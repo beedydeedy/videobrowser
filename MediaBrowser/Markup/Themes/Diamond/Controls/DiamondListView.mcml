@@ -110,7 +110,7 @@
           </pp:PopupPlay>-->
 
           <!-- List Repeater -->
-          <Scroller Orientation="Vertical" FadeSize="-15" Margins="5,0,0,5" Name="Scroller" Navigation="RememberFocus" ScrollingData="[ScrollingData]" >
+          <Scroller Orientation="Vertical" FadeSize="-15" Name="Scroller" Navigation="RememberFocus" ScrollingData="[ScrollingData]" >
             <LayoutInput>
               <DockLayoutInput Alignment="Fill"  Position="Client"  />
             </LayoutInput>
@@ -119,13 +119,13 @@
                 <Layout>
                   <FlowLayout Orientation="Vertical" ItemAlignment="Center" Spacing="0,0"/>
                 </Layout>
-                <Divider>
+                <!--<Divider>
                   <Clip FadeSize="150" Orientation="Horizontal" FadeAmount="1" >
                     <Children>
                       <ColorFill Content="DarkSlateGray" Alpha="0.8" Layout="Fill" MaximumSize="0,1" />
                     </Children>
                   </Clip>
-                </Divider>
+                </Divider>-->
                 <Animations>
                   <Animation Type="Move">
                     <Keyframes>
@@ -208,6 +208,7 @@
           <BooleanTransformer Inverse="true"/>
         </Transformer>
       </Binding>
+      <Binding Source="[Application.Config.ParentalControlEnabled]" Target="[PCPanel.Visible]" />
 
       <Default Target="[Input.KeyInteractive]" Value="true" />
 
@@ -234,7 +235,7 @@
         <Children>
           <Panel Layout="Dock">
             <Children>
-              <Panel Layout="Center" MaximumSize="30,20" MinimumSize="20,20" >
+              <Panel Name="PCPanel" Layout="Center" MaximumSize="30,20" MinimumSize="20,20" >
                 <LayoutInput>
                   <DockLayoutInput Alignment="Center" Position="Left" />
                 </LayoutInput>

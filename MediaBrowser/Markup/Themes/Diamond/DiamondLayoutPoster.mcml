@@ -65,9 +65,6 @@
               <Text Name="List_Total" Content="0" Color="White" Font="font://f:Diamond_Medium" />
             </Children>
           </Panel>
-
-          <!-- Top Clip -->
-          <dtb:DiamondClipTop LayoutInput="global://dtb:LI_ClipTop" />
           
           <!-- Posert Scroller -->
           <ps:PosterScroller Name="ItemPanel" Application="[Application]" Folder="[Folder]"
@@ -76,10 +73,7 @@
                              UnwatchedCountFont="font://f:PV_UnwatchedCountFont"
                              LayoutInput="[Posters_Few]">
           </ps:PosterScroller>
-          
-          <!-- Bottom Clip -->
-          <dtb:DiamondClipBottom LayoutInput="global://dtb:LI_ClipBottom" />
-          
+                    
 					<!-- Backdrop -->
           <dtb:DiamondBG Name="BG_Art" Visible="[Application.Config.ShowBackdrop]" LayoutInput="global://dtb:LI_Bg" />
 

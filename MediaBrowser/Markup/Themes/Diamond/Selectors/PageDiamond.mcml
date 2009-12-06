@@ -261,27 +261,24 @@
               </me:TopBar>
 
 
-              <Panel Name="TimePanel">
+              <Graphic Name="TimePanel" Content="image://i:DiamondTimePanel" Padding="20,0,20,10"
+                       SizingPolicy="SizeToChildren">
                 <Layout>
                   <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
                 </Layout>
                 <LayoutInput>
-                  <AnchorLayoutInput Left="Parent,0,50" Bottom="Parent,0,50" Right="Parent,0,125" Horizontal="Center"/>
+                  <AnchorLayoutInput Right="Parent,1,-20" Top="Parent,0" />
                 </LayoutInput>
                 <Children>
-                  <Panel Layout="Scale">
-                    <Children>
                       <Text Name="TimeDate" Font="font://f:P_ClockFont"  Color="White"
                             Visible="[Application.Config.ShowClock]" />
-                    </Children>
-                  </Panel>
                 </Children>
-              </Panel>
+              </Graphic>
 
               <!--Banner / Breadcrumbs -->
               <Panel Name="Breadcrumbs">
                 <LayoutInput>
-                  <AnchorLayoutInput Top="Parent, 0,50" Left="Parent, 0.5,-250" Right="Parent,.5,250" Horizontal="Center"  />
+                  <AnchorLayoutInput Top="Parent, 0,40" Left="Parent, 0.5,-250" Right="Parent,.5,250" Horizontal="Center"  />
                 </LayoutInput>
                 <Children>
                   <Panel Layout="Scale">

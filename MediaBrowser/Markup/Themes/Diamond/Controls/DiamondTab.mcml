@@ -66,22 +66,17 @@
           <FlowLayout Orientation="Vertical" Spacing="0,0"/>
         </Layout>
         <Children>
-          <Clip FadeSize="0" Orientation="Horizontal" FadeAmount="1" >
-            <Children>
-              <ColorFill Content="DimGray" Alpha="0.8" Layout="Fill" MaximumSize="0,2" />
-            </Children>
-          </Clip>
           <Repeater Source="[Model.Options]" Layout="HorizontalFlow" Name="ButtonRepeater" Navigation="RememberFocus">
             <Layout>
-              <FlowLayout Repeat="Never" RepeatGap="100,0" Spacing="5,0" ItemAlignment="Near"/>
+              <FlowLayout Repeat="Never" RepeatGap="100,0" Spacing="15,0" ItemAlignment="Near"/>
             </Layout>
             <Content>
               <me:DiamondTabItem Label="[RepeatedItem.ToString]" Index="[RepeatedItemIndex]" Model="[Model]" />
             </Content>
           </Repeater>
-          <Clip FadeSize="0" Orientation="Horizontal" FadeAmount="1" >
+          <Clip FadeSize="100" Orientation="Horizontal" FadeAmount="1" >
             <Children>
-              <ColorFill Content="DimGray" Alpha="0.8" Layout="Fill" MaximumSize="0,2" />
+              <ColorFill Content="White" Alpha="0.8" Layout="Fill" MaximumSize="0,2" />
             </Children>
           </Clip>
         </Children>
@@ -137,7 +132,7 @@
         </Layout>
         <Children>
           <!-- The label to display. -->
-          <Text Name="Name" Font="font://f:Diamond_Medium" Color="[Color]" Margins="5,5,5,-5" >
+          <Text Name="Name" Font="font://f:Diamond_Medium" Color="[Color]" Margins="5,2,5,0" >
           </Text>
         </Children>
       </Panel>

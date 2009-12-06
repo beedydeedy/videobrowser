@@ -6,8 +6,8 @@
 	    xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
       xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
       xmlns:s="file://Styles_DoNotEdit.mcml"
-	    xmlns:f="file://Fonts_DoNotEdit.mcml"      
-      
+	    xmlns:f="file://Fonts_DoNotEdit.mcml"
+      xmlns:db="resx://MediaBrowser/MediaBrowser.Resources/DirectorButton"
 	    xmlns:sr="resx://MediaBrowser/MediaBrowser.Resources/StarRating"
       xmlns:mp="resx://MediaBrowser/MediaBrowser.Resources/MPAARating"
       xmlns:gb="resx://MediaBrowser/MediaBrowser.Resources/GenreButton"
@@ -16,18 +16,13 @@
       xmlns:ft="resx://MediaBrowser/MediaBrowser.Resources/FancyText"
     xmlns:me="Me">
 
-  <!-- LAYOUT INPUTS -->
-  <FormLayoutInput Name="LI_Bg" Left="Parent,0,-50" Top="Parent,0,-20" Bottom="Parent,1,20" Right="Parent,1,50"/>
-  <AnchorLayoutInput Name="LI_Title" Top="Parent, 0" Left="Parent, 0.5,-400" Right="Parent,.5,400" Horizontal="Center"  />
-  <AnchorLayoutInput Name="LI_ClipTop" Top="Parent,0,-20" Bottom="Parent,0,120" Left="Parent,0,-50" Right="Parent,1,50" />
-  <FormLayoutInput Name="LI_ClipBottom" Left="Parent,0,-50" Top="Parent,1,-120" Bottom="Parent,1,20" Right="Parent,1,50"/>
-  <AnchorLayoutInput Name="LI_ListCounter" Right="Parent,1,-25" Bottom="Parent,0,50" />
-  <!-- END LAYOUT INPUTS -->
+  
 
   <UI Name="DiamondTitleUI">
 
     <Properties>
       <lib:Item Name="Item" Item="$Required" />
+      <Size Name="MinSize" Size="800,80"/>
     </Properties>
 
     <Rules>
@@ -36,31 +31,19 @@
     </Rules>
     <Content>
       <!-- Title Details -->
-      <Panel>
+      <Graphic Content="image://i:DiamondMovieTitlePanel" MinimumSize="[MinSize]" Padding="10,0,10,10"
+                       SizingPolicy="SizeToConstraint">
         <Layout>
-          <FlowLayout Orientation="Vertical" ItemAlignment="Center" Spacing="0,0" />
+          <FlowLayout Orientation="Horizontal" ItemAlignment="Center" StripAlignment="Center" Spacing="0,0" />
         </Layout>
-        <Children>          
-          <Graphic SizingPolicy="SizeToChildren">
-            <LayoutInput>
-              <AnchorLayoutInput Vertical="Center" Horizontal="Near"/>
-            </LayoutInput>
-            <Children>
+        <Children>       
               <ft:FancyText AvailableSpaceInt="800" HasFocus="true"
                             AllowMarquee="true" Name="Label"
                             Font="font://f:Diamond_Title"
                             Color="color://s:FontColorLight" MinimumSize="0,40"
-                            />
-            </Children>
-          </Graphic>
-          <Clip FadeSize="150" Orientation="Horizontal" FadeAmount="1" >
-            <Children>
-              <ColorFill Content="White" Alpha="0.8" Layout="Fill" MaximumSize="0,2" />
-            </Children>
-          </Clip>        
-          
+                            />          
         </Children>
-      </Panel>
+      </Graphic>
     </Content>
   </UI>
 
@@ -207,12 +190,13 @@
       </Changed>
     </Rules>
     <Content>
-      <Panel >
+      <Graphic Content="image://i:DiamondTopPanel" Layout="VerticalFlow" Margins="0,0,0,0"
+               Padding="15,15,15,15">
         <Children>
           <Text Visible="false" Name="Summary" Font="[Font]" Color="[Color]" WordWrap="true" FadeSize="100"  >
           </Text>
         </Children>
-      </Panel>
+      </Graphic>
     </Content>
   </UI>
 
@@ -244,6 +228,217 @@
   </UI>
 
 
+  <!-- Common Information Panel -->
+  <UI Name="DiamondCommonInformation">
+    <Properties>
+      <lib:Item Name="Item" Item="$Required"/>
+      <a:Application Name="Application" Application="$Required"/>
+      <Color Name="AttributeColor" Color="White" />
+      <Color Name="ValueColor" Color="White" />
+      <Font Name="TitleFont" Font="font://f:Diamond_Small"/>
+      <Font Name="ValueFont" Font="font://f:Diamond_Small_SemiBold"/>
+      <cor:Boolean Name="FullMode" Boolean="true" />
+    </Properties>
+    <Locals>
+      <Size Name="MinSize" Size="155,0"/>
+    </Locals>
+    <Rules>
+      <!-- Common Info Panel-->
+      <Binding Source="[Item.ImdbRatingString]" Target="[IMDBRating.Content]" />
+      <Binding Source="[Item.ImdbRating]" Target="[StarRating.Value]" />
+      <Binding Source="[Item.MpaaRating]" Target="[MPAARating.Value]" />
+      <Binding Source="[Item.Directors]" Target="[DirectorRepeater.Source]"/>
+      <Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />
+      <Condition Source="[Item.ImdbRating]" ConditionOp="GreaterThanOrEquals" SourceValue="0" Target="[IMDBRatingPanel.Visible]" Value="true"  />
+      <Condition Source="[Item.Directors.Count]" ConditionOp="GreaterThan" SourceValue="0" Target="[DirectedByPanel.Visible]" Value="true"  />
+      <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
+      <!--
+      <Binding Target="[MediaInfoPane.Visible]" Source="[Item.HasMediaInfo]" />
+
+      <Changed Source="[Item.MediaInfo]" InitialEvaluate="true">
+        <Actions>
+          <Set Target="[MediaInfo.Content]" Value="[Item.MediaInfo.CombinedInfo]"/>
+        </Actions>
+      </Changed>-->
+
+      <!-- Show and hide common panels -->
+      <Condition Source="[Item.Genres.Count]" ConditionOp="LessThanOrEquals"  SourceValue="0"  Target="[GenrePanel.Visible]"      Value="false"/>
+      <Condition Source="[Item.Genres.Count]" ConditionOp="NotEquals"         SourceValue="0"  Target="[GenrePanel.Visible]"      Value="true"/>
+      <Condition Source="[Item.StudioItems.Count]" ConditionOp="LessThanOrEquals"  SourceValue="0"  Target="[StudioPanel.Visible]"      Value="false"/>
+      <Condition Source="[Item.StudioItems.Count]" ConditionOp="NotEquals"         SourceValue="0"  Target="[StudioPanel.Visible]"      Value="true"/>
+
+
+    </Rules>
+    <Content>
+      <Graphic Name="CommonInfoPanel" Content="image://i:DiamondTopPanel" Layout="VerticalFlow" Margins="0,0,0,0"
+               Padding="15,15,15,15">
+        <Children>
+          <Panel Layout="Anchor">
+            <Children>
+
+              <Panel Name="rPanel">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" />
+                </Layout>
+                <LayoutInput>
+                  <AnchorLayoutInput Right="Parent, 1"/>
+                </LayoutInput>
+                <Children>
+                  <mp:MPAARating Name="MPAARating" Value="[Item.MpaaRating]" Margins="5,0,0,0" MaximumSize="0,30"/>
+                  <Text Name="Runtime" Content="[Item.RunningTimeString]"
+                          Font="[ValueFont]" Color="[ValueColor]" />
+                  <Graphic Name="PCLock" Visible="false" Content="image://i:Lock" MaintainAspectRatio="true" MaximumSize="30,30" />
+                </Children>
+              </Panel>
+
+              <Panel Name="lPanel">
+                <Layout>
+                  <FlowLayout Orientation="Vertical" />
+                </Layout>
+                <LayoutInput>
+                  <AnchorLayoutInput Left="Parent, 0" Right="rPanel,0"/>
+                </LayoutInput>
+                <Children>
+                  <Panel Name="IMDBRatingPanel" Visible="false">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal" Spacing="5,5"/>
+                    </Layout>
+                    <Children>
+                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="IMDB RATING" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <Text Name="IMDBRating" Content="" Color="[ValueColor]" Font="[ValueFont]"/>
+                      <Text Font="[ValueFont]" Color="[ValueColor]" Content="/ 10"/>
+                      <sr:StarRating Name="StarRating" Value="[Item.ImdbRating]" />
+                    </Children>
+                  </Panel>
+
+                  <Panel Name="GenrePanel">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal"/>
+                    </Layout>
+                    <Children>
+                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="GENRE"  Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <Repeater Name="GenreRepeater" Source="[Item.Genres]" Margins="0,0,0,0" MaximumSize="0,100" >
+                        <Layout>
+                          <FlowLayout Orientation="Horizontal" AllowWrap="true"  Spacing="25,0"  />
+                        </Layout>
+                        <Divider>
+                          <Text Content="●" Font="font://f:MM_GenreFont" Color="190,190,190" Alpha="0.6"  />
+                        </Divider>
+                        <Content>
+                          <gb:GenreButton Text="[RepeatedItem!cor:String]"
+                                  Application="[Application]" Item="[Item]"
+                                  GenreCategory="[RepeatedItem!cor:String]"
+                                  Font="font://f:MM_GenreFont" Color="190,190,190"/>
+                        </Content>
+                      </Repeater>
+                    </Children>
+                  </Panel>
+
+                  <Panel Name="DirectedByPanel" Layout="HorizontalFlow" Visible="false">
+                    <Children>
+                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="DIRECTOR" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <!--<Text Name="Director" Font="font://f:MM_ItemFont" WordWrap="true" MaximumLines="3" Color="[ValueColor]" Content="[Item.DirectorString]"/>-->
+                      <Repeater Name="DirectorRepeater" Source="[Item.Directors]" Margins="0,0,0,0" MaximumSize="0,150" >
+                        <Layout>
+                          <FlowLayout Orientation="Horizontal" AllowWrap="true"  Spacing="25,0"  />
+                        </Layout>
+                        <Divider>
+                          <Text Content="●" Font="[TitleFont]" Color="Gray" />
+                        </Divider>
+                        <Content>
+                          <db:DirectorButton Text="[RepeatedItem!cor:String]"
+                                  Application="[Application]" Item="[Item]"
+                                  DirectorName="[RepeatedItem!cor:String]"
+                                  Font="[TitleFont]" Color="[ValueColor]"/>
+                        </Content>
+                      </Repeater>
+
+                    </Children>
+                  </Panel>
+
+
+                  <Panel Name="StudioPanel" Layout="HorizontalFlow" Visible="false">
+                    <Children>
+                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="STUDIO" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <Repeater Name="StudioRepeater" Source="[Item.StudioItems]" Margins="0,0,0,0" MaximumSize="0,0" >
+                        <Layout>
+                          <FlowLayout Orientation="Horizontal" AllowWrap="false"  Spacing="25,0"  />
+                        </Layout>
+                        <Content>
+                          <me:DiamondStudio StudioItem="[RepeatedItem!lib:StudioItemWrapper]" Name="StudioLogo"/>
+                        </Content>
+                        <Divider>
+                          <Text Content="●" Font="font://f:MM_GenreFont" Color="190,190,190" Alpha="0.6"  />
+                        </Divider>
+                      </Repeater>
+                    </Children>
+                  </Panel>
+
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
+
+
+
+          <!--<Panel  Name="MediaInfoPane" Visible="false" >
+            <Layout>
+              <FlowLayout Orientation="Horizontal" AllowWrap="true" ItemAlignment="Near" StripAlignment="Near"/>
+            </Layout>
+            <Children>
+              <Text Font="[TitleFont]" Color="[AttributeColor]" Content="MEDIA INFO" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+              <Text Name="MediaInfo" Font="font://f:Diamond_MediaInfo" Color="[ValueColor]" Margins="0,0,0,0" MaximumSize="0,100" />
+            </Children>
+          </Panel>-->
+
+        </Children>
+      </Graphic>
+    </Content>
+  </UI>
+  
+  <UI Name="DiamondCounter">
+    <Properties>
+      <cor:Int32 Name="List_Counter" Int32="0" />
+      <cor:Int32 Name="List_Total" Int32="0" />
+    </Properties>
+
+    <Rules>
+      <!-- Counter Bindings -->
+      <Binding Source="[List_Counter!cor:String]" Target="[Text_Counter.Content]">
+        <Transformer>
+          <MathTransformer Add="1"/>
+        </Transformer>
+      </Binding>
+      <Binding Source="[List_Total]" Target="[Text_Total.Content]" >
+        <Transformer>
+          <FormatTransformer Format=" | {0}" />
+        </Transformer>
+      </Binding>
+    </Rules>
+    
+    <Content>
+      <Graphic Content="image://i:DiamondCounterPanel" Padding="30,10,30,5"
+                       SizingPolicy="SizeToChildren">
+        <Layout>
+          <FlowLayout Orientation="Horizontal" ItemAlignment="Far"/>
+        </Layout>
+        <Children>
+          <Text Name="Text_Counter" Content="0" Color="White" Font="font://f:P_ClockFont" />
+          <Text Name="Text_Total" Content="0" Color="White" Font="font://f:P_ClockFont" />
+        </Children>
+        <Animations>
+          <Animation Type="Size" CenterPointPercent="1,.5,.5">
+            <Keyframes>
+              <SizeKeyframe Time="0" RelativeTo="Current"/>
+              <SizeKeyframe Time="0.3" RelativeTo="Final"/>
+            </Keyframes>
+          </Animation>
+        </Animations>
+      </Graphic>
+    </Content>
+  </UI>
+  
+  
   <UI Name="DiamondClipTop">
     <Content>
       <Clip  FadeSize="100" Orientation="Vertical" ShowNear="false" FadeAmount="1" NearOffset="25" >
@@ -278,11 +473,11 @@
 
       <cor:Boolean Name="IsNavigatingCommand" Boolean="false" />
       <cor:Boolean Name="LeftAlign" Boolean="true" />
-      <cor:Boolean Name="MiniMode" Boolean="false" />
+      <cor:Boolean Name="MiniMode" Boolean="false" /> 
       <cor:String Name="Text" String="$Required" />
       <Size Name="Size" Size="0,0" />
-      <Size Name="MinSize" Size="50,50" />
-      <Color Name="Color" Color="Gray"/>
+      <Size Name="MinSize" Size="200,45" />
+      <Color Name="Color" Color="200,200,200"/>
       <Color Name="FocusColor" Color="White"/>
       <Image Name="Icon" Image="image://i:BlankImage" />
       <Image Name="ImageFocus" Image="image://i:DiamondListFocus" />
@@ -303,6 +498,7 @@
       <Binding Source="[Font]" Target="[Label.Font]" />
       <Binding Source="[Text]" Target="[Label.Content]" />
       <Binding Source="[MiniMode]" Target="[Label.Visible]" />
+      
 
       <Default Target="[Input.KeyInteractive]" Value="true" />
 
@@ -355,14 +551,14 @@
         </Conditions>
         <Actions>
           <Set Target="[imgButton.Content]" Value="[ImageFocus]"/>
-          <!--<Set Target="[imgButton.MinimumSize]" Value="[Size]"/>-->
-          <Set Target="[imgButton.MaximumSize]" Value="[Size]"/>
+          <!--<Set Target="[imgButton.MinimumSize]" Value="[Size]"/>
+          <Set Target="[imgButton.MaximumSize]" Value="[Size]"/>-->
           <Set Target="[Label.Color]" Value="[FocusColor]" />
           <PlaySound Sound="sound://sounds:Focus" />
         </Actions>
       </Condition>
 
-      <Condition Source="[Input.MouseFocus]" SourceValue="true">
+      <!--<Condition Source="[Input.MouseFocus]" SourceValue="true">
         <Conditions>
           <Equality Source="[Command.Available]" ConditionOp="Equals" Value="true" />
         </Conditions>
@@ -370,7 +566,28 @@
           <Set Target="[imgButton.Content]" Value="[ImageFocus]"/>
           <Set Target="[Label.Color]" Value="[FocusColor]" />
         </Actions>
-      </Condition>
+      </Condition>-->
+
+      <Rule>
+        <Conditions>
+          <Equality Source="[Input.MouseFocus]" Value="true"/>
+          <Equality Source="[MiniMode]" Value="true"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[imgButton.MinimumSize]" Value="[MinSize]"/>
+          <Set Target="[imgButton.MaximumSize]" Value="[Size]"/>
+        </Actions>
+      </Rule>
+
+     <Rule>
+        <Conditions>
+          <Equality Source="[MiniMode]" Value="false"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[imgButton.MinimumSize]" Value="50,50"/>
+          <Set Target="[imgButton.MaximumSize]" Value="50,50"/>
+        </Actions>
+      </Rule> <!---->
 
       
       <Condition Source="[LeftAlign]" ConditionOp="Equals" SourceValue="true">
@@ -394,7 +611,7 @@
             </Layout>
             <Children>
               <Graphic Name="graphicBullet" MaximumSize="25,25" MinimumSize="25,25" MaintainAspectRatio="true"
-                           Margins="7,10,3,0" Visible="true" Content="[Icon]">
+                           Margins="7,7,3,0" Visible="true" Content="[Icon]">
               </Graphic>
               <!-- The label to display. -->
               <Text Name="Label"  Color="[Color]" MinimumSize="0,30" Margins="4,3,0,0"
@@ -418,18 +635,24 @@
     </Properties>
 
     <Rules>
-      <Binding Source="[StudioItem.Item.PrimaryImage]" Target="[SImage.Content]" />
+      <Binding Source="[StudioItem.Item.Name]" Target="[SImage.Content]" />
     </Rules>
 
     <Content>
       <Panel>
-        <Children>
-          <Graphic Name="SImage" MaximumSize="75,75" MaintainAspectRatio="true"/>
+        <Children>          
+          <Text Name="SImage" Color="White" Font="font://f:Diamond_Small"/>
         </Children>
       </Panel>
     </Content>
   </UI>
 
 
-    
+  <!-- LAYOUT INPUTS-->
+  <FormLayoutInput Name="LI_Bg" Left="Parent,0,-50" Top="Parent,0,-20" Bottom="Parent,1,20" Right="Parent,1,50"/>
+  <AnchorLayoutInput Name="LI_Title" Top="Parent, 0" Left="Parent, 0.5,-400" Right="Parent,.5,400" Horizontal="Center"  />
+  <AnchorLayoutInput Name="LI_ClipTop" Top="Parent,0,-20" Bottom="Parent,0,120" Left="Parent,0,-50" Right="Parent,1,50" />
+  <FormLayoutInput Name="LI_ClipBottom" Left="Parent,0,-50" Top="Parent,1,-120" Bottom="Parent,1,20" Right="Parent,1,50"/>
+  <AnchorLayoutInput Name="LI_ListCounter" Right="Parent,1,-25" Bottom="Parent,1" />
+  <!-- END LAYOUT INPUTS -->
 </Mcml>

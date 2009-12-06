@@ -120,8 +120,6 @@
             </LayoutInput>
           </mip:MediaInfoPanel>                 
 
-          <!-- Bottom Clip -->
-          <dtb:DiamondClipBottom LayoutInput="global://dtb:LI_ClipBottom" />
           
           <!-- Coverflow Scroller -->
           <me:CoverflowScroller Name="CFScroller" Application="[Application]" Folder="[Folder]">            
@@ -129,11 +127,6 @@
               <AnchorLayoutInput Horizontal="Fill" Top="Parent, .55" Bottom="Parent, 1, 125" />
             </LayoutInput>
           </me:CoverflowScroller>
-
-          
-          
-          <!-- Top Clip -->
-          <dtb:DiamondClipTop LayoutInput="global://dtb:LI_ClipTop" />
           
           <!-- Backdrop -->
           <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
@@ -665,7 +658,7 @@
               <AnchorLayoutInput Top="FocusBg, 1, -5" />
             </LayoutInput>
             <Children>
-              <Panel Name="ConstraintPanel2" ColorFilter="175,175,175" Alpha="global://s:MirrorAlpha" CenterPointPercent="0.5,0.5,0.5" Rotation="180deg;1,0,0">
+              <Panel Name="ConstraintPanel2" ColorFilter="50,50,50" Alpha="global://s:MirrorAlpha" CenterPointPercent="0.5,0.5,0.5" Rotation="180deg;1,0,0">
                 <Layout>
                   <AnchorLayout SizeToHorizontalChildren="false" SizeToVerticalChildren="false"/>
                 </Layout>

@@ -140,12 +140,6 @@
             </Children>
           </Panel>
 
-          <!-- Bottom Clip -->
-          <dtb:DiamondClipBottom LayoutInput="global://dtb:LI_ClipBottom" />
-
-          <!-- Top Clip -->
-          <dtb:DiamondClipTop LayoutInput="global://dtb:LI_ClipTop" />
-
           <!-- Backdrop -->
           <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]"  LayoutInput="global://dtb:LI_Bg"/>
 

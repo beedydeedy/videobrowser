@@ -264,10 +264,16 @@
     <Content Include="Images\Diamond\dia_bg.png" />
     <Content Include="Images\Diamond\dia_list_bg.png" />
     <Content Include="Images\Diamond\dia_list_focus.png" />
+    <Content Include="Images\Diamond\dia_TopPanel.png" />
+    <Content Include="Images\Diamond\Overlay\dia_CounterPanel.png" />
+    <Content Include="Images\Diamond\Overlay\dia_detailA.png" />
+    <Content Include="Images\Diamond\Overlay\dia_detailB.png" />
     <Content Include="Images\Diamond\Overlay\dia_overlay_all.png" />
     <Content Include="Images\Diamond\Overlay\dia_overlay_all_dark.png" />
     <Content Include="Images\Diamond\Overlay\dia_overlay_bottom.png" />
     <Content Include="Images\Diamond\Overlay\dia_overlay_top_dark.png" />
+    <Content Include="Images\Diamond\Overlay\dia_timePanel.png" />
+    <Content Include="Images\Diamond\Overlay\dia_titlePanel.png" />
     <Content Include="Images\Icons\IconAdded.png" />
     <Content Include="Images\Icons\IconWatched.png" />
     <Content Include="Images\Lock.png" />
