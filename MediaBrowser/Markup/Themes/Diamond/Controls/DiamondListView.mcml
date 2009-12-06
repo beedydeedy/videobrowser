@@ -88,7 +88,7 @@
         <Children>
 
           <!-- Spacer -->
-          <Panel>
+          <!--<Panel>
             <LayoutInput>
               <DockLayoutInput Position="Left" Alignment="Near"  />
             </LayoutInput>
@@ -99,7 +99,7 @@
                 </Children>
               </Clip>
             </Children>
-          </Panel>
+          </Panel>-->
 
           <!-- Popup Play Panel -->
           <!--<pp:PopupPlay Name="PopupPlay" Visible="false" Item="[Folder.SelectedChild]" Close="[ClosePopupPlay]"

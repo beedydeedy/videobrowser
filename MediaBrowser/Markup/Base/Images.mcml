@@ -128,7 +128,7 @@
   <Image Name="DiamondTimePanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_timePanel" NineGrid="10,10,10,10" />
   <Image Name="DiamondCounterPanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_CounterPanel" NineGrid="10,10,10,10" />
   <Image Name="DiamondDetailA" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_detailA" NineGrid="10,10,10,10" />
-  <Image Name="DiamondDetailB" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_detailB" NineGrid="10,10,10,10" />
+  <Image Name="DiamondDetailB" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_detailB" NineGrid="15,15,15,15" />
 
 
   

@@ -75,6 +75,7 @@
       
       <!-- Title and Year -->
       <Binding Source="[SelectedItem]" Target="[TitleUI.Item]"/>
+      <!-- Media Data Bindings -->
       <Binding Source="[SelectedItem]" Target="[DiamondTopInfoBox.Item]" />
       <Binding Source="[SelectedItem]" Target="[DiamondSummary.Item]" />
       <Binding Source="[SelectedItem]" Target="[MediaInfoPanel.Item]"/>

@@ -252,6 +252,7 @@
       <Condition Source="[Item.ImdbRating]" ConditionOp="GreaterThanOrEquals" SourceValue="0" Target="[IMDBRatingPanel.Visible]" Value="true"  />
       <Condition Source="[Item.Directors.Count]" ConditionOp="GreaterThan" SourceValue="0" Target="[DirectedByPanel.Visible]" Value="true"  />
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
+      <Binding Source="[Item.StudioItems]" Target="[StudioRepeater.Source]" />
       <!--
       <Binding Target="[MediaInfoPane.Visible]" Source="[Item.HasMediaInfo]" />
 
@@ -278,7 +279,7 @@
 
               <Panel Name="rPanel">
                 <Layout>
-                  <FlowLayout Orientation="Vertical" />
+                  <FlowLayout Orientation="Vertical" ItemAlignment="Center" />
                 </Layout>
                 <LayoutInput>
                   <AnchorLayoutInput Right="Parent, 1"/>
@@ -653,6 +654,6 @@
   <AnchorLayoutInput Name="LI_Title" Top="Parent, 0" Left="Parent, 0.5,-400" Right="Parent,.5,400" Horizontal="Center"  />
   <AnchorLayoutInput Name="LI_ClipTop" Top="Parent,0,-20" Bottom="Parent,0,120" Left="Parent,0,-50" Right="Parent,1,50" />
   <FormLayoutInput Name="LI_ClipBottom" Left="Parent,0,-50" Top="Parent,1,-120" Bottom="Parent,1,20" Right="Parent,1,50"/>
-  <AnchorLayoutInput Name="LI_ListCounter" Right="Parent,1,-25" Bottom="Parent,1" />
+  <AnchorLayoutInput Name="LI_ListCounter" Right="Parent,1,-5" Bottom="Parent,1" />
   <!-- END LAYOUT INPUTS -->
 </Mcml>

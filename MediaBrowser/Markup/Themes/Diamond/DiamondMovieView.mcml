@@ -152,7 +152,7 @@
                   <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
                 </Layout>
                 <LayoutInput>
-                  <AnchorLayoutInput Right="Parent,1,-20" Top="Parent,0" />
+                  <AnchorLayoutInput Right="Parent,1,-5" Top="Parent,0" />
                 </LayoutInput>
                 <Children>
                   <Text Name="TimeDate" Font="font://f:P_ClockFont"  Color="White"

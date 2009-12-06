@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{C6B27E5F-3D83-4D71-85B9-AF83C8392721}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -324,8 +324,6 @@
     <Content Include="Images\Spinner\IncrementNoFocus.png" />
     <Content Include="Images\Spinner\IncrementFocused.png" />
     <Content Include="Images\Index.png" />
-    <Content Include="Images\LeftMenuBorderBlack.png" />
-    <Content Include="Images\LeftMenuBorderDefault.png" />
     <Content Include="Images\MediaInfo\aspect_169.png" />
     <Content Include="Images\MediaInfo\aspect_1851.png" />
     <Content Include="Images\MediaInfo\aspect_2391.png" />
@@ -409,8 +407,6 @@
     <Content Include="Images\Ratings\TV-Y.png" />
     <Content Include="Images\Ratings\TV-Y7-FV.png" />
     <Content Include="Images\Ratings\TV-Y7.png" />
-    <Content Include="Images\RightMenuBorderBlack.png" />
-    <Content Include="Images\RightMenuBorderDefault.png" />
     <Content Include="Images\Sort.png" />
     <Content Include="Images\spacer.png" />
     <Content Include="Images\Special\FilmScreen.png" />
