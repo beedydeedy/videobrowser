@@ -20,13 +20,13 @@ namespace MediaBrowser
     public class ConfigData
     {
         
-        [Comment(@"If you enable this, make sure System.Data.SQLite.DLL is copied to c:\program data\media browser, make sure you install the right version there is a x32 and x64")]
+        [Comment(@"If you enable this, make sure System.Data.SQLite.DLL is copied to c:\program data\mediabrowser, make sure you install the right version there is a x32 and x64")]
         public bool EnableExperimentalSqliteSupport = false;
         public bool AlwaysShowDetailsPage = true;
         public bool EnableVistaStopPlayStopHack = true;
         public bool EnableRootPage = true;
         public bool IsFirstRun = true;
-        public string ImageByNameLocation = "";
+        public string ImageByNameLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
         public Vector3 OverScanScaling = new Vector3() {X=1, Y=1, Z=1};
         public Inset OverScanPadding = new Inset();
         public bool EnableTraceLogging = false;
@@ -72,7 +72,8 @@ namespace MediaBrowser
         public List<ExternalPlayer> ExternalPlayers = new List<ExternalPlayer>();
         public string Theme = "Default";
         public string FontTheme = "Default";
-        public bool ShowClock = true;
+        // I love the clock, but it keeps on crashing the app, so disabling it for now
+        public bool ShowClock = false;
         public bool EnableAdvancedCmds = false;
         public bool Advanced_EnableDelete = false;
         public bool UseAutoPlayForIso = false;
@@ -81,7 +82,7 @@ namespace MediaBrowser
 
         public string UserSettingsPath = null;
         public string ViewTheme = "Default";
-        public int AlphaBlending = 50;
+        public int AlphaBlending = 80;
         public bool ShowConfigButton = false;
 
         public bool EnableSyncViews = true;

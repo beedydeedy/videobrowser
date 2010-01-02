@@ -134,14 +134,14 @@ namespace MediaBrowser.Library.Entities {
         /// <param name="searchFunction"></param>
         /// <returns></returns>
         public Index Search(Func<BaseItem, bool> searchFunction, string name) {
-            var items = new List<BaseItem>();
+            var items = new Dictionary<Guid,BaseItem>();
 
             foreach (var item in RecursiveChildren) {
                 if (searchFunction(item)) {
-                    items.Add(item);
+                    items[item.Id] = item;
                 }
             }
-            return new Index(this, items);
+            return new Index(this, items.Values.ToList());
         }
 
         class BaseItemIndexComparer : IEqualityComparer<BaseItem> {
@@ -167,7 +167,7 @@ namespace MediaBrowser.Library.Entities {
         public IList<Index> IndexBy(IndexType indexType) {
 
             if (indexType == IndexType.None) throw new ArgumentException("Index type should not be none!");
-            Func<Show, IEnumerable<BaseItem>> indexingFunction = null;
+            Func<IShow, IEnumerable<BaseItem>> indexingFunction = null;
 
             switch (indexType) {
                 case IndexType.Actor:
@@ -199,7 +199,7 @@ namespace MediaBrowser.Library.Entities {
 
             var index = new Dictionary<BaseItem, List<BaseItem>>(new BaseItemIndexComparer());
             foreach (var item in RecursiveChildren) {
-                Show show = item as Show;
+                IShow show = item as IShow;
                 IEnumerable<BaseItem> subIndex = null;
                 if (show != null) {
                     subIndex = indexingFunction(show);
@@ -208,12 +208,15 @@ namespace MediaBrowser.Library.Entities {
 
                 if (subIndex != null) {
                     foreach (BaseItem innerItem in subIndex) {
-                        AddItemToIndex(index, innerItem, item);
-                        added = true;
+                        if (!(item is Episode) && !(item is Season)) //exclude episodes/seasons as their series will be there
+                        {
+                            AddItemToIndex(index, innerItem, item);
+                            added = true;
+                        }
                     }
                 }
 
-                if (!added && item is Show) {
+                if (!added && item is IShow && !(item is Episode) && !(item is Season)) {
                     AddItemToIndex(index, unknown, item);
                 }
 
@@ -223,14 +226,12 @@ namespace MediaBrowser.Library.Entities {
 
             sortedIndex.AddRange(
                 index
-                    .Select(pair => new Index(pair.Key, pair.Value))
+                    .Select(pair => new Index(pair.Key, pair.Value.Distinct(i => i.Id).ToList()))
                 );
 
 
             sortedIndex.Sort((x, y) =>
             {
-                if (x.Children.Count == 1 && y.Children.Count > 1) return 1;
-                if (x.Children.Count > 1 && y.Children.Count == 1) return -1;
                 return x.Name.CompareTo(y.Name);
             });
 

@@ -22,6 +22,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Net;
 using MediaBrowser.Util;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser.Library {
 
@@ -335,22 +336,26 @@ namespace MediaBrowser.Library {
 
             this.ParentalControls.ClearEnteredList();
         }
-        public Dictionary<string, string> ConfigPanels = new Dictionary<string, string>() {
-            {"General",""},{"Media Options",""},{"Themes",""},{"ParentalControl",""} }; //defaults are embedded in configpage others will be added to end
+        public Dictionary<string, ConfigPanel> ConfigPanels = new Dictionary<string, ConfigPanel>() {
+            {"General",new ConfigPanel("")},{"Media Options",new ConfigPanel("")},{"Themes",new ConfigPanel("")},{"ParentalControl",new ConfigPanel("")} }; //defaults are embedded in configpage others will be added to end
 
         //method for external entities (plug-ins) to add a new config panels
         //panel should be a resx reference to a UI that fits within the config panel area and takes Application and FocusItem as parms
         public void AddConfigPanel(string name, string panel)
         {
-            ConfigPanels.Add(name, panel);
+            ConfigPanels.Add(name, new ConfigPanel(panel));
+        }
+
+        public void AddConfigPanel(string name, string panel, ModelItem configObject)
+        {
+            ConfigPanels.Add(name, new ConfigPanel(panel,configObject));
         }
 
         public Dictionary<string, ViewTheme> AvailableThemes = new Dictionary<string, ViewTheme>()
             {
                 {"Default", new ViewTheme()},
-                {"Diamond", new ViewTheme("Diamond", "resx://MediaBrowser/MediaBrowser.Resources/PageDiamond#PageDiamond", "resx://MediaBrowser/MediaBrowser.Resources/DiamondMovieView#DiamondMovieView")},
-                {"Vanilla", new ViewTheme("Vanilla", "resx://MediaBrowser/MediaBrowser.Resources/PageVanilla#Page", "resx://MediaBrowser/MediaBrowser.Resources/ViewMovieVanilla#ViewMovieVanilla")},
-            };
+                //{"Diamond", new ViewTheme("Diamond", "resx://MediaBrowser/MediaBrowser.Resources/PageDiamond#PageDiamond", "resx://MediaBrowser/MediaBrowser.Resources/DiamondMovieView#DiamondMovieView")},
+             };
 
         //method for external entities (plug-ins) to add a new theme - only support replacing detail areas for now...
         public void AddTheme(string name, string pageArea, string detailArea)
@@ -365,9 +370,9 @@ namespace MediaBrowser.Library {
         public List<Type> ExternalPlayableItems { get { return externalPlayableItems; } }
         public List<Type> ExternalPlayableFolders { get { return externalPlayableFolders; } }
 
-        public List<MenuItem> ContextMenuItems { get { return menuOptions.FindAll(m => m.Supports(MenuType.Item)); } }
-        public List<MenuItem> PlayMenuItems { get { return menuOptions.FindAll(m => m.Supports(MenuType.Play)); } }
-        public List<MenuItem> DetailMenuItems { get { return menuOptions.FindAll(m => m.Supports(MenuType.Detail)); } }
+        public List<MenuItem> ContextMenuItems { get { return menuOptions.FindAll(m => (m.Available && m.Supports(MenuType.Item))); } }
+        public List<MenuItem> PlayMenuItems { get { return menuOptions.FindAll(m => (m.Available && m.Supports(MenuType.Play))); } }
+        public List<MenuItem> DetailMenuItems { get { return menuOptions.FindAll(m => (m.Available && m.Supports(MenuType.Detail))); } }
 
         public MenuItem AddMenuItem(MenuItem menuItem) {
             menuOptions.Add(menuItem);       

@@ -155,7 +155,8 @@ namespace MediaBrowser.Library
 
         public string ItemTypeString {
             get {
-                return ItemType.ToString();
+                string[] items = BaseItem.GetType().ToString().Split('.');
+                return items[items.Length - 1];
             }
         }
 
@@ -244,6 +245,11 @@ namespace MediaBrowser.Library
                     this.PlayableItem.QueueItem = queue;                    
                     this.PlayableItem.Play(this.PlayState, resume);
                     if (!this.IsFolder && this.TopParent != null) this.TopParent.AddNewlyWatched(this); //add to recent watched list if not a whole folder
+                    Async.Queue("Resume state updater", () =>
+                    {
+                        Thread.Sleep(10000); //we have to wait for playstate object to be created before we can...
+                        Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => FirePropertyChanged("CanResume")); //force UI to update
+                    });
                 }
             }
             catch (Exception)
@@ -252,7 +258,6 @@ namespace MediaBrowser.Library
                 ev.Dialog("There was a problem playing the content. Check location exists\n" + baseItem.Path, "Content Error", DialogButtons.Ok, 60, true);
             }
         }
-
 
         private void Play(bool resume)
         {
@@ -413,6 +418,11 @@ namespace MediaBrowser.Library
                 if (value != HaveWatched) {
                     if (value && PlayState.PlayCount == 0) {
                         PlayState.PlayCount = 1;
+                        //remove ourselves from the unwatched list as well
+                        if (this.PhysicalParent != null)
+                        {
+                            this.PhysicalParent.RemoveRecentlyUnwatched(this); //thought about asynch'ing this but its a list of 20 items...
+                        }
                         //don't add to watched list as we didn't really watch it (and it might just clutter up the list)
                         Application.CurrentInstance.Information.AddInformationString("Set Watched " + this.Name);
                     } else {
@@ -466,6 +476,23 @@ namespace MediaBrowser.Library
             }
         }
 
+        public FolderModel Season {
+            get {
+
+                FolderModel season = null;
+                Episode episode = baseItem as Episode;
+                FolderModel parent = PhysicalParent;
+
+                    if (episode != null)
+                    {
+                       season = ItemFactory.Instance.Create(episode.Season) as FolderModel;
+                    }
+
+                return season;
+            }
+        }
+
+
         public FolderModel Series {
             get {
 
@@ -473,17 +500,18 @@ namespace MediaBrowser.Library
 
                 Episode episode = baseItem as Episode; 
                 Season season = baseItem as Season;
+
                 FolderModel parent = PhysicalParent;
                 FolderModel grandParent = null;
-
+                
                 if (parent != null) {
                     grandParent = PhysicalParent.PhysicalParent;
                 }
-
+                /*
                 if (parent != null && parent.baseItem is Series) {
                     series = parent;
                 }
-
+                */
                 if (series == null) {
 
                     if (episode != null) {
@@ -502,6 +530,38 @@ namespace MediaBrowser.Library
                     }
                 }
                 return series;
+            }
+        }
+
+        public string SeasonNumber {
+            get {
+                Episode episode = baseItem as Episode;
+                if (episode != null)
+                {
+                    if (episode.SeasonNumber != null)
+                        return episode.SeasonNumber;
+                    else
+                        return "";
+                }
+                else
+                    return "";
+            }
+        }
+
+        public string EpisodeNumber
+        {
+            get
+            {
+                Episode episode = baseItem as Episode;
+                if (episode != null)
+                {
+                    if (episode.EpisodeNumber != null)
+                        return episode.EpisodeNumber;
+                    else
+                        return "";
+                }
+                else
+                    return "";
             }
         }
 

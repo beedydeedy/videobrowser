@@ -67,7 +67,7 @@ namespace MediaBrowser
         {
             if (Kernel.Instance.ConfigPanels.ContainsKey(name))
             {
-                return Kernel.Instance.ConfigPanels[name];
+                return Kernel.Instance.ConfigPanels[name].Resource;
             }
             else
             {
@@ -81,10 +81,18 @@ namespace MediaBrowser
         {
             get
             {
-                return Kernel.Instance.ConfigPanels[ConfigModel.Chosen.ToString()];
+                return Kernel.Instance.ConfigPanels[ConfigModel.Chosen.ToString()].Resource;
             }
         }
 
+        public ModelItem CurrentConfigObject
+        {
+            get
+            {
+                ModelItem temp = Kernel.Instance.ConfigPanels[ConfigModel.Chosen.ToString()].ConfigObject;
+                return temp;
+            }
+        }
 
         public Dictionary<string, ViewTheme> AvailableThemes { get { return Kernel.Instance.AvailableThemes; } }
 
@@ -351,6 +359,12 @@ namespace MediaBrowser
             // Present dialog
             DialogResult dr = mce.Dialog(msg, caption, DialogButtons.No | DialogButtons.Yes, 0, true);
 
+            if (dr == DialogResult.No)
+            {
+                mce.Dialog("Item NOT Deleted.", "Delete Cancelled by User", DialogButtons.Ok, 0, true);
+                return;
+            }
+
             if (dr == DialogResult.Yes && this.Config.Advanced_EnableDelete == true 
                 && this.Config.EnableAdvancedCmds == true)
             {
@@ -435,6 +449,11 @@ namespace MediaBrowser
                         {
                             try
                             {
+                                //refresh the root folder children in case we changed sort order
+                                foreach (BaseItem child in this.RootFolder.Children)
+                                {
+                                    child.RefreshMetadata(MetadataRefreshOptions.Force);
+                                }
                                 FullRefresh(this.RootFolder);
                             }
                             catch (Exception ex)

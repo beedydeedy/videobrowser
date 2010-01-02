@@ -30,6 +30,8 @@ using System.Diagnostics;
 using MediaBrowser.Library.Threading;
 using System.Windows.Threading;
 using System.Threading;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace Configurator
 {
@@ -42,9 +44,10 @@ namespace Configurator
 
         ConfigData config;
         Ratings ratings = new Ratings();
+        PermissionDialog waitWin;
 
         public MainWindow()
-        {
+        { 
             try {        
                 Initialize();
             } catch (Exception ex) {
@@ -55,11 +58,11 @@ namespace Configurator
 
         private void Initialize() {
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
+            config = Kernel.Instance.ConfigData;
             
             InitializeComponent();
             LoadComboBoxes();
 
-            config = Kernel.Instance.ConfigData;
 
             infoPanel.Visibility = Visibility.Hidden;
             infoPlayerPanel.Visibility = Visibility.Hidden;
@@ -102,6 +105,111 @@ namespace Configurator
             PluginManager.Init();
 
             RefreshEntryPoints(false);
+
+            ValidateMBAppDataFolderPermissions();
+            if (pluginUpgradesAvailable()) MessageBox.Show("Some of your installed plug-ins have newer versions available.  You should upgrade these plugins from the 'Plug-ins' tab.\n\nYour current versions may not work with this version of MediaBrowser.", "Upgrade Plugins");
+        }
+
+        private bool pluginUpgradesAvailable()
+        {
+            //Look to see if any of our installed plugins have upgrades available
+            foreach (IPlugin plugin in Kernel.Instance.Plugins)
+            {
+                System.Version v = PluginManager.Instance.GetLatestVersion(plugin);
+                if (v != null)
+                {
+                    if (v > plugin.Version) return true;
+                }
+            }
+            return false;
+        }
+
+
+        public void ValidateMBAppDataFolderPermissions()
+        {
+            String windowsAccount = "Users";
+            FileSystemRights fileSystemRights = FileSystemRights.FullControl;
+            DirectoryInfo folder = new DirectoryInfo(ApplicationPaths.AppConfigPath);
+
+            if(!folder.Exists)
+            {
+                MessageBox.Show(folder.FullName + " does not exist. Cannot validate permissions.");
+                return;
+            }
+            
+
+            if (!ValidateFolderPermissions(windowsAccount, fileSystemRights, folder))
+            {               
+                String folderSecurityQuestion = "Your folder permission are not set correctly for MediaBrowser.  "+
+                    "Would you like to set these permissions properly?\n\nIf you click 'Yes', here's what we'll do:"+
+                    "\n\nThe Group 'Users' will be given full access to ONLY the private program data directory for MediaBrowser."+
+                    "\n\nNo other permissions will be altered.\n\nIf you click 'No', no permissions will be altered but MediaBrowser may not function correctly.";
+                if (MessageBox.Show(folderSecurityQuestion, "Folder permissions", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    //hide our main window and throw up a quick dialog to tell user what is going on
+                    this.Visibility = Visibility.Hidden;
+                    waitWin = new PermissionDialog();
+                    waitWin.Show();
+                    Async.Queue("Configurator Permissions Set", () =>
+                        {
+                            SetDirectoryAccess(folder, windowsAccount, fileSystemRights, AccessControlType.Allow);
+                        }, () => { this.Dispatcher.Invoke(new doneProcess(permissionsDone)); });
+                }
+            }
+        }
+
+        public delegate void doneProcess();
+        public void permissionsDone()
+        {
+            //close window and make us visible
+            waitWin.Close();
+            this.Visibility = Visibility.Visible;
+        }
+    
+
+
+        public bool ValidateFolderPermissions(String windowsAccount, FileSystemRights fileSystemRights, DirectoryInfo folder)
+        { 
+            try
+            {                              
+                DirectorySecurity dSecurity = folder.GetAccessControl();
+
+                foreach (FileSystemAccessRule rule in dSecurity.GetAccessRules(true, false, typeof(SecurityIdentifier)))
+                {
+                    NTAccount account = new NTAccount(windowsAccount);
+                    SecurityIdentifier sID = account.Translate(typeof(SecurityIdentifier)) as SecurityIdentifier;
+                    if(sID.CompareTo(rule.IdentityReference as SecurityIdentifier) == 0)
+                    {
+                        if (fileSystemRights == rule.FileSystemRights)                        
+                            return true; // Validation complete                        
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                string msg = "Error validating permissions set on " + folder.FullName + " for the Account \"" + windowsAccount + "\"";
+                Logger.ReportException(msg, ex);
+                MessageBox.Show(msg);
+                return false;
+            }                       
+        }
+
+        public void SetDirectoryAccess(DirectoryInfo folder, String windowsAccount, FileSystemRights rights, AccessControlType controlType)
+        {
+            try
+            {
+                DirectorySecurity dSecurity = folder.GetAccessControl();
+                dSecurity.AddAccessRule(new FileSystemAccessRule(windowsAccount, rights,InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, controlType));                
+                folder.SetAccessControl(dSecurity);
+            }
+            catch (Exception ex)
+            {
+                string msg = "Error applying permissions to " + folder.FullName + " for the Account \"" + windowsAccount + "\"";
+                Logger.ReportException(msg, ex);
+                MessageBox.Show(msg);
+            }
         }
 
         public void InitFolderTree()
@@ -270,13 +378,25 @@ namespace Configurator
             config.Save();
         }
 
+        private void RefreshThemes()
+        {
+            ddlOptionViewTheme.ItemsSource = Kernel.Instance.AvailableThemes.Keys;
+            if (ddlOptionViewTheme.Items != null)
+            {
+                if (!ddlOptionViewTheme.Items.Contains(config.ViewTheme))
+                {
+                    //must have just deleted our theme plugin - set to default
+                    config.ViewTheme = "Default";
+                    SaveConfig();
+                    ddlOptionViewTheme.SelectedItem = config.ViewTheme;
+                }
+            }
+        }
+
         private void LoadComboBoxes()
         {
             // Themes
-            //ddlOptionViewTheme.Items.Add("Classic"); 
-            ddlOptionViewTheme.Items.Add("Default");            
-            ddlOptionViewTheme.Items.Add("Diamond");
-            ddlOptionViewTheme.Items.Add("Vanilla");
+            RefreshThemes();            
             // Colors
             ddlOptionThemeColor.Items.Add("Default");
             ddlOptionThemeColor.Items.Add("Black");
@@ -499,13 +619,22 @@ sortorder: {2}
 
             try
             {
-                List<EntryPointItem> entryPoints = new List<EntryPointItem>();                
-                
-                if(RefreshPlugins)
-                    Kernel.Init(KernelLoadDirective.ShadowPlugins);
-                
-                Kernel.Instance.RootFolder.ValidateChildren();                
-                
+                List<EntryPointItem> entryPoints = new List<EntryPointItem>();
+
+                try
+                {
+                    Logger.ReportInfo("Reloading Virtual children");
+                    if (RefreshPlugins)
+                        Kernel.Init(KernelLoadDirective.ShadowPlugins);
+
+                    Kernel.Instance.RootFolder.ValidateChildren();
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportError("Error validating children. " + ex.Message, ex);
+                    throw new Exception("Error validating children. " + ex.Message);
+                }
+
                 foreach (var folder in Kernel.Instance.RootFolder.Children)                
                 {
                     String displayName = folder.Name;
@@ -532,7 +661,7 @@ sortorder: {2}
             catch (Exception ex)
             {
                 String msg = "Error Refreshing Entry Points. " + ex.Message;
-                Logger.ReportError(msg);
+                Logger.ReportError(msg, ex);
                 MessageBox.Show(msg);
             }
         }
@@ -1249,6 +1378,7 @@ sortorder: {2}
                   MessageBox.Show(message, "Remove plugin", MessageBoxButton.YesNoCancel) == MessageBoxResult.Yes) {
                 PluginManager.Instance.RemovePlugin(plugin);
                 RefreshEntryPoints(true);
+                RefreshThemes();
             }
         }
 
@@ -1258,6 +1388,7 @@ sortorder: {2}
             window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             window.ShowDialog();
             RefreshEntryPoints(true);
+            RefreshThemes();
         }
 
         private void configurePlugin_Click(object sender, RoutedEventArgs e)
@@ -1346,7 +1477,6 @@ sortorder: {2}
             }
         }
 
-        
     }
     #region FormatParser Class
     class FormatParser

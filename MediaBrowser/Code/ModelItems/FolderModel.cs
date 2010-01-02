@@ -91,7 +91,13 @@ namespace MediaBrowser.Library {
             get {
                 if (Application.CurrentInstance.RecentItemOption == "watched") {
                     return RecentItems;
-                } else {
+                }
+                else if (Application.CurrentInstance.RecentItemOption == "unwatched")
+                {
+                    return UnwatchedItems;
+                }
+                else
+                {
                     return NewestItems;
                 }
             } 
@@ -119,6 +125,23 @@ namespace MediaBrowser.Library {
                 } else {
                     return new List<Item>(); //return empty list if folder is protected
                 }
+            }
+        }
+
+        public List<Item> UnwatchedItems
+        {
+            get
+            {
+                //only want items from non-protected folders
+                if (folder != null && folder.ParentalAllowed)
+                {
+                    return GetRecentUnwatchedItems(Config.Instance.RecentItemCount);
+                }
+                else
+                {
+                    return new List<Item>(); //return empty list if folder is protected
+                }
+
             }
         }
         
@@ -167,6 +190,30 @@ namespace MediaBrowser.Library {
             return recentWatchedItems;
         }
 
+        List<Item> recentUnwatchedItems = null;
+        public List<Item> GetRecentUnwatchedItems(int count)
+        {
+            if (recentUnwatchedItems == null)
+            {
+                recentUnwatchedItems = new List<Item>();
+                if (folder != null)
+                {
+                    Async.Queue("Recent Watched Loader", () =>
+                    {
+                        var items = new SortedList<DateTime, Item>();
+                        FindRecentUnwatchedChildren(folder, items, count);
+                        recentUnwatchedItems = items.Values.Select(i => i).Reverse().ToList();
+                        Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
+                        {
+                            FirePropertyChanged("RecentItems");
+                            FirePropertyChanged("QuickListItems");
+                        });
+                    }, null, true);
+                }
+            }
+            return recentUnwatchedItems;
+        }
+
         public void AddNewlyWatched(Item item)
         {
             //called when we watch something so add to top of list (this way we don't have to re-build whole thing)
@@ -205,8 +252,33 @@ namespace MediaBrowser.Library {
                     FirePropertyChanged("QuickListItems");
                 }
             }
+            if (recentUnwatchedItems != null) // have a list
+            {
+                Item us = recentUnwatchedItems.Find(i => i.Id == item.Id);
+                if (us != null)
+                {
+                    recentUnwatchedItems.Remove(us);
+                    FirePropertyChanged("UnwatchedItems");
+                    FirePropertyChanged("QuickListItems");
+                }
+            }
         }
-       
+
+        public void RemoveRecentlyUnwatched(Item item)
+        {
+            //called when watched status set manually (this way we don't have to re-build whole thing)
+            if (recentUnwatchedItems != null) // have a list
+            {
+                Item us = recentUnwatchedItems.Find(i => i.Id == item.Id);
+                if (us != null)
+                {
+                    recentUnwatchedItems.Remove(us);
+                    FirePropertyChanged("UnwatchedItems");
+                    FirePropertyChanged("QuickListItems");
+                }
+            }
+        }
+
         string folderOverviewCache = null;
         public override string Overview {
             get {
@@ -233,11 +305,40 @@ namespace MediaBrowser.Library {
         }
 
         private void RefreshFolderOverviewCache() {
-            var items = new SortedList<DateTime, Item>();
-            FindNewestChildren(folder, items, 20,-1);
-            folderOverviewCache = string.Join("\n", items.Reverse()
-                .Select(i => (this.BaseItem.GetType() == typeof(Season) ? i.Value.Name : i.Value.LongName) )
-                .ToArray());
+            //produce list sorted by episode number if we are a TV season
+            if (this.BaseItem is Season)
+            {
+                int unknown = 9999; //use this for episodes that don't have episode number
+                var items = new SortedList<int, BaseItem>();
+                foreach (BaseItem i in this.Folder.Children) {
+                    Episode ep = i as Episode;
+                    if (ep != null)
+                    {
+                        int epNum;
+                        try
+                        {
+                            epNum = Convert.ToInt32(ep.EpisodeNumber);
+                        }
+                        catch { epNum = unknown++; }
+                        try
+                        {
+                            items.Add(epNum, ep);
+                        } catch {
+                            //probably more than one episode coming up as "0"
+                            items.Add(unknown++, ep);
+                        }
+                    }
+                }
+                folderOverviewCache = string.Join("\n", items.Select(i => (i.Value.Name)).ToArray());
+            }
+            else // normal folder
+            {
+                var items = new SortedList<DateTime, Item>();
+                FindNewestChildren(folder, items, 20, -1);
+                folderOverviewCache = string.Join("\n", items.Reverse()
+                    .Select(i => (this.BaseItem.GetType() == typeof(Season) ? i.Value.Name : i.Value.LongName))
+                    .ToArray());
+            }
         }
 
         public void FindNewestChildren(Folder folder, SortedList<DateTime, Item> foundNames, int maxSize)
@@ -326,31 +427,76 @@ namespace MediaBrowser.Library {
             }
         }
 
-        public void RefreshUI()
+        public void FindRecentUnwatchedChildren(Folder folder, SortedList<DateTime, Item> foundNames, int maxSize)
         {
-            //force an update of the children
-            this.folderChildren.RefreshChildren();
-            this.folderChildren.Sort();
-            if (this.IsRoot)
+            DateTime daysAgo = DateTime.Now.Subtract(DateTime.Now.Subtract(DateTime.Now.AddDays(-Config.Instance.RecentItemDays)));
+            FolderModel folderModel = ItemFactory.Instance.Create(folder) as FolderModel;
+            folderModel.PhysicalParent = this;
+            foreach (var item in folder.Children)
             {
-                //if this is the root page - also the recent items
-                try
+                // skip folders
+                if (item is Folder)
                 {
-                    foreach (FolderModel folder in this.Children)
+                    //don't return items inside protected folders
+                    if (item.ParentalAllowed)
                     {
-                        folder.newestItems = null; //force it to go get the real items
-                        folder.GetNewestItems(Config.Instance.RecentItemCount);
-                        folder.recentWatchedItems = null;
-                        folder.GetRecentWatchedItems(Config.Instance.RecentItemCount);
+                        FindRecentUnwatchedChildren(item as Folder, foundNames, maxSize);
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Logger.ReportException("Invalid root folder type", ex);
+                    if (item is Video)
+                    {
+                        Video i = item as Video;
+                        if (i.PlaybackStatus.WasPlayed == false)
+                        {
+                            DateTime creationTime = item.DateCreated;
+                            Item modelItem = ItemFactory.Instance.Create(item);
+                            modelItem.PhysicalParent = folderModel;
+                            item.Parent = folder;
+                            foundNames.Add(creationTime, modelItem);
+                            if (foundNames.Count > maxSize)
+                            {
+                                foundNames.RemoveAt(0);
+                            }
+                        }
+                    }
+
                 }
-                this.SelectedChildChanged(); //make sure recent list changes
+
             }
-            FireChildrenChangedEvents(); //force UI to update
+        }
+
+        public void RefreshUI()
+        {
+            //this could take a bit so kick this off in the background
+            Async.Queue("Refresh UI", () =>
+            {
+                //force an update of the children
+                this.folder.ValidateChildren();
+                this.folderChildren.RefreshChildren();
+                this.folderChildren.Sort();
+                if (this.IsRoot)
+                {
+                    //if this is the root page - also the recent items
+                    try
+                    {
+                        foreach (FolderModel folder in this.Children)
+                        {
+                            folder.newestItems = null; //force it to go get the real items
+                            folder.GetNewestItems(Config.Instance.RecentItemCount);
+                            folder.recentWatchedItems = null;
+                            folder.GetRecentWatchedItems(Config.Instance.RecentItemCount);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Invalid root folder type", ex);
+                    }
+                    this.SelectedChildChanged(); //make sure recent list changes
+                }
+                FireChildrenChangedEvents(); //force UI to update
+            }, null, true);
         }
 
         protected void FireChildrenChangedEvents() {
