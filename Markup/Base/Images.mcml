@@ -1,0 +1,51 @@
+<Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
+    xmlns:me="Me">
+
+  <Image Name="BlankImage" Image="null"/>
+  
+  
+
+  <Image Name="Lines" Source="resx://MediaBrowser/MediaBrowser.Resources/Lines"/>
+  <Image Name="ConfigImg" Source="resx://Diamond/Diamond.Resources/IconConfig"/>
+  <Image Name="SortImg" Source="resx://MediaBrowser/MediaBrowser.Resources/Sort"/>
+  <Image Name="IndexImg" Source="resx://MediaBrowser/MediaBrowser.Resources/Index"/>
+
+
+  <Image Name="StarFull" Source="resx://MediaBrowser/MediaBrowser.Resources/Star_Full" />
+  
+  
+  <!-- Diamond Images -->
+  <Image Name="PosterFrame" Source="resx://MediaBrowser/MediaBrowser.Resources/poster_frame" NineGrid="10,10,10,10" />
+  <Image Name="DiamondOverlayWhiteAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all" />
+  <Image Name="DiamondOverlayDarkAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all_dark" />
+  <Image Name="DiamondOverlayDarkTop" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_top_dark" />
+
+  <Image Name="DiamondListBg" Source="resx://Diamond/Diamond.Resources/dia_list_bg" NineGrid="20,20,20,20" />
+  <Image Name="DiamondFolderMenuBg" Source="resx://Diamond/Diamond.Resources/dia_foldermenu" NineGrid="20,20,20,35" />
+  <Image Name="DiamondFolderButton" Source="resx://Diamond/Diamond.Resources/dia_folderbutton" NineGrid="20,20,20,20" />
+  <Image Name="DiamondListFocus" Source="resx://Diamond/Diamond.Resources/dia_list_focus" NineGrid="5,5,0,5" />
+  <Image Name="DiamondTopPanel" Source="resx://Diamond/Diamond.Resources/dia_TopPanel" NineGrid="10,10,10,10" />
+  <Image Name="DiamondMovieTitlePanel" Source="resx://Diamond/Diamond.Resources/dia_titlePanel" NineGrid="10,10,10,10" />
+  <Image Name="DiamondTimePanel" Source="resx://Diamond/Diamond.Resources/dia_timePanel" NineGrid="10,10,10,10" />
+  <Image Name="DiamondCounterPanel" Source="resx://Diamond/Diamond.Resources/dia_CounterPanel" NineGrid="10,10,10,10" />
+  <Image Name="DiamondDetailA" Source="resx://Diamond/Diamond.Resources/dia_detailA" NineGrid="10,10,10,10" />
+  <Image Name="DiamondDetailB" Source="resx://Diamond/Diamond.Resources/dia_detailB" NineGrid="15,15,15,15" />
+
+  <Image Name="DiamondCFArc" Source="resx://Diamond/Diamond.Resources/dia_cf_arc" />
+
+  <!-- Media Info Icons-->  
+  <!-- Ratio -->
+  <Image Name="Ratio_133" Source="resx://Diamond/Diamond.Resources/ratio_133" />
+  <Image Name="Ratio_166" Source="resx://Diamond/Diamond.Resources/ratio_166" />
+  <Image Name="Ratio_177" Source="resx://Diamond/Diamond.Resources/ratio_177" />
+  <Image Name="Ratio_178" Source="resx://Diamond/Diamond.Resources/ratio_178" />
+  <Image Name="Ratio_185" Source="resx://Diamond/Diamond.Resources/ratio_185" />
+  <Image Name="Ratio_220" Source="resx://Diamond/Diamond.Resources/ratio_220" />
+  <Image Name="Ratio_235" Source="resx://Diamond/Diamond.Resources/ratio_235" />
+  <Image Name="Ratio_239" Source="resx://Diamond/Diamond.Resources/ratio_239" />
+  <Image Name="Ratio_240" Source="resx://Diamond/Diamond.Resources/ratio_240" />
+  <!-- Codecs -->
+
+  <!-- Studio / Network -->
+
+</Mcml>
