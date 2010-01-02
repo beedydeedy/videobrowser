@@ -88,6 +88,7 @@
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Diamond.pgn" />
     <Content Include="Images\Buttons\BallButtonDark.png" />
     <Content Include="Images\Buttons\BallButtonLight.png" />
     <Content Include="Images\Icons\IconGears.png" />
@@ -195,7 +196,10 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>%25windir%25\eHome\McmlVerifier.exe -verbose -assemblyredirect:"$(FullyQualifiedOutputPath)" -directory:"$(ProjectDir)Markup"
-copy  $(TargetPath) %25windir%25\eHome</PostBuildEvent>
+echo copy Diamond.dll to %25windir%25\eHome
+copy $(TargetPath) %25windir%25\eHome
+echo copy Diamond.pgn to C:\ProgramData\MediaBrowser\Plugins\
+copy $(ProjectDir)Diamond.pgn C:\ProgramData\MediaBrowser\Plugins\</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
