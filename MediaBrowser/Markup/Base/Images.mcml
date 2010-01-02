@@ -117,20 +117,6 @@
   
   <!-- Diamond Images -->
   <Image Name="PosterFrame" Source="resx://MediaBrowser/MediaBrowser.Resources/poster_frame" NineGrid="10,10,10,10" />
-  <Image Name="DiamondOverlayWhiteAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all" />
-  <Image Name="DiamondOverlayDarkAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all_dark" />
-  <Image Name="DiamondOverlayDarkTop" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_top_dark" />
-
-  <Image Name="DiamondListBg" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_list_bg" NineGrid="20,20,20,20" />
-  <Image Name="DiamondListFocus" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_list_focus" NineGrid="5,5,0,5" />
-  <Image Name="DiamondTopPanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_TopPanel" NineGrid="10,10,10,10" />
-  <Image Name="DiamondMovieTitlePanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_titlePanel" NineGrid="10,10,10,10" />
-  <Image Name="DiamondTimePanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_timePanel" NineGrid="10,10,10,10" />
-  <Image Name="DiamondCounterPanel" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_CounterPanel" NineGrid="10,10,10,10" />
-  <Image Name="DiamondDetailA" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_detailA" NineGrid="10,10,10,10" />
-  <Image Name="DiamondDetailB" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_detailB" NineGrid="15,15,15,15" />
-
-
   
   <!--PC images-->
   <Image Name="Lock" Source="resx://MediaBrowser/MediaBrowser.Resources/Lock"/>
