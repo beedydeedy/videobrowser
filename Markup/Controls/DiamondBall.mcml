@@ -82,6 +82,14 @@
                    Content="image://me:GreenBallDark" MouseInteractive="true"/>
         
         </Children>
+        <Animations>
+          <Animation Type="Show">
+            <Keyframes>
+              <AlphaKeyframe Time="0" Value="0" />
+              <AlphaKeyframe Time="1" Value="1" />
+            </Keyframes>
+          </Animation>
+        </Animations>
       </Panel>
     </Content>
   </UI>

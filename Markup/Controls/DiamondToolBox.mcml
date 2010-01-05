@@ -1,6 +1,7 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
 	  xmlns:cor="assembly://MSCorLib/System"
     xmlns:a="assembly://MediaBrowser/MediaBrowser"
+    xmlns:dia="assembly://Diamond/Diamond"
     xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
     xmlns:sounds="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
 	    xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
@@ -223,6 +224,7 @@
       <Font Name="TitleFont" Font="font://f:Diamond_Small"/>
       <Font Name="ValueFont" Font="font://f:Diamond_Small_SemiBold"/>
       <cor:Boolean Name="FullMode" Boolean="true" />
+      <!--<dia:AppUtil Name="AppUtil" />-->
     </Properties>
     <Locals>
       <Size Name="MinSize" Size="155,0"/>
@@ -238,6 +240,18 @@
       <Condition Source="[Item.Directors.Count]" ConditionOp="GreaterThan" SourceValue="0" Target="[DirectedByPanel.Visible]" Value="true"  />
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
       <Binding Source="[Item.StudioItems]" Target="[StudioRepeater.Source]" />
+
+      <Binding Target="[FirstAired.Content]" Source="[Item.FirstAired]" />
+      
+      <!--<Changed Source="[FirstAired.Content]" >
+        <Actions>
+          <Invoke Target="[AppUtil.formatFirstAirDate]"
+                  airDate="[Item.FirstAired]" 
+                  ResultTarget="[FirstAired.Content]">
+          </Invoke>
+        </Actions>
+      </Changed>-->
+      
       <!--
       <Binding Target="[MediaInfoPane.Visible]" Source="[Item.HasMediaInfo]" />
 
@@ -252,8 +266,7 @@
       <Condition Source="[Item.Genres.Count]" ConditionOp="NotEquals"         SourceValue="0"  Target="[GenrePanel.Visible]"      Value="true"/>
       <Condition Source="[Item.StudioItems.Count]" ConditionOp="LessThanOrEquals"  SourceValue="0"  Target="[StudioPanel.Visible]"      Value="false"/>
       <Condition Source="[Item.StudioItems.Count]" ConditionOp="NotEquals"         SourceValue="0"  Target="[StudioPanel.Visible]"      Value="true"/>
-
-
+      <Condition Source="[Item.FirstAired]"   ConditionOp="NotEquals"            SourceValue=""    Target="[FirstAiredPanel.Visible]"  Value="true" />
     </Rules>
     <Content>
       <Graphic Name="CommonInfoPanel" Content="image://di:DiamondTopPanel" Layout="VerticalFlow" Margins="0,0,0,0"
@@ -341,8 +354,7 @@
 
                     </Children>
                   </Panel>
-
-
+                  
                   <Panel Name="StudioPanel" Layout="HorizontalFlow" Visible="false">
                     <Children>
                       <Text Font="[TitleFont]" Color="[AttributeColor]" Content="STUDIO" Visible="[FullMode]" MinimumSize="[MinSize]"/>
@@ -360,6 +372,16 @@
                     </Children>
                   </Panel>
 
+                  <Panel Name="FirstAiredPanel" Visible="false">
+                    <Layout>
+                      <FlowLayout Orientation="Horizontal" Spacing="5,5"/>
+                    </Layout>
+                    <Children>
+                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="FIRST AIRED" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <Text Name="FirstAired" Content="" Color="[ValueColor]" Font="[ValueFont]"/>
+                    </Children>
+                  </Panel>
+                  
                 </Children>
               </Panel>
             </Children>

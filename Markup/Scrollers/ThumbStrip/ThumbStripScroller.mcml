@@ -34,10 +34,9 @@
       <ScrollingData Name="ScrollingData" />
 
 
-      <GridLayout Name="MyLayout" Repeat="WhenTooBig" RepeatGap="100" Orientation="Vertical" Rows="[RowLimit]" 
-                  Columns="0"
-						AllowWrap="true" Spacing="[Application.Config.GridSpacing]" MinorAlignment="Center" 
-                  MajorAlignment="Far" />
+      <GridLayout Name="MyLayout" Repeat="WhenTooBig" RepeatGap="0" Orientation="Vertical" Rows="[RowLimit]" 
+                  Columns="0" AllowWrap="true" Spacing="[Application.Config.GridSpacing]" 
+                  MinorAlignment="Center" MajorAlignment="Far" />
 
       <ShortcutHandler Name="JumpForward" Shortcut="SkipForward" HandlerStage="Bubbled" Handle="true" />
       <ShortcutHandler Name="JumpBack" Shortcut="SkipBack" HandlerStage="Bubbled" Handle="true"/>
@@ -125,7 +124,6 @@
           <Set Target="[ItemPanel.Padding]" Value="0,0,0,0" />
           <Set Target="[Scroller.LayoutInput]" Value="[HLayout]" />
           <Set Target="[MyLayout.Repeat]" Value="WhenTooBig" />
-          <Set Target="[MyLayout.RepeatGap]" Value="100" />
         </Actions>
       </Rule>
 

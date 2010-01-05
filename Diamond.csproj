@@ -75,6 +75,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\AppUtil.cs" />
+    <Compile Include="Code\Config.cs" />
+    <Compile Include="Code\ConfigData.cs" />
     <Compile Include="Code\OnScreenHelp.cs" />
     <Compile Include="MyStrings.cs" />
     <Compile Include="Plugin.cs" />
