@@ -18,6 +18,7 @@
     xmlns:ib="resx://MediaBrowser/MediaBrowser.Resources/ItemButton"
     xmlns:sounds="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
       xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
+    xmlns:app="assembly://Diamond/Diamond"
     xmlns:me="Me"
 	  >
 
@@ -27,6 +28,7 @@
       <a:Application Name="Application" Application="$Required"/>
       <lib:FolderModel Name="Folder" FolderModel="$Required"/>
       <cor:Boolean Name="UseCustomAnchor" Boolean="false" />
+      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -44,6 +46,7 @@
       <!-- Backdrop-->
       <Binding Target="[Backdrop.Image]" Source="[PreSelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[PreSelectedItem]" />
+      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtCoverflow]" />
 
       <Binding Source="[PreSelectedItem]" Target="[TitleUI.Item]"/>
       <Binding Source="[PreSelectedItem]" Target="[MediaInfoPanel.Item]"/>
@@ -119,7 +122,7 @@
           </Graphic>
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
       </Panel>

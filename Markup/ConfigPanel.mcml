@@ -18,11 +18,21 @@
       <Inset Name="CMargin" Inset="25,0,0,0" />
       <!-- CONFIG OPTIONS -->
       <BooleanChoice Name="MiniMode" Value="[Config.MiniMode]" />
+      <BooleanChoice Name="FanArtCoverflow" Value="[Config.FanArtCoverflow]" />
+      <BooleanChoice Name="FanArtDetail" Value="[Config.FanArtDetail]" />
+      <BooleanChoice Name="FanArtPoster" Value="[Config.FanArtPoster]" />
+      <BooleanChoice Name="FanArtThumb" Value="[Config.FanArtThumb]" />
+      <BooleanChoice Name="FanArtThumbstrip" Value="[Config.FanArtThumbstrip]" />
       <!-- END OF CONFIG OPTIONS -->
     </Locals>
     <Rules>
       <!-- OPTION BINDINGS -->
       <Binding Source="[MiniMode.Value]" Target="[Config.MiniMode]" />
+      <Binding Source="[FanArtCoverflow.Value]" Target="[Config.FanArtCoverflow]" />
+      <Binding Source="[FanArtDetail.Value]" Target="[Config.FanArtDetail]" />
+      <Binding Source="[FanArtPoster.Value]" Target="[Config.FanArtPoster]" />
+      <Binding Source="[FanArtThumb.Value]" Target="[Config.FanArtThumb]" />
+      <Binding Source="[FanArtThumbstrip.Value]" Target="[Config.FanArtThumbstrip]" />
       <!-- END OF OPTION BINDINGS -->
     </Rules>
 		<Content>
@@ -30,7 +40,12 @@
         <Children>
           <me:TextHeader Text="General" />
           <cb:CheckBox Label="Media Details in Mini Mode" Checked="[MiniMode]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
-          
+          <me:TextHeader Text="Fan Art Backdrops" />
+          <cb:CheckBox Label="Coverflow" Checked="[FanArtCoverflow]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
+          <cb:CheckBox Label="Detail" Checked="[FanArtDetail]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
+          <cb:CheckBox Label="Poster" Checked="[FanArtPoster]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
+          <cb:CheckBox Label="Thumb" Checked="[FanArtThumb]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
+          <cb:CheckBox Label="Thumbstrip" Checked="[FanArtThumbstrip]" FocusItem="[FocusItem]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
         </Children>
       </Panel>
     </Content>

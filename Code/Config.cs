@@ -24,12 +24,6 @@ namespace Diamond
 
         #region Config Options
 
-        public bool JasBool
-        {
-            get { return true; }
-            //set { if (this.data.AlwaysShowDetailsPage != value) { this.data.AlwaysShowDetailsPage = value; Save(); FirePropertyChanged("AlwaysShowDetailsPage"); } }
-        }
-
         public bool MiniMode
         {
             get { return this.data.MiniMode; }
@@ -43,6 +37,73 @@ namespace Diamond
                 } 
             }
         }
+
+        public bool FanArtCoverflow
+        {
+            get { return this.data.FanArtCoverflow; }
+            set
+            {
+                if (this.data.FanArtCoverflow != value)
+                {
+                    this.data.FanArtCoverflow = value;
+                    Save();
+                    FirePropertyChanged("FanArtCoverflow");
+                }
+            }
+        }
+        public bool FanArtDetail
+        {
+            get { return this.data.FanArtDetail; }
+            set
+            {
+                if (this.data.FanArtDetail != value)
+                {
+                    this.data.FanArtDetail = value;
+                    Save();
+                    FirePropertyChanged("FanArtDetail");
+                }
+            }
+        }
+        public bool FanArtPoster
+        {
+            get { return this.data.FanArtPoster; }
+            set
+            {
+                if (this.data.FanArtPoster != value)
+                {
+                    this.data.FanArtPoster = value;
+                    Save();
+                    FirePropertyChanged("FanArtPoster");
+                }
+            }
+        }
+        public bool FanArtThumb
+        {
+            get { return this.data.FanArtThumb; }
+            set
+            {
+                if (this.data.FanArtThumb != value)
+                {
+                    this.data.FanArtThumb = value;
+                    Save();
+                    FirePropertyChanged("FanArtThumb");
+                }
+            }
+        }
+        public bool FanArtThumbstrip
+        {
+            get { return this.data.FanArtThumbstrip; }
+            set
+            {
+                if (this.data.FanArtThumbstrip != value)
+                {
+                    this.data.FanArtThumbstrip = value;
+                    Save();
+                    FirePropertyChanged("FanArtThumbstrip");
+                }
+            }
+        }
+
 
         #endregion
 

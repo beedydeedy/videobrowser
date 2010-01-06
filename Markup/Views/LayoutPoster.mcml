@@ -7,7 +7,7 @@
 	  xmlns:f="file://Fonts_DoNotEdit.mcml"
       
 	  xmlns:bd="resx://MediaBrowser/MediaBrowser.Resources/Backdrop"
-	  
+	  xmlns:app="assembly://Diamond/Diamond"
 	  xmlns:ps="resx://Diamond/Diamond.Resources/PosterScroller"
     xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
   >
@@ -18,6 +18,7 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <lib:FolderModel Name="Folder" FolderModel="$Required"/>
+      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -25,15 +26,20 @@
       <MathTransformer Name="Add1" AddInt="1"/>
       <FormLayoutInput Name="Posters_Many" Left="Parent,.0" Top="Parent,0,40" Bottom="Parent,1,-20" Right="Parent,1"/>
       <FormLayoutInput Name="Posters_Few" Left="Parent,.0" Top="Parent,0,80" Bottom="Parent,1,-20" Right="Parent,1"/>
+
+      <lib:Item Name="SelectedItem" Item="[Folder.SelectedChild]" />
+      <Timer Name="FullDetailsTimer" Interval="300" AutoRepeat="false"/>
     </Locals>
     <Rules>
       <!-- Title and Year -->
-      <Binding Source="[Folder.SelectedChild]" Target="[TitleUI.Item]"/>
-      <!--<Binding Source="[Folder.SelectedChild.BackdropImage]" Target="[BG_Art.BG]" />-->
-      
+      <Binding Source="[SelectedItem]" Target="[TitleUI.Item]"/>
       <!-- Counter Bindings -->
       <Binding Source="[Folder.SelectedChildIndex]" Target="[Counter.List_Counter]" />
       <Binding Source="[Folder.Children.Count]" Target="[Counter.List_Total]" />
+      <!-- Backdrop -->
+      <Binding Target="[Backdrop.Image]" Source="[SelectedItem.BackdropImage]" />
+      <Binding Target="[Backdrop.Item]" Source="[SelectedItem]" />
+      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtPoster]" />
 
       <Rule>
         <Conditions>
@@ -43,6 +49,30 @@
           <Set Target="[ItemPanel.LayoutInput]" Value="[Posters_Many]" />
         </Actions>
       </Rule>
+
+
+      <Changed Source="[Folder.SelectedChildIndex]" InitialEvaluate="true">
+        <Conditions>
+          <Equality ConditionOp="NotEquals" Source="[Folder.SelectedChildIndex]" Value="-1"></Equality>
+        </Conditions>
+        <Actions>
+          <Set Target="[FullDetailsTimer.Enabled]" Value="true" />
+          <Invoke Target="[FullDetailsTimer.Stop]" />
+          <Invoke Target="[FullDetailsTimer.Start]" />
+        </Actions>
+      </Changed>
+
+      <Changed Source="[FullDetailsTimer.Tick]">
+        <Actions>
+          <Set Target="[SelectedItem]" Value="[Folder.SelectedChild]" />
+        </Actions>
+      </Changed>
+
+      <Changed Source="[SelectedItem]">
+        <Actions>
+          <Set Target="[FullDetailsTimer.Enabled]" Value="false"/>
+        </Actions>
+      </Changed>
 
     </Rules>
     <Content>
@@ -64,7 +94,7 @@
           </ps:PosterScroller>
 
           <!-- Backdrop -->
-          <dtb:DiamondBG Name="BG_Art" Visible="[Application.Config.ShowBackdrop]" LayoutInput="global://dtb:LI_Bg" />
+          <bd:Backdrop4 Name="Backdrop" Image="[SelectedItem.BackdropImage]" Item="[SelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
       </Panel>

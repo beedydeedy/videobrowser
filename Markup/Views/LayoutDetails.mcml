@@ -14,6 +14,7 @@
       xmlns:link="resx://MediaBrowser/MediaBrowser.Resources/LinkItem"
       xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
       xmlns:mip="resx://Diamond/Diamond.Resources/DiamondMediaInfoPanel"
+      xmlns:app="assembly://Diamond/Diamond"
 	    xmlns:me="Me">
 
   <UI Name="DiamondLayoutDetails">
@@ -21,6 +22,7 @@
       <a:Application Name="Application" Application="$Required"/>
       <Timer Name="InfoTimer" AutoRepeat="false" Interval="200" Enabled="false"/>
       <lib:FolderModel Name="Item" FolderModel="$Required"/>
+      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -82,6 +84,7 @@
       <!-- Backdrop-->
       <Binding Target="[Backdrop.Image]" Source="[SelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[SelectedItem]" />
+      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtDetail]" />
 
       <!--<Binding Source="[SelectedItem.BackdropImage]" Target="[BG_Art.BG]" />-->
 
@@ -177,7 +180,7 @@
           </Graphic>
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[SelectedItem.BackdropImage]" Item="[SelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Image="[SelectedItem.BackdropImage]" Item="[SelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
 
