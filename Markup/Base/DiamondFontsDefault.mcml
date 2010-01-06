@@ -1,0 +1,27 @@
+<Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
+	  xmlns:cor="assembly://MsCorLib/System"
+	  xmlns:me="Me"
+	  >
+	<!-- Page 
+	<Font Name="P_BreadcrumbFont" Font="Segoe Media Center Light, 36"/>
+	<Font Name="P_BreadcrumbSmallFont" Font="Segoe Media Center Light, 16"/>
+	<Font Name="P_ConfigButtons" Font="Segoe Media Center Semibold,18"/>
+	<Font Name="P_FindAsYouTypeFont" Font="Segoe Media Center Semibold,150"/>
+	<Font Name="P_ClockFont" Font="Segoe Media Center Semibold,18"/>
+-->
+
+  <!-- Diamond Fonts -->
+  <Font Name="Diamond_Title" Font="Segoe Media Center, 24"/>
+  <Font Name="Diamond_Smallest" Font="Segoe Media Center,12"/>
+  <Font Name="Diamond_Smaller" Font="Segoe Media Center,14"/>
+  <Font Name="Diamond_Small" Font="Segoe Media Center,16"/>
+  <Font Name="Diamond_Medium" Font="Segoe Media Center,18"/>
+  <Font Name="Diamond_Large" Font="Segoe Media Center,20"/>
+  <Font Name="Diamond_Small_SemiBold" Font="Segoe Media Center Semibold,16"/>
+
+  <Font Name="Diamond_OverviewMini" Font="Segoe Media Center,16"/>  
+  <Font Name="Diamond_Overview" Font="Segoe Media Center,18"/>
+  <Font Name="Diamond_MediaInfo" Font="Arial, 14"/>
+  
+
+</Mcml>

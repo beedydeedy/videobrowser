@@ -200,6 +200,20 @@ namespace Diamond {
             }
         }
         
+        internal static byte[] DiamondFontsDefault {
+            get {
+                object obj = ResourceManager.GetObject("DiamondFontsDefault", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        internal static byte[] DiamondFontsSmall {
+            get {
+                object obj = ResourceManager.GetObject("DiamondFontsSmall", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
         internal static byte[] DiamondListView {
             get {
                 object obj = ResourceManager.GetObject("DiamondListView", resourceCulture);

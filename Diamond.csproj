@@ -135,6 +135,8 @@
     <Content Include="Images\Icons\IconWatched.png" />
     <Content Include="Images\Overlays\DiamondMainBG.png" />
     <Content Include="Images\RectLight.png" />
+    <Content Include="Markup\Base\DiamondFontsDefault.mcml" />
+    <Content Include="Markup\Base\DiamondFontsSmall.mcml" />
     <Content Include="Markup\Base\Images.mcml" />
     <Content Include="Markup\ConfigPanel.mcml" />
     <Content Include="Markup\Controls\DiamondBall.mcml" />

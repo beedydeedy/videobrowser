@@ -20,8 +20,9 @@
     xmlns:mip="resx://Diamond/Diamond.Resources/DiamondMediaInfoPanel"
     xmlns:pb="resx://MediaBrowser/MediaBrowser.Resources/PersonButton"
     
-      xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
-      xmlns:in="resx://MediaBrowser/MediaBrowser.Resources/InfoMarquee"
+    xmlns:app="assembly://Diamond/Diamond"
+    xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
+    xmlns:in="resx://MediaBrowser/MediaBrowser.Resources/InfoMarquee"
     xmlns:me="Me"
     >
 
@@ -30,6 +31,7 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <lib:Item Name="Item" Item="$Required"/>
+      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -56,11 +58,17 @@
         <Transformer>
           <BooleanTransformer Inverse="true"/>
         </Transformer>
-      </Default>-->
+      </Default>
+      <Binding Source="[Config.Vanilla2AlphaBlending!cor:Single]" Target="[DetailBackdrop.Alpha]">
+      <Transformer>           
+      <MathTransformer Divide="100"/>         
+      </Transformer>       
+      </Binding> 
+      -->
 
       <Changed Source="[NavTimer.Tick]">
         <Conditions>
-          <Equality Source="[Application.Config.StartDiamondMovieMinimal]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[Config.MiniMode]" ConditionOp="Equals" Value="true" />
         </Conditions>
         <Actions>
           <Set Target="[CmdButtons.DisplayMax.Value]" Value="false" />

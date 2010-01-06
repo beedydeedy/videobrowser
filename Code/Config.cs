@@ -3,12 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.MediaCenter.UI;
+using System.IO;
+using MediaBrowser.Library.Configuration;
+using Microsoft.MediaCenter;
 
 namespace Diamond
 {
     public class Config : ModelItem
     {
         private ConfigData data;
+        private bool isValid;
+
+        private readonly string configFilePath = Path.Combine(ApplicationPaths.AppPluginPath, "Configurations\\Diamond.xml");
+        private readonly string configFolderPath = Path.Combine(ApplicationPaths.AppPluginPath, "Configurations");
+
+        public Config()
+        {
+            isValid = Load();
+        }
+
+        #region Config Options
 
         public bool JasBool
         {
@@ -24,27 +38,46 @@ namespace Diamond
                 if (this.data.MiniMode != value) 
                 {
                     this.data.MiniMode = value; 
-                    //Save(); 
+                    Save(); 
                     FirePropertyChanged("MiniMode"); 
                 } 
             }
         }
 
+        #endregion
 
 
-        private static Config _instance = new Config();
-        public static Config Instance
+        #region Save / Load Configuration
+
+        private void Save() 
+        { 
+            lock (this) this.data.Save(); 
+        }
+
+        private bool Load()
         {
-            get
+            try
             {
-                return _instance;
+                this.data = ConfigData.FromFile(configFilePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment; 
+                DialogResult r = ev.Dialog(ex.Message + "\nReset to default?", "Error in configuration file", DialogButtons.Yes | DialogButtons.No, 600, true); 
+                if (r == DialogResult.Yes)
+                {
+                    if (!Directory.Exists(configFolderPath)) 
+                        Directory.CreateDirectory(configFolderPath); 
+                    this.data = new ConfigData(configFilePath);
+                    Save();
+                    return true;
+                }
+                else 
+                    return false;
             }
         }
 
-
-        public Config()
-        {
-            this.data = new ConfigData();
-        }
+        #endregion
     }
 }
