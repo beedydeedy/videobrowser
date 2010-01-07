@@ -18,7 +18,6 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <lib:FolderModel Name="Folder" FolderModel="$Required"/>
-      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -39,7 +38,7 @@
       <!-- Backdrop -->
       <Binding Target="[Backdrop.Image]" Source="[SelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[SelectedItem]" />
-      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtPoster]" />
+      <Binding Target="[Backdrop.Visible]"   Source="[Folder.DisplayPrefs.UseBackdrop.Value]"/>
 
       <Rule>
         <Conditions>

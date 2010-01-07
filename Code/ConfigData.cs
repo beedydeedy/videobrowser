@@ -20,11 +20,6 @@ namespace Diamond
         #endregion
 
         public bool MiniMode = false;
-        public bool FanArtCoverflow = true;
-        public bool FanArtDetail = true;
-        public bool FanArtPoster = true;
-        public bool FanArtThumb = true;
-        public bool FanArtThumbstrip = true;
 
         #region Load / Save Data
         public static ConfigData FromFile(string file)

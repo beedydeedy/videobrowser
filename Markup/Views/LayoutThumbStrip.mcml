@@ -19,7 +19,6 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <lib:FolderModel Name="Item" FolderModel="$Required"/>
-      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -44,7 +43,7 @@
       <!-- Backdrop-->
       <Binding Target="[Backdrop.Image]" Source="[PreSelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[PreSelectedItem]" />
-      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtThumbstrip]" />
+      <Binding Target="[Backdrop.Visible]"   Source="[Item.DisplayPrefs.UseBackdrop.Value]"/>
 
       <Changed Source="[Item.SelectedChildIndex]" InitialEvaluate="true">
         <Conditions>

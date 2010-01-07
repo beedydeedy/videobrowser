@@ -1,3 +1,4 @@
 glob:bin/
 glob:obj/
 glob:Diamond.suo
+glob:Diamond.csproj.user

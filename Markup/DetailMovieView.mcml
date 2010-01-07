@@ -31,7 +31,7 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <lib:Item Name="Item" Item="$Required"/>
-      <app:Config Name="Config" />
+      <app:Config Name="ThemeConfig" />
     </Properties>
 
     <Locals>
@@ -68,7 +68,7 @@
 
       <Changed Source="[NavTimer.Tick]">
         <Conditions>
-          <Equality Source="[Config.MiniMode]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[ThemeConfig.MiniMode]" ConditionOp="Equals" Value="true" />
         </Conditions>
         <Actions>
           <Set Target="[CmdButtons.DisplayMax.Value]" Value="false" />

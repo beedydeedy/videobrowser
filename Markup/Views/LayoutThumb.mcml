@@ -18,7 +18,6 @@
       <a:Application Name="Application" Application="$Required"/>
       <Timer Name="InfoTimer" AutoRepeat="false" Interval="200" Enabled="false"/>
       <lib:FolderModel Name="Folder" FolderModel="$Required"/>
-      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -40,7 +39,7 @@
       <!-- Backdrop Bindings -->
       <Binding Target="[Backdrop.Image]" Source="[SelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[SelectedItem]" />
-      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtThumb]" />
+      <Binding Target="[Backdrop.Visible]"   Source="[Folder.DisplayPrefs.UseBackdrop.Value]"/>
       <!-- Thumb Width Sizing Bindings -->
       <Binding Target="[Split.Right.Offset]" Source="[Application.Config.ThumbStripPosterWidth]" />
       <Binding Target="[Split2.Left.Offset]" Source="[Application.Config.ThumbStripPosterWidth]" />

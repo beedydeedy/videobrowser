@@ -45,7 +45,24 @@
   <Image Name="Ratio_239" Source="resx://Diamond/Diamond.Resources/ratio_239" />
   <Image Name="Ratio_240" Source="resx://Diamond/Diamond.Resources/ratio_240" />
   <!-- Codecs -->
-
+  <Image Name="Xvid" Source="resx://Diamond/Diamond.Resources/codec_xvid" />
+  <Image Name="Divx" Source="resx://Diamond/Diamond.Resources/codec_divx" />
+  <Image Name="Ac3" Source="resx://Diamond/Diamond.Resources/codec_ac3" />
+  <Image Name="Aac" Source="resx://Diamond/Diamond.Resources/codec_aac" />
+  <Image Name="Asf" Source="resx://Diamond/Diamond.Resources/codec_asf" />
+  <Image Name="MpegAudio" Source="resx://Diamond/Diamond.Resources/codec_mpegaudio" />
+  <Image Name="Dts" Source="resx://Diamond/Diamond.Resources/codec_dts" />
+  <Image Name="H264" Source="resx://Diamond/Diamond.Resources/codec_h264" />
+  <Image Name="Vc1" Source="resx://Diamond/Diamond.Resources/codec_vc1" />
+  <Image Name="Wmv" Source="resx://Diamond/Diamond.Resources/codec_wmv" />
+  <Image Name="Wma" Source="resx://Diamond/Diamond.Resources/codec_wma" />
+  <Image Name="Media_Bluray" Source="resx://Diamond/Diamond.Resources/media_bluray" />
+  <Image Name="Media_Hddvd" Source="resx://Diamond/Diamond.Resources/media_hddvd" />
+  <Image Name="Media_Dvd" Source="resx://Diamond/Diamond.Resources/media_dvd" />
+  <Image Name="Media_Mkv" Source="resx://Diamond/Diamond.Resources/media_mkv" />
+  <Image Name="Media_Avi" Source="resx://Diamond/Diamond.Resources/media_avi" />
+  <Image Name="HDType_1080" Source="resx://Diamond/Diamond.Resources/hdtype_1080" />
+  <Image Name="HDType_720" Source="resx://Diamond/Diamond.Resources/hdtype_720" />
   <!-- Studio / Network -->
 
 </Mcml>

@@ -74,6 +74,83 @@ namespace Diamond {
             }
         }
         
+        internal static System.Drawing.Bitmap codec_aac {
+            get {
+                object obj = ResourceManager.GetObject("codec_aac", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_ac3 {
+            get {
+                object obj = ResourceManager.GetObject("codec_ac3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_asf {
+            get {
+                object obj = ResourceManager.GetObject("codec_asf", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_divx {
+            get {
+                object obj = ResourceManager.GetObject("codec_divx", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_dts {
+            get {
+                object obj = ResourceManager.GetObject("codec_dts", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_h264 {
+            get {
+                object obj = ResourceManager.GetObject("codec_h264", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_mpegaudio {
+            get {
+                object obj = ResourceManager.GetObject("codec_mpegaudio", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_vc1 {
+            get {
+                object obj = ResourceManager.GetObject("codec_vc1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_wma {
+            get {
+                object obj = ResourceManager.GetObject("codec_wma", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_wmv {
+            get {
+                object obj = ResourceManager.GetObject("codec_wmv", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap codec_xvid {
+            get {
+                object obj = ResourceManager.GetObject("codec_xvid", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static byte[] ConfigPanel {
             get {
                 object obj = ResourceManager.GetObject("ConfigPanel", resourceCulture);
@@ -256,6 +333,20 @@ namespace Diamond {
             }
         }
         
+        internal static System.Drawing.Bitmap hdtype_1080 {
+            get {
+                object obj = ResourceManager.GetObject("hdtype_1080", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap hdtype_720 {
+            get {
+                object obj = ResourceManager.GetObject("hdtype_720", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap IconActors {
             get {
                 object obj = ResourceManager.GetObject("IconActors", resourceCulture);
@@ -428,6 +519,41 @@ namespace Diamond {
             get {
                 object obj = ResourceManager.GetObject("LayoutThumbStrip", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_avi {
+            get {
+                object obj = ResourceManager.GetObject("media_avi", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_bluray {
+            get {
+                object obj = ResourceManager.GetObject("media_bluray", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_dvd {
+            get {
+                object obj = ResourceManager.GetObject("media_dvd", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_hddvd {
+            get {
+                object obj = ResourceManager.GetObject("media_hddvd", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap media_mkv {
+            get {
+                object obj = ResourceManager.GetObject("media_mkv", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

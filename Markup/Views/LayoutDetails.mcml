@@ -22,7 +22,6 @@
       <a:Application Name="Application" Application="$Required"/>
       <Timer Name="InfoTimer" AutoRepeat="false" Interval="200" Enabled="false"/>
       <lib:FolderModel Name="Item" FolderModel="$Required"/>
-      <app:Config Name="Config" />
     </Properties>
 
     <Locals>
@@ -84,7 +83,7 @@
       <!-- Backdrop-->
       <Binding Target="[Backdrop.Image]" Source="[SelectedItem.BackdropImage]" />
       <Binding Target="[Backdrop.Item]" Source="[SelectedItem]" />
-      <Binding Target="[Backdrop.Visible]" Source="[Config.FanArtDetail]" />
+      <Binding Target="[Backdrop.Visible]"   Source="[Item.DisplayPrefs.UseBackdrop.Value]"/>
 
       <!--<Binding Source="[SelectedItem.BackdropImage]" Target="[BG_Art.BG]" />-->
 
