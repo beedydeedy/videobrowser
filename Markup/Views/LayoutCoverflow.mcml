@@ -121,7 +121,7 @@
           </Graphic>
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
       </Panel>
@@ -444,6 +444,7 @@
           <!--<Set Target="[FocusBg.Content]" Value="[FocusImage]" />-->
           <Set Target="[ConstraintPanel1.ColorFilter]" Value="White" />
           <Set Target="[ConstraintPanel1.Alpha]" Value="1" />
+          <Set Target="[g1.Content]" Value="[Item.PreferredImage]" />
         </Actions>
       </Condition>
 
@@ -623,7 +624,7 @@
                       </Graphic>
                     </Children>
                   </Panel>
-                  <Graphic Name="g1" SizingPolicy="SizeToConstraint" MaintainAspectRatio="true">
+                  <Graphic Name="g1" SizingPolicy="SizeToConstraint" MaintainAspectRatio="true" Content="[Item.PreferredImageSmall]">
                     <Children>
                       <Panel  Scale="1,1,1" Padding="0,0,0,0" Layout="Center">
                         <LayoutInput>

@@ -1,9 +1,7 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
-      xmlns:cor ="assembly://mscorlib/System"
-      xmlns:proxy ="assembly://ehiProxy/ehiProxy"
-	  xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
-      xmlns:me = "Me"
-      >
+    xmlns:cor ="assembly://mscorlib/System"
+    xmlns:me = "Me"
+    >
 
   
 
@@ -13,10 +11,9 @@
       <cor:Single Name="MaxPages" Single="0"/>
     </Properties>
     <Locals>
-      <!--<Image Name="EmptyStar" Image="image://i:StarEmpty" />
-      <Image Name="FullStar"  Image="image://i:StarFull" />-->
       <Color Name="EmptyStar" Color="Gray" />
       <Color Name="FullStar"  Color="White" />
+      <Font Name="Font" Font="Segoe UI SemiBold, 16" />
     </Locals> 
     <Rules>
       <!--<Binding Source="[MaxPages!cor:String]" Target="[V.Content]" />-->
@@ -189,18 +186,11 @@
                   <FlowLayout Spacing="2,2" Orientation="Horizontal"/>
                 </Layout>
                 <Children>
-                  <Text Name="T1" Content="●" Font="Segoe UI SemiBold, 16" Color="Gray" />
-                  <Text Name="T2" Content="●" Font="Segoe UI SemiBold, 16" Color="Gray" />
-                  <Text Name="T3" Content="●" Font="Segoe UI SemiBold, 16" Color="Gray" />
-                  <Text Name="T4" Content="●" Font="Segoe UI SemiBold, 16" Color="Gray" />
-                  <Text Name="T5" Content="●" Font="Segoe UI SemiBold, 16" Color="Gray" />
-                  <!--<Text Name="V" Font="Segoe UI SemiBold, 10" Color="Gray" />-->
-
-                  <!--<Graphic Name="Star1" MaximumSize="[MaxSize]" />
-                  <Graphic Name="Star2"  MaximumSize="[MaxSize]" />
-                  <Graphic Name="Star3"  MaximumSize="[MaxSize]" />
-                  <Graphic Name="Star4"  MaximumSize="[MaxSize]" />
-                  <Graphic Name="Star5"  MaximumSize="[MaxSize]" />-->
+                  <Text Name="T1" Content="●" Font="[Font]" Color="Gray" />
+                  <Text Name="T2" Content="●" Font="[Font]" Color="Gray" />
+                  <Text Name="T3" Content="●" Font="[Font]" Color="Gray" />
+                  <Text Name="T4" Content="●" Font="[Font]" Color="Gray" />
+                  <Text Name="T5" Content="●" Font="[Font]" Color="Gray" />
                 </Children>
           </Panel>
         </Children>

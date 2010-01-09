@@ -122,7 +122,7 @@
           <dtb:DiamondCounter Name="Counter" LayoutInput="global://dtb:LI_ListCounter" />
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]"  LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]"  LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
 

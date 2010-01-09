@@ -95,6 +95,7 @@
     <Content Include="Images\Buttons\BallButtonDark.png" />
     <Content Include="Images\Buttons\BallButtonLight.png" />
     <Content Include="Images\Icons\IconGears.png" />
+    <None Include="Images\Icons\IconRT.png" />
     <Content Include="Images\MediaInfo\codec_aac.png" />
     <Content Include="Images\MediaInfo\codec_ac3.png" />
     <None Include="Images\MediaInfo\codec_asf.png" />
@@ -173,6 +174,7 @@
     <Content Include="Markup\Views\LayoutCoverflow.mcml" />
     <Content Include="Markup\Views\LayoutDetails.mcml" />
     <Content Include="Markup\Views\LayoutPoster.mcml" />
+    <Content Include="Markup\Views\LayoutRoot.mcml" />
     <Content Include="Markup\Views\LayoutThumb.mcml" />
     <Content Include="Markup\Views\LayoutThumbStrip.mcml" />
   </ItemGroup>

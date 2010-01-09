@@ -445,6 +445,13 @@ namespace Diamond {
             }
         }
         
+        internal static System.Drawing.Bitmap IconRT {
+            get {
+                object obj = ResourceManager.GetObject("IconRT", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap IconShuffle {
             get {
                 object obj = ResourceManager.GetObject("IconShuffle", resourceCulture);
@@ -504,6 +511,13 @@ namespace Diamond {
         internal static byte[] LayoutPoster {
             get {
                 object obj = ResourceManager.GetObject("LayoutPoster", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        internal static byte[] LayoutRoot {
+            get {
+                object obj = ResourceManager.GetObject("LayoutRoot", resourceCulture);
                 return ((byte[])(obj));
             }
         }

@@ -6,7 +6,7 @@
 	  xmlns:lth="resx://Diamond/Diamond.Resources/LayoutThumb"
 	  xmlns:lde="resx://Diamond/Diamond.Resources/LayoutDetails"
 	  xmlns:lcf="resx://Diamond/Diamond.Resources/LayoutCoverflow"
-	  xmlns:lr="resx://MediaBrowser/MediaBrowser.Resources/LayoutRoot"
+	  xmlns:lr="resx://Diamond/Diamond.Resources/LayoutRoot"
 	  xmlns:lts="resx://Diamond/Diamond.Resources/LayoutThumbStrip">
 
   <!--*****************************************************************************************************************

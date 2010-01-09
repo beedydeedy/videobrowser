@@ -4,18 +4,18 @@
     xmlns:dia="assembly://Diamond/Diamond"
     xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
     xmlns:sounds="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
-	    xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
-      xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
-      xmlns:di="resx://Diamond/Diamond.Resources/Images"
-      xmlns:s="file://Styles_DoNotEdit.mcml"
-	    xmlns:f="file://Fonts_DoNotEdit.mcml"
-      xmlns:db="resx://MediaBrowser/MediaBrowser.Resources/DirectorButton"
-	    xmlns:sr="resx://MediaBrowser/MediaBrowser.Resources/StarRating"
-      xmlns:mp="resx://MediaBrowser/MediaBrowser.Resources/MPAARating"
-      xmlns:gb="resx://MediaBrowser/MediaBrowser.Resources/GenreButton"
-      xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/ScrollableText"
-      xmlns:mip="resx://MediaBrowser/MediaBrowser.Resources/MediaInfoPanel"
-      xmlns:ft="resx://MediaBrowser/MediaBrowser.Resources/FancyText"
+    xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
+    xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
+    xmlns:di="resx://Diamond/Diamond.Resources/Images"
+    xmlns:s="file://Styles_DoNotEdit.mcml"
+    xmlns:f="file://Fonts_DoNotEdit.mcml"
+    xmlns:db="resx://MediaBrowser/MediaBrowser.Resources/DirectorButton"
+    xmlns:sr="resx://MediaBrowser/MediaBrowser.Resources/StarRating"
+    xmlns:mp="resx://MediaBrowser/MediaBrowser.Resources/MPAARating"
+    xmlns:gb="resx://MediaBrowser/MediaBrowser.Resources/GenreButton"
+    xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/ScrollableText"
+    xmlns:mip="resx://MediaBrowser/MediaBrowser.Resources/MediaInfoPanel"
+    xmlns:ft="resx://MediaBrowser/MediaBrowser.Resources/FancyText"
     xmlns:me="Me">
 
   
@@ -48,7 +48,6 @@
       </Graphic>
     </Content>
   </UI>
-
 
   <UI Name="DiamondDetailInfoBox">
     <Properties>

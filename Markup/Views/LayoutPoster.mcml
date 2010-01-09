@@ -93,7 +93,7 @@
           </ps:PosterScroller>
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Image="[SelectedItem.BackdropImage]" Item="[SelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[SelectedItem.BackdropImage]" Item="[SelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
       </Panel>

@@ -55,6 +55,7 @@ namespace Diamond
                 kernel.StringData.AddStringData(MyStrings.FromFile(MyStrings.GetFileName("Diamond-")));
                 
                 CustomResourceManager.AppendFonts("Diamond", Resources.DiamondFontsDefault, Resources.DiamondFontsSmall);
+                
             }
             catch (Exception ex)
             {
