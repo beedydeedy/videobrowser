@@ -28,7 +28,8 @@
 							  HandlePageCommands="true" HandlePageKeys="true" HandlerStage="Bubbled" Name="ScrollingHandler"/>
 
 			<ScrollingData Name="VScrollingData" />
-			<ScrollingData Name="HScrollingData" EndPaddingRelativeTo="Far" EndPadding="400" BeginPadding="100" BeginPaddingRelativeTo="Near"/>
+			<ScrollingData Name="HScrollingData" EndPaddingRelativeTo="Far" EndPadding="400" 
+                     BeginPadding="100" BeginPaddingRelativeTo="Near" />
 			<ScrollingData Name="CenterScollingData" LockedAlignment="0.5" LockedPosition="0.5"/>
 			<ScrollingData Name="ScrollingData" />
 			

@@ -104,12 +104,12 @@
           <Equality Source="[Application.Config.EnableRootPage]" Value="true"/>
         </Conditions>
         <Actions>          
-          <Set Target="[TimePanel.Visible]" Value="false" />          
-          <Set Target="[ConfigButton.Visible]" Value="false" />
+          <!--<Set Target="[TimePanel.Visible]" Value="false" /> -->         
+          <Set Target="[ConfigButton.Visible]" Value="true" />
           <Set Target="[FolderButton.Visible]" Value="false" />
           <Set Target="[NowPlaying.Visible]" Value="false"/>
           <Set Target="[Breadcrumbs.Visible]" Value="false"/>
-          <Set Target="[PCButton.Visible]" Value="false"/>
+          <!--<Set Target="[PCButton.Visible]" Value="false"/>-->
           <Set Target="[BottomCenterInfoPanel.Visible]" Value="false"/>
         </Actions>
       </Rule>
@@ -122,7 +122,7 @@
         </Conditions>
         <Actions>
           <Set Target="[ConfigButton.Visible]" Value="true" />
-          <Set Target="[FolderButton.Visible]" Value="true" />
+          <!--<Set Target="[FolderButton.Visible]" Value="true" />-->
         </Actions>
       </Rule>
 
@@ -269,7 +269,8 @@
                   <FlowLayout Orientation="Horizontal" Spacing="10,0"/>
                 </Layout>
                 <LayoutInput>
-                  <AnchorLayoutInput Left="Parent,0,110" Top="Parent,0,10" />
+                  <AnchorLayoutInput Left="Parent,0,70" Top="Parent,0,10" Right="Parent, 0.5, -400" 
+                                     Horizontal="Center" />
                 </LayoutInput>
                 <Children>
                   <!-- Config Page Button -->
@@ -278,17 +279,23 @@
                   <!-- Folder Config Button -->
                   <db:DiamondBall Name="FolderButton" Command="[FolderMenuCmd]" FocusOrder="1000"
                                   Visible="false" />
+                  <!-- PC Indicator Button -->
+                  <pci:PCIndicatorButton Name="PCButton" Application="[Application]" FocusOrder="1000"
+                                         FocusImage="resx://Diamond/Diamond.Resources/BallButtonLight"
+                                         BlankImage="resx://Diamond/Diamond.Resources/BallButtonDark">
+                    <Animations>
+                      <Animation Type="Show">
+                        <Keyframes>
+                          <AlphaKeyframe Time="0" Value="0" />
+                          <AlphaKeyframe Time="1" Value="1" />
+                        </Keyframes>
+                      </Animation>
+                    </Animations>
+                  </pci:PCIndicatorButton>
                 </Children>
               </Panel>
 
-              <!-- PC Indicator Button -->
-              <pci:PCIndicatorButton Name="PCButton" Application="[Application]" FocusOrder="1000"
-                                     FocusImage="resx://Diamond/Diamond.Resources/BallButtonLight"
-                                     BlankImage="resx://Diamond/Diamond.Resources/BallButtonDark">
-                <LayoutInput>
-                  <AnchorLayoutInput Right="Parent,1,-160" Top="Parent,0,10" />
-                </LayoutInput>
-              </pci:PCIndicatorButton>
+              
 
 
               <!-- Time Panel -->

@@ -23,7 +23,7 @@
     <Locals>
       <FormLayoutInput Name="TitleLayout" Top="ItemPanel,1"  Left="Parent,0.2" Right="Parent,.89"/>
       <MathTransformer Name="Add1" AddInt="1"/>
-      <FormLayoutInput Name="Posters_Many" Left="Parent,.0" Top="Parent,0,40" Bottom="Parent,1,-20" Right="Parent,1"/>
+      <FormLayoutInput Name="Posters_Many" Left="Parent,.0" Top="Parent,0,80" Bottom="Parent,1,-20" Right="Parent,1"/>
       <FormLayoutInput Name="Posters_Few" Left="Parent,.0" Top="Parent,0,80" Bottom="Parent,1,-20" Right="Parent,1"/>
 
       <lib:Item Name="SelectedItem" Item="[Folder.SelectedChild]" />

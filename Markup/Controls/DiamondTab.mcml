@@ -110,7 +110,7 @@
         </Conditions>
         <Actions>
           <Set Target="[Name.Color]" Value="[FocusColor]"/>
-          <Set Target="[Name.Font]" Value="Segoe Media Center Semibold, 18"/>
+          <Set Target="[Name.Font]" Value="font://f:Diamond_Medium"/>
           <Set Target="[Model.ChosenIndex]" Value="[Index.Value]"/>
         </Actions>
       </Rule>
@@ -119,7 +119,7 @@
       <Condition Source="[Model.ChosenIndex]" SourceValue="[Index.Value]">
         <Actions>
           <Set Target="[Name.Color]" Value="[FocusColor]"/>
-          <Set Target="[Name.Font]" Value="Segoe Media Center, 18" />
+          <Set Target="[Name.Font]" Value="font://f:Diamond_Medium" />
         </Actions>
       </Condition>
 

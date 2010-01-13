@@ -57,7 +57,7 @@
       <Graphic Content="image://i:DiamondFolderMenuBg" Padding="30,15,30,30"
                Navigation="ContainAll" Layout="VerticalFlow">
         <Children>
-          <Text Content="FOLDER MENU" Color="White" Font="Segoe UI, 20" Margins="10,0,0,0" />
+          <Text Content="FOLDER MENU" Color="White" Font="font://f:Diamond_Large" Margins="10,0,0,0" />
           <Scroller Orientation="Horizontal" FadeSize="20"  ScrollingData="[SD]" Navigation="RememberFocus" >
             <Children>
               <Panel MinimumSize="0,150">
@@ -108,8 +108,8 @@
       <ClickHandler Name="Clicker" />
       <Color Name="Color" Color="Gray" />
       <Color Name="FocusColor" Color="White" />
-      <Font Name="Font" Font="Segoe UI, 18" />
-      <Font Name="FontS" Font="Segoe UI, 16" />
+      <Font Name="Font" Font="font://f:Diamond_Medium" />
+      <Font Name="FontS" Font="font://f:Diamond_Small" />
     </Locals>
 
     <Rules>
