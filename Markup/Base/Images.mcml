@@ -1,4 +1,5 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
+    xmlns:a="assembly://MediaBrowser/MediaBrowser"
     xmlns:me="Me">
 
   <Image Name="BlankImage" Image="null"/>
@@ -16,9 +17,6 @@
   
   <!-- Diamond Images -->
   <Image Name="PosterFrame" Source="resx://MediaBrowser/MediaBrowser.Resources/poster_frame" NineGrid="10,10,10,10" />
-  <Image Name="DiamondOverlayWhiteAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all" />
-  <Image Name="DiamondOverlayDarkAll" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_all_dark" />
-  <Image Name="DiamondOverlayDarkTop" Source="resx://MediaBrowser/MediaBrowser.Resources/dia_overlay_top_dark" />
 
   <Image Name="DiamondListBg" Source="resx://Diamond/Diamond.Resources/dia_list_bg" NineGrid="20,20,20,20" />
   <Image Name="DiamondFolderMenuBg" Source="resx://Diamond/Diamond.Resources/dia_foldermenu" NineGrid="20,20,20,35" />

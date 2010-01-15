@@ -22,7 +22,7 @@
     
     xmlns:app="assembly://Diamond/Diamond"
     xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
-    xmlns:in="resx://MediaBrowser/MediaBrowser.Resources/InfoMarquee"
+    xmlns:in="resx://Diamond/Diamond.Resources/DiamondInfo"
     xmlns:me="Me"
     >
 
@@ -36,7 +36,6 @@
 
     <Locals>
       <BooleanChoice Name="DisplayMax" Value="true" />
-      <a:Clock Name="Clock"/>
 
       <Color Name="FilterColor" Color="color://s:FilterColor" />
       <Color Name="AttributeColor" Color="190,190,190" />
@@ -47,7 +46,6 @@
       <!-- Selection Anchor-->
       <AnchorLayoutInput Name="sVisible" Top="CommonInfoPanel,1,10" Left="Parent,0.48" Right="Parent,1,-30" Bottom="Parent, 1, -150" />
       <AnchorLayoutInput Name="sHidden" Top="Parent,1" Left="Parent,1" Right="Parent,1,1" Bottom="Parent, 1,1" />
-
 
       <Timer Name="NavTimer" AutoRepeat="false" Enabled="true" Interval="250"  />
     </Locals>
@@ -87,19 +85,6 @@
 
       <Binding Source="[Application.Config.ShowThemeBackground]" Target="[MainBG.Visible]" />
 
-      <Binding Source="[Clock.Time]" Target="[TimeDate.Content]">
-        <Conditions>
-          <Equality Source="[Application.Config.ShowClock]" ConditionOp="Equals" Value="true" />
-        </Conditions>
-      </Binding>
-
-
-
-
-
-
-
-
       <Changed Source="[DisplayMax.Value]">
         <Conditions>
           <Equality Source="[DisplayMax.Value]" ConditionOp="Equals" Value="true" />
@@ -138,6 +123,19 @@
         </Actions>
       </Condition>
 
+      <!-- Extender Bindings -->
+      <Rule>
+        <Conditions>
+          <Equality Source="[Application.RunningOnExtender]" ConditionOp="Equals" Value="true" />
+        </Conditions>
+        <Actions>
+          <Set Target="[Backdrop.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+          <Set Target="[MainBG.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+          <Set Target="[BG_InitialFolder.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+        </Actions>
+      </Rule>
+
+
     </Rules>
 
     <Content>
@@ -149,31 +147,11 @@
               <!-- Title Details -->
               <dtb:DiamondTitleUI Name="TitleUI" MinSize="800,40" Item="[Item]" LayoutInput="global://dtb:LI_Title" />
 
-
               <!-- Time Panel -->
-              <Graphic Name="TimePanel" Content="image://i:DiamondTimePanel" Padding="20,0,20,10"
-                       SizingPolicy="SizeToChildren">
-                <Layout>
-                  <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
-                </Layout>
-                <LayoutInput>
-                  <AnchorLayoutInput Right="Parent,1,-5" Top="Parent,0" />
-                </LayoutInput>
-                <Children>
-                  <Text Name="TimeDate" Font="font://f:P_ClockFont"  Color="White"
-                        Visible="[Application.Config.ShowClock]" />
-                </Children>
-              </Graphic>
+              <dtb:DiamondTime Name="TimePanel" Application="[Application]" LayoutInput="global://dtb:LI_Time" />
 
-              <!-- Information Panel -->
-              <Panel Name="BottomCenterInfoPanel">
-                <LayoutInput>
-                  <AnchorLayoutInput Bottom="Parent, 1,-5" Left="Parent, 0.5,-300" Right="Parent,.5,300"  Horizontal="Center"/>
-                </LayoutInput>
-                <Children>
-                  <in:InfoMarquee Application="[Application]" Color="222,222,222" />
-                </Children>
-              </Panel>
+              <!--Information Panel -->
+              <in:DiamondInfo Name="BottomCenterInfoPanel" Application="[Application]" LayoutInput="global://dtb:LI_Information" />
 
               <!-- play/resume buttons-->
               <me:CommandButtons Application="[Application]" Item="[Item]" FilterColor="[FilterColor]"
@@ -182,8 +160,6 @@
                   <AnchorLayoutInput Left="Parent,0,25" Top="Parent,0.15" />
                 </LayoutInput>
               </me:CommandButtons>
-
-
 
               <me:SelectionPanel Name="SelectionPanel" Application="[Application]"
                                  Item="[Item]" LayoutInput="[sVisible]" />
@@ -381,7 +357,7 @@
         <Children>
           <dtb:DiamondImageButton Name="ResumeMovieButton"  Text="RESUME"       Command="[ResumeMovieCommand]"  Icon="resx://Diamond/Diamond.Resources/IconResume"  Size="[Size]"   MinSize="[MinSize]" Font="[Font]" MiniMode="[DisplayMini]"/>
           <dtb:DiamondImageButton Name="PlayMovieButton"    Text="PLAY"         Command="[PlayMovieCommand]"    Icon="resx://Diamond/Diamond.Resources/IconPlay"    Size="[Size]"   MinSize="[MinSize]" Font="[Font]" MiniMode="[DisplayMini]"/>
-          <dtb:DiamondImageButton Name="TrailerButton"      Text="TRAILER"      Command="[LocalTrailerCommand]" Icon="resx://Diamond/Diamond.Resources/IconTrailers" Size="[Size]"   MinSize="[MinSize]" Font="[Font]" Visible="false" MiniMode="[DisplayMini]" />
+          <dtb:DiamondImageButton Name="TrailerButton"      Text="TRAILER"      Command="[LocalTrailerCommand]" Icon="resx://Diamond/Diamond.Resources/IconTrailers" Size="[Size]"  MinSize="[MinSize]" Font="[Font]" Visible="false" MiniMode="[DisplayMini]" />
           <dtb:DiamondImageButton Name="ToggleViewButton"   Text="DISPLAY"      Command="[ToggleViewCommand]"   Icon="resx://Diamond/Diamond.Resources/IconFloral"  Size="[Size]"   MinSize="[MinSize]" Font="[Font]" MiniMode="[DisplayMini]" />
           <dtb:DiamondImageButton Name="RefreshMovieButton" Text="REFRESH"      Command="[RefreshMovieCommand]" Icon="resx://Diamond/Diamond.Resources/IconRefresh" Size="[Size]"   MinSize="[MinSize]" Font="[Font]" MiniMode="[DisplayMini]" />
           <dtb:DiamondImageButton Name="CacheMovieButton"   Text="CACHE 2 XML"  Command="[NullCommand]"         Icon="resx://Diamond/Diamond.Resources/Lines"       Size="[Size]"   MinSize="[MinSize]" Font="[Font]" Visible="false" MiniMode="[DisplayMini]" />

@@ -56,6 +56,10 @@ namespace Diamond
                 
                 CustomResourceManager.AppendFonts("Diamond", Resources.DiamondFontsDefault, Resources.DiamondFontsSmall);
                 
+                //Logger.ReportInfo("Running on Extender: " + Application.RunningOnExtender);
+                //Application.CurrentInstance.Information.AddInformationString("HELLLOOOOOOOOOOO");
+                //Application.CurrentInstance.Information.AddInformationString("56465");
+                //Application.CurrentInstance.Information.AddInformation(new InfomationItem("Welcome to Diamond " + Version.ToString(),2));
             }
             catch (Exception ex)
             {
@@ -73,7 +77,7 @@ namespace Diamond
         public override string Description
         {
             //provide a longer description of your theme - this will display when the user selects the theme in the plug-in section
-            get { return "A new Theme for MediaBrowser"; }
+            get { return "Theme for MediaBrowser"; }
         }
 
         public override bool InstallGlobally

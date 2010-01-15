@@ -4,17 +4,17 @@
     xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
     xmlns:s="file://Styles_DoNotEdit.mcml"
     xmlns:f="file://Fonts_DoNotEdit.mcml"
-    xmlns:di="resx://Diamond/Diamond.Resources/Images"    
+    xmlns:di="resx://Diamond/Diamond.Resources/Images"
     xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
     xmlns:np="resx://MediaBrowser/MediaBrowser.Resources/NowPlayingViewport"
     xmlns:pci="resx://MediaBrowser/MediaBrowser.Resources/PCIndicatorButton"
-    xmlns:in="resx://MediaBrowser/MediaBrowser.Resources/InfoMarquee"
+    xmlns:in="resx://Diamond/Diamond.Resources/DiamondInfo"
     xmlns:pda="resx://Diamond/Diamond.Resources/PageDetailArea"
     xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
     xmlns:sd="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
     xmlns:cm="resx://MediaBrowser/MediaBrowser.Resources/ContextMenu"
     xmlns:db="resx://Diamond/Diamond.Resources/DiamondBall"
-    xmlns:dfm="resx://Diamond/Diamond.Resources/DiamondFolderMenu"      
+    xmlns:dfm="resx://Diamond/Diamond.Resources/DiamondFolderMenu"
     xmlns:me="Me"
       >
 
@@ -35,20 +35,18 @@
         </EditableText>
       </TypingHandler>
 
-      <a:Clock Name="Clock"/>
-
       <cor:Boolean Name="CanPlay" Boolean="false" />
       <BooleanChoice Name="TopBarHasFocus" Value="false" />
       <BooleanChoice Name="DisplayMenuButtons" Value="false" />
 
       <AnchorLayoutInput Name="LayoutTopBarShow" Top="Parent,0" Left="Parent,0" Right="Parent,1" Horizontal="Center" />
       <AnchorLayoutInput Name="LayoutTopBarHide" Left="Parent,0" Top="Parent,0,-100" Right="Parent,1" Horizontal="Center" />
-      
+
       <!-- Navigate Timer to bypass view triggering -->
       <Timer Name="DisplayMenuTimer" Interval="1000" AutoRepeat="false" Enabled="true"/>
       <Timer Name="RefocusTimer" Interval="250" AutoRepeat="false" Enabled="false"/>
       <Timer Name="HideFindAsYouType" Interval="3000" AutoRepeat="false"/>
-      
+
       <Command Name="CloseContextMenu" />
       <Command Name="Popup" />
       <Command Name="ClosePopupPlay" />
@@ -57,7 +55,7 @@
       <Command Name="CloseCommand" />
     </Locals>
 
-    <Rules>      
+    <Rules>
 
       <!-- Should be invoked when the view changes -->
       <Changed Source="[RefocusTimer.Tick]">
@@ -80,7 +78,7 @@
           <Set Target="[RefocusTimer.Enabled]" Value="false" />
         </Actions>
       </Changed>
-      
+
       <!--<Rule>
         <Conditions>
           <Equality Source="[TopBarHasFocus.Value]" ConditionOp="Equals" Value="true" />
@@ -103,14 +101,14 @@
           <Equality Source="[Folder.IsRoot]" Value="true"/>
           <Equality Source="[Application.Config.EnableRootPage]" Value="true"/>
         </Conditions>
-        <Actions>          
-          <!--<Set Target="[TimePanel.Visible]" Value="false" /> -->         
+        <Actions>
+          <!--<Set Target="[TimePanel.Visible]" Value="false" /> -->
           <Set Target="[ConfigButton.Visible]" Value="true" />
           <Set Target="[FolderButton.Visible]" Value="false" />
           <Set Target="[NowPlaying.Visible]" Value="false"/>
           <Set Target="[Breadcrumbs.Visible]" Value="false"/>
           <!--<Set Target="[PCButton.Visible]" Value="false"/>-->
-          <Set Target="[BottomCenterInfoPanel.Visible]" Value="false"/>
+          <!--<Set Target="[BottomCenterInfoPanel.Visible]" Value="false"/>-->
         </Actions>
       </Rule>
 
@@ -135,12 +133,6 @@
           <Set Target="[FolderButton.Visible]" Value="true" />
         </Actions>
       </Rule>
-
-      <Binding Source="[Clock.Time]" Target="[TimeDate.Content]">
-        <Conditions>
-          <Equality Source="[Application.Config.ShowClock]" ConditionOp="Equals" Value="true" />
-        </Conditions>
-      </Binding>
 
       <Rule>
         <Conditions>
@@ -259,7 +251,7 @@
                   <Animation Animation="animation://an:PageShow" />
                 </Animations>
                 <LayoutInput>
-                  <AnchorLayoutInput Left="Parent,0.2" Right="Parent,0.8" Top="Parent,0.3" Bottom="Parent, 0.3, 300" />
+                  <AnchorLayoutInput Left="Parent,0.5,-275" Right="Parent,.5,275" Top="Parent,0.1" Bottom="Parent, 0.9" />
                 </LayoutInput>
               </dfm:DiamondFolderMenu>
 
@@ -269,12 +261,12 @@
                   <FlowLayout Orientation="Horizontal" Spacing="10,0"/>
                 </Layout>
                 <LayoutInput>
-                  <AnchorLayoutInput Left="Parent,0,70" Top="Parent,0,10" Right="Parent, 0.5, -400" 
+                  <AnchorLayoutInput Left="Parent,0,70" Top="Parent,0,10" Right="Parent, 0.5, -400"
                                      Horizontal="Center" />
                 </LayoutInput>
                 <Children>
                   <!-- Config Page Button -->
-                  <db:DiamondBall Name="ConfigButton" Command="[ConfigMenuCmd]" FocusOrder="1000" 
+                  <db:DiamondBall Name="ConfigButton" Command="[ConfigMenuCmd]" FocusOrder="1000"
                                   Visible="false" Icon="image://di:ConfigImg" />
                   <!-- Folder Config Button -->
                   <db:DiamondBall Name="FolderButton" Command="[FolderMenuCmd]" FocusOrder="1000"
@@ -295,23 +287,9 @@
                 </Children>
               </Panel>
 
-              
-
 
               <!-- Time Panel -->
-              <Graphic Name="TimePanel" Content="image://di:DiamondTimePanel" Padding="20,0,20,10"
-                       SizingPolicy="SizeToChildren">
-                <Layout>
-                  <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
-                </Layout>
-                <LayoutInput>
-                  <AnchorLayoutInput Right="Parent,1,-5" Top="Parent,0" />
-                </LayoutInput>
-                <Children>
-                  <Text Name="TimeDate" Font="font://f:P_ClockFont"  Color="White"
-                        Visible="[Application.Config.ShowClock]" />
-                </Children>
-              </Graphic>
+              <dtb:DiamondTime Name="TimePanel" Application="[Application]" LayoutInput="global://dtb:LI_Time" />
 
               <!--Banner / Breadcrumbs -->
               <Panel Name="Breadcrumbs">
@@ -328,15 +306,8 @@
                 </Children>
               </Panel>
 
-              <!--Information Panel Top Leftt-->
-              <Panel Name="BottomCenterInfoPanel">
-                <LayoutInput>
-                  <AnchorLayoutInput Bottom="Parent, 1,-5" Left="Parent, 0.5,-300" Right="Parent,.5,300"  Horizontal="Center"/>
-                </LayoutInput>
-                <Children>
-                  <in:InfoMarquee Application="[Application]" Color="222,222,222" />
-                </Children>
-              </Panel>
+              <!--Information Panel -->
+              <in:DiamondInfo Name="BottomCenterInfoPanel" Application="[Application]" LayoutInput="global://dtb:LI_Information" />
 
               <!-- find in list panel - highest Z-Order -->
               <Panel Name="FindAsYouTypePanel"  >
@@ -367,7 +338,7 @@
               <cm:PlayMenu Name="PopupPlay" Application="[Application]" Close="[ClosePopupPlay]" Visible="false" />
 
               <!--  View Details-->
-              <pda:PageDetailAreaDiamond FocusOrder="1" Name="ViewPanel" Folder="[Folder]" 
+              <pda:PageDetailAreaDiamond FocusOrder="1" Name="ViewPanel" Folder="[Folder]"
                                          Application="[Application]"
                                          >
                 <LayoutInput>
@@ -383,8 +354,9 @@
               </np:NowPlayingViewport>
 
 
-              <Graphic Name="Overlay" Content="resx://Diamond/Diamond.Resources/DiamondMainBG"  LayoutInput="global://dtb:LI_Bg" />
-                
+              <Graphic Name="Overlay" Content="resx://Diamond/Diamond.Resources/DiamondMainBG"
+                       LayoutInput="global://dtb:LI_Bg_Extender" />
+
             </Children>
           </Clip>
 

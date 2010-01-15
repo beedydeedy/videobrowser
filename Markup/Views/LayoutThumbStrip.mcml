@@ -79,6 +79,9 @@
       <!-- Counter Bindings -->
       <Binding Source="[Item.SelectedChildIndex]" Target="[Counter.List_Counter]" />
       <Binding Source="[Item.Children.Count]" Target="[Counter.List_Total]" />
+      <!-- Extender Bindings -->
+      <Condition Source="[Application.RunningOnExtender]" ConditionOp="Equals" SourceValue="true" Target="[Backdrop.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+
     </Rules>
 
     <Content>

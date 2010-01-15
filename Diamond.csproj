@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{E7FD3720-EBA8-4A14-8142-75A3A438C8EA}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -131,6 +131,7 @@
     <Content Include="Images\Panels\dia_foldermenu.png" />
     <Content Include="Images\Overlays\dia_list_bg.png" />
     <Content Include="Images\dia_list_focus.png" />
+    <None Include="Images\Panels\dia_infoPanel.png" />
     <Content Include="Images\Panels\dia_timePanel.png" />
     <Content Include="Images\Panels\dia_titlePanel.png" />
     <Content Include="Images\Panels\dia_TopPanel.png" />
@@ -158,6 +159,7 @@
     <Content Include="Markup\Base\DiamondFontsSmall.mcml" />
     <Content Include="Markup\Base\Images.mcml" />
     <Content Include="Markup\ConfigPanel.mcml" />
+    <Content Include="Markup\Controls\DiamondInfo.mcml" />
     <Content Include="Markup\Controls\DiamondBall.mcml" />
     <Content Include="Markup\Controls\DiamondFolderMenu.mcml" />
     <Content Include="Markup\Controls\DiamondListView.mcml" />

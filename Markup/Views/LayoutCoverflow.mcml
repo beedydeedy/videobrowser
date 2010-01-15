@@ -89,7 +89,10 @@
       <!-- Counter Bindings -->
       <Binding Source="[Folder.SelectedChildIndex]" Target="[Counter.List_Counter]" />
       <Binding Source="[Folder.Children.Count]" Target="[Counter.List_Total]" />
-
+      
+      <!-- Extender Bindings -->
+      <Condition Source="[Application.RunningOnExtender]" ConditionOp="Equals" SourceValue="true" Target="[Backdrop.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+        
     </Rules>
 
     <Content>
@@ -121,7 +124,8 @@
           </Graphic>
 
           <!-- Backdrop -->
-          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
+          <bd:Backdrop4 Name="Backdrop" Visible="[Application.Config.ShowBackdrop]" 
+                        Image="[PreSelectedItem.BackdropImage]" Item="[PreSelectedItem]" LayoutInput="global://dtb:LI_Bg"/>
 
         </Children>
       </Panel>

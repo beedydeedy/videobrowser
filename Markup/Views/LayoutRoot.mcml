@@ -11,7 +11,6 @@
 		xmlns:vm="resx://MediaBrowser/MediaBrowser.Resources/ViewMenu"
 	  xmlns:np="resx://MediaBrowser/MediaBrowser.Resources/NowPlayingViewport"
     xmlns:an="resx://MediaBrowser/MediaBrowser.Resources/Animations"
-    xmlns:in="resx://MediaBrowser/MediaBrowser.Resources/InfoMarquee"
     xmlns:dp="resx://MediaBrowser/MediaBrowser.Resources/DiamondPagination"
     xmlns:pci="resx://MediaBrowser/MediaBrowser.Resources/PCIndicatorButton"
     xmlns:pv="resx://MediaBrowser/MediaBrowser.Resources/Pivot"
@@ -23,8 +22,9 @@
     xmlns:pp="resx://MediaBrowser/MediaBrowser.Resources/PopupPlay"
     xmlns:ib="resx://MediaBrowser/MediaBrowser.Resources/ItemButton"
     xmlns:sounds="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
-     xmlns:hb="resx://MediaBrowser/MediaBrowser.Resources/HeaderButton"
-      xmlns:me="Me"
+    xmlns:hb="resx://MediaBrowser/MediaBrowser.Resources/HeaderButton"
+    xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
+    xmlns:me="Me"
 	  >
 
 
@@ -354,6 +354,17 @@
         </Actions>
       </Rule>
 
+      <!-- Extender Bindings -->
+      <Rule>
+        <Conditions>
+          <Equality Source="[Application.RunningOnExtender]" ConditionOp="Equals" Value="true" />
+        </Conditions>
+        <Actions>
+          <Set Target="[MainBG.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+          <Set Target="[BG_InitialFolder.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
+        </Actions>
+      </Rule>
+
     </Rules>
 
     <Content>
@@ -424,32 +435,6 @@
                 </Children>
               </Graphic>
 
-
-              <!-- Right Bottom Main Menu Panel -->
-              <Panel>
-                <LayoutInput>
-                  <AnchorLayoutInput Top="ItemMenuPanel,1,2" Bottom="ItemMenuPanel,1,37" Left="Parent,0.65" Right="Parent,1"/>
-                </LayoutInput>
-                <Children>
-                  <Panel>
-                    <Layout>
-                      <FlowLayout Orientation="Horizontal" ItemAlignment="Near" StripAlignment="Far"/>
-                    </Layout>
-                  </Panel>
-                  <ColorFill Layout="Fill" Content="Black" Alpha="0.15" />
-                </Children>
-              </Panel>
-
-              <!-- Left Bottom Main Menu Panel-->
-              <Panel>
-                <LayoutInput>
-                  <AnchorLayoutInput Top="ItemMenuPanel,1,2" Bottom="ItemMenuPanel,1,37" Left="Parent,0" Right="Parent,0.65"/>
-                </LayoutInput>
-                <Children>
-                  <in:InfoMarquee Application="[Application]" />
-                  <ColorFill Layout="Fill" Content="Black" Alpha="0.15" />
-                </Children>
-              </Panel>
 
               <!-- Now Playing Box -->
               <np:NowPlayingViewportLarge Name="NowPlaying" Visible="false" Application="[Application]">
@@ -545,39 +530,18 @@
               <!-- Background Fade Object (hidden when no background image selected)-->
               <Graphic Name="NPClipP" Content="image://me:50AlphaBgforTab" Visible="[Application.Config.ShowRootBackground]">
                 <LayoutInput>
-                  <AnchorLayoutInput Top="recentlyAdded,1,60" Bottom="Parent,0.7,25" Left="RecentListPanel,0,-10" Right="RecentListPanel,1,10" />
+                  <AnchorLayoutInput Top="recentlyAdded,0,-5" Bottom="RecentListPanel,1,10" Left="RecentListPanel,0,-10" Right="RecentListPanel,1,10" />
                 </LayoutInput>
               </Graphic>
-
-              <!-- Background For recent text (hidden when no background image selected)-->
-              <Graphic Name="RecentBack" Content="image://me:50AlphaTab" Visible="[Application.Config.ShowRootBackground]">
-                <LayoutInput>
-                  <AnchorLayoutInput Top="recentlyAdded,0,-5" Bottom="NPClipP,0" Left="recentlyAdded,0,0" Right="recentlyAdded,1,0" />
-                </LayoutInput>
-              </Graphic>
-              <!--<Clip Name="NPClipP" FadeSize="5" Orientation="Horizontal" FadeAmount="1" Visible="[Application.Config.ShowRootBackground]">
-                <LayoutInput>
-                  <AnchorLayoutInput Top="recentlyAdded,1,5" Bottom="Parent,0.7,25" Left="Parent,0,-10" Right="Parent,1,10" />
-                </LayoutInput>
-                <Children>
-                  <ColorFill Content="color://s:FillColor" Alpha="0.55" Layout="Fill">
-                  </ColorFill>
-                </Children>
-              </Clip>-->
 
               <!-- Main Background -->
-              <bd:Backdrop4 Name="MainBG" Visible="true" Image="[Folder.BackdropImage]" Item="[Folder]">
-                <LayoutInput>
-                  <FormLayoutInput Left="Parent,0,-50" Top="Parent,0,-20" Bottom="Parent,1,20" Right="Parent,1,50"/>
-                </LayoutInput>
+              <bd:Backdrop4 Name="MainBG" Visible="true" Image="[Folder.BackdropImage]" Item="[Folder]" LayoutInput="global://dtb:LI_Bg">
               </bd:Backdrop4>
 
               <!-- Initial Folder Backdrop -->
               <bd:InitialFolderBackground Name="BG_InitialFolder" Application="[Application]"
-                                          Visible="[Application.Config.ShowRootBackground]">
-                <LayoutInput>
-                  <FormLayoutInput Name="LI_Bg" Left="Parent,0,-50" Top="Parent,0,-20" Bottom="Parent,1,20" Right="Parent,1,50"/>
-                </LayoutInput>
+                                          Visible="[Application.Config.ShowRootBackground]"
+                                          LayoutInput="global://dtb:LI_Bg">
               </bd:InitialFolderBackground>
 
             </Children>
@@ -700,7 +664,7 @@
           <!-- Poster Images-->
           <Clip FadeSize="20" Orientation="Horizontal" FadeAmount="1" CenterPointPercent="0.5,0.5,0.5" >
             <Children>
-              <Scroller Orientation="Horizontal" Margins="0,0,0,0" Name="Scroller" FadeSize="10" ScrollingData="[ScrollingData]">
+              <Scroller Orientation="Horizontal" Margins="0,0,0,0" Name="Scroller" FadeSize="5" ScrollingData="[ScrollingData]">
                 <Children>
                   <Repeater Name="Repeater" Layout="[MyLayout]" >
                     <Content>

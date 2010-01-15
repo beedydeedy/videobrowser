@@ -19,7 +19,8 @@
       <lib:DisplayPreferences Name="Prefs" DisplayPreferences="$Required" />
     </Properties>
     <Locals>
-      <ScrollingData Name="SD" LockedPosition=".5"/>
+      <ScrollingData Name="SD" />
+      <!--<ScrollingData Name="SD" LockedPosition=".5"/>-->
       <ShortcutHandler Name="BackHandler"  Handle="true" Shortcut="Back" HandlerStage="Bubbled" Command="[Close]"/>
       <Command Name="IncreaseCmd" />
       <Command Name="DecreaseCmd"/>
@@ -57,12 +58,18 @@
       <Graphic Content="image://i:DiamondFolderMenuBg" Padding="30,15,30,30"
                Navigation="ContainAll" Layout="VerticalFlow">
         <Children>
-          <Text Content="FOLDER MENU" Color="White" Font="font://f:Diamond_Large" Margins="10,0,0,0" />
-          <Scroller Orientation="Horizontal" FadeSize="20"  ScrollingData="[SD]" Navigation="RememberFocus" >
+          
+          <Panel Layout="HorizontalFlow">
+            <Children>
+              <Text Content="FOLDER MENU" Color="White" Font="font://f:Diamond_Large" Margins="10,0,150,0" />
+              <sb:SimpleButton Command="[Close]" Text="Close" Font="font://f:Diamond_Small" Size="150,40" />
+            </Children>
+          </Panel>
+          <Scroller Orientation="Vertical" FadeSize="20"  ScrollingData="[SD]" Navigation="RememberFocus" Margins="0,0,0,25" >
             <Children>
               <Panel MinimumSize="0,150">
                 <Layout>
-                  <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+                  <FlowLayout Orientation="Vertical" ItemAlignment="Center" Spacing="0,0"/>
                 </Layout>
                 <Children>
                   <me:DockItem Choice="[Folder.DisplayPrefs.ViewType]"      DisplayStr="VIEW BY" Bullet="image://i:Lines" />
@@ -81,11 +88,7 @@
               </Panel>
             </Children>
           </Scroller>
-          <Panel Layout="HorizontalFlow">
-            <Children>
-              <sb:SimpleButton Command="[Close]" Text="Close" Font="font://f:Diamond_Small" Size="150,40" />
-            </Children>
-          </Panel>
+          
           
         </Children>
       </Graphic>
@@ -95,13 +98,14 @@
 
   <!-- Dock Item Base Control -->
   <UI Name="DockItemBase">
-    <Properties>      
+    <Properties>
       <cor:String Name="DisplayStr" cor:String="$Required" />
       <cor:String Name="DisplayStr2" cor:String="" />
       <Image Name="Bullet" Image="image://i:StarFull"/>
       <Color Name="BGColor" Color="Transparent"/>
       <Vector3 Name="FocusScale" Vector3="1.1,1.1,1.1"/>
       <Vector3 Name="UnFocusScale" Vector3=".9,.9,.9"/>
+      <Size Name="Size" Size="450,55"/>
     </Properties>
 
     <Locals>
@@ -110,6 +114,86 @@
       <Color Name="FocusColor" Color="White" />
       <Font Name="Font" Font="font://f:Diamond_Medium" />
       <Font Name="FontS" Font="font://f:Diamond_Small" />
+
+    </Locals>
+
+    <Rules>
+      <Default Target="[Input.MakeTopmostOnFocus]" Value="true"/>
+      <Default Target="[Input.KeyInteractive]" Value="true" />
+      <Default Target="[Input.CreateInterestOnFocus]" Value="true" />
+
+      <Rule>
+        <Conditions>
+          <Modified Source="[Clicker.Invoked]"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Select"/>
+          <PlayAnimation Animation="animation://me:Spin" Target="[Icon]" />
+        </Actions>
+      </Rule>
+
+      <Rule ConditionLogicalOp="Or">
+        <Conditions>
+          <Equality Source="[Input.MouseFocus]" Value="true"/>
+          <Equality Source="[Input.KeyFocus]" Value="true"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Focus"/>
+          <Set Target="[LabelValue.Color]" Value="[FocusColor]" />
+          <Set Target="[LabelOption.Color]" Value="[FocusColor]" />
+          <Set Target="[Main.Scale]" Value="[FocusScale]" />
+          <Set Target="[Light.Visible]" Value="true" />
+          <Set Target="[ColorBox.Visible]" Value="false" />
+        </Actions>
+      </Rule>
+    </Rules>
+
+    <Content>
+      <Panel Name="Main" MinimumSize="[Size]" MaximumSize="[Size]"
+             Scale="[UnFocusScale]" CenterPointPercent=".5,.5,.5" >        
+        <Children>
+          <Graphic Name="bg" Content="image://i:DiamondFolderButton" Padding="25,10,5,5" MinimumSize="[Size]"
+                   MaximumSize="[Size]">
+            <Layout>
+              <FlowLayout Orientation="Horizontal" ItemAlignment="Center"/>
+            </Layout>
+            <Children>
+              <Graphic Name="Icon" Content="[Bullet]" MaximumSize="25,25" MinimumSize="25,25" Margins="0,0,25,0" />
+              <Text Name="LabelOption" Content="[DisplayStr]" Color="[Color]"
+                    MinimumSize="225,0" Font="[FontS]"/>              
+              <Text Name="LabelValue"  Content="[DisplayStr2]" Color="[Color]" Font="[Font]" />
+            </Children>
+          </Graphic>
+          <Graphic Name="Light" Content="image://me:RectLight" Layout="Fill"
+                   Margins="15,15,15,15" Visible="false" >
+            <Animations>
+              <Animation Animation="animation://me:GlowAnim" />
+            </Animations>
+          </Graphic>
+          <ColorFill Name="ColorBox" Content="[BGColor]" Layout="Fill" Margins="15,15,15,15" Visible="true" />
+        </Children>
+      </Panel>
+    </Content>
+  </UI>
+  
+  <UI Name="DockItemBase2">
+    <Properties>      
+      <cor:String Name="DisplayStr" cor:String="$Required" />
+      <cor:String Name="DisplayStr2" cor:String="" />
+      <Image Name="Bullet" Image="image://i:StarFull"/>
+      <Color Name="BGColor" Color="Transparent"/>
+      <Vector3 Name="FocusScale" Vector3="1.1,1.1,1.1"/>
+      <Vector3 Name="UnFocusScale" Vector3=".9,.9,.9"/>
+      <Size Name="Size" Size="200,135"/>
+    </Properties>
+
+    <Locals>
+      <ClickHandler Name="Clicker" />
+      <Color Name="Color" Color="Gray" />
+      <Color Name="FocusColor" Color="White" />
+      <Font Name="Font" Font="font://f:Diamond_Medium" />
+      <Font Name="FontS" Font="font://f:Diamond_Small" />
+      
     </Locals>
 
     <Rules>
@@ -144,11 +228,11 @@
     </Rules>
 
     <Content>
-      <Panel Name="Main" MinimumSize="200,135" MaximumSize="200,135"
+      <Panel Name="Main" MinimumSize="[Size]" MaximumSize="[Size]"
              Scale="[UnFocusScale]" CenterPointPercent=".5,.5,.5" >
         <Children>
-          <Graphic Name="bg" Content="image://i:DiamondFolderButton" Padding="5,10,5,5" MinimumSize="200,135"
-                   MaximumSize="200,135">
+          <Graphic Name="bg" Content="image://i:DiamondFolderButton" Padding="5,10,5,5" MinimumSize="[Size]"
+                   MaximumSize="[Size]">
             <Layout>
               <FlowLayout Orientation="Vertical" StripAlignment="Center" ItemAlignment="Center"/>
             </Layout>
@@ -226,6 +310,13 @@
   </UI>
 
 
+  <Animation Name="Spin" CenterPointPercent="0.5,0.5,0.5">
+    <Keyframes>
+      <RotateKeyframe Time="0" Value="0deg;0,1,0"/>
+      <RotateKeyframe Time=".6" Value="360deg;0,1,0"/>
+    </Keyframes>
+  </Animation>
+  
   <Animation Name="Grow" CenterPointPercent="0.5,0.5,0.5">
     <Keyframes>
       <ScaleKeyframe Time="0" Value="1,1,1"/>

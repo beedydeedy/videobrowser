@@ -72,6 +72,9 @@
           <Set Target="[FullDetailsTimer.Enabled]" Value="false"/>
         </Actions>
       </Changed>
+      
+      <!-- Extender Bindings -->
+      <Condition Source="[Application.RunningOnExtender]" ConditionOp="Equals" SourceValue="true" Target="[Backdrop.LayoutInput]" Value="global://dtb:LI_Bg_Extender" />
 
     </Rules>
     <Content>
