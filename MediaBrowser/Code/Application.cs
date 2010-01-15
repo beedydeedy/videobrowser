@@ -45,6 +45,7 @@ namespace MediaBrowser
             get { return singleApplicationInstance; }
         }
 
+        private bool directlyEnteredConfigPage = false;
         private static Application singleApplicationInstance;
         private MyHistoryOrientedPageSession session;
         private static object syncObj = new object();
@@ -340,6 +341,9 @@ namespace MediaBrowser
 
         public void Back()
         {
+            if (this.directlyEnteredConfigPage)
+                Close();
+
             session.BackPage();
         }
 
@@ -527,7 +531,7 @@ namespace MediaBrowser
                     if (entryPointPath.ToLower() == "configmb") //specialized case for config page
                     {
                         //OpenFolderPage((MediaBrowser.Library.FolderModel)ItemFactory.Instance.Create(this.RootFolder));
-                        OpenConfiguration(true);
+                        OpenConfiguration(true, true);
                     }
                     else
                     {
@@ -729,11 +733,18 @@ namespace MediaBrowser
             }
         }
 
+        public void OpenConfiguration(bool showFullOptions, bool fromDirectEntry)
+        {
+            this.directlyEnteredConfigPage = fromDirectEntry;
+
+            OpenConfiguration(showFullOptions);
+        }
+
         public void OpenConfiguration(bool showFullOptions)
         {
             Dictionary<string, object> properties = new Dictionary<string, object>();
             properties["Application"] = this;
-            properties["ShowFull"] = showFullOptions;
+            properties["ShowFull"] = showFullOptions;            
 
             if (session != null)
             {
