@@ -5,8 +5,8 @@
 
 <!-- We change the ProductVersion and ProductCode with each release                                      -->
 
-<?define Property_ProductVersion = "2.2.4.0" ?>
-<?define Property_ProductCode = "EB9956D3-1B9C-44ef-9C8F-ED90F7EEC1AA" ?>
+<?define Property_ProductVersion = "2.2.5.0" ?>
+<?define Property_ProductCode = "BFC218D7-5BCA-41a1-B585-E75E1DCD56A6" ?>
 
 <!-- The UpgradeCode always stays the same                                                               -->
 <?define Property_UpgradeCode = "1AA59629-46C2-42d5-AD06-534A20F68296" ?>
@@ -249,11 +249,11 @@
         <RemoveFile Id="RemItemsCache" Name="*.*" On="install" />
       </Component>
     </DirectoryRef>-->
-    <DirectoryRef Id="CacheFolder">
+    <!--<DirectoryRef Id="CacheFolder">
       <Component Id="ClearCacheDB" Guid="34E19004-53BF-4a27-A75A-1AC9CC310379" >
         <RemoveFile Id="RemCacheDB" Name="cache.db" On="install" />
       </Component>
-    </DirectoryRef>
+    </DirectoryRef>-->
 
 
     <!-- This is a list of features that are installed as a part of this product. In this case, there is -->
@@ -275,7 +275,7 @@
       <ComponentRef Id="OptionalStartupFolderShortcut" />
       <!--<ComponentRef Id="RemPlugins" />-->
       <!--<ComponentRef Id="ClearCache" />-->
-      <ComponentRef Id="ClearCacheDB" />
+      <!--<ComponentRef Id="ClearCacheDB" />-->
     </Feature>
     
 

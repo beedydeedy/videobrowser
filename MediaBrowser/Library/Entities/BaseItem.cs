@@ -61,7 +61,7 @@ namespace MediaBrowser.Library.Entities {
 
         public LibraryImage PrimaryImage {
             get {
-                if (this is Media || this is Folder)
+                if (this is Media || this is Folder || this is Person )
                     return GetImage(PrimaryImagePath, true);
                 else
                     return GetImage(PrimaryImagePath);
@@ -328,7 +328,6 @@ namespace MediaBrowser.Library.Entities {
                         Logger.ReportException("Failed to clear local image (its probably in use)", ex);
                     }
                 }
-                
             }
 
             bool changed = MetadataProviderHelper.UpdateMetadata(this, options);
