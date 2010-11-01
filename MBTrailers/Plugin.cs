@@ -13,7 +13,7 @@ namespace MBTrailers {
     public class Plugin : BasePlugin {
 
         internal const string PluginName = "Media Browser Trailers";
-        internal const string PluginDescription = "HD Trailers for MediaBrowser.";
+        internal const string PluginDescription = "HD Trailers for MediaBrowser.\n\nUnrestricted version is available to supporters.";
 
         internal const int ProxyPort = 8752;
 
@@ -29,7 +29,13 @@ namespace MBTrailers {
             
             var trailers = (kernel.ItemRepository.RetrieveItem(TrailersGuid) as MBTrailerFolder) ?? new MBTrailerFolder();
             trailers.Path = "";
-            trailers.Id = TrailersGuid;            
+            trailers.Id = TrailersGuid;
+            //validate sort value and fill in
+            //int sort = 0;
+            //int.TryParse(PluginOptions.Instance.SortOrder, out sort);
+            //if (sort > 0) trailers.SortName = sort.ToString("000");
+            //Logger.ReportInfo("MBTrailers Sort is: " + trailers.SortName);
+
             kernel.RootFolder.AddVirtualChild(trailers);
 
             isMC = AppDomain.CurrentDomain.FriendlyName.Contains("ehExtHost");
@@ -47,7 +53,7 @@ namespace MBTrailers {
 
                 int port = ProxyPort;
                 proxy = new HttpProxy(cachePath, port);
-                while (proxy.AlreadyRunning() && port < ProxyPort + 10)
+                while (proxy.AlreadyRunning() && port < ProxyPort + 50)
                 {
                     //try a different port if already running
                     port++;
@@ -61,7 +67,12 @@ namespace MBTrailers {
                 proxy.Start();
 
                 trailers.RefreshProxy();
+
+                //tell core our types are playable (for menus)
+                kernel.AddExternalPlayableItem(typeof(ITunesTrailer));
+                kernel.AddExternalPlayableFolder(typeof(MBTrailerFolder));
             }
+            Logger.ReportInfo("MBTrailers (version "+Version+") Plug-in loaded.");
      
         }
 
@@ -90,6 +101,14 @@ namespace MBTrailers {
             get
             {
                 return true;
+            }
+        }
+
+        public override Version TestedMBVersion
+        {
+            get
+            {
+                return new Version("2.2.9.0") ;
             }
         }
 

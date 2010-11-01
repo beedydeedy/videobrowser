@@ -125,7 +125,7 @@
                     </Grid>
                 </Grid>
             </TabItem>
-                <TabItem Header="display" x:Name="displayTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed" IsSelected="True">
+                <TabItem Header="display/playback" x:Name="displayTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed" IsSelected="True">
                     <Grid>
                         <GroupBox Header="General Display Settings" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,35,0,0" Height="170" Name="groupBox1" Width="270">
                             <Grid>
@@ -174,6 +174,19 @@
                                     <Hyperlink NavigateUri="http://community.mediabrowser.tv/permalinks/1368/how-do-i-show-the-weather-on-supported-themes" RequestNavigate="HandleRequestNavigate">Help?</Hyperlink>
                                 </TextBlock>
                                 
+                            </Grid>
+                        </GroupBox>
+                        <GroupBox Header="Resume" Height="100" Margin="301,289.76,0,0" Name="groupBox7" VerticalAlignment="Top" HorizontalAlignment="Left" Width="430">
+                            <Grid>
+                                <Label HorizontalAlignment="Left" Margin="8,9.24,0,36.76" Name="label10" Width="155">Min Resumable Length</Label>
+                                <Label Margin="183,9.24,188,36.76" Name="label11">Start</Label>
+                                <Label HorizontalAlignment="Right" Margin="0,9.24,47,36.76" Name="label12" Width="56.88">End</Label>
+                                <TextBox HorizontalAlignment="Left" Margin="23,34,0,17" Name="tbxMinResumeDuration" Width="33" PreviewTextInput="tbxMinResumeDuration_PreviewTextInput" LostFocus="tbxMinResumeDuration_LostFocus"  ToolTip="Any media less than this length will not save resume status" HorizontalContentAlignment="Right" />
+                                <Label Margin="62,32,0,14.38" Name="label13" HorizontalAlignment="Left" Width="47">Mins</Label>
+                                <Slider Margin="169,35.38,147,17" Name="sldrMinResumePct" Maximum="100" TickFrequency="5" TickPlacement="TopLeft" SmallChange="1" LargeChange="10" ToolTip="If you haven't watched this far into a video, it won't save resume status" ValueChanged="sldrMinResumePct_ValueChanged" />
+                                <Slider HorizontalAlignment="Right" LargeChange="10" Margin="0,35.38,13,17" Maximum="100" Name="sldrMaxResumePct" SmallChange="1" TickFrequency="5" TickPlacement="TopLeft" Width="100" ToolTip="If you have watched this much or more of a video, it will no longer save resume status" ValueChanged="sldrMaxResumePct_ValueChanged" />
+                                <Label HorizontalAlignment="Right" Margin="0,9.24,147,36.76" Name="lblMinResumePct" Width="43" HorizontalContentAlignment="Right">5%</Label>
+                                <Label HorizontalAlignment="Right" HorizontalContentAlignment="Right" Margin="0,9.24,13,36.76" Name="lblMaxResumePct" Width="43">5%</Label>
                             </Grid>
                         </GroupBox>
                     </Grid>
@@ -290,7 +303,7 @@
             </TabItem>
             <TabItem Header="help" Name="helpTab" FontSize="14" Visibility="Collapsed" IsSelected="True">
                 <Grid>
-                        <Label HorizontalAlignment="Right" Margin="0,10,20,0" HorizontalContentAlignment="Right" Name="lblVersion2" VerticalAlignment="Top" Width="112" Height="25">Version 0.0.0.0</Label>
+                        <Label HorizontalAlignment="Right" Margin="0,10,20,0" HorizontalContentAlignment="Right" Name="lblVersion2" VerticalAlignment="Top" Width="143" Height="25">Version 0.0.0.0</Label>
                         <GroupBox Header="Help &amp; Support" Margin="20,35,20,0" Height="210" FontSize="14" VerticalAlignment="Top">
                         <Grid>
                             <TextBlock Margin="10,10,10,0" VerticalAlignment="Top" Height="25">If you need any help, have a look at these resources:</TextBlock>
@@ -312,11 +325,12 @@
                     <GroupBox Header="About Media Browser" Margin="220,265,20,20" Height="142" FontSize="14" VerticalAlignment="Top">
                     <Grid>
                         <TextBlock Margin="10,10,0,0" VerticalAlignment="Top" Height="25" HorizontalAlignment="Left" Width="146"><Hyperlink NavigateUri="http://www.mediabrowser.tv" RequestNavigate="HandleRequestNavigate" Name="h5">www.mediabrowser.tv</Hyperlink></TextBlock>
-                        <TextBlock Margin="10,35,0,0" VerticalAlignment="Top" Height="25">Visit the official website...</TextBlock>
+                        <TextBlock Margin="10,35,0,56.38" HorizontalAlignment="Left" Width="177">Visit the official website...</TextBlock>
                         <TextBlock Margin="10,0,0,31.38" VerticalAlignment="Bottom" Height="25" HorizontalAlignment="Left" Width="95"><Hyperlink NavigateUri="http://www.mediabrowser.tv/donate" TextDecorations="None" RequestNavigate="HandleRequestNavigate" Name="h6"><Image Source="./Images/btn_donate.png"/></Hyperlink></TextBlock>
                         <TextBlock Margin="10,85,10,0" VerticalAlignment="Top" Height="25">If you like Media Browser, please consider making a donation!</TextBlock>
-                                <Label Margin="211,32,165,57" Name="label9">Supporter Key</Label>
-                                <TextBox Margin="211,58,31,36" Name="tbxSupporterKey" LostFocus="tbxSupporterKey_LostFocus" ToolTip="Paste the key from the email you received when you donated" />
+                                <Label Margin="0,5,165,0" Name="label9" HorizontalAlignment="Right" Width="120" Height="27.38" VerticalAlignment="Top">Supporter Key</Label>
+                                <TextBox Margin="0,31,31,0" Name="tbxSupporterKey" ToolTip="Paste the key from the email you received when you donated" Height="22.38" VerticalAlignment="Top" HorizontalAlignment="Right" Width="254" />
+                                <Button Margin="0,59,31,0" Name="btnValidateKey" HorizontalAlignment="Right" Width="75" Height="22.38" VerticalAlignment="Top" Click="btnValidateKey_Click">Save</Button>
                             </Grid>
                     </GroupBox>
                 </Grid>

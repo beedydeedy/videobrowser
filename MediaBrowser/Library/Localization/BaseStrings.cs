@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0013";
+        const string VERSION = "1.0014";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -83,7 +83,7 @@ namespace MediaBrowser.Library.Localization
         public string ConfigConfig = "Configuration";
         public string VersionConfig = "Version";
         public string MediaOptionsConfig = "Media Options";
-        public string ThemesConfig = "Themes";
+        public string ThemesConfig = "Theme Options";
         public string ParentalControlConfig = "Parental Control";
         public string ContinueConfig = "Continue";
         public string ResetDefaultsConfig = "Reset Defaults";
@@ -179,7 +179,7 @@ namespace MediaBrowser.Library.Localization
         public string PlayDetail = "Play";
         public string ResumeDetail = "Resume";
         public string RefreshDetail = "Refresh";
-        public string PlayTrailersDetail = "Play Trailer";
+        public string PlayTrailersDetail = "Trailer";
         public string CacheDetail = "Cache 2 xml";
         public string DeleteDetail = "Delete";
         public string IMDBRatingDetail = "IMDB Rating";
@@ -284,6 +284,7 @@ namespace MediaBrowser.Library.Localization
         public string ProfilerTimeProf = "{1} took {2} seconds.";
         public string RefreshProf = "Refresh";
         public string SetWatchedProf = "Set Watched {0}";
+        public string RefreshFolderProf = "Refresh Folder and all Children of";
         public string ClearWatchedProf = "Clear Watched {0}";
         public string FullRefreshProf = "Full Library Refresh";
         public string FullValidationProf = "Full Library Validation";

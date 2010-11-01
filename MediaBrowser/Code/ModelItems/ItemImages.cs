@@ -139,7 +139,14 @@ namespace MediaBrowser.Library
             {
                 if (!HasBackdropImage)
                 {
-                    return null;
+                    if (PhysicalParent != null)
+                    {
+                        return PhysicalParent.BackdropImages;
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
 
                 if (backdropImages == null)
@@ -189,7 +196,6 @@ namespace MediaBrowser.Library
         {
             if (!Config.Instance.RotateBackdrops) return; // only do this if we want to rotate
 
-            backdropImageIndex++;
             EnsureAllBackdropsAreLoaded();
             var images = new List<AsyncImageLoader>();
             lock (backdropImages)
@@ -201,11 +207,16 @@ namespace MediaBrowser.Library
             {
                 if (Config.Instance.RandomizeBackdrops)
                 {
-                    backdropImageIndex = randomizer.Next(images.Count);
+                    int lastOne = backdropImageIndex;
+                    while (backdropImageIndex == lastOne)
+                    {
+                        backdropImageIndex = randomizer.Next(images.Count);
+                    }
                 }
                 else
                 {
 
+                    backdropImageIndex++;
                     backdropImageIndex = backdropImageIndex % images.Count;
                 }
                 if (images[backdropImageIndex].Image != null)

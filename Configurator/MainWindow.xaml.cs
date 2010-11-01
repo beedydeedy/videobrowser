@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Net;
 
 
 using MediaBrowser;
@@ -62,7 +63,7 @@ namespace Configurator
             InitializeComponent();
             config = Kernel.Instance.ConfigData;
             LoadComboBoxes();
-            lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.Version;
+            lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
 
             //we're hiding the podcast and plugin detail panels until the user selects one
             infoPlayerPanel.Visibility = pluginPanel.Visibility = Visibility.Hidden;
@@ -388,6 +389,10 @@ namespace Configurator
                 ddlWeatherUnits.SelectedItem = "Fahrenheit";
             else
                 ddlWeatherUnits.SelectedItem = "Celsius";
+
+            tbxMinResumeDuration.Text = config.MinResumeDuration.ToString();
+            sldrMinResumePct.Value = config.MinResumePct;
+            sldrMaxResumePct.Value = config.MaxResumePct;
 
             //Parental Control
             cbxEnableParentalControl.IsChecked = config.ParentalControlEnabled;
@@ -1761,12 +1766,61 @@ sortorder: {2}
             }
         }
 
-        private void tbxSupporterKey_LostFocus(object sender, RoutedEventArgs e)
+        private void btnValidateKey_Click(object sender, RoutedEventArgs e)
         {
-            //if (sender == tbxSupporterKey)
+            Config.Instance.SupporterKey = tbxSupporterKey.Text.Trim();
+            if (ValidateKey("trailers")) //use trailers because it is the lowest level
             {
-                Config.Instance.SupporterKey = tbxSupporterKey.Text;
+                MessageBox.Show("Supporter key saved and validated.  Thank you for your support.", "Save Key");
             }
+            else
+            {
+                MessageBox.Show("Supporter key does not appear to be valid.  Please double check. Copy and paste from the email for best results.", "Supporter Key Invalid");
+            }
+        }
+
+        private bool ValidateKey(string feature)
+        {
+            this.Cursor = Cursors.Wait;
+            bool valid = false;
+            string path = "http://www.mediabrowser.tv/registration/registrations?feature=" + feature + "&key=" + Config.Instance.SupporterKey;
+            WebRequest request = WebRequest.Create(path);
+
+            using (var response = request.GetResponse()) using (Stream stream = response.GetResponseStream())
+            {
+                byte[] buffer = new byte[5];
+                stream.Read(buffer, 0, 5);
+                string res = System.Text.Encoding.ASCII.GetString(buffer).Trim();
+                valid = res.StartsWith("true");
+            }
+            this.Cursor = Cursors.Arrow;
+            return valid;
+        }
+
+        private void sldrMinResumePct_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            lblMinResumePct.Content = ((int)e.NewValue).ToString() + "%";
+            config.MinResumePct = (int)e.NewValue;
+            SaveConfig();
+        }
+
+        private void sldrMaxResumePct_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            lblMaxResumePct.Content = ((int)e.NewValue).ToString() + "%";
+            config.MaxResumePct = (int)e.NewValue;
+            SaveConfig();
+        }
+
+        private void tbxMinResumeDuration_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Int32.TryParse(tbxMinResumeDuration.Text, out config.MinResumeDuration);
+            SaveConfig();
+        }
+
+        private void tbxMinResumeDuration_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !Char.IsDigit(e.Text[0]);
+            base.OnPreviewTextInput(e);
         }
     }
 

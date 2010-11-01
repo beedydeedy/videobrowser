@@ -41,7 +41,6 @@ namespace MBTrailers {
             }
         }
 
-        private string _name;
         public override string Name {
             get {
                 return Plugin.PluginOptions.Instance.MenuName;
@@ -63,9 +62,16 @@ namespace MBTrailers {
         public override void  ValidateChildren()
         {
             if (!Plugin.PluginOptions.Instance.Changed && Math.Abs((lastUpdated - DateTime.Now).TotalMinutes) < UpdateMinuteInterval) return;
-            //Plugin.PluginOptions.Instance.Changed = false; //reset this
-            //Plugin.PluginOptions.Save();
-            Logger.ReportInfo("Last Updated: "+lastUpdated+" Changed: "+Plugin.PluginOptions.Instance.Changed+" Trailers Validating Children...");
+            Logger.ReportInfo("MBTrailers Last Updated: "+lastUpdated+" Changed: "+Plugin.PluginOptions.Instance.Changed+" Trailers Validating Children...");
+            Plugin.PluginOptions.Instance.Changed = false; //reset this
+            try
+            {
+                Plugin.PluginOptions.Save();
+            }
+            catch
+            {
+                Logger.ReportInfo("Unable to save MBTrailers configuration");
+            }
 
             try {
                 // load the xml
@@ -129,7 +135,10 @@ namespace MBTrailers {
                             switch (reader.Name) {
                                 case "movieinfo":
                                     if (trailer != null)
+                                    {
+                                        //found a new entry - add last one
                                         children.Add(trailer);
+                                    }
 
                                     trailer = new ITunesTrailer();
 
