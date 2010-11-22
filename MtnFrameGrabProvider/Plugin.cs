@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MediaBrowser.Library;
 using System.IO;
+using System.Diagnostics;
 using MediaBrowser.Library.Configuration;
 using System.Reflection;
 using MediaBrowser.Library.Plugins;
@@ -12,47 +13,37 @@ using ICSharpCode.SharpZipLib.Zip;
 using MediaBrowser.Library.Extensions;
 
 namespace MtnFrameGrabProvider {
-    public class Plugin : BasePlugin
-    {
+    public class Plugin : BasePlugin {
+
         internal const string PluginName = "High Quality Thumbnails";
         internal const string PluginDescription = "High quality automatic thumbnails powered by the mtn project. http://moviethumbnail.sourceforge.net";
+        internal const string includedMtnVersion = "2010.11.10";
         public static PluginConfiguration<PluginOptions> PluginOptions { get; set; }
 
-        static Plugin()
-        {
-            try
-            {
+        static Plugin() {
+            try { 
                 MtnPath = Path.Combine(ApplicationPaths.AppPluginPath, "mtn");
-            }
-            catch (Exception)
-            {
+            } catch (Exception) {
                 // mono workaround 
                 MtnPath = "temp";
             }
-            MtnExe = Path.Combine(MtnPath, "mtn.exe");
-            FrameGrabsPath = Path.Combine(MtnPath, "FrameGrabs");
-
+            MtnExe = Path.Combine(MtnPath, "mtn.exe");           
         }
 
         public static readonly string MtnPath;
         public static readonly string MtnExe;
-        public static readonly string FrameGrabsPath;
 
-        public override void Init(Kernel kernel)
-        {
+        public override void Init(Kernel kernel) {
             PluginOptions = new PluginConfiguration<PluginOptions>(kernel, this.GetType().Assembly);
             PluginOptions.Load();
 
             EnsureMtnIsExtracted();
-            deleteMtnCache();
-            createMtnCache();
 
             kernel.MetadataProviderFactories.Add(new MetadataProviderFactory(typeof(FrameGrabProvider)));
 
-            kernel.ImageResolvers.Add((path, canBeProcessed, item) =>
+            kernel.ImageResolvers.Add((path,canBeProcessed,item) =>
             {
-                if (path.ToLower().StartsWith("mtn"))
-                {
+                if (path.ToLower().StartsWith("mtn")) {
                     return new GrabImage();
                 }
                 return null;
@@ -81,8 +72,7 @@ namespace MtnFrameGrabProvider {
             get { return PluginName; }
         }
 
-        public override string Description
-        {
+        public override string Description {
             get { return PluginDescription; }
         }
 
@@ -100,19 +90,64 @@ namespace MtnFrameGrabProvider {
                 return new System.Version(2, 2, 4, 0);
             }
         }
+        
         public static void EnsureMtnIsExtracted()
         {
+            string name = "MtnFrameGrabProvider.mtn.zip";
+            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name); 
+            bool needsToExtractMtn = false;
+           
+            /*
+            if (!Directory.Exists(MtnPath)) {
+                Directory.CreateDirectory(MtnPath);
+                //Directory.CreateDirectory(FrameGrabsPath);
+                
+                using (var zip = new ZipInputStream(stream)) {
 
-            if (!Directory.Exists(MtnPath))
+                    ZipEntry entry; 
+                    while ((entry = zip.GetNextEntry()) != null) {
+                        string destination = Path.Combine(MtnPath, entry.Name);
+                        File.WriteAllBytes(destination, zip.ReadAllBytes());
+                    }
+                }
+            } else {
+                FileVersionInfo mtnVersion = FileVersionInfo.GetVersionInfo(MtnExe);
+                Logger.ReportInfo("Using mtn version:{0}", mtnVersion.FileVersion);
+                if (mtnVersion.FileVersion == null)
+                    Logger.ReportInfo("Using a pre-versioning copy of mtn.");
+            }
+            */
+
+            if (!Directory.Exists(MtnPath)) 
             {
                 Directory.CreateDirectory(MtnPath);
+                needsToExtractMtn = true;
+            } 
+            else 
+            {
+                FileVersionInfo mtnVersion = FileVersionInfo.GetVersionInfo(MtnExe);
+                Logger.ReportInfo("Using mtn version:{0}", mtnVersion.FileVersion);
 
-                string name = "MtnFrameGrabProvider.mtn.zip";
-                var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
+                if (mtnVersion.FileVersion != null) 
+                {
+                    if (mtnVersion.FileVersion.ToString() != includedMtnVersion) 
+                    {
+                        Logger.ReportInfo("mtn too old!");
+                        needsToExtractMtn = true;
+                    }
+                } 
+                else 
+                {
+                    Logger.ReportInfo("Using pre-versioning copy of mtn!");
+                    needsToExtractMtn = true;
+                }
 
+            }
+
+            if (needsToExtractMtn) 
+            {
                 using (var zip = new ZipInputStream(stream))
                 {
-
                     ZipEntry entry;
                     while ((entry = zip.GetNextEntry()) != null)
                     {
@@ -122,47 +157,8 @@ namespace MtnFrameGrabProvider {
                 }
             }
         }
+        
 
-        public static void deleteMtnCache()
-        {
-            if (Directory.Exists(FrameGrabsPath))
-            {
-                Logger.ReportInfo(PluginName + ": Deleting FrameGrabs folder");
-                try
-                {
-                    Directory.Delete(FrameGrabsPath, true);
-                }
-                catch
-                {
-                    // well at least we tried
-                }
-                //try
-                //{
-                //    foreach (var file in Directory.GetFiles(FrameGrabsPath, "*.jpg"))
-                //    {
-                //        File.Delete(file);
-                //    }
-                //}
-                //catch
-                //{
-                //    // well at least we tried
-                //}
-            }
-        }
-        public static void createMtnCache()
-        {
-            if (!Directory.Exists(FrameGrabsPath))
-            {
-                Logger.ReportInfo(PluginName + ": Creating FrameGrabs folder");
-                try
-                {
-                    Directory.CreateDirectory(FrameGrabsPath);
-                }
-                catch
-                {
-                    // well at least we tried
-                }
-            }
-        }
+
     }
 }
