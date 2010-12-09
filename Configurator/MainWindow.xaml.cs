@@ -45,6 +45,7 @@ namespace Configurator
         ConfigData config;
         Ratings ratings = new Ratings();
         PermissionDialog waitWin;
+        PopupMsg PopUpMsg;
 
         public MainWindow()
         { 
@@ -60,6 +61,7 @@ namespace Configurator
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
             
             InitializeComponent();
+            PopUpMsg = new PopupMsg(alertText);
             config = Kernel.Instance.ConfigData;
             LoadComboBoxes();
             lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
@@ -106,43 +108,25 @@ namespace Configurator
             podcastDetails(false);
             SaveConfig();
 
-            PluginManager.Init();
+
+            Async.Queue("Plugin Init", () =>
+            {
+                PluginManager.Instance.Init();
+                while (!PluginManager.Instance.PluginsLoaded) { } //wait for plugins to load
+                if (PluginManager.Instance.UpgradesAvailable())
+                    Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
+                    {
+                        PopUpMsg.DisplayMessage("Some of your plug-ins have upgrades available.");
+                    }));
+            });
+
 
             Async.Queue("Startup Validations", () =>
             {
-
                 RefreshEntryPoints(false);
                 ValidateMBAppDataFolderPermissions();
-
-
-                //wait for plugins to get loaded and then go see if we have updates
-                while (!PluginManager.Instance.PluginsLoaded) { }
-                if (pluginUpgradesAvailable()) MessageBox.Show("Some of your installed plug-ins have newer versions available.  You should upgrade these plugins from the 'Plug-ins' tab.\n\nYour current versions may not work with this version of MediaBrowser.", "Upgrade Plugins");
-            },() =>
-                {
-                    //be sure latest version gets selected properly
-                    Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
-                    {
-                        pluginList_SelectionChanged(this, null);
-                    }));
-                });
+            });
         }
-
-        private bool pluginUpgradesAvailable()
-        {
-            //Look to see if any of our installed plugins have upgrades available
-            foreach (IPlugin plugin in Kernel.Instance.Plugins)
-            {
-                System.Version v = PluginManager.Instance.GetLatestVersion(plugin);
-                System.Version rv = PluginManager.Instance.GetRequiredVersion(plugin) ?? new System.Version(0, 0, 0, 0);
-                if (v != null)
-                {
-                    if (v > plugin.Version && rv <= Kernel.Instance.Version) return true;
-                }
-            }
-            return false;
-        }
-
 
         public void ValidateMBAppDataFolderPermissions()
         {
@@ -874,7 +858,8 @@ sortorder: {2}
             {
                 IPlugin plugin = pluginList.SelectedItem as IPlugin;
                 System.Version v = PluginManager.Instance.GetLatestVersion(plugin);
-                System.Version rv = PluginManager.Instance.GetRequiredVersion(plugin) ?? new System.Version(0,0,0,0);
+                System.Version rv = plugin.RequiredMBVersion;
+                System.Version bv = PluginManager.Instance.GetBackedUpVersion(plugin);
                 //enable the remove button if a plugin is selected.
                 removePlugin.IsEnabled = true;
 
@@ -897,6 +882,22 @@ sortorder: {2}
                     latestPluginVersion.Content = "Unknown";
                     upgradePlugin.IsEnabled = false;
                 }
+                //show backup if exists
+                if (bv != null)
+                {
+                    lblBackedUpVersion.Content = bv.ToString();
+                    btnRollback.IsEnabled = (bv != plugin.Version);
+                    rollbackPanel.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    btnRollback.IsEnabled = false;
+                    rollbackPanel.Visibility = Visibility.Hidden;
+                }
+            }
+            else
+            {
+                pluginPanel.Visibility = Visibility.Hidden;
             }
         }
 
@@ -904,8 +905,8 @@ sortorder: {2}
             if (pluginList.SelectedItem != null)
             {
                 IPlugin plugin = pluginList.SelectedItem as IPlugin;
-                //get our original source so we can upgrade...
-                IPlugin newPlugin = PluginManager.Instance.AvailablePlugins.Find(plugin);
+                //get our latest version so we can upgrade...
+                IPlugin newPlugin = PluginManager.Instance.AvailablePlugins.Find(plugin, PluginManager.Instance.GetLatestVersion(plugin));
                 if (newPlugin != null)
                 {
                     PluginInstaller p = new PluginInstaller();
@@ -1651,18 +1652,25 @@ sortorder: {2}
                 try
                 {
                     this.Cursor = Cursors.Wait;
-                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items")))
-                        Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"), true);
-                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children")))
-                        Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"), true);
-                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata")))
-                        Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"), true);
-                    File.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "cache.db"));
+                    if (config.EnableExperimentalSqliteSupport)
+                    {
+                        Kernel.Instance.ItemRepository.ClearEntireCache();
+                    }
+                    else
+                    {
 
-                    //recreate the directories
-                    Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"));
-                    Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"));
-                    Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"));
+                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items")))
+                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"), true);
+                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children")))
+                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"), true);
+                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata")))
+                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"), true);
+
+                        //recreate the directories
+                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"));
+                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"));
+                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"));
+                    }
                     //force MB to re-build library next time
                     config.LastFullRefresh = DateTime.MinValue;
                     config.Save();
@@ -1700,9 +1708,9 @@ sortorder: {2}
             {
                 try
                 {
-                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "playstate")))
+                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate")))
                     {
-                        string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "playstate"));
+                        string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate"));
                         foreach (string file in files)
                         {
                             File.Delete(file);
@@ -1720,7 +1728,7 @@ sortorder: {2}
             {
                 try
                 {
-                    string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "display"));
+                    string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "display"));
                     foreach (string file in files) {
                         File.Delete(file);
                     }
@@ -1820,6 +1828,29 @@ sortorder: {2}
         {
             e.Handled = !Char.IsDigit(e.Text[0]);
             base.OnPreviewTextInput(e);
+        }
+
+        private void btnRollback_Click(object sender, RoutedEventArgs e)
+        {
+            IPlugin plugin = pluginList.SelectedItem as IPlugin;
+            if (plugin == null) return;
+            if (MessageBox.Show("Are you sure you want to overwrite your current version of "+plugin.Name, "Rollback Plug-in", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                this.Cursor = Cursors.Wait;
+                if (PluginManager.Instance.RollbackPlugin(plugin))
+                {
+                    PluginManager.Instance.RefreshInstalledPlugins();
+                    pluginList.SelectedIndex = 0;
+                    this.Cursor = Cursors.Arrow;
+                    PopUpMsg.DisplayMessage("Plugin " + plugin.Name + " rolled back.");
+                }
+                else
+                {
+                    Logger.ReportError("Error attempting to rollback plugin " + plugin.Name);
+                    this.Cursor = Cursors.Arrow;
+                    MessageBox.Show("Error attempting to rollback plugin " + plugin.Name, "Rollback Failed");
+                }
+            }
         }
     }
 

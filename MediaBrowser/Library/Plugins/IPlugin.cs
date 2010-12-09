@@ -22,5 +22,8 @@ namespace MediaBrowser.Library.Plugins {
         bool IsConfigurable { get; }
         void Configure();
         bool InstallGlobally { get; }
+        bool UpdateAvail { get; set; }
+        bool Installed { get; set; }
+        string ListDisplayString { get; }
     }
 }

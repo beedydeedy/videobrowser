@@ -60,6 +60,23 @@ namespace MediaBrowser.Library {
         static object sync = new object();
         static Kernel kernel;
 
+        public bool MajorActivity
+        {
+            get
+            {
+                if (Application.CurrentInstance != null)
+                    return Application.CurrentInstance.Information.MajorActivity;
+                else
+                    return false;
+            }
+            set
+            {
+                if (Application.CurrentInstance != null)
+                if (Application.CurrentInstance.Information.MajorActivity != value)
+                    Application.CurrentInstance.Information.MajorActivity = value;
+            }
+        }
+
         private static MultiLogger GetDefaultLogger(ConfigData config) {
             var logger = new MultiLogger();
 
@@ -327,8 +344,8 @@ namespace MediaBrowser.Library {
         }
 
         static System.Reflection.Assembly OnAssemblyResolve(object sender, ResolveEventArgs args) {
-            Logger.ReportInfo(args.Name + " is being resolved!");
             if (args.Name.StartsWith("MediaBrowser,")) {
+                Logger.ReportInfo("Plug-in reference to "+args.Name + " is being linked to version "+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
                 return typeof(Kernel).Assembly;
             }
             return null;
@@ -601,28 +618,36 @@ namespace MediaBrowser.Library {
         }
 
         public void InstallPlugin(string path, bool globalTarget) {
-            InstallPlugin(path, globalTarget, null, null, null);
+            InstallPlugin(path, Path.GetFileName(path), globalTarget, null, null, null);
         }
 
         public void InstallPlugin(string path, bool globalTarget,
+                MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
+                MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
+                MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB)
+        {
+            InstallPlugin(path, Path.GetFileName(path), globalTarget, updateCB, doneCB, errorCB);
+        }
+
+        public void InstallPlugin(string sourcePath, string targetName, bool globalTarget,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB) {
             string target;
             if (globalTarget) {
                 //install to ehome for now - can change this to GAC if figure out how...
-                target = Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", Path.GetFileName(path)));
+                target = Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", targetName));
                 //and put our pointer file in "plugins"
-                File.Create(Path.Combine(ApplicationPaths.AppPluginPath, Path.ChangeExtension(Path.GetFileName(path), ".pgn")));
+                File.Create(Path.Combine(ApplicationPaths.AppPluginPath, Path.ChangeExtension(Path.GetFileName(sourcePath), ".pgn")));
             }
             else {
-                target = Path.Combine(ApplicationPaths.AppPluginPath, Path.GetFileName(path));
+                target = Path.Combine(ApplicationPaths.AppPluginPath, targetName);
             }
 
-            if (path.ToLower().StartsWith("http")) {
+            if (sourcePath.ToLower().StartsWith("http")) {
                 // Initialise Async Web Request
                 int BUFFER_SIZE = 1024;
-                Uri fileURI = new Uri(path);
+                Uri fileURI = new Uri(sourcePath);
 
                 WebRequest request = WebRequest.Create(fileURI);
                 Network.WebDownload.State requestState = new Network.WebDownload.State(BUFFER_SIZE, target);
@@ -635,7 +660,7 @@ namespace MediaBrowser.Library {
                 IAsyncResult result = (IAsyncResult)request.BeginGetResponse(new AsyncCallback(ResponseCallback), requestState);
             }
             else {
-                File.Copy(path, target);
+                File.Copy(sourcePath, target, true);
                 InitialisePlugin(target);
             }
 
