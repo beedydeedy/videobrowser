@@ -53,6 +53,12 @@ namespace MediaBrowser.Library.Plugins {
             set;
         }
 
+        public string SourceFilename
+        {
+            get;
+            set;
+        }
+
         public virtual bool IsConfigurable
         {
             get
@@ -70,5 +76,10 @@ namespace MediaBrowser.Library.Plugins {
             get;
             set;
         }
+
+        public virtual bool ServiceOnly { get; set; }
+		public virtual bool Installed { get; set; }
+        public virtual bool UpdateAvail { get; set; }
+        public string ListDisplayString { get { return Name + " (v" + Version + ")"; } }
     }
 }

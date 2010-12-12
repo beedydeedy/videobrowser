@@ -100,6 +100,8 @@ namespace MediaBrowser.Library.Plugins {
             get { return Path.GetFileName(filename); } 
         }
 
+        public bool ServiceOnly { get { return pluginInterface.ServiceOnly; } }
+
         public void Delete() {
             File.Delete(filename);
             if (this.InstallGlobally)
@@ -117,6 +119,23 @@ namespace MediaBrowser.Library.Plugins {
         public virtual bool InstallGlobally
         {
             get { return pluginInterface.InstallGlobally; }
+        }
+
+        public bool Installed
+        {
+            get { return pluginInterface.InstallGlobally; }
+            set { pluginInterface.Installed = value; }
+        }
+
+        public bool UpdateAvail
+        {
+            get { return pluginInterface.UpdateAvail; }
+            set { pluginInterface.UpdateAvail = value; }
+        }
+
+        public string ListDisplayString
+        {
+            get { return pluginInterface.ListDisplayString; }
         }
 
         public virtual void Configure()

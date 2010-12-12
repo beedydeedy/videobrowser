@@ -148,11 +148,18 @@ namespace MediaBrowser
         public int MinResumePct = 10; //if this far or less into video, don't resume
         public int MaxResumePct = 90; //if this far or more into video, don't resume
 
+        public bool YearSortAsc = false; //true to sort years in ascending order
+
+        public bool AutoScrollText = false; //Turn on/off Auto Scrolling Text (typically for Overviews)
+
         [Comment("Cache all images in memory so navigation is faster, consumes a lot more memory")]
         public bool CacheAllImagesInMemory = false;
 
         [Comment("The frequency at which we will force a full refresh of the library (in hours)")]
         public int FullRefreshInterval = 24;
+
+        [Comment("The hour of day full refresh is supposed to run")]
+        public int FullRefreshPreferredHour = 2;
 
         [Comment("The delay (in seconds) before we start validating library items. This allows sleeping drives and servers to come alive")]
         public int ValidationDelay = 0;
@@ -160,7 +167,7 @@ namespace MediaBrowser
         [Comment("The last time a full refresh was done.")]
         public DateTime LastFullRefresh =  DateTime.MinValue;
 
-        public List<string> PluginSources = new List<string>() { "http://www.mediabrowser.tv/plugins/plugin_info.xml" };
+        public List<string> PluginSources = new List<string>() { "http://www.mediabrowser.tv/plugins/multi/plugin_info.xml" };
 
         public class ExternalPlayer
         {

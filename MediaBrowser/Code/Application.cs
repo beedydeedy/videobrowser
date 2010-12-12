@@ -540,32 +540,7 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
-                    //kick off full refresh if interval has passed
-                    if (Config.LastFullRefresh < DateTime.Now.AddHours(-(Config.FullRefreshInterval)))
-                    {
-                        Async.Queue("Full Refresh", () =>
-                        {
-                            using (new Profiler(CurrentInstance.StringData("FullRefreshProf")))
-                            {
-                                try
-                                {
-
-                                    if (!IsInEntryPoint)
-                                    {
-                                        // only refresh for the root entry, this will help speed things up
-                                        FullRefresh(this.RootFolder, MetadataRefreshOptions.Default);
-                                        Config.LastFullRefresh = DateTime.Now;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Logger.ReportException("Failed to refresh library! ", ex);
-                                    Debug.Assert(false, "Full refresh thread should never crash!");
-                                }
-                            }
-                        }, 20 * 1000);
-                    }
-                    else Logger.ReportInfo("Not Refreshing Library.  Interval of "+Config.FullRefreshInterval+"hrs has not passed.  Last Refresh: "+Config.LastFullRefresh);
+                    // full refresh moved to the service
 
                     //check for alternate entry point
                     this.entryPointPath = EntryPointResolver.EntryPointPath;
@@ -637,7 +612,7 @@ namespace MediaBrowser
 
         void FullRefresh(Folder folder, MetadataRefreshOptions options)
         {
-            Information.MajorActivity = true;
+            Kernel.Instance.MajorActivity = true;
             Information.AddInformationString(CurrentInstance.StringData("FullRefreshMsg"));
             folder.RefreshMetadata(options);
 
@@ -661,7 +636,7 @@ namespace MediaBrowser
             }
 
             Information.AddInformationString(CurrentInstance.StringData("FullRefreshFinishedMsg"));
-            Information.MajorActivity = false;
+            Kernel.Instance.MajorActivity = false;
         }
 
         void RunActionRecursively(Folder folder, Action<BaseItem> action)

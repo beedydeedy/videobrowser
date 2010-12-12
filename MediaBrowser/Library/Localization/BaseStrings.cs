@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0014";
+        const string VERSION = "1.0016";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -63,7 +63,7 @@ namespace MediaBrowser.Library.Localization
         public string UnlockPeriodHoursConfigDesc = "The Amount of Time (in Hours) Before the Library Will Automatically Re-Lock.";
         public string EnterNewPINConfigDesc = "Change the Global Security Code.";
         public string ContinueConfigDesc = "Return to the Previous Screen.  (All Changes Are Saved Automatically)";
-        public string ResetDefaultsConfigDesc = "Reset Configuration Items to Their Default Values.  USE WITH CAUTION - Setings Will Be Overwritten.";
+        public string ResetDefaultsConfigDesc = "Reset Configuration Items to Their Default Values.  USE WITH CAUTION - Settings Will Be Overwritten.";
         public string ClearCacheConfigDesc = "Delete the Internal Data Files MediaBrowser Uses and Cause Them to be Re-built.";
         public string UnlockConfigDesc = "Temporarily Disable Parental Control for the Entire Library.  Will Re-Lock Automatically.";
         public string AssumeWatchedIfOlderThanConfigDesc = "Mark All Items Older Than This as Watched.";
@@ -80,6 +80,7 @@ namespace MediaBrowser.Library.Localization
         public string UpdateLibraryConfigDesc = "Update information on the items in your library.";
         public string BackdropRotationIntervalConfigDesc = "Seconds between Backdrop Rotations.";
         public string BackdropTransitionIntervalConfigDesc = "Fade in seconds for the backdrop transition animation.";
+        public string AutoScrollTextConfigDesc = "Turn on Automatically Scrolling Overviews.";
 
 
         //Config Panel
@@ -157,6 +158,8 @@ namespace MediaBrowser.Library.Localization
         public string BackdropSettingsConfig = "Backdrop Settings";
         public string BackdropRotationIntervalConfig = "Rotation Time";
         public string BackdropTransitionIntervalConfig = "Transition Time";
+        public string AutoScrollTextConfig = "Auto Scroll Overview";
+        public string SortYearsAscConfig = "Sort by Year in Ascending Order";
 
 
 
@@ -284,6 +287,7 @@ namespace MediaBrowser.Library.Localization
         public string Playstr = "Play";
         public string MinutesStr = "mins"; //Minutes abbreviation
         public string KBsStr = "Kbps";  //Kilobytes per second
+        public string FrameRateStr = "fps";  //Frames per second
 
         //Profiler
         public string WelcomeProf = "Welcome to Media Browser";
