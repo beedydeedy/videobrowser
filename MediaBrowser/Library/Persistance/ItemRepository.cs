@@ -155,12 +155,6 @@ namespace MediaBrowser.Library {
             return null;
         }
 
-        public List<BaseItem> RetrieveSubIndex(string childTable, string property, object value)
-        {
-            return null;
-        }
-
-
         public PlaybackStatus RetrievePlayState(Guid id) {
             return playbackStatus[id]; 
         }

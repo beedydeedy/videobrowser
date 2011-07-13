@@ -75,12 +75,6 @@ namespace MediaBrowser.Library.Persistance {
             return repository.RetrieveIndex(folder, property, constructor);
         }
 
-        public List<BaseItem> RetrieveSubIndex(string childTable, string property, object value)
-        {
-            return repository.RetrieveSubIndex(childTable, property, value);
-        }
-
-
         // Do not memoize these calls, as they are shared.
         public PlaybackStatus RetrievePlayState(Guid id) {
             return repository.RetrievePlayState(id); 

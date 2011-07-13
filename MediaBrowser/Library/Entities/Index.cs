@@ -77,27 +77,7 @@ namespace MediaBrowser.Library.Entities {
             this.shadowItem = item;
         }
 
-        public Index(BaseItem item, string childTable, string property)
-        {
-            this.children = null;
-            this.Id = Guid.NewGuid();
-            this.indexProperty = property;
-            this.childTableName = childTable;
-            this.shadowItem = item;
-        }
-
-        protected override List<BaseItem> ActualChildren
-        {
-            get
-            {
-                if (children == null)
-                {
-                    children = Kernel.Instance.ItemRepository.RetrieveSubIndex(childTableName, indexProperty, this.Name);
-                }
-
-                return children;
-            }
-        }
+        protected override List<BaseItem> ActualChildren { get { return children; } }
 
         public override void ValidateChildren() {
             // do nothing
