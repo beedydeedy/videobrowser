@@ -197,110 +197,44 @@ namespace MediaBrowser.Library.Entities {
                 .Select(s => func(s));
         }
 
-        public IList<Index> IndexBy(IndexType indexType) {
+        public List<BaseItem> IndexBy(IndexType indexType) {
 
             if (indexType == IndexType.None) throw new ArgumentException("Index type should not be none!");
-            Func<IShow, IEnumerable<BaseItem>> indexingFunction = null;
-            bool allowEpisodes = false;
+
+            List<BaseItem> ret = null;
+            string property = "";
 
             switch (indexType) {
                 case IndexType.Actor:
-                    var ret2 = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Actors", a => Person.GetPerson(a));
-                    //build in images
-                    Async.Queue("Index image builder", () =>
-                    {
-                        foreach (Index item in ret2)
-                        {
-                            item.RefreshMetadata();
-                        }
-                    });
-                    return ret2;
-                    indexingFunction = show =>
-                        show.Actors == null ? null : show.Actors.Select(a => (BaseItem)a.Person);
+                    property = "Actors";
+                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Actors", a => Person.GetPerson(a));
                     break;
 
                 case IndexType.Director:
-                    indexingFunction = show => MapStringsToBaseItems(show.Directors, d => Person.GetPerson(d));
+                    property = "Directors";
+                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Directors", d => Person.GetPerson(d));
                     break;
 
-
                 case IndexType.Genre:
-                    var ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Genres", g => Genre.GetGenre(g));
-                    //build in images
-                    Async.Queue("Index image builder", () =>
-                    {
-                        foreach (Index item in ret)
-                        {
-                            item.RefreshMetadata();
-                        }
-                    });
-                    return ret;
-                    indexingFunction = show => MapStringsToBaseItems(show.Genres, g => Genre.GetGenre(g));
+                    property = "Genres";
+                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Genres", g => Genre.GetGenre(g));
                     break;
 
                 case IndexType.Year:
-                    indexingFunction = show =>
-                        show.ProductionYear == null ? null : new BaseItem[] { Year.GetYear(show.ProductionYear.ToString()) };
-                    allowEpisodes = true;
+                    property = "ProductionYear";
+                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "ProductionYear", y => Year.GetYear(y));
                     break;
                 case IndexType.Studio:
-                    indexingFunction = show => MapStringsToBaseItems(show.Studios, s => Studio.GetStudio(s));
+                    property = "Studios";
+                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Studios", s => Studio.GetStudio(s));
                     break;
 
                 default:
                     break;
             }
-            BaseItem unknown = UnknownItem(indexType);
-
-            var index = new Dictionary<BaseItem, List<BaseItem>>(new BaseItemIndexComparer());
-            foreach (var item in RecursiveChildren) {
-                IShow show = item as IShow;
-                IEnumerable<BaseItem> subIndex = null;
-                if (show != null) {
-                    subIndex = indexingFunction(show);
-                }
-                bool added = false;
-
-                if (subIndex != null) {
-                    foreach (BaseItem innerItem in subIndex) {
-                        if ((allowEpisodes && !(innerItem is Series)) || (!(innerItem is Episode) && !(innerItem is Season))) //exclude episodes/seasons as their series will be there
-                        {
-                            AddItemToIndex(index, innerItem, item);
-                            added = true;
-                        }
-                    }
-                }
-
-                if (!added && item is IShow && ((allowEpisodes && !(item is Series)) || (!allowEpisodes && !(item is Episode) && !(item is Season))))
-                {
-                    AddItemToIndex(index, unknown, item);
-                }
-
-            }
-
-            List<Index> sortedIndex = new List<Index>();
-
-            sortedIndex.AddRange(
-                index
-                    .Select(pair => new Index(pair.Key, pair.Value.Distinct(i => i.Id).ToList()))
-                );
 
 
-            sortedIndex.Sort((x, y) =>
-            {
-                return x.Name.CompareTo(y.Name);
-            });
-
-            //build in images
-            Async.Queue("Index image builder", () =>
-            {
-                foreach (Index item in sortedIndex)
-                {
-                    item.RefreshMetadata();
-                }
-            });
-
-            return sortedIndex;
+            return ret;
         }
 
         private static BaseItem UnknownItem(IndexType indexType) {

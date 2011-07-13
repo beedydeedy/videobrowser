@@ -60,12 +60,18 @@ namespace MediaBrowser.Library.Persistance {
             return SafeFunc(() => repository.RetrieveChildren(id));
         }
 
-        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
         {
             return SafeFunc(() =>repository.RetrieveIndex(folder, property, constructor));
         }
 
-        public PlaybackStatus RetrievePlayState(Guid id) {
+        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        {
+            SafeAction(() =>repository.FillSubIndexes(folder, children, property));
+        }
+
+        public PlaybackStatus RetrievePlayState(Guid id)
+        {
             return SafeFunc(() => repository.RetrievePlayState(id));
         }
 

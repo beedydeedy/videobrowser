@@ -259,7 +259,9 @@ namespace MediaBrowser.Code.ModelItems {
                     folderIsIndexed = true;
                     lock (this)
                     {
-                        currentChildren = folder.IndexBy(indexType).Select(i => (BaseItem)i).ToList();
+                        currentChildren = folder.IndexBy(indexType); //.Select(i => (BaseItem)i).ToList();
+                        Async.Queue("Index Builder", () => Kernel.Instance.ItemRepository.FillSubIndexes(this.folder, currentChildren, "Actors"),() =>folder_ChildrenChanged(this, null));
+                        
                     }
                 }
 

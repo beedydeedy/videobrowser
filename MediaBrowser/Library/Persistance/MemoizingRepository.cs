@@ -70,9 +70,14 @@ namespace MediaBrowser.Library.Persistance {
             return Memoize(id, fullChildren, repository.RetrieveChildren);
         }
 
-        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
         {
             return repository.RetrieveIndex(folder, property, constructor);
+        }
+
+        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        {
+            repository.FillSubIndexes(folder, children, property);
         }
 
         // Do not memoize these calls, as they are shared.

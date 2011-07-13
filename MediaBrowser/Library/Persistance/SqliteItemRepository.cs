@@ -508,13 +508,109 @@ namespace MediaBrowser.Library.Persistance {
             return children.Count == 0 ? null : children;
         }
 
-        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
-        {
-            const string unknown = "<Unknown>";
-            Dictionary<string, List<BaseItem>> index = new Dictionary<string, List<BaseItem>>();
+        const string UNKNOWN = "<Unknown>";
 
-            //add in our unknown
-            index.Add(unknown, new List<BaseItem>());
+        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        {
+            List<BaseItem> index = new List<BaseItem>();
+            var cmd = connection.CreateCommand();
+            //we'll build the unknown items as we go through the children the first time
+            List<BaseItem> unknownItems = new List<BaseItem>();
+
+            //create a temporary table of this folder's recursive children to use in the retrievals
+            string tableName = "[" + folder.Id.ToString().Replace("-", "") + "_" + property + "]";
+            if (connection.TableExists(tableName))
+            {
+                connection.Exec("delete from " + tableName);
+            }
+            else
+            {
+                connection.Exec("create temporary table if not exists " + tableName + "(child)");
+            }
+
+            bool allowEpisodes = property == "Year"; //only go to episode level for year index
+
+            cmd.CommandText = "Insert into " + tableName + " (child) values(@1)";
+            var childParam = cmd.Parameters.Add("@1", DbType.Guid);
+            SQLInfo.ColDef col = new SQLInfo.ColDef();
+            Type currentType = null;
+
+            lock (connection)
+            {
+                var tran = connection.BeginTransaction();
+
+                foreach (var child in folder.RecursiveChildren)
+                {
+                    if (child is IShow && !(child is Season)) // && (allowEpisodes && !(child is Series)) || (!allowEpisodes && !(child is Episode)))
+                    {
+                        //determine if property has any value
+                        if (col.ColType != child.GetType()) {
+                            currentType = child.GetType();
+                            col = ItemSQL[child.GetType()].Columns.Find(c => c.ColName == property);
+                        }
+                        object data = null;
+                        if (col.MemberType == MemberTypes.Property)
+                        {
+                            data = col.PropertyInfo.GetValue(child, null);
+                        }
+                        else if (col.MemberType == MemberTypes.Field)
+                        {
+                            data = col.FieldInfo.GetValue(child);
+                        }
+                        if (data != null) //only save children with data
+                        {
+                            //Logger.ReportInfo("Adding child " + child.Name + " to temp table");
+                            childParam.Value = child.Id;
+                            cmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            //just as fast to do this now...
+                            unknownItems.Add(child);
+                        }
+                    }
+                }
+                tran.Commit();
+            }
+
+
+            //create our Unknown Index
+            index.Add(new Index(constructor(UNKNOWN), unknownItems));
+
+            //now retrieve the values for the main indicies
+            cmd = connection.CreateCommand(); //new command
+            property = property == "Actors" ? "ActorName" : property; //re-map to our name entry
+
+            if (col.ListType)
+            {
+                //need to get values from list table
+                cmd.CommandText = "select distinct value from list_items where property = '" + property + "' and guid in (select child from " + tableName + ") order by value";
+            }
+            else
+            {
+                cmd.CommandText = "select distinct " + property + " where guid in (select child from " + tableName + ") order by " + property;
+            }
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    //Logger.ReportInfo("Creating index " + reader[0].ToString() + " on " + folder.Name);
+                    index.Add(new Index(constructor(reader[0].ToString()), new List<BaseItem>()));
+                }
+            }
+            return index;
+        }
+
+        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        {
+            //convert list to dictionary for easy access
+            Dictionary<string, IList<BaseItem>> index = new Dictionary<string, IList<BaseItem>>();
+            foreach (var item in children)
+            {
+                index[item.Name] = (item as Index).Children;
+                item.ReCacheAllImages(null);
+            }
 
             SQLInfo.ColDef col = new SQLInfo.ColDef();
             Type currentType = null;
@@ -524,7 +620,10 @@ namespace MediaBrowser.Library.Persistance {
                     if (child is IShow && !(child is Season)) // && (allowEpisodes && !(child is Series)) || (!allowEpisodes && !(child is Episode)))
                     {
                         //get the value of the property we are indexing
-                        col = child.GetType() != currentType ? ItemSQL[child.GetType()].Columns.Find(c => c.ColName == property) : col; //only need to find this once
+                        if (col.ColType != child.GetType()) {
+                            currentType = child.GetType();
+                            col = ItemSQL[child.GetType()].Columns.Find(c => c.ColName == property);
+                        }
                         object data = null;
                         //Logger.ReportInfo("Column is: "+col.ColName+"/"+col.ColType);
                         //Logger.ReportInfo("Child is: " + child.Name);
@@ -564,24 +663,15 @@ namespace MediaBrowser.Library.Persistance {
                         else
                         {
                             //add to Unknown
-                            AddItemToIndex(index, unknown, child);
+                            AddItemToIndex(index, UNKNOWN, child);
                         }
                     }
             }
-
-            //now go through and create main indexes from our dictionary
-            var mainIndex = new List<Index>();
-            foreach (var pair in index)
-            {
-                mainIndex.Add(new Index(constructor(pair.Key), pair.Value));
-            }
-
-            return mainIndex;
         }
 
-        private void AddItemToIndex(Dictionary<string, List<BaseItem>> index, string value, BaseItem child)
+        private void AddItemToIndex(Dictionary<string, IList<BaseItem>> index, string value, BaseItem child)
         {
-            List<BaseItem> subItems;
+            IList<BaseItem> subItems;
             if (!index.TryGetValue(value, out subItems))
             {
                 subItems = new List<BaseItem>();
@@ -600,7 +690,7 @@ namespace MediaBrowser.Library.Persistance {
                         Name = "<Unknown>"
                     };
                 }
-                IndexFolder series = (IndexFolder)index[value].Find(i => i.Id == (value + currentSeries.Name).GetMD5());
+                IndexFolder series = null; // (IndexFolder)index[value].Find(i => i.Id == (value + currentSeries.Name).GetMD5());
                 if (series == null)
                 {
                     series = new IndexFolder()
