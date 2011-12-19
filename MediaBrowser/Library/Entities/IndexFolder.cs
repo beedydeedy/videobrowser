@@ -14,6 +14,7 @@ namespace MediaBrowser.Library.Entities
         public IndexFolder(List<BaseItem> children)
         {
             //create an index folder with a specified set of children
+            this.ActualChildren.Clear();
             this.AddChildren(children);
         }
 

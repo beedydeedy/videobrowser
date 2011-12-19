@@ -721,7 +721,7 @@ namespace MediaBrowser.Library.Persistance {
                         }
                         if (data != null)
                         {
-                            //Logger.ReportInfo("Adding child " + child.Name + " to temp table");
+                            //Logger.ReportVerbose("Adding child " + child.Name + " to temp table");
                             childParam.Value = child.Id;
                             cmd.ExecuteNonQuery();
                         }
@@ -759,7 +759,7 @@ namespace MediaBrowser.Library.Persistance {
             {
                 while (reader.Read())
                 {
-                    //Logger.ReportInfo("Creating index " + reader[0].ToString() + " on " + folder.Name);
+                    //Logger.ReportVerbose("Creating index " + reader[0].ToString() + " on " + folder.Name);
                     object value = reader[0];
                     children.Add(new Index(constructor(value.ToString()), tableName, property, value));
                 }
