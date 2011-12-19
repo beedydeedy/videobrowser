@@ -474,6 +474,22 @@ namespace MediaBrowser.Library
         {
             FirePropertiesChanged("QuickListItems", "RecentItems","RecentWatchedItems","RecentUnwatchedItems");
         }
+
+        public virtual DateTime LastPlayed
+        {
+            get
+            {
+                if (PlayState != null)
+                {
+                    return PlayState.LastPlayed;
+                }
+                else
+                {
+                    return DateTime.MinValue;
+                }
+            }
+        }
+
         public string LastPlayedString
         {
             get

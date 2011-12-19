@@ -184,11 +184,11 @@ namespace MediaBrowser.Library.Entities {
 
         protected Guid QuickListID(string option)
         {
-            return (option + this.Name + this.Path).GetMD5();
+            return ("quicklist" + option + this.Name + this.Path).GetMD5();
         }
 
         protected bool reBuildQuickList = false;
-        public Folder QuickList
+        public virtual Folder QuickList
         {
             get
             {
@@ -291,7 +291,7 @@ namespace MediaBrowser.Library.Entities {
                         containerNo++;
                         IndexFolder aContainer = new IndexFolder(new List<BaseItem>())
                             {
-                                Id = (recentItemOption + this.Name.ToLower() + containerNo).GetMD5(),
+                                Id = ("container"+recentItemOption + this.Name + this.Path + containerNo).GetMD5(),
                                 Name = currentContainer.Name + " ("+container.Count()+" Items)",
                                 Overview = currentContainer.Overview,
                                 MpaaRating = currentContainer.MpaaRating,
@@ -321,7 +321,7 @@ namespace MediaBrowser.Library.Entities {
                                 containerNo++;
                                 IndexFolder aSeason = new IndexFolder(season.ToList())
                                 {
-                                    Id = (recentItemOption + this.Name.ToLower() + containerNo).GetMD5(),
+                                    Id = ("season"+recentItemOption + this.Name + this.Path + containerNo).GetMD5(),
                                     Name = currentSeason.Name + " ("+season.Count()+" Items)",
                                     Overview = currentSeason.Overview,
                                     MpaaRating = currentSeason.MpaaRating,
