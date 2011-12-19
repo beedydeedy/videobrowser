@@ -84,6 +84,26 @@ namespace MediaBrowser.Library {
             }
         }
 
+        public override DateTime LastPlayed
+        {
+            get
+            {
+                if (Children.Count > 0)
+                {
+                    Media lastPlayedItem = this.folder.RecursiveChildren.Where(i => i is Media).OrderByDescending(i => (i as Media).PlaybackStatus.LastPlayed).First() as Media;
+                    if (lastPlayedItem != null)
+                    {
+                        return lastPlayedItem.PlaybackStatus.LastPlayed;
+                    }
+                    else
+                    {
+                        return DateTime.MinValue;
+                    }
+                }
+                return DateTime.MinValue;
+            }
+        }
+
         public override bool ShowNewestItems {
             get {
                 return string.IsNullOrEmpty(BaseItem.Overview);
@@ -180,9 +200,9 @@ namespace MediaBrowser.Library {
                             }
                             lock (quickListLock)
                             {
-                                Logger.ReportVerbose(this.Name + " Quicklist has " + folder.QuickList.Children.Count + " items");
+                                //Logger.ReportVerbose(this.Name + " Quicklist has " + folder.QuickList.Children.Count + " items");
                                 quickListItems = recentItemOption == "watched" ? 
-                                    folder.QuickList.Children.Select(c => ItemFactory.Instance.Create(c)).OrderByDescending(i => i.LastPlayedString).ToList() :
+                                    folder.QuickList.Children.Select(c => ItemFactory.Instance.Create(c)).OrderByDescending(i => i.LastPlayed).ToList() :
                                     folder.QuickList.Children.Select(c => ItemFactory.Instance.Create(c)).OrderByDescending(i => i.BaseItem.DateCreated).ToList();
                                 Logger.ReportVerbose(this.Name + " Quicklist created with " + quickListItems.Count + " items");
                                 foreach (var item in quickListItems)
