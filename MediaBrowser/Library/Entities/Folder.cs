@@ -224,7 +224,7 @@ namespace MediaBrowser.Library.Entities {
         protected void RemoveQuicklist()
         {
             //remove any persisted lists from the cache
-            quickListFolder = new IndexFolder(new List<BaseItem>()) { Id = QuickListID("added") };
+            quickListFolder = new IndexFolder(new List<BaseItem>()) { Id = QuickListID("added"), Name = "Reset" };
             Kernel.Instance.ItemRepository.SaveItem(quickListFolder);
             Kernel.Instance.ItemRepository.SaveChildren(quickListFolder.Id, new List<Guid>());
             quickListFolder.Id = QuickListID("unwatched");
@@ -711,6 +711,11 @@ namespace MediaBrowser.Library.Entities {
             // this is a rare concurrency bug workaround - which I already fixed (it protects against regressions)
             if (!changed && childrenCopy.Count != (validChildren.Count + unavailableItems)) {
                 Logger.ReportWarning("For some reason we have duplicate items in folder "+Name+", fixing this up!");
+                Logger.ReportVerbose("ChildrenCopy count: "+childrenCopy.Count + " ValidChildren count: "+(validChildren.Count + unavailableItems));
+                Logger.ReportVerbose("ChildrenCopy contents are: ");
+                foreach (var item in childrenCopy) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
+                Logger.ReportVerbose("ValidChildren contents are: ");
+                foreach (var item in validChildren) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
                 childrenCopy = childrenCopy
                     .Distinct(i => i.Id)
                     .ToList();
@@ -728,7 +733,7 @@ namespace MediaBrowser.Library.Entities {
                 SaveChildren(Children);
                 //we need to blank out the persisted RAL items for the top level folder
                 var item = this;
-                while (item.Parent != Kernel.Instance.RootFolder) item = item.Parent;
+                while (item != null && item.Parent != Kernel.Instance.RootFolder) item = item.Parent;
                 if (item != null) item.RemoveQuicklist();
                 OnChildrenChanged(new ChildrenChangedEventArgs { FolderContentChanged = true });
             }
