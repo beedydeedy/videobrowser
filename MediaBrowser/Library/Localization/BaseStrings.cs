@@ -205,7 +205,7 @@ namespace MediaBrowser.Library.Localization
         public string PlayTrailersDetail = "Trailer";
         public string CacheDetail = "Cache 2 xml";
         public string DeleteDetail = "Delete";
-        public string IMDBRatingDetail = "IMDB Rating";
+        public string IMDBRatingDetail = "TMDb Rating";
         public string OutOfDetail = "out of";
         public string DirectorDetail = "Director";
         public string RuntimeDetail = "Runtime";
