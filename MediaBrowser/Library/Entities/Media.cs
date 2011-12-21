@@ -25,5 +25,10 @@ namespace MediaBrowser.Library.Entities {
             }
             return true;
         }
+
+        public virtual int RunTime
+        {
+            get { return 0; }
+        }
     }
 }

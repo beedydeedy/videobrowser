@@ -384,6 +384,14 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public int RunTime
+        {
+            get
+            {
+                return this.RecursiveMedia.Select(m => m.RunTime).Sum();
+            }
+        }
+
         public bool Watched {
             set {
                 foreach (var item in this.EnumerateChildren()) {
@@ -582,6 +590,25 @@ namespace MediaBrowser.Library.Entities {
                         {
                             yield return subitem;
                         }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// A recursive enumerator that walks through all the sub children
+        /// that are some type of media and not hidden by parental controls.  Use for UI operations.
+        ///   Safe for multithreaded use, since it operates on list clones
+        /// </summary>
+        public virtual IEnumerable<Media> RecursiveMedia
+        {
+            get
+            {
+                foreach (var item in RecursiveChildren)
+                {
+                    if (item is Media)
+                    {
+                        yield return item as Media;
                     }
                 }
             }

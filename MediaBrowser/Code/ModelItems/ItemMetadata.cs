@@ -124,8 +124,26 @@ namespace MediaBrowser.Library {
             get {
                 string runtime = "";
                 var show = baseItem as IShow;
-                if (show != null) {
-                    runtime = show.RunningTime==null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                if (show != null)
+                {
+                    runtime = show.RunningTime == null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                }
+                else
+                {
+                    var folder = baseItem as Folder;
+                    if (folder != null)
+                    {
+                        int totalMinutes = folder.RunTime;
+                        if (totalMinutes <= 60)
+                        {
+                            runtime = totalMinutes + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                        }
+                        else
+                        {
+                            TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
+                            runtime = string.Format("{0}hrs {1}mins", ts.Hours, ts.Minutes);
+                        }
+                    }
                 }
                 return runtime;
             }

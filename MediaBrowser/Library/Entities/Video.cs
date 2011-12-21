@@ -80,6 +80,13 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public override int RunTime
+        {
+            get
+            {
+                return RunningTime ?? 0;
+            }
+        }
 
         public virtual IEnumerable<string> VideoFiles {
             get {
