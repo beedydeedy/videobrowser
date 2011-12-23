@@ -20,7 +20,7 @@
     xmlns:sounds="resx://MediaBrowser/MediaBrowser.Resources/Sounds"
     
     xmlns:bd="resx://Diamond/Diamond.Resources/DiamondBackdrop"
-    xmlns:dp="resx://Diamond/Diamond.Resources/DiamondPagination"      
+    xmlns:ep="resx://Diamond/Diamond.Resources/ExtendedPagination"
     xmlns:dtb="resx://Diamond/Diamond.Resources/DiamondToolBox"
     xmlns:ds="resx://Diamond/Diamond.Resources/DiamondSpin"
     xmlns:me="Me"
@@ -648,6 +648,10 @@
       <BooleanChoice Name="NavInto" BooleanChoice="$Required" />
     </Properties>
     <Locals>
+      <Choice Name="PageChoice" Description="1"/>
+      <cor:Int32 Name="TotalPages" Int32="0" />
+      <cor:Int32 Name="GetTotalPages" Int32="0" />
+      <cor:Single Name="MaxPageCount" Single="25" />
       <ScrollingHandler Name="ScrollingHandler"  HandleDirectionalKeys="true" HandleHomeEndKeys="true" HandleMouseWheel="true"
 							  HandlePageCommands="true" HandlePageKeys="true" HandlerStage="Bubbled" />
       <ScrollingData Name="ScrollingData" LockedAlignment="0.0" LockedPosition="0.01"  />
@@ -665,6 +669,7 @@
           <Set Target="[EmptyList.Visible]" Value="true" />
           <Set Target="[ItemsClip.Visible]" Value="false" />
           <Set Target="[Pagination.Visible]" Value="false" />
+          <Set Target="[Counter.Visible]" Value="false" />
         </Actions>
       </Condition> 
       <!-- Binding for Newest Items-->
@@ -678,6 +683,35 @@
       </Changed>-->
       <Binding Source="[ScrollingData.CurrentPage]" Target="[Pagination.Value]" />
       <Binding Source="[ScrollingData.TotalPages]" Target="[Pagination.MaxPages]" />
+      <Binding Source="[PageChoice.Description]" Target="[CurrentPageNumber.Content]"/>
+      <!--ScrollingData page counts skip some pages and ExtendedPagination allows for this-->
+      <!--Show ExtendedPagination element until MaxPages > MaxPageCount then show Counter-->
+      <Rule>
+        <Conditions>
+          <Equality Source="[Pagination.MaxPages]" ConditionOp="GreaterThan" Value="[MaxPageCount]"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[Counter.Visible]" Value="true"/>
+          <Set Target="[Pagination.Visible]" Value="false"/>
+        </Actions>
+      </Rule>
+      <!--Get accurate TotalPages number from Index.Value-->
+      <Binding Source="[Folder.QuickListItems.Count]" Target="[GetTotalPages]">
+        <Transformer>
+          <MathTransformer AddInt="3"/>
+        </Transformer>
+      </Binding>
+      <Binding Source="[GetTotalPages]" Target="[TotalPages]">
+        <Transformer>
+          <MathTransformer DivideInt="4"/>
+        </Transformer>
+      </Binding>
+      <Binding Source="[TotalPages]" Target="[TotalPagesNumber.Content]">
+        <Transformer>
+          <FormatTransformer Format="{0:F0}"/>
+        </Transformer>
+      </Binding>
+      
     </Rules>
     
     <Content>
@@ -695,8 +729,8 @@
                 <Children>
                   <Repeater Name="Repeater" Layout="[MyLayout]" >
                     <Content>
-                      <me:RecentItems Application="[Application]" Item="[RepeatedItem!lib:Item]" 
-                                      Index="[RepeatedItemIndex]"  />
+                      <me:RecentItems Application="[Application]" Item="[RepeatedItem!lib:Item]"
+                                      Index="[RepeatedItemIndex]" PageChoice="[PageChoice]" />
                     </Content>
                     <Animations>
                       <Animation Type="Move">
@@ -709,11 +743,24 @@
                   </Repeater>
                 </Children>
               </Scroller>
-                
-                </Children>
+            </Children>
           </Clip>
           <!-- Pagination -->
-          <dp:DiamondPagination Name="Pagination" Value="3" Visible="true" />
+          <Panel >
+            <Layout>
+              <FlowLayout Orientation="Horizontal"/>
+            </Layout>
+            <Children>
+              <ep:ExtendedPagination Name="Pagination" Value="3" Visible="true" />
+              <Panel Name="Counter" Layout ="HorizontalFlow" Padding="0,3,0,0" Visible="false" >
+                <Children>
+                  <Text Name="CurrentPageNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight"/>
+                  <Text Content="|" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
+                  <Text Name="TotalPagesNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
+                </Children>
+              </Panel>
+            </Children>
+          </Panel>
           <Text Name="EmptyList" Content="[Application.LocalStrings.#NoItemsEHS!cor:String]" Font="font://f:Diamond_Title" Color="color://s:D_Normal" Visible="false" >
             <LayoutInput>
               <AnchorLayoutInput Bottom="Parent,1,-5"/>
@@ -733,15 +780,18 @@
       <Size Name="MinSize" Size="700,88"/>
       <app:AreaOfInterestHelper Name="AreaOfInterestHelper" />
       <Timer Name="AreaHelpTimer" AutoRepeat="false" Interval="200" Enabled="false" />
+      <Choice Name="PageChoice" Choice="$Required"/>
     </Properties>
 
     <Locals>
       <Image Name="Tick" Image="image://i:Tick"/>
       <ClickHandler Name="Clicker"/>
-      <cor:Int32 Name="DisplayCount" Int32="20" />
+      <!--<cor:Int32 Name="DisplayCount" Int32="20" />-->
       <Color Name="FocusColor" Color="color://s:D_Normal" />
       <Color Name="Color" Color="color://s:D_Light" />
       <Color Name="BulletFocusColor" Color="color://s:D_Focus" />
+      <cor:Int32 Name="CurrentPage" Int32="0" />
+      <cor:Int32 Name="GetCurrentPage" Int32="0" />
     </Locals>
 
     <Rules>
@@ -787,13 +837,25 @@
         </Conditions>
       </Binding>
 
-      <Condition Source="[Index.Value]" ConditionOp="GreaterThan" SourceValue="[DisplayCount]" Target="[Bg.Alpha]" Value="0" />
+      <!--<Condition Source="[Index.Value]" ConditionOp="GreaterThan" SourceValue="[DisplayCount]" Target="[Bg.Alpha]" Value="0" />-->
 
       <Changed Source="[Input.KeyFocus]" >
         <Conditions>
           <Equality Source="[Input.KeyFocus]" Value="true" />
         </Conditions>
         <Actions>
+          <!--Get CurrentPage number from Index.Value-->
+          <Set Target="[GetCurrentPage]" Value="[Index.Value]">
+            <Transformer>
+              <MathTransformer AddInt="4"/>
+            </Transformer>
+          </Set>
+          <Set Target="[CurrentPage]" Value="[GetCurrentPage]">
+            <Transformer>
+              <MathTransformer DivideInt="4"/>
+            </Transformer>
+          </Set>
+          <Set Target="[PageChoice.Description]" Value="[CurrentPage!cor:String]" />
           <Set Target="[Application.CurrentItem]" Value="[Item]" />
           <Set Target="[Runtime.Color]" Value="[FocusColor]" />
           <Set Target="[Txt1.Color]" Value="[FocusColor]" />
