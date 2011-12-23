@@ -875,11 +875,11 @@
             </Layout>
             <Children>
               <ep:ExtendedPagination Name="Pagination" Value="3" Padding="0,-3,0,3" MinimumSize="0,31" Visible="true"/>
-              <Panel Layout ="HorizontalFlow" Name="Counter" Margins="0,0,0,3" Visible="false" >
+              <Panel Name="Counter" Layout ="HorizontalFlow" Margins="0,0,0,3" Visible="false" >
                 <Children>
-                  <Text Name="CurrentPageNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight"/>
-                  <Text Content="|" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
-                  <Text Name="TotalPagesNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
+                  <Text Name="CurrentPageNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorMedium"/>
+                  <Text Content="|" Font="font://f:MM_ActorFont" Color="color://s:FontColorMedium" />
+                  <Text Name="TotalPagesNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorMedium" />
                 </Children>
               </Panel>
             </Children>

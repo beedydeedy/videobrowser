@@ -751,12 +751,12 @@
               <FlowLayout Orientation="Horizontal"/>
             </Layout>
             <Children>
-              <ep:ExtendedPagination Name="Pagination" Value="3" Visible="true" />
-              <Panel Name="Counter" Layout ="HorizontalFlow" Padding="0,3,0,0" Visible="false" >
+              <ep:ExtendedPagination Name="Pagination" Value="3" Padding="0,4,0,0" Visible="true" />
+              <Panel Name="Counter" Layout ="HorizontalFlow" Padding="0,8,0,0" Visible="false" >
                 <Children>
-                  <Text Name="CurrentPageNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight"/>
-                  <Text Content="|" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
-                  <Text Name="TotalPagesNumber" Font="font://f:MM_ActorFont" Color="color://s:FontColorLight" />
+                  <Text Name="CurrentPageNumber" Font="font://f:MM_ActorFont" Color="color://s:D_Light"/>
+                  <Text Content="|" Font="font://f:MM_ActorFont" Color="color://s:D_Light" />
+                  <Text Name="TotalPagesNumber" Font="font://f:MM_ActorFont" Color="color://s:D_Light" />
                 </Children>
               </Panel>
             </Children>
