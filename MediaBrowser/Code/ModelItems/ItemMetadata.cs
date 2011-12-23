@@ -141,7 +141,7 @@ namespace MediaBrowser.Library {
                         else
                         {
                             TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
-                            runtime = string.Format("{0}hrs {1}mins", ts.Hours, ts.Minutes);
+                            runtime = string.Format("{0}{2} {1}{3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"),Kernel.Instance.StringData.GetString("MinutesStr"));
                         }
                     }
                 }
