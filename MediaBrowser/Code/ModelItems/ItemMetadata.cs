@@ -120,6 +120,28 @@ namespace MediaBrowser.Library {
             }
         }
 
+        public int RunningTime
+        {
+            get
+            {
+                int runtime = 0;
+                var show = baseItem as IShow;
+                if (show != null)
+                {
+                    runtime = show.RunningTime == null ? this.MediaInfo.RunTime : show.RunningTime.Value;
+                }
+                else
+                {
+                    var folder = baseItem as Folder;
+                    if (folder != null)
+                    {
+                        runtime = folder.RunTime;
+                    }
+                }
+                return runtime;
+            }
+        }
+
         public string RunningTimeString {
             get {
                 string runtime = "";
@@ -141,7 +163,7 @@ namespace MediaBrowser.Library {
                         else
                         {
                             TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
-                            runtime = string.Format("{0}{2} {1}{3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"),Kernel.Instance.StringData.GetString("MinutesStr"));
+                            runtime = string.Format("{0} {2} {1} {3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"),Kernel.Instance.StringData.GetString("MinutesStr"));
                         }
                     }
                 }
