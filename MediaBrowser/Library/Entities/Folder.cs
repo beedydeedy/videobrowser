@@ -158,7 +158,7 @@ namespace MediaBrowser.Library.Entities {
             {
                 if (lastWatchedItem == null)
                 {
-                    lastWatchedItem = this.RecursiveChildren.Where(i => i is Video && (i as Video).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Video).PlaybackStatus.LastPlayed).First();
+                    lastWatchedItem = this.RecursiveChildren.Where(i => i is Video && (i as Video).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Video).PlaybackStatus.LastPlayed).FirstOrDefault();
                 }
                 return lastWatchedItem;
             }
