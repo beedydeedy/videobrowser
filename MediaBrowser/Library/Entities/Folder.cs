@@ -386,11 +386,16 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        protected int? runtime;
         public int RunTime
         {
             get
             {
-                return this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                if (runtime == null)
+                {
+                    using (new MediaBrowser.Util.Profiler(this.Name+" runtime calc")) runtime = this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                }
+                return runtime == null ? 0 : runtime.Value;
             }
         }
 
