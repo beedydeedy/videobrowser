@@ -158,38 +158,6 @@ namespace MediaBrowser.Library {
                                             changed |= subFolder.FolderChildrenChanged;
                                         }
                                     }
-                                    if (!changed)
-                                    {
-                                        if (recentItemOption == "unwatched" && quickListItems != null)
-                                        {
-                                            lock (quickListLock)
-                                            {
-                                                //if we have an unwatched list that has already been loaded from the repo and anything in it is watched - we need to rebuild
-                                                foreach (var item in quickListItems)
-                                                {
-                                                    if (item is FolderModel)
-                                                    {
-                                                        foreach (var subItem in (item as FolderModel).Folder.RecursiveChildren)
-                                                        {
-                                                            if (subItem is Video && (subItem as Video).PlaybackStatus.PlayCount > 0)
-                                                            {
-                                                                changed = true;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        if (item.BaseItem is Video && (item.BaseItem as Video).PlaybackStatus.PlayCount > 0)
-                                                        {
-                                                            changed = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
                                     if (changed)
                                     {
                                         Logger.ReportVerbose(this.Name + " has had changes.");
@@ -267,6 +235,12 @@ namespace MediaBrowser.Library {
                                     {
                                         item.PhysicalParent = this; //otherwise, just point to us
                                     }
+                                }
+                                if (recentItemOption == "unwatched" && folder.QuickList.RecursiveMedia.Count() != folder.QuickList.UnwatchedCount)
+                                {
+                                    //something is watched in our unwatched list - force a rebuild
+                                    Logger.ReportVerbose(this.Name + " unwatched items changed.");
+                                    QuickListItems = null;
                                 }
                                 Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
                                 {
