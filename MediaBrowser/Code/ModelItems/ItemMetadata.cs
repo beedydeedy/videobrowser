@@ -120,54 +120,71 @@ namespace MediaBrowser.Library {
             }
         }
 
+        private int? runtime;
         public int RunningTime
         {
             get
             {
-                int runtime = 0;
-                var show = baseItem as IShow;
-                if (show != null)
+                if (runtime == null)
                 {
-                    runtime = show.RunningTime == null ? this.MediaInfo.RunTime : show.RunningTime.Value;
-                }
-                else
-                {
-                    var folder = baseItem as Folder;
-                    if (folder != null)
+                    runtime = 0;
+                    var show = baseItem as IShow;
+                    if (show != null)
                     {
-                        runtime = folder.RunTime;
+                        runtime = show.RunningTime == null ? this.MediaInfo.RunTime : show.RunningTime.Value;
+                    }
+                    else
+                    {
+                        var folder = baseItem as Folder;
+                        if (folder != null)
+                        {
+                            //this might take a bit...
+                            Async.Queue("runtime calc", () =>
+                            {
+                                runtime = folder.RunTime;
+                                FirePropertiesChanged("RunningTime", "RunningTimeString");
+                            });
+                        }
                     }
                 }
-                return runtime;
+                return runtime == null ? 0 : runtime.Value;
             }
         }
 
+        private string runtimestr;
         public string RunningTimeString {
             get {
-                string runtime = "";
-                var show = baseItem as IShow;
-                if (show != null)
+                if (runtimestr == null)
                 {
-                    runtime = show.RunningTime == null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
-                }
-                else
-                {
-                    var folder = baseItem as Folder;
-                    if (folder != null)
+                    var show = baseItem as IShow;
+                    if (show != null)
                     {
-                        int totalMinutes = folder.RunTime;
-                        if (totalMinutes <= 60)
+                        runtimestr = show.RunningTime == null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                    }
+                    else
+                    {
+                        var folder = baseItem as Folder;
+                        if (folder != null)
                         {
-                            runtime = totalMinutes + " " + Kernel.Instance.StringData.GetString("MinutesStr");
-                        }
-                        else
-                        {
-                            TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
-                            runtime = string.Format("{0} {2} {1} {3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"),Kernel.Instance.StringData.GetString("MinutesStr"));
+                            //this might take a bit...
+                            Async.Queue("runningtimestr calc", () =>
+                            {
+                                int totalMinutes = folder.RunTime;
+                                if (totalMinutes <= 60)
+                                {
+                                    runtimestr = totalMinutes + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                                }
+                                else
+                                {
+                                    TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
+                                    runtimestr = string.Format("{0} {2} {1} {3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"), Kernel.Instance.StringData.GetString("MinutesStr"));
+                                }
+                                FirePropertiesChanged("RunningTime", "RunningTimeString");
+                            });
                         }
                     }
                 }
-                return runtime;
+                return runtimestr == null ? "" : runtimestr;
             }
         }
 

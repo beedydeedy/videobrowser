@@ -158,7 +158,7 @@ namespace MediaBrowser.Library.Entities {
             {
                 if (lastWatchedItem == null)
                 {
-                    lastWatchedItem = this.RecursiveChildren.Where(i => i is Video && (i as Video).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Video).PlaybackStatus.LastPlayed).First();
+                    lastWatchedItem = this.RecursiveChildren.Where(i => i is Video && (i as Video).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Video).PlaybackStatus.LastPlayed).FirstOrDefault();
                 }
                 return lastWatchedItem;
             }
@@ -386,11 +386,16 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        protected int? runtime;
         public int RunTime
         {
             get
             {
-                return this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                if (runtime == null)
+                {
+                    using (new MediaBrowser.Util.Profiler(this.Name+" runtime calc")) runtime = this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                }
+                return runtime == null ? 0 : runtime.Value;
             }
         }
 
