@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0037";
+        const string VERSION = "1.0038";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -311,6 +311,7 @@ namespace MediaBrowser.Library.Localization
         public string Playstr = "Play";
         public string MinutesStr = "mins"; //Minutes abbreviation
         public string HoursStr = "hrs"; //Hours abbreviation
+        public string EndsStr = "Ending:"; //Hours abbreviation
         public string KBsStr = "Kbps";  //Kilobytes per second
         public string FrameRateStr = "fps";  //Frames per second
         public string AtStr = "at";  //x at y, e.g. 1920x1080 at 25 fps

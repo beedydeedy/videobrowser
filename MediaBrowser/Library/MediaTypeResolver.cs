@@ -18,6 +18,8 @@ namespace MediaBrowser.Library {
                 return MediaType.Mpeg;
             if (path.EndsWith(".mkv"))
                 return MediaType.Mkv;
+            if (path.EndsWith(".mk3d"))
+                return MediaType.Mk3d;
             if (path.EndsWith(".wmv"))
                 return MediaType.Wmv;
             if (path.EndsWith(".mp4"))

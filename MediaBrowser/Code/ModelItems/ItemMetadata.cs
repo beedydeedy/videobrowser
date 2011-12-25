@@ -188,6 +188,19 @@ namespace MediaBrowser.Library {
             }
         }
 
+        public string EndTimeString
+        {
+            get
+            {
+                var endtime = "";
+                if (this.RunningTime > 0)
+                {
+                    endtime = Localization.LocalizedStrings.Instance.GetString("EndsStr") + " " + (DateTime.Now + TimeSpan.FromMinutes(this.RunningTime)).ToShortTimeString();
+                }
+                return endtime;
+            }
+        }
+
         public int ProductionYear {
             get {
                 int productionYear = -1;
