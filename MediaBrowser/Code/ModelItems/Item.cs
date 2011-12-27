@@ -776,7 +776,7 @@ namespace MediaBrowser.Library
             }
         }
 
-        internal PlayableItem PlayableItem
+        public PlayableItem PlayableItem
         {
             get
             {

@@ -132,6 +132,8 @@ namespace MediaBrowser.Library.Playables
             SetWindowPlacement(mceWnd, ref wp);
             ExternalSplashForm.Hide();
             SetForegroundWindow(mceWnd);
+            //call hook for end of play
+            if (OnPlayBackFinished != null) OnPlayBackFinished(true); //we have no way of knowing if user stopped so assume they did
             Application.CurrentInstance.RunPostPlayProcesses(); //finally call the post play
         }
 

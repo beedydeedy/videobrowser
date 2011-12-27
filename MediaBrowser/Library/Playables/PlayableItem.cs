@@ -37,6 +37,7 @@ namespace MediaBrowser.Library
 
         public bool QueueItem { get; set; }
         public IEnumerable<string> PlayableItems { get; set; }
+        public Func<bool, bool> OnPlayBackFinished;
 
         static Transcoder transcoder;
         private string fileToPlay;
@@ -54,7 +55,17 @@ namespace MediaBrowser.Library
 
         protected bool PlayCountIncremented = false;
 
-
+        public bool PlayBackFinished(bool stoppedByUser)
+        {
+            if (OnPlayBackFinished != null)
+            {
+                return OnPlayBackFinished(stoppedByUser);
+            }
+            else
+            {
+                return true;
+            }
+        }
 
         public void Play(PlaybackStatus playstate, bool resume)
         {
@@ -134,6 +145,7 @@ namespace MediaBrowser.Library
                 PlaybackController.GoToFullScreen();
 
             PlaybackController.OnProgress += new EventHandler<PlaybackStateEventArgs>(PlaybackController_OnProgress);
+            if (PlaybackController is PlaybackController) (PlaybackController as PlaybackController).OnPlayBackFinished = OnPlayBackFinished; //avoid changing interface...
         }
 
         public virtual void Play(string file)
