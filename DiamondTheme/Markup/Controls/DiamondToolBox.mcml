@@ -174,20 +174,6 @@
         </Actions>
       </Rule>
 
-      <!--<Rule>
-        <Conditions>
-          <Modified Source="[Item.RunningTimeString]" InitialEvaluate="true" />
-          <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
-        </Conditions>
-        <Actions>
-          <Invoke Target="[Utility.CalculateEndTime]" runTime="[Item.RunningTimeString]"
-                  ResultTarget="[EstimateEndTime.Content]" InvokePolicy="AsynchronousLowPri" >
-            <Transformer>
-              <FormatTransformer Format="{0}"/>
-            </Transformer>
-          </Invoke>
-        </Actions>
-      </Rule>-->
       <Binding Source="[ThemeConfig.DisplayEndTime]" Target="[EstimateEndTime.Visible]" />
 
     </Rules>

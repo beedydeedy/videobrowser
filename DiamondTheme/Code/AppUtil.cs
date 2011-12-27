@@ -27,20 +27,6 @@ namespace Diamond
             }
             return endtime;
         }
-
-        //public string CalculateEndTime(string runTime)
-        //{
-        //    string str = runTime;
-        //    if (string.IsNullOrEmpty(runTime))
-        //        return "";
-
-        //    int minutes = int.Parse(runTime.Replace(" mins", ""));
-        //    DateTime time = DateTime.Now.AddMinutes((double)minutes);
-
-        //    return time.ToString("h:mm tt");
-        //    //Item x = new Item()
-        //    //x.pat
-        //}
-        
     }
 }
+
