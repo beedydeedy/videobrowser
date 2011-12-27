@@ -1369,6 +1369,11 @@ namespace MediaBrowser
                             item.Play();
                             this.lastPlayed = item;
                         }
+                        else
+                        {
+                            //be sure we run finished process
+                            if (item.PlayableItem.OnPlayBackFinished != null) item.PlayableItem.OnPlayBackFinished(true);
+                        }
                     });
                 }
             }

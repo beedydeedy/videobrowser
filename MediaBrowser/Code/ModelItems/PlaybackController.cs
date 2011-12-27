@@ -22,6 +22,7 @@ namespace MediaBrowser
     {
 
         volatile EventHandler<PlaybackStateEventArgs> progressHandler;
+        public Func<bool, bool> OnPlayBackFinished;
         Thread governatorThread;
         object sync = new object();
         bool terminate = false;
@@ -468,6 +469,8 @@ namespace MediaBrowser
                 {
                     Logger.ReportVerbose("Stopped so detaching...");
                     Detach(); //we don't want to continue to get updates if play something outside MB
+                    //call hook for end state
+                    if (OnPlayBackFinished != null) OnPlayBackFinished(position < duration);
                     //we're done - call post-processor
                     Logger.ReportVerbose("Calling post play...");
                     Application.CurrentInstance.RunPostPlayProcesses();
