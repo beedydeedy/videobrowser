@@ -18,6 +18,7 @@ namespace MediaBrowser.Library {
         M2ts,
         M4v,
         Mkv,
+        Mk3d,
         Mov,
         Mp4,
         Mpeg,
@@ -27,7 +28,7 @@ namespace MediaBrowser.Library {
         Threegp,
         Ts,
         Wmv,
-        Wtv,
-        Mk3d
+        Wtv        
     }
 }
+
