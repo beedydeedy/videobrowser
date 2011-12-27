@@ -96,6 +96,7 @@
     </Properties>
     <Locals>
       <Size Name="MinSize" Size="155,0"/>
+      <a:Clock Name="Clock"/>
     </Locals>
     <Rules>
       <Default Target="[Input.Enabled]" Value="false">
@@ -151,6 +152,30 @@
 
       <Rule>
         <Conditions>
+          <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Modified Source="[Item.RunningTime]" InitialEvaluate="true" />
+        </Conditions>
+        <Actions>     
+          <Invoke Target="[Utility.CalculateEndTime]" runningTime="[Item.RunningTime]"
+                  ResultTarget="[EstimateEndTime.Content]" InvokePolicy="AsynchronousLowPri" >
+          </Invoke>
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Modified Source="[Clock.Time]" InitialEvaluate="true" />
+        </Conditions>
+        <Actions>
+          <Invoke Target="[Utility.CalculateEndTime]" runningTime="[Item.RunningTime]"
+                  ResultTarget="[EstimateEndTime.Content]" InvokePolicy="AsynchronousLowPri" >
+          </Invoke>
+        </Actions>
+      </Rule>
+
+      <!--<Rule>
+        <Conditions>
           <Modified Source="[Item.RunningTimeString]" InitialEvaluate="true" />
           <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
         </Conditions>
@@ -162,7 +187,7 @@
             </Transformer>
           </Invoke>
         </Actions>
-      </Rule>
+      </Rule>-->
       <Binding Source="[ThemeConfig.DisplayEndTime]" Target="[EstimateEndTime.Visible]" />
 
     </Rules>
