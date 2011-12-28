@@ -1259,6 +1259,13 @@ namespace MediaBrowser {
             }
         }
         
+        internal static byte[] ExtendedPagination {
+            get {
+                object obj = ResourceManager.GetObject("ExtendedPagination", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
         internal static byte[] ExternalPlayback {
             get {
                 object obj = ResourceManager.GetObject("ExternalPlayback", resourceCulture);
