@@ -195,7 +195,20 @@ namespace MediaBrowser.Library {
                 var endtime = "";
                 if (this.RunningTime > 0)
                 {
-                    endtime = Localization.LocalizedStrings.Instance.GetString("EndsStr") + " " + (DateTime.Now + TimeSpan.FromMinutes(this.RunningTime)).ToShortTimeString();
+                    endtime = Localization.LocalizedStrings.Instance.GetString("EndsStr") + " " + this.EndTime.ToShortTimeString();
+                }
+                return endtime;
+            }
+        }
+
+        public DateTime EndTime
+        {
+            get
+            {
+                DateTime endtime = DateTime.MinValue;
+                if (this.RunningTime > 0)
+                {
+                    endtime = (DateTime.Now + TimeSpan.FromMinutes(this.RunningTime));
                 }
                 return endtime;
             }
