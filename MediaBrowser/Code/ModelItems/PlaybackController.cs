@@ -470,7 +470,7 @@ namespace MediaBrowser
                     Logger.ReportVerbose("Stopped so detaching...");
                     Detach(); //we don't want to continue to get updates if play something outside MB
                     //call hook for end state
-                    if (OnPlayBackFinished != null) OnPlayBackFinished(position < duration);
+                    if (OnPlayBackFinished != null) OnPlayBackFinished(position != 0);
                     //we're done - call post-processor
                     Logger.ReportVerbose("Calling post play...");
                     Application.CurrentInstance.RunPostPlayProcesses();
