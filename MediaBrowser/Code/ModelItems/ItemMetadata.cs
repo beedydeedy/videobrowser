@@ -177,7 +177,7 @@ namespace MediaBrowser.Library {
                                 else
                                 {
                                     TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
-                                    runtimestr = string.Format("{0} {2} {1} {3}", ts.Hours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"), Kernel.Instance.StringData.GetString("MinutesStr"));
+                                    runtimestr = string.Format("{0} {2} {1} {3}", (int)ts.TotalHours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"), Kernel.Instance.StringData.GetString("MinutesStr"));
                                 }
                                 FirePropertiesChanged("RunningTime", "RunningTimeString");
                             });
