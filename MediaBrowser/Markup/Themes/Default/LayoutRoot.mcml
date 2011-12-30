@@ -269,7 +269,7 @@
           <Equality Source="[Folder.Children.Count]" ConditionOp="GreaterThan" Value="0" />
         </Conditions>
         <Actions>
-          <Set Target="[Repeater.DefaultFocusIndex]"  Value="[backFocus]"/>
+          <Invoke Target="[Repeater.NavigateIntoIndex]"  index="[backFocus]" InvokePolicy="Synchronous"/>
         </Actions>
       </Rule>
 
@@ -837,7 +837,7 @@
       <Binding Source="[ScrollingData.TotalPages]" Target="[Pagination.MaxPages]" />
       <Binding Source="[PageChoice.Description]" Target="[CurrentPageNumber.Content]"/>
       <!--ScrollingData page counts skip some pages and ExtendedPagination allows for this-->
-      <!--Show ExtendedPagination element until MaxPages > MaxPageCount then show Counter-->
+      <!--Show ExtendedPagination until MaxPages > MaxPageCount then show Counter-->
       <Rule>
         <Conditions>
           <Equality Source="[Pagination.MaxPages]" ConditionOp="GreaterThan" Value="[MaxPageCount]"/>
