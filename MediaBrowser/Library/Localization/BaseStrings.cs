@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0039";
+        const string VERSION = "1.0040";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -39,11 +39,11 @@ namespace MediaBrowser.Library.Localization
         public string ThemesConfigDesc = "Select the Visual Presentation Style of MediaBrowser.";
         public string ParentalControlConfigDesc = "Parental Control Configuration.  Requires PIN to Access.";
         public string RememberFolderIndexingConfigDesc = "Remember Folder Indexing.  e.g. If a Folder is Indexed by Genre, It Will Stay Indexed Each Time It is Entered.";
-        public string ShowUnwatchedCountConfigDesc = "Show the Number of Unwatched Items in a Folder on the Folder Poster.";
-        public string WatchedIndicatoronFoldersConfigDesc = "Show an Indicator if All Items Inside a Folder Have Been Watched.";
-        public string WatchedIndicatoronVideosConfigDesc = "Show an Indicator if a Show Has Been Marked Watched.";
-        public string WatchedIndicatorinDetailViewConfigDesc = "Show the Watched Indicator in Lists as Well as Poster Views.";
-        public string DefaultToFirstUnwatchedItemConfigDesc = "Scroll to the First Unwatched Item When Entering a Folder.";
+        public string ShowUnwatchedCountConfigDesc = "Show the Number of Unplayed Items in a Folder on the Folder Poster.";
+        public string WatchedIndicatoronFoldersConfigDesc = "Show an Indicator if All Items Inside a Folder Have Been Played.";
+        public string WatchedIndicatoronVideosConfigDesc = "Show an Indicator if an Item Has Been Marked Played.";
+        public string WatchedIndicatorinDetailViewConfigDesc = "Show the Played Indicator in Lists as Well as Poster Views.";
+        public string DefaultToFirstUnwatchedItemConfigDesc = "Scroll to the First Unplayed Item When Entering a Folder.";
         public string AllowNestedMovieFoldersConfigDesc = "Allow the Ability to Put Movie Folders Inside of Other Movie Folders.";
         public string TreatMultipleFilesAsSingleMovieConfigDesc = "If a Folder Contains More than One Playable Item, Play Them in Sequence. Turn this off if you are having trouble with small collections.";
         public string AutoEnterSingleFolderItemsConfigDesc = "If a Folder Contains Only One Item, Automatically Select and Either Play or Go to the Detail View for That Item.";
@@ -68,7 +68,7 @@ namespace MediaBrowser.Library.Localization
         public string ResetDefaultsConfigDesc = "Reset Configuration Items to Their Default Values.  USE WITH CAUTION - Settings Will Be Overwritten.";
         public string ClearCacheConfigDesc = "Delete the Internal Data Files MediaBrowser Uses and Cause Them to be Re-built.";
         public string UnlockConfigDesc = "Temporarily Disable Parental Control for the Entire Library.  Will Re-Lock Automatically.";
-        public string AssumeWatchedIfOlderThanConfigDesc = "Mark All Items Older Than This as Watched.";
+        public string AssumeWatchedIfOlderThanConfigDesc = "Mark All Items Older Than This as Played.";
         public string ShowThemeBackgroundConfigDesc = "Display Theme background. [TIER 3] Highest tier background effect takes precedence.";
         public string ShowInitialFolderBackgroundConfigDesc = "Display initial backdrop in all views. (backdrop.png or backdrop.jpg sourced from your initial folder) [TIER 2] Highest tier background effect takes precedence.";
         public string ShowFanArtonViewsConfigDesc = "Display fan art as a Background in views that support this capability. [TIER 1] Highest tier background effect takes precedence.";
@@ -76,7 +76,7 @@ namespace MediaBrowser.Library.Localization
         public string ShowHDOverlayonPostersConfigDesc = "Show 'HD' or resolution overlay on Hi-def items in Poster Views.";
         public string ShowIcononRemoteContentConfigDesc = "Show an indicator on items from the web in Poster Views.";
         public string ExcludeRemoteContentInSearchesConfigDesc = "Don't show content from the web when searching entire library.";
-        public string HighlightUnwatchedItemsConfigDesc = "Show a Highlight on Un-watched Content.";
+        public string HighlightUnwatchedItemsConfigDesc = "Show a Highlight on Unplayed Content.";
         public string RandomizeBackdropConfigDesc = "Select random fan art from the available ones.";
         public string RotateBackdropConfigDesc = "Show all available fan art in a sequence (can be random).";
         public string UpdateLibraryConfigDesc = "Update information on the items in your library.";
@@ -103,7 +103,7 @@ namespace MediaBrowser.Library.Localization
         public string EnableScreenSaverConfig = "Screen Saver";
         public string SSTimeOutConfig = "Timeout (mins)";
         public string TrackingConfig = "Tracking";
-        public string AssumeWatchedIfOlderThanConfig = "Assume Watched If Older Than";
+        public string AssumeWatchedIfOlderThanConfig = "Assume Played If Older Than";
         public string MetadataConfig = "Metadata";
         public string EnableInternetProvidersConfig = "Allow Internet Providers";
         public string UpdatesConfig = "Updates";
@@ -130,12 +130,12 @@ namespace MediaBrowser.Library.Localization
         public string EnableAdvancedCmdsConfig = "Enable Advanced Commands";
         public string MediaTrackingConfig = "Media Tracking";
         public string RememberFolderIndexingConfig = "Remember Folder Indexing";
-        public string ShowUnwatchedCountConfig = "Show Unwatched Count";
-        public string WatchedIndicatoronFoldersConfig = "Watched Indicator on Folders";
-        public string HighlightUnwatchedItemsConfig = "Highlight Unwatched Items";
-        public string WatchedIndicatoronVideosConfig = "Watched Indicator on Videos";
-        public string WatchedIndicatorinDetailViewConfig = "Watched Indicator in Detail View";
-        public string DefaultToFirstUnwatchedItemConfig = "Default To First Unwatched Item";
+        public string ShowUnwatchedCountConfig = "Show Unplayed Count";
+        public string WatchedIndicatoronFoldersConfig = "Played Indicator on Folders";
+        public string HighlightUnwatchedItemsConfig = "Highlight Unplayed Items";
+        public string WatchedIndicatoronVideosConfig = "Played Indicator on Items";
+        public string WatchedIndicatorinDetailViewConfig = "Played Indicator in Detail View";
+        public string DefaultToFirstUnwatchedItemConfig = "Default To First Unplayed Item";
         public string GeneralBehaviorConfig = "General Behavior";
         public string AllowNestedMovieFoldersConfig = "Allow Nested Movie Folders";
         public string AutoEnterSingleFolderItemsConfig = "Auto Enter Single Folder Items";
@@ -174,12 +174,12 @@ namespace MediaBrowser.Library.Localization
 
 
         //EHS        
-        public string RecentlyWatchedEHS = "last watched";
+        public string RecentlyWatchedEHS = "last played";
         public string RecentlyAddedEHS = "last added";
-        public string RecentlyAddedUnwatchedEHS = "last added unwatched";
-        public string WatchedEHS = "Watched";
+        public string RecentlyAddedUnwatchedEHS = "last added unplayed";
+        public string WatchedEHS = "Played";
         public string AddedEHS = "Added";
-        public string UnwatchedEHS = "Unwatched";
+        public string UnwatchedEHS = "Unplayed";
         public string AddedOnEHS = "Added on";
         public string OnEHS = "on";
         public string OfEHS = "of";
@@ -191,8 +191,8 @@ namespace MediaBrowser.Library.Localization
         public string PlayMenuCMenu = "Play Menu";
         public string ItemMenuCMenu = "Item Menu";
         public string PlayAllCMenu = "Play All";
-        public string MarkUnwatchedCMenu = "Mark Unwatched";
-        public string MarkWatchedCMenu = "Mark Watched";
+        public string MarkUnwatchedCMenu = "Mark Unplayed";
+        public string MarkWatchedCMenu = "Mark Played";
         public string ShufflePlayCMenu = "Shuffle Play";
 
         //Movie Detail Page
@@ -232,7 +232,7 @@ namespace MediaBrowser.Library.Localization
         public string DateDispPref = "Date";
         public string RatingDispPref = "Rating";
         public string RuntimeDispPref = "Runtime";
-        public string UnWatchedDispPref = "Unwatched";
+        public string UnWatchedDispPref = "Unplayed";
         public string YearDispPref = "Year";
         public string NoneDispPref = "None";
         public string ActorDispPref = "Actor";
@@ -320,9 +320,9 @@ namespace MediaBrowser.Library.Localization
         public string WelcomeProf = "Welcome to Media Browser";
         public string ProfilerTimeProf = "{1} took {2} seconds.";
         public string RefreshProf = "Refresh";
-        public string SetWatchedProf = "Set Watched {0}";
+        public string SetWatchedProf = "Set Played {0}";
         public string RefreshFolderProf = "Refresh Folder and all Contents of";
-        public string ClearWatchedProf = "Clear Watched {0}";
+        public string ClearWatchedProf = "Clear Played {0}";
         public string FullRefreshProf = "Full Library Refresh";
         public string FullValidationProf = "Full Library Validation";
         public string FastRefreshProf = "Fast Metadata refresh";
