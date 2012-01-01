@@ -795,6 +795,13 @@ namespace Diamond {
             }
         }
         
+        internal static byte[] ExtendedPagination {
+            get {
+                object obj = ResourceManager.GetObject("ExtendedPagination", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
         internal static byte[] FocusSelector {
             get {
                 object obj = ResourceManager.GetObject("FocusSelector", resourceCulture);

@@ -336,6 +336,7 @@ namespace MediaBrowser.Library.Entities
                 {
                     if (this.ScanType == "Progressive") return "p";
                     if (this.ScanType == "Interlaced") return "i";
+                    if (this.ScanType == "MBAFF") return "i";
                     else return "";
                 }
                 else
