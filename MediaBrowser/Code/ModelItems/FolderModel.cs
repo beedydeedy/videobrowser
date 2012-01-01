@@ -119,7 +119,9 @@ namespace MediaBrowser.Library {
         {
             get
             {
-                return ItemFactory.Instance.Create(folder.LastWatchedItem);
+                var lastwatched = ItemFactory.Instance.Create(folder.LastWatchedItem);
+                if (lastwatched.BaseItem is Episode) CreateEpisodeParents(lastwatched);
+                return lastwatched;
             }
         }
 
@@ -186,49 +188,7 @@ namespace MediaBrowser.Library {
                                         }
                                         else
                                         {
-                                            //** I don't really like this little bit of 'magic' to derive our season/series but I guess
-                                            //** it is better than storing backwards pointers...maybe.
-
-                                            //this item loaded out of context (no season/series parent) we need to derive and create them
-                                            if (episode.Parent != null && episode.Path != null)
-                                            {
-                                                //derive id of what would be our season
-                                                string parentPath = System.IO.Path.GetDirectoryName(episode.Path);
-                                                Guid seasonId = (typeof(Season).FullName + parentPath.ToLower()).GetMD5();
-                                                var mySeason = Kernel.Instance.ItemRepository.RetrieveItem(seasonId) as Season;
-                                                if (mySeason != null)
-                                                {
-                                                    //found season - attach it
-                                                    episode.Parent = mySeason;
-                                                    //and create a model item for it
-                                                    item.PhysicalParent = ItemFactory.Instance.Create(mySeason) as FolderModel;
-                                                    parentPath = System.IO.Path.GetDirectoryName(parentPath); //parent of season is series
-                                                }
-                                                //gonna need a series too
-                                                Guid seriesId = (typeof(Series).FullName + parentPath.ToLower()).GetMD5();
-                                                var mySeries = Kernel.Instance.ItemRepository.RetrieveItem(seriesId) as Series;
-                                                if (mySeries != null)
-                                                {
-                                                    mySeason.Parent = mySeries;
-                                                    item.PhysicalParent.PhysicalParent = ItemFactory.Instance.Create(mySeries) as FolderModel;
-
-                                                    //now force the blasted images to load so they will inherit
-                                                    var ignoreList = mySeries.BackdropImages;
-                                                    ignoreList = mySeason != null ? mySeason.BackdropImages : null;
-                                                    ignoreList = episode.BackdropImages;
-                                                    var ignore = mySeries.ArtImage;
-                                                    ignore = mySeries.LogoImage;
-                                                    ignore = mySeason != null ? mySeason.ArtImage : null;
-                                                    ignore = mySeason != null ? mySeason.LogoImage : null;
-                                                    ignore = episode.ArtImage;
-                                                    ignore = episode.LogoImage;
-                                                }
-                                                else
-                                                {
-                                                    //something went wrong deriving all this - attach to us
-                                                    item.PhysicalParent = this;
-                                                }
-                                            }
+                                            CreateEpisodeParents(item);
                                         }
                                     }
                                     else
@@ -267,6 +227,56 @@ namespace MediaBrowser.Library {
                 });
 
             }
+        }
+
+        protected void CreateEpisodeParents(Item item)
+        {
+            //** I don't really like this little bit of 'magic' to derive our season/series but I guess
+            //** it is better than storing backwards pointers...maybe.
+
+            var episode = item.BaseItem as Episode;
+            if (episode == null) return;
+            //this item loaded out of context (no season/series parent) we need to derive and create them
+            if (episode.Parent != null && episode.Path != null)
+            {
+                //derive id of what would be our season
+                string parentPath = System.IO.Path.GetDirectoryName(episode.Path);
+                Guid seasonId = (typeof(Season).FullName + parentPath.ToLower()).GetMD5();
+                var mySeason = Kernel.Instance.ItemRepository.RetrieveItem(seasonId) as Season;
+                if (mySeason != null)
+                {
+                    //found season - attach it
+                    episode.Parent = mySeason;
+                    //and create a model item for it
+                    item.PhysicalParent = ItemFactory.Instance.Create(mySeason) as FolderModel;
+                    parentPath = System.IO.Path.GetDirectoryName(parentPath); //parent of season is series
+                }
+                //gonna need a series too
+                Guid seriesId = (typeof(Series).FullName + parentPath.ToLower()).GetMD5();
+                var mySeries = Kernel.Instance.ItemRepository.RetrieveItem(seriesId) as Series;
+                if (mySeries != null)
+                {
+                    mySeason.Parent = mySeries;
+                    item.PhysicalParent.PhysicalParent = ItemFactory.Instance.Create(mySeries) as FolderModel;
+
+                    //now force the blasted images to load so they will inherit
+                    var ignoreList = mySeries.BackdropImages;
+                    ignoreList = mySeason != null ? mySeason.BackdropImages : null;
+                    ignoreList = episode.BackdropImages;
+                    var ignore = mySeries.ArtImage;
+                    ignore = mySeries.LogoImage;
+                    ignore = mySeason != null ? mySeason.ArtImage : null;
+                    ignore = mySeason != null ? mySeason.LogoImage : null;
+                    ignore = episode.ArtImage;
+                    ignore = episode.LogoImage;
+                }
+                else
+                {
+                    //something went wrong deriving all this - attach to us
+                    item.PhysicalParent = this;
+                }
+            }
+
         }
 
         public List<Item> RecentItems
