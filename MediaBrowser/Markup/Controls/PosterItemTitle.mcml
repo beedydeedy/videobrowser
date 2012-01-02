@@ -19,9 +19,16 @@
 		<Rules>
 			<Binding Source="[Folder.SelectedChild]" Target="[SelectedItem]" />
 			<Binding Source="[SelectedItem.Name]" Target="[Name.Content]"/>
-			<Binding Source="[SelectedItem.RunningTimeString]" Target="[Runtime.Content]"/>
 			<Binding Source="[SelectedItem.ImdbRating]" Target="[StarRating.Value]"/>
 			<Condition Source="[SelectedItem.RunningTimeString]" ConditionOp="Equals" SourceValue="" Target="[Runtime.Visible]" Value="false"/>
+
+      <Binding Source="[SelectedItem.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[Runtime.Content]">
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Source="[SelectedItem.RunningTimeString]" Target="[Runtime.Content]"/>
+      
 		</Rules>
 
     <Content>

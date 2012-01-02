@@ -88,7 +88,6 @@
       
       <Binding Target="[Preview.Content]" Source="[SelectedItem.PreferredImageSmall]"/>
       <Binding Target="[StarRating.Value]" Source="[SelectedItem.ImdbRating]" />
-      <Binding Target="[TxtRuntime.Content]" Source="[SelectedItem.RunningTimeString]"/>
       <Binding Target="[GenreRepeater.Source]" Source="[SelectedItem.Genres]"/>
       <Binding Target="[Title1.Content]" Source="[SelectedItem.Name]"/>
       <Binding Target="[Title2.Content]" Source="[SelectedItem.SubTitle]"/>
@@ -99,6 +98,13 @@
       <Binding Target="[MPAARating.Value]" Source="[SelectedItem.OfficialRating]" />
       <Binding Target="[MediaInfo.Item]" Source="[SelectedItem]" />
 
+      <Binding Source="[SelectedItem.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[TxtRuntime.Content]">
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[TxtRuntime.Content]" Source="[SelectedItem.RunningTimeString]"/>
+      
       <!-- Show Proper Overview Panel -->
       <Binding Source="[Application.Config.AutoScrollText]" Target="[AutoScrollOverview.Visible]" />
       <Binding Source="[Application.Config.AutoScrollText]" Target="[Summary.Visible]">

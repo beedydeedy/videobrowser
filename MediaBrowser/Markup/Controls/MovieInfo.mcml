@@ -25,12 +25,18 @@
     </Properties>
     <Rules>
       <Binding Target="[StarRating.Value]" Source="[Model.ImdbRating]" />
-      <Binding Target="[TxtRuntime.Content]" Source="[Model.RunningTimeString]"/>
       <Binding Target="[Genres.SourceData]" Source="[Model.Genres]"/>
       <Binding Target="[Directors.Item]" Source="[Model]"/>
       <Binding Target="[Writers.Item]" Source="[Model]"/>
       <Binding Target="[ProductionYear.Content]" Source="[Model.ProductionYearString]"/>
       <Binding Target="[MPAARating.Value]" Source="[Model.OfficialRating]"/>
+      
+      <Binding Source="[Model.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[TxtRuntime.Content]">
+        <Conditions>
+          <Equality Source="[Model.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[TxtRuntime.Content]" Source="[Model.RunningTimeString]"/>
       
       <!--Get localized text for First Aired-->
       <Binding Source="[Application.LocalStrings.#FirstAiredDetail!cor:String]" Target="[FirstAiredText.Content]"/>

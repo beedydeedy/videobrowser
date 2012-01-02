@@ -635,11 +635,17 @@
       <Binding Source="[Item.ImdbRatingString]" Target="[IMDBRating.Content]" />
       <Binding Source="[Item.ImdbRating]" Target="[StarRating.Value]" />
       <Binding Source="[Item.OfficialRating]" Target="[MPAARating.Value]" />
-      <Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
       <Binding Source="[Item.Directors]" Target="[DirectorRepeater.Source]"/>
       <Binding Source="[Item.Overview]" Target="[Overview.Text]" />
       <Binding Source="[Item.Overview]" Target="[AutoScrollOverview.Text]" />
+
+      <Binding Source="[Item.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[Runtime.Content]">
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[Runtime.Content]" Source="[Item.RunningTimeString]"/>
 
       <!-- Show Proper Overview Panel -->
       <Binding Source="[Application.Config.AutoScrollText]" Target="[AutoScrollOverview.Visible]" />
