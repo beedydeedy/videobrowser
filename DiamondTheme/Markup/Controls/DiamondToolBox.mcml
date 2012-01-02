@@ -109,10 +109,17 @@
       <Binding Source="[Item.ImdbRating]" Target="[StarRating.Value]" />
       <Binding Source="[Item.MpaaRating]" Target="[MPAARating.Value]" />
       <Binding Source="[Item.Directors]" Target="[DirectorRepeater.Source]"/>
-      <Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />
+      <!--<Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />-->
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
       <Binding Source="[Item.StudioItems]" Target="[StudioRepeater.Source]" />
       <Binding Target="[FirstAired.Content]" Source="[Item.FirstAired]" />
+
+      <Binding Source="[Item.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[Runtime.Content]">
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[Runtime.Content]" Source="[Item.RunningTimeString]"/>
 
       <Condition  Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Season">
         <Actions>

@@ -830,6 +830,12 @@
       <Binding Source="[Item.RecentDateString]" Target="[Txt2.Content]" />
       <Binding Source="[Item.MpaaRating]" Target="[MPAARating.Value]" />
       
+      <Binding Source="[Item.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[Runtime.Content]">
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[Runtime.Content]" Source="[Item.RunningTimeString]"/>
 
       <Binding Source="[Item.HaveWatched]" Target="[TickIndicator.Visible]" >
         <Conditions>
