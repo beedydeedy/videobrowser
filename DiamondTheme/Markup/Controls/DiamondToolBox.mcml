@@ -160,6 +160,7 @@
       <Rule>
         <Conditions>
           <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
           <Equality Source="[Item.RunningTime]" ConditionOp="GreaterThan" Value="0" />
         </Conditions>
         <Actions>
@@ -174,6 +175,7 @@
       <Rule>
         <Conditions>
           <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
           <Equality Source="[Item.RunningTime]" ConditionOp="GreaterThan" Value="0" />
           <Modified Source="[Clock.Time]" InitialEvaluate="true" />
         </Conditions>
