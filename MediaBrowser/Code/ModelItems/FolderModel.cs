@@ -115,13 +115,21 @@ namespace MediaBrowser.Library {
             get { return folder.LastWatchedItem != null; }
         }
 
+        protected Item lastWatched;
         public Item LastWatchedItem
         {
             get
             {
-                var lastwatched = ItemFactory.Instance.Create(folder.LastWatchedItem);
-                if (lastwatched.BaseItem is Episode) CreateEpisodeParents(lastwatched);
-                return lastwatched;
+                if (lastWatched == null)
+                {
+                    Async.Queue("lastwatched load", () =>
+                    {
+                        lastWatched = ItemFactory.Instance.Create(folder.LastWatchedItem);
+                        if (lastWatched.BaseItem is Episode) CreateEpisodeParents(lastWatched);
+                        FirePropertyChanged("LastWatchedItem");
+                    });
+                }
+                return lastWatched;
             }
         }
 
@@ -335,6 +343,7 @@ namespace MediaBrowser.Library {
             if (item.ParentalAllowed || !Config.Instance.HideParentalDisAllowed)
             {
                 folder.LastWatchedItem = item.BaseItem;
+                this.lastWatched = null;
                 FirePropertyChanged("LastWatchedItem");
                 if (Config.Instance.RecentItemOption == "watched" && quickListItems != null) //already have a list
                 {
