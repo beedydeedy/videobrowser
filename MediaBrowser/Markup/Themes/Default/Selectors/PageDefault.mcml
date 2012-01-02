@@ -254,7 +254,7 @@
         </Conditions>
         <Actions>
           <Set Target="[BreadCrumbs.Font]" Value="font://f:P_BreadcrumbFont" />
-          <Set Target="[BreadCrumbs.Margins]" Value="0,20,0,0" />
+          <Set Target="[BreadCrumbs.Margins]" Value="0,10,0,0" />
         </Actions>
       </Rule>
 
@@ -264,7 +264,7 @@
           <Equality Source="[Application.BreadCrumbs]" ConditionOp="Equals" Value="" />
         </Conditions>
         <Actions>
-          <Set Target="[BreadCrumbs.Content]" Value="video library" />
+          <Set Target="[BreadCrumbs.Content]" Value="media library" />
           <Set Target="[BreadCrumbs.Font]" Value="font://f:P_BreadcrumbFont" />
         </Actions>
       </Rule>
