@@ -28,7 +28,6 @@
       <Binding Target="[Genres.SourceData]" Source="[Model.Genres]"/>
       <Binding Target="[Directors.Item]" Source="[Model]"/>
       <Binding Target="[Writers.Item]" Source="[Model]"/>
-      <Binding Target="[ProductionYear.Content]" Source="[Model.ProductionYearString]"/>
       <Binding Target="[MPAARating.Value]" Source="[Model.OfficialRating]"/>
       
       <Binding Source="[Model.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[TxtRuntime.Content]">
@@ -37,6 +36,16 @@
         </Conditions>
       </Binding>
       <Binding Target="[TxtRuntime.Content]" Source="[Model.RunningTimeString]"/>
+
+      <Binding Source="[Model.DynamicProperties.#ProductionYear!cor:String]" Target="[ProductionYear.Content]">
+        <Conditions>
+          <Equality Source="[Model.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
+        </Conditions>
+        <Transformer>
+          <FormatTransformer Format="{0}" />
+        </Transformer>
+      </Binding>
+      <Binding Target="[ProductionYear.Content]" Source="[Model.ProductionYearString]"/>
       
       <!--Get localized text for First Aired-->
       <Binding Source="[Application.LocalStrings.#FirstAiredDetail!cor:String]" Target="[FirstAiredText.Content]"/>
@@ -83,7 +92,7 @@
               <FlowLayout Orientation="Horizontal" ItemAlignment="Far" Spacing="0,0"/>
             </Layout>
             <Children>
-              <Text Name="ProductionYear" Content=""  Font="font://f:TD_MI_ProductionYearFont" Color="color://s:FontColorLight" Margins="0,0,10,0"/>
+              <Text Name="ProductionYear" Content="" Font="font://f:TD_MI_ProductionYearFont" Color="color://s:FontColorLight" Margins="0,0,10,0"/>
               <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:TD_MI_RuntimeFont" Margins="0,2,0,0"/>
             </Children>
           </Panel>

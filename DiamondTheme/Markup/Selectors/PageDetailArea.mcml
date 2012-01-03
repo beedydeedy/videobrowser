@@ -54,7 +54,7 @@
 
       <Rule ConditionLogicalOp ="And">
         <Conditions >
-          <Equality Source="[Folder.ItemTypeString]" Value="ArtistAlbum"/>
+          <Equality Source="[Folder.ItemTypeString]" Value="MusicAlbum"/>
         </Conditions>
         <Actions>
           <Set Target="[DetailsView.Visible]" Value="false"/>
@@ -88,7 +88,7 @@
 			<Condition Source="[Folder.DisplayPrefs.ViewTypeString]" ConditionOp="NotEquals" SourceValue="ThumbStrip" Target="[ThumbStripView.Visible]" Value="false" />
 			<Condition Source="[Folder.DisplayPrefs.ViewTypeString]" ConditionOp="Equals" SourceValue="CoverFlow" Target="[CoverFlow.Visible]" Value="true" />
 			<Condition Source="[Folder.DisplayPrefs.ViewTypeString]" ConditionOp="NotEquals" SourceValue="CoverFlow" Target="[CoverFlow.Visible]" Value="false" />
-      <Condition Source="[Folder.ItemTypeString]" ConditionOp="NotEquals" SourceValue="ArtistAlbum" Target="[AlbumArtist.Visible]" Value="false" />
+      <Condition Source="[Folder.ItemTypeString]" ConditionOp="NotEquals" SourceValue="MusicAlbum" Target="[AlbumArtist.Visible]" Value="false" />
 
 
 		</Rules>
