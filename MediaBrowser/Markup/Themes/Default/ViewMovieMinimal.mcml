@@ -37,13 +37,21 @@
 
     <Locals>
       <a:Clock Name="Clock"/>
+      
       <Choice Name="Model">
         <Options>
           <cor:String String="[Application.LocalStrings.#GeneralDetail!cor:String]" />
           <cor:String String="[Application.LocalStrings.#ActorsDetail!cor:String]" />
         </Options>
       </Choice>
-
+      
+      <Choice Name="Artists">
+        <Options>
+          <cor:String String="[Application.LocalStrings.#GeneralDetail!cor:String]" />
+          <cor:String String="[Application.LocalStrings.#ArtistsDetail!cor:String]" />
+        </Options>
+      </Choice>
+      
       <Color Name="FilterColor" Color="color://s:FilterColor" />
 
       <ShortcutHandler Name="PlayBtn" Handle="true" Shortcut="Play" HandlerStage="Bubbled"/>
@@ -129,8 +137,57 @@
           <Set Target="[TimeClip.Visible]" Value="true" />
         </Actions>
       </Rule>
+      
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song"
+                 Target="[FullConfigNav.Model]" Value="[Artists]"/>
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="NotEquals" SourceValue="Song"
+                 Target="[FullConfigNav.Model]" Value="[Model]"/>
+      
+      <!-- Show and hide Selectors -->
+      <!-- Use Artists tab for songs -->
 
-      <Default Target="[FullConfigNav.Model]" Value="[Model]" />
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[Artists.ChosenIndex]" ConditionOp="Equals" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Target="[Info.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[Artists.ChosenIndex]" ConditionOp="Equals" Value="1" />
+        </Conditions>
+        <Actions>
+          <Set Target="[ActorScroller.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Model.ChosenIndex]" ConditionOp="Equals" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Target="[Info.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Model.ChosenIndex]" ConditionOp="Equals" Value="1" />
+        </Conditions>
+        <Actions>
+          <Set Target="[ActorScroller.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+
+      <!--<Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[Info.Visible]" Value="true" />
+      <Condition Source="[Model.ChosenIndex]" SourceValue="1" ConditionOp="Equals" Target="[ActorScroller.Visible]" Value="true" />-->
+
+      <Binding Source="[Application.ShowNowPlaying]" Target="[NowPlaying.Visible]" />
 
       <!-- Play Rules -->
       <Rule ConditionLogicalOp ="Or">
@@ -142,12 +199,6 @@
           <Invoke Target="[Application.Play]" item="[Item]"  />
         </Actions>
       </Rule>
-
-      <!-- Show and hide Selectors -->
-      <Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[Info.Visible]" Value="true" />
-      <Condition Source="[Model.ChosenIndex]" SourceValue="1" ConditionOp="Equals" Target="[ActorScroller.Visible]" Value="true" />
-      
-      <Binding Source="[Application.ShowNowPlaying]" Target="[NowPlaying.Visible]" />
 
     </Rules>
 
@@ -164,7 +215,7 @@
           </np:NowPlayingViewport>
           
           <!-- Movie Title -->
-          <Clip Name="TitleText" FadeSize="40" Orientation="Vertical" FadeAmount="0.7" NearOffset="-25"
+          <Clip Name="TitleText" FadeSize="40" Orientation="Vertical" FadeAmount="0.2" NearOffset="-25"
                 CenterPointPercent="-100,-100,0">
             <LayoutInput>
               <AnchorLayoutInput Top="Parent,0,23" Left="Parent, 0.2"  Right="Parent,0.98"
@@ -196,7 +247,7 @@
           </Clip>
 
           <!-- Time Panel -->
-          <Clip Name="TimeText" FadeSize="40" Orientation="Vertical" FadeAmount="0.7" FarOffset="25" CenterPointPercent="100,100,0" Visible="false">
+          <Clip Name="TimeText" FadeSize="40" Orientation="Vertical" FadeAmount="0.2" FarOffset="25" CenterPointPercent="100,100,0" Visible="false">
             <LayoutInput>
               <AnchorLayoutInput Top="TitleText,0"  Left="Parent,0" />
             </LayoutInput>
@@ -676,6 +727,8 @@
           <FormatTransformer Format="{0} 10"/>
         </Transformer>
       </Binding>
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song"
+                 Target="[DirectorText.Content]" Value="[Application.LocalStrings.#ComposerDetail!cor:String]"/>
       <Binding Target="[DirectorText.Content]" Source="[Application.LocalStrings.#DirectorDetail!cor:String]"/>
       <Binding Target="[RuntimeText.Content]" Source="[Application.LocalStrings.#RuntimeDetail!cor:String]"/>
 
