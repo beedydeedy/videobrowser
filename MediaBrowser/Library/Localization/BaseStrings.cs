@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0040";
+        const string VERSION = "1.0041";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -195,10 +195,10 @@ namespace MediaBrowser.Library.Localization
         public string MarkWatchedCMenu = "Mark Played";
         public string ShufflePlayCMenu = "Shuffle Play";
 
-        //Movie Detail Page
+        //Media Detail Page
         public string GeneralDetail = "General";
         public string ActorsDetail = "Actors";
-        public string HostDetail = "Host";
+        public string ArtistsDetail = "Artists";        
         public string PlayDetail = "Play";
         public string ResumeDetail = "Resume";
         public string RefreshDetail = "Refresh";
@@ -208,6 +208,8 @@ namespace MediaBrowser.Library.Localization
         public string IMDBRatingDetail = "TMDb Rating";
         public string OutOfDetail = "out of";
         public string DirectorDetail = "Director";
+        public string ComposerDetail = "Composer";
+        public string HostDetail = "Host";
         public string RuntimeDetail = "Runtime";
         public string NextItemDetail = "Next";
         public string PreviousItemDetail = "Previous";
@@ -215,6 +217,7 @@ namespace MediaBrowser.Library.Localization
 
         public string DirectedByDetail = "Directed By: ";
         public string WrittenByDetail = "Written By: ";
+        public string ComposedByDetail = "Composed By: ";
 
         //Display Prefs
         public string ViewDispPref = "View";

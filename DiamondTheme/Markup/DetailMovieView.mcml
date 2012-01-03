@@ -396,13 +396,84 @@
           <cor:String String="[Application.LocalStrings.#MediaDetail!cor:String]" />
         </Options>
       </Choice>
+
+      <Choice Name="ModelWithArtists">
+        <Options>
+          <cor:String String="[Application.LocalStrings.#GeneralDetail!cor:String]" />
+          <cor:String String="[Application.LocalStrings.#ArtistsDetail!cor:String]" />
+          <cor:String String="[Application.LocalStrings.#MediaDetail!cor:String]" />
+        </Options>
+      </Choice>
     </Locals>
 
     <Rules>
+      
+      <!-- Use Artists tab for songs -->      
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song"
+                 Target="[FullConfigNav.Model]" Value="[ModelWithArtists]"/>
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="NotEquals" SourceValue="Song"
+                 Target="[FullConfigNav.Model]" Value="[Model]"/>
+      
       <!-- Show and hide Selectors -->
-      <Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[OverviewPanel.Visible]" Value="true" />
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[ModelWithArtists.ChosenIndex]" ConditionOp="Equals" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Target="[OverviewPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[ModelWithArtists.ChosenIndex]" ConditionOp="Equals" Value="1" />
+        </Conditions>
+        <Actions>
+          <Set Target="[ActorsPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[ModelWithArtists.ChosenIndex]" ConditionOp="Equals" Value="2" />
+        </Conditions>
+        <Actions>
+          <Set Target="[MediaDetailsPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Model.ChosenIndex]" ConditionOp="Equals" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Target="[OverviewPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Model.ChosenIndex]" ConditionOp="Equals" Value="1" />
+        </Conditions>
+        <Actions>
+          <Set Target="[ActorsPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Model.ChosenIndex]" ConditionOp="Equals" Value="2" />
+        </Conditions>
+        <Actions>
+          <Set Target="[MediaDetailsPanel.Visible]" Value="true" />
+        </Actions>
+      </Rule>      
+      
+      <!--<Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[OverviewPanel.Visible]" Value="true" />
       <Condition Source="[Model.ChosenIndex]" SourceValue="1" ConditionOp="Equals" Target="[ActorsPanel.Visible]" Value="true" />
-      <Condition Source="[Model.ChosenIndex]" SourceValue="2" ConditionOp="Equals" Target="[MediaDetailsPanel.Visible]" Value="true" />
+      <Condition Source="[Model.ChosenIndex]" SourceValue="2" ConditionOp="Equals" Target="[MediaDetailsPanel.Visible]" Value="true" />-->
 
       <Binding Source="[Item.Overview]" Target="[Overview.Text]" />
       <Condition Source="[Item.Actors.Count]" ConditionOp="LessThan" SourceValue="1" Target="[ActorsPanel.Visible]" Value="false" />
