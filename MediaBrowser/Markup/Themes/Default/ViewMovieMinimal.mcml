@@ -45,7 +45,7 @@
         </Options>
       </Choice>
       
-      <Choice Name="Artists">
+      <Choice Name="ModelWithArtists">
         <Options>
           <cor:String String="[Application.LocalStrings.#GeneralDetail!cor:String]" />
           <cor:String String="[Application.LocalStrings.#ArtistsDetail!cor:String]" />
@@ -138,18 +138,17 @@
         </Actions>
       </Rule>
       
+      <!-- Use Artists tab for songs -->
       <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song"
-                 Target="[FullConfigNav.Model]" Value="[Artists]"/>
+                 Target="[FullConfigNav.Model]" Value="[ModelWithArtists]"/>
       <Condition Source="[Item.ItemTypeString]" ConditionOp="NotEquals" SourceValue="Song"
                  Target="[FullConfigNav.Model]" Value="[Model]"/>
       
       <!-- Show and hide Selectors -->
-      <!-- Use Artists tab for songs -->
-
       <Rule >
         <Conditions>
           <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
-          <Equality Source="[Artists.ChosenIndex]" ConditionOp="Equals" Value="0" />
+          <Equality Source="[ModelWithArtists.ChosenIndex]" ConditionOp="Equals" Value="0" />
         </Conditions>
         <Actions>
           <Set Target="[Info.Visible]" Value="true" />
@@ -158,7 +157,7 @@
       <Rule >
         <Conditions>
           <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
-          <Equality Source="[Artists.ChosenIndex]" ConditionOp="Equals" Value="1" />
+          <Equality Source="[ModelWithArtists.ChosenIndex]" ConditionOp="Equals" Value="1" />
         </Conditions>
         <Actions>
           <Set Target="[ActorScroller.Visible]" Value="true" />

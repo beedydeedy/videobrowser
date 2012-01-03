@@ -198,8 +198,7 @@ namespace MediaBrowser.Library.Localization
         //Media Detail Page
         public string GeneralDetail = "General";
         public string ActorsDetail = "Actors";
-        public string ArtistsDetail = "Artists";
-        public string HostDetail = "Host";
+        public string ArtistsDetail = "Artists";        
         public string PlayDetail = "Play";
         public string ResumeDetail = "Resume";
         public string RefreshDetail = "Refresh";
@@ -210,6 +209,7 @@ namespace MediaBrowser.Library.Localization
         public string OutOfDetail = "out of";
         public string DirectorDetail = "Director";
         public string ComposerDetail = "Composer";
+        public string HostDetail = "Host";
         public string RuntimeDetail = "Runtime";
         public string NextItemDetail = "Next";
         public string PreviousItemDetail = "Previous";
