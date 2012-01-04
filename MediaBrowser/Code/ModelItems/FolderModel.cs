@@ -127,9 +127,13 @@ namespace MediaBrowser.Library {
                 {
                     Async.Queue("lastwatched load", () =>
                     {
-                        lastWatched = ItemFactory.Instance.Create(folder.LastWatchedItem);
-                        if (lastWatched.BaseItem is Episode) CreateEpisodeParents(lastWatched);
-                        FirePropertyChanged("LastWatchedItem");
+                        var baseItem = folder.LastWatchedItem;
+                        if (baseItem != null)
+                        {
+                            lastWatched = ItemFactory.Instance.Create(folder.LastWatchedItem);
+                            if (lastWatched.BaseItem is Episode) CreateEpisodeParents(lastWatched);
+                            FirePropertyChanged("LastWatchedItem");
+                        }
                     });
                 }
                 return lastWatched;
