@@ -110,6 +110,9 @@ namespace MediaBrowser.Library {
             }
         }
 
+        /// <summary>
+        /// WARNING - this call may block the thread as the folder is searched for a lastwatched item
+        /// </summary>
         public bool HasLastWatchedItem
         {
             get { return folder.LastWatchedItem != null; }
