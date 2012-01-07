@@ -701,15 +701,13 @@ namespace MediaBrowser.Library
             }
         }
 
+        protected FolderModel season;
         public FolderModel Season
         {
             get
             {
 
-                FolderModel season = null;
                 Episode episode = baseItem as Episode;
-                FolderModel parent = PhysicalParent;
-
                 if (episode != null)
                 {
                     season = ItemFactory.Instance.Create(episode.Season) as FolderModel;

@@ -33,7 +33,10 @@ namespace MediaBrowser.Library.Entities {
 
         public Season Season {
             get {
-                return Parent as Season;
+                if (Parent is Season)
+                    return Parent as Season;
+                else
+                    return this.RetrieveSeason();
             }
         }
 
