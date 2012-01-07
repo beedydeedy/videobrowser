@@ -386,6 +386,7 @@
       <Size Name="MinSize" Size="225,0"/>
       <Font Name="TitleFont" Font="font://f:Diamond_Small"/>
       <Font Name="ValueFont" Font="font://f:Diamond_Small_SemiBold"/>
+      <cor:Int32 Name="MaxLines" Int32="2"/>
     </Properties>
 
     <Locals>
@@ -469,16 +470,44 @@
         <Actions>
           <Set Target="[MediaDetailsPanel.Visible]" Value="true" />
         </Actions>
-      </Rule>      
-      
+      </Rule>
       <!--<Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[OverviewPanel.Visible]" Value="true" />
       <Condition Source="[Model.ChosenIndex]" SourceValue="1" ConditionOp="Equals" Target="[ActorsPanel.Visible]" Value="true" />
       <Condition Source="[Model.ChosenIndex]" SourceValue="2" ConditionOp="Equals" Target="[MediaDetailsPanel.Visible]" Value="true" />-->
-
+       
       <Binding Source="[Item.Overview]" Target="[Overview.Text]" />
       <Condition Source="[Item.Actors.Count]" ConditionOp="LessThan" SourceValue="1" Target="[ActorsPanel.Visible]" Value="false" />
       
-    </Rules>
+      <!--Increase ItemPath.MaximumLines if media details are empty-->
+      <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song" >
+        <Actions>
+          <Set Target="[ItemPath.MaximumLines]" Value="[MaxLines]" >
+            <Transformer>
+              <MathTransformer Add="3"/>
+            </Transformer>
+          </Set>
+        </Actions>
+      </Condition>
+      
+      <Condition Source="[Item.MediaInfo.SubtitleString]" ConditionOp="Equals" SourceValue="" >
+      <Actions>
+        <Set Target="[ItemPath.MaximumLines]" Value="[MaxLines]" >
+          <Transformer>
+            <MathTransformer Add="1"/>
+          </Transformer>
+        </Set>
+      </Actions>
+      </Condition>
+      
+      <!--Hide panels if media details are empty-->
+      <Condition Source="[Item.MediaInfo.VideoCodecExtendedString]" ConditionOp="NotEquals" SourceValue="" Target="[VCodec.Visible]" Value="true" />
+      <Condition Source="[Item.MediaInfo.VideoResolutionExtendedString]" ConditionOp="NotEquals" SourceValue="" Target="[VRes.Visible]" Value="true" />
+      <Condition Source="[Item.MediaInfo.AudioCodecExtendedString]" ConditionOp="NotEquals" SourceValue="" Target="[ACodec.Visible]" Value="true" />
+      <Condition Source="[Item.MediaInfo.AudioStreamString]" ConditionOp="NotEquals" SourceValue="" Target="[AStreams.Visible]" Value="true" />
+      <Condition Source="[Item.MediaInfo.AudioChannelString]" ConditionOp="NotEquals" SourceValue="" Target="[AChannels.Visible]" Value="true" />
+      <Condition Source="[Item.MediaInfo.SubtitleString]" ConditionOp="NotEquals" SourceValue="" Target="[Subtitles.Visible]" Value="true" />    
+    
+  </Rules>
 
     <Content>
       <Graphic Content="image://i:DiamondTopPanel" Padding="5,5,5,5">
@@ -522,47 +551,41 @@
              <Panel Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#LocationMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
-                  <Text Content="[Item.Path]" Color="[ValueColor]" Font="[ValueFont]"                         WordWrap="true" MaximumLines="2"/>
+                  <Text  Name="ItemPath" Content="[Item.Path]" Color="[ValueColor]" Font="[ValueFont]"                         WordWrap="true" MaximumLines="[MaxLines]"/>
                 </Children>
               </Panel>  
 
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="VCodec" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]"  Content="[Application.LocalStrings.#VCodecMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.VideoCodecExtendedString]" Color="[ValueColor]"                          Font="[ValueFont]"/>
                 </Children>
               </Panel>
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="VRes" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#VResMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.VideoResolutionExtendedString]" Color="[ValueColor]" Font="[ValueFont]"/>
                 </Children>
               </Panel>
-         <!-- <Panel Layout="HorizontalFlow">
-                <Children>
-                  <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#VFrameRateMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
-                  <Text Content="[Item.MediaInfo.VideoFrameRateString]" Color="[ValueColor]" Font="[ValueFont]"/>
-                </Children>
-              </Panel> -->
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="ACodec" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#ACodecMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.AudioCodecExtendedString]" Color="[ValueColor]" Font="[ValueFont]"/>
                 </Children>
               </Panel>
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="AStreams" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#AStreamsMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.AudioStreamString]" Color="[ValueColor]" Font="[ValueFont]"/>
                 </Children>
               </Panel>
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="AChannels" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#AChannelsMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.AudioChannelString]" Color="[ValueColor]" Font="[ValueFont]"/>
                 </Children>
               </Panel>
-              <Panel Layout="HorizontalFlow">
+              <Panel Name="Subtitles" Visible="false" Layout="HorizontalFlow">
                 <Children>
                   <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#SubtitlesMedia!cor:String.ToUpper]"                         MinimumSize="[MinSize]"/>
                   <Text Content="[Item.MediaInfo.SubtitleString]" Color="[ValueColor]" Font="[ValueFont]"/>
