@@ -454,22 +454,22 @@ namespace MediaBrowser.Library.Entities {
             if (this.BannerImage != null)
             {
                 this.BannerImage.ClearLocalImages();
-                ignore = this.BannerImage.GetLocalImagePath(); //and, finally, banner
+                ignore = this.BannerImage.GetLocalImagePath(); //and banner
             }
             if (this.LogoImage != null)
             {
                 this.LogoImage.ClearLocalImages();
-                ignore = this.LogoImage.GetLocalImagePath(); //and, finally, banner
+                ignore = this.LogoImage.GetLocalImagePath(); //and logo
             }
             if (this.ArtImage != null)
             {
                 this.ArtImage.ClearLocalImages();
-                ignore = this.ArtImage.GetLocalImagePath(); //and, finally, banner
+                ignore = this.ArtImage.GetLocalImagePath(); //and art
             }
             if (this.ThumbnailImage != null)
             {
                 this.ThumbnailImage.ClearLocalImages();
-                ignore = this.ThumbnailImage.GetLocalImagePath(); //and, finally, banner
+                ignore = this.ThumbnailImage.GetLocalImagePath(); //and, finally, thumb
             }
         }
 

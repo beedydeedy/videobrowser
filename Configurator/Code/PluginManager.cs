@@ -67,6 +67,7 @@ namespace Configurator.Code {
                 {"lotus theme", new System.Version(1,0,6,2)},
                 {"jade theme", new System.Version(1,0,6,2)},
                 {"neo theme", new System.Version(1,0,7,0)},
+                {"follw.it", new System.Version(1,0,1,1273)},
             };
 
         public PluginManager()
