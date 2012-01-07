@@ -719,12 +719,16 @@ namespace MediaBrowser.Library
             }
         }
 
-
+        protected FolderModel series;
         public FolderModel Series
         {
             get
             {
-                return new FolderModel() { baseItem = this.baseItem.OurSeries};
+                if (series == null)
+                {
+                    series = ItemFactory.Instance.Create(this.baseItem.OurSeries) as FolderModel;
+                }
+                return series;
             }
         }
 

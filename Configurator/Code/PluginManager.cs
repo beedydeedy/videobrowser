@@ -46,11 +46,28 @@ namespace Configurator.Code {
 
         //any of these plugins with older versions than defined here are incompatable with this version
         public static Dictionary<string, System.Version> RequiredVersions = new Dictionary<string, System.Version>() {
-                {"coverart",new System.Version(2,3,1,2)},
+                {"coverart",new System.Version(3,0,0,0)},
                 {"mediainfo provider", new System.Version(1,3,0)},
                 {"gametime", new System.Version(6,0,0)},
                 {"high quality thumbnails", new System.Version(1,2,0)},
-                {"media browser trailers", new System.Version(1,3,0,6)}
+                {"media browser trailers", new System.Version(1,3,0,6)},
+                {"diamond theme", new System.Version(0,3,6,0)},
+                {"dvr-ms and wtv metadata", new System.Version(1,0,5,0)},
+                {"ascendancy theme", new System.Version(2,0,2,0)},
+                {"centrality theme", new System.Version(2,0,1,1)},
+                {"harmony theme", new System.Version(2,0,1,1)},
+                {"imperium theme", new System.Version(2,0,2,0)},
+                {"kismet theme", new System.Version(2,0,2,1)},
+                {"maelstrom theme", new System.Version(2,0,2,0)},
+                {"regency theme", new System.Version(1,0,2,0)},
+                {"supremacy theme", new System.Version(1,0,2,0)},
+                {"vanilla theme", new System.Version(3,0,2,0)},
+                {"pearl theme", new System.Version(1,0,7,1)},
+                {"sapphire theme", new System.Version(1,0,6,2)},
+                {"lotus theme", new System.Version(1,0,6,2)},
+                {"jade theme", new System.Version(1,0,6,2)},
+                {"neo theme", new System.Version(1,0,7,0)},
+                {"follw.it", new System.Version(1,0,1,1273)},
             };
 
         public PluginManager()

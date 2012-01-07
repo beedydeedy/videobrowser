@@ -114,7 +114,7 @@ namespace MediaBrowser.Library.Plugins {
         {
             get
             {
-                return IsPremium ? "$" : "";
+                return IsPremium ? " (premium)" : "";
             }
         }
 

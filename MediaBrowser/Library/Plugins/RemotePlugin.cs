@@ -90,6 +90,6 @@ namespace MediaBrowser.Library.Plugins {
         public virtual bool UpdateAvail { get; set; }
         public virtual bool IsLatestVersion { get; set; }
         public virtual bool IsPremium { get; set; }
-        public string ListDisplayString { get { return Name + " (v" + Version + ")"+(IsPremium ? " $" : ""); } }
+        public string ListDisplayString { get { return Name + " (v" + Version + ")"+(IsPremium ? " (premium)" : ""); } }
     }
 }
