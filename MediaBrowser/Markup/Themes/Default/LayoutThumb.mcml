@@ -150,7 +150,7 @@
             <FlowLayout Orientation="Vertical" StripAlignment="Near" Spacing="0,0"/>
           </Layout>
           <LayoutInput>
-            <FormLayoutInput Left="DetailsSection,0" Top="DetailsSection,1" Right="DetailsSection,1" Bottom="Parent,1,-80" />
+            <FormLayoutInput Left="DetailsSection,0,-5" Top="DetailsSection,1" Right="DetailsSection,1" Bottom="Parent,1,-80" />
           </LayoutInput>
           </as:AutoScrollText>
 

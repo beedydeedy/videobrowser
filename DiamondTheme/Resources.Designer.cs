@@ -648,6 +648,13 @@ namespace Diamond {
             }
         }
         
+        internal static System.Drawing.Bitmap dia_list_focus_mini {
+            get {
+                object obj = ResourceManager.GetObject("dia_list_focus_mini", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap dia_pagePanel {
             get {
                 object obj = ResourceManager.GetObject("dia_pagePanel", resourceCulture);

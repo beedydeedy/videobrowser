@@ -435,7 +435,7 @@
     <Properties>
       <ICommand Name="Command" ICommand="$Required" />
       <Font Name="Font" Font="$Required" />
-
+      <cor:Boolean Name="Rotate" Boolean="true" />
       <cor:Boolean Name="IsNavigatingCommand" Boolean="false" />
       <cor:Boolean Name="LeftAlign" Boolean="true" />
       <cor:Boolean Name="MaxMode" Boolean="false" />
@@ -496,10 +496,22 @@
         <Conditions>
           <Modified Source="[Clicker.Invoked]"/>
           <Equality Source="[IsNavigatingCommand]" Value="true" />
+          <Equality Source="[Rotate]" Value="true"/>
         </Conditions>
         <Actions>
           <PlaySound Sound="sound://sounds:Select" />
           <PlayAnimation Animation="animation://an:RotateRound" Target="[graphicBullet]"  />
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Modified Source="[Clicker.Invoked]"/>
+          <Equality Source="[IsNavigatingCommand]" Value="true" />
+          <Equality Source="[Rotate]" Value="false"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Select" />
         </Actions>
       </Rule>
 
@@ -507,10 +519,22 @@
         <Conditions>
           <Modified Source="[Clicker.Invoked]"/>
           <Equality Source="[IsNavigatingCommand]" Value="false"/>
+          <Equality Source="[Rotate]" Value="true"/>
         </Conditions>
         <Actions>
           <PlaySound Sound="sound://sounds:Miniselect" />
           <PlayAnimation Animation="animation://an:RotateRound" Target="[graphicBullet]"  />
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Modified Source="[Clicker.Invoked]"/>
+          <Equality Source="[IsNavigatingCommand]" Value="false"/>
+          <Equality Source="[Rotate]" Value="false"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Miniselect" />
         </Actions>
       </Rule>
 
@@ -553,8 +577,8 @@
           <Equality Source="[MaxMode]" Value="false"/>
         </Conditions>
         <Actions>
-          <Set Target="[imgButton.MinimumSize]" Value="50,50"/>
-          <Set Target="[imgButton.MaximumSize]" Value="50,50"/>
+          <Set Target="[imgButton.MinimumSize]" Value="50,45"/>
+          <Set Target="[imgButton.MaximumSize]" Value="50,45"/>
         </Actions>
       </Rule>
       <!---->

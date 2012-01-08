@@ -175,9 +175,9 @@
           </ColorFill>
           
           <!-- Details List -->
-          <lv:ListView Visible="true" Application="[Application]" Folder="[Item]" Name="MyItems" Font="font://f:DV_ListButtonFont" FocusOrder="0" Padding="0,0,0,-22">
+          <lv:ListView Visible="true" Application="[Application]" Folder="[Item]" Name="MyItems" Font="font://f:DV_ListButtonFont" FocusOrder="0" Padding="0,0,0,0">
             <LayoutInput>
-              <FormLayoutInput Left="Parent,0,0" Top="Parent,0.04,-14" Right="Parent,.4" Bottom="Parent,1,-24" ></FormLayoutInput>
+              <FormLayoutInput Left="Parent,0,0" Top="Parent,0.04,0" Right="Parent,.4" Bottom="Parent,1,41" ></FormLayoutInput>
             </LayoutInput>
           </lv:ListView>
 
