@@ -70,7 +70,7 @@ namespace Configurator.Code {
                 {"follw.it", new System.Version(1,0,1,1273)},
                 {"traktmb", new System.Version(0,9,0,38)},
                 {"storageviewer", new System.Version(0,0,4,10)},
-                {"gamebrowser", new System.Version(1,0,0,7)},
+                {"gamebrowser", new System.Version(1,0,0,6)},
             };
 
         public PluginManager()
