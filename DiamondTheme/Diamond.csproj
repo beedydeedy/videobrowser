@@ -109,6 +109,7 @@
     <Content Include="Images\Common\folder.png" />
     <None Include="Images\Common\zoompane.png" />
     <None Include="Images\Icons\IconAdd.png" />
+    <Content Include="Images\dia_list_focus_mini.png" />
     <Content Include="Images\Icons\IconIndex.png" />
     <Content Include="Images\Icons\IconLines.png" />
     <Content Include="Images\Icons\IconLock.png" />
