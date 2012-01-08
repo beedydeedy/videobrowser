@@ -88,6 +88,36 @@ namespace MediaBrowser.Library.Persistance
 
         protected SQLiteConnection connection;
         protected List<SQLiteCommand> delayedCommands = new List<SQLiteCommand>();
+        protected const int MAX_RETRIES = 5;
+
+        protected virtual bool ConnectToDB(string dbPath)
+        {
+            SQLiteConnectionStringBuilder connectionstr = new SQLiteConnectionStringBuilder();
+            connectionstr.PageSize = 4096;
+            connectionstr.CacheSize = 4096;
+            connectionstr.SyncMode = SynchronizationModes.Normal;
+            connectionstr.DataSource = dbPath;
+            connectionstr.JournalMode = SQLiteJournalModeEnum.Delete;
+            connection = new SQLiteConnection(connectionstr.ConnectionString);
+            int retries = 0;
+            bool connected = false;
+            while (!connected && retries < MAX_RETRIES)
+            {
+                try
+                {
+                    connection.Open();
+                    connected = true;
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Error connecting to database "+dbPath+"! Will retry " + MAX_RETRIES + " times.", e);
+                    retries++;
+                    Thread.Sleep(250);
+                }
+            }
+
+            return connected;
+        }
 
         public virtual void ShutdownDatabase()
         {

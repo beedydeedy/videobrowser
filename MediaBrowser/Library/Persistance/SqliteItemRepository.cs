@@ -344,38 +344,14 @@ namespace MediaBrowser.Library.Persistance {
         SQLiteDisplayRepository displayRepo;
         // Playstate repo
         FileBasedDictionary<PlaybackStatus> playbackStatus;
-        const int MAX_RETRIES = 3;
 
         private SqliteItemRepository(string dbPath) {
 
             Logger.ReportInfo("==========Using new SQL Repo========");
             dbFileName = dbPath;
 
-            SQLiteConnectionStringBuilder connectionstr = new SQLiteConnectionStringBuilder();
-            connectionstr.PageSize = 4096;
-            connectionstr.CacheSize = 4096;
-            connectionstr.SyncMode = SynchronizationModes.Normal;
-            connectionstr.DataSource = dbPath;
-            connectionstr.JournalMode = SQLiteJournalModeEnum.Delete; 
-            connection = new SQLiteConnection(connectionstr.ConnectionString);
-            int retries = 0;
-            bool connected = false;
-            while (!connected && retries < MAX_RETRIES)
-            {
-                try
-                {
-                    connection.Open();
-                    connected = true;
-                }
-                catch (Exception e)
-                {
-                    Logger.ReportException("Error connecting to database! Will retry "+MAX_RETRIES+" times.", e);
-                    retries++;
-                    Thread.Sleep(250);
-                }
-            }
 
-            if (!connected) throw new ApplicationException("CRITICAL ERROR - Unable to connect to database: " + dbPath + ".  Program cannot function.");
+            if (!ConnectToDB(dbPath)) throw new ApplicationException("CRITICAL ERROR - Unable to connect to database: " + dbPath + ".  Program cannot function.");
 
             displayRepo = new SQLiteDisplayRepository(Path.Combine(ApplicationPaths.AppUserSettingsPath, "display.db"));
             playbackStatus = new FileBasedDictionary<PlaybackStatus>(GetPath("playstate", ApplicationPaths.AppUserSettingsPath));
