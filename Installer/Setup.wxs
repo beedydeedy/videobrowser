@@ -111,7 +111,7 @@
                   Type="url"/>
         <util:InternetShortcut Id="CommunityTrackerKnowledgebase"
                   Name="Knowledge Base"
-                  Target="http://community.mediabrowser.tv/topics?category_id=5"
+                  Target="http://community.mediabrowser.tv/topics?category_id=5&amp;status=published"
                   Directory="ApplicationHelpAndSupportFolder"
                   Type="url"/>
         <RemoveFolder Id="RemoveApplicationHelpAndSupportFolder" Directory="ApplicationHelpAndSupportFolder" On="uninstall"/>
