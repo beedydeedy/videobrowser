@@ -7,6 +7,7 @@
 	  xmlns:mi="resx://MediaBrowser/MediaBrowser.Resources/MovieInfo"
 	  xmlns:lw="resx://MediaBrowser/MediaBrowser.Resources/LastWatched"
 	  xmlns:ts="resx://MediaBrowser/MediaBrowser.Resources/TitleSet"
+    xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
 	  xmlns:sy="resx://MediaBrowser/MediaBrowser.Resources/Summary"
     xmlns:as="resx://MediaBrowser/MediaBrowser.Resources/AutoScroller"
 	  xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
@@ -96,7 +97,19 @@
           <FormatTransformer Format=" | {0}" />
         </Transformer>
       </Binding>
-    </Rules>
+
+      <Rule>
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[SelectedItem.Actors.Count]" ConditionOp="GreaterThan" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Value="[SelectedItem.Actors]" Target="[ArtistList.SourceData]"/>
+          <Set Value="true" Target="[ArtistList.Visible]"/>
+        </Actions>
+      </Rule>
+    
+  </Rules>
 
     <Content>
       <Panel Name="MainPanel" Layout="Form" Navigation="Group">
@@ -120,6 +133,7 @@
             </Layout>
             <Children>
               <ts:TitleSet Name="TitleSet" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:PD_TitleFont" SubFont="font://f:PD_SubTitleFont"/>
+              <al:ArtistList Name="ArtistList" SourceData="[SelectedItem.Actors]" Font="font://f:PD_SubTitleFont" WordWrap="true" Visible="false"/>
               <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" DisplayMediaInfo="false" />
               <lw:LastWatched Name="LastWatched" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:PD_LastWatchedFont"/>
             </Children>

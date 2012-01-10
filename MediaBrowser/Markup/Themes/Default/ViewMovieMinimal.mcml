@@ -21,6 +21,7 @@
     xmlns:mip="resx://MediaBrowser/MediaBrowser.Resources/MediaInfoPanel"
     xmlns:pb="resx://MediaBrowser/MediaBrowser.Resources/PersonButton"
     xmlns:db="resx://MediaBrowser/MediaBrowser.Resources/DirectorButton"
+    xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
     xmlns:ai="resx://MediaBrowser/MediaBrowser.Resources/ActivityIndicator"
     xmlns:me="Me"
     >
@@ -182,9 +183,19 @@
           <Set Target="[ActorScroller.Visible]" Value="true" />
         </Actions>
       </Rule>
-
       <!--<Condition Source="[Model.ChosenIndex]" SourceValue="0" ConditionOp="Equals" Target="[Info.Visible]" Value="true" />
       <Condition Source="[Model.ChosenIndex]" SourceValue="1" ConditionOp="Equals" Target="[ActorScroller.Visible]" Value="true" />-->
+      
+      <Rule >
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song" />
+          <Equality Source="[Item.Actors.Count]" ConditionOp="GreaterThan" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Value="[Item.Actors]" Target="[ArtistList.SourceData]"/>
+          <Set Value="true" Target="[ArtistList.Visible]"/>
+        </Actions>
+        </Rule>
 
       <Binding Source="[Application.ShowNowPlaying]" Target="[NowPlaying.Visible]" />
 
@@ -199,6 +210,7 @@
         </Actions>
       </Rule>
 
+    
     </Rules>
 
     <Content>
@@ -217,16 +229,16 @@
           <Clip Name="TitleText" FadeSize="40" Orientation="Vertical" FadeAmount="0.2" NearOffset="-25"
                 CenterPointPercent="-100,-100,0">
             <LayoutInput>
-              <AnchorLayoutInput Top="Parent,0,23" Left="Parent, 0.2"  Right="Parent,0.98"
+              <AnchorLayoutInput Top="Parent,0,23" Left="Parent, 0.2"  Right="Parent,1"
                                  Horizontal="Far"/>
             </LayoutInput>
             <Children>
               <Panel Layout="Scale">
                 <Children>
-                  <Panel  Layout="HorizontalFlow" Padding="100,0,0,0">
+                  <Panel  Layout="HorizontalFlow" Padding="100,0,38,0">
                     <Children>
                       <Text Name="TitleName" Content="" Font="font://f:MM_TitleFont" Color="color://s:FontColorMedium"/>
-                      <Text Name="ProductionYear" Content="" Font="font://f:MM_TitleFont" Color="color://s:FontColorMedium" Margins="10,0,25,0" />
+                      <Text Name="ProductionYear" Content="" Font="font://f:MM_TitleFont" Color="color://s:FontColorMedium" Margins="10,0,0,0" />
                     </Children>
                   </Panel>
                 </Children>
@@ -242,6 +254,35 @@
               <ColorFill Content="color://s:FillColor" Alpha="global://s:FilterAlpha">
 
               </ColorFill>
+            </Children>
+          </Clip>
+          
+          <!-- Song Artist -->
+          <Clip Name="ArtistText" FadeSize="40" Orientation="Vertical" FadeAmount="0.2" NearOffset="-25"
+                CenterPointPercent="-100,-100,0">
+            <LayoutInput>
+              <AnchorLayoutInput Top="TitleText,1" Left="Parent, 0.2"  Right="Parent,1"
+                                 Horizontal="Far"/>
+            </LayoutInput>
+            <Children>
+              <Panel Layout="Scale">
+                <Children>
+                  <Panel  Layout="HorizontalFlow" Padding="100,0,40,0">
+                    <Children>
+                      <al:ArtistList Name="ArtistList" SourceData="[Item.Actors]" Font="font://f:MM_ArtistFont" Color="color://s:FontColorMedium" Visible="false"/>
+                    </Children>
+                  </Panel>
+                </Children>
+              </Panel>
+
+            </Children>
+          </Clip>
+          <Clip Name="ArtistClip" FadeSize="100" Orientation="Horizontal" ShowFar="false" FadeAmount="1" NearOffset="25" >
+            <LayoutInput>
+              <AnchorLayoutInput Top="ArtistText,0" Bottom="ArtistText,1" Left="ArtistText,0" Right="ArtistText,1" />
+            </LayoutInput>
+            <Children>
+              <ColorFill Content="color://s:FillColor" Alpha="global://s:FilterAlpha"/>
             </Children>
           </Clip>
 
@@ -335,7 +376,7 @@
             </LayoutInput>
           </ColorFill>
 
-          <!-- Poster (large movie pick) -->
+          <!-- Poster (large movie pic) -->
           <ColorFill Visible="true" Name="PosterPanel" Layout="VerticalFlow" MaximumSize="1000,350" Content="Transparent" Padding="1,1,1,1">
             <LayoutInput>
               <FormLayoutInput Right="Parent,.97" Bottom="ScreenBox, 0, -10" />
@@ -687,6 +728,7 @@
       <Binding Source="[Item.OfficialRating]" Target="[MPAARating.Value]" />
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
       <Binding Source="[Item.Directors]" Target="[DirectorRepeater.Source]"/>
+      <Binding Source="[Item.DirectorString]" Target="[Composer.Content]"/>
       <Binding Source="[Item.Overview]" Target="[Overview.Text]" />
       <Binding Source="[Item.Overview]" Target="[AutoScrollOverview.Text]" />
 
@@ -696,7 +738,38 @@
         </Conditions>
       </Binding>
       <Binding Target="[Runtime.Content]" Source="[Item.RunningTimeString]"/>
+      
+      <Rule>
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:Int32]" ConditionOp="GreaterThan" Value="0"/>
+        </Conditions>
+        <Actions>
+          <Set Value="[Item.DynamicProperties.#TrackNo!cor:String]" Target="[TrackNumber.Content]">
+            <Transformer>
+              <FormatTransformer Format="{0}"/>
+            </Transformer>
+          </Set>
+          <Set Value="[Item.PhysicalParent.Children.Count]" Target="[TrackCount.Content]">
+            <Transformer>
+              <FormatTransformer Format=" / {0}"/>
+            </Transformer>
+          </Set>
+          <Set Target="[TrackNumberPanel.Visible]" Value="true"/>
+        </Actions>
+      </Rule>
 
+      <Rule>
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[Item.Directors.Count]" ConditionOp="GreaterThan" Value="0"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[ComposedByPanel.Visible]" Value="true"/>
+          <Set Target="[DirectedByPanel.Visible]" Value="false"/>
+        </Actions>
+      </Rule>
+      
       <!-- Show Proper Overview Panel -->
       <Binding Source="[Application.Config.AutoScrollText]" Target="[AutoScrollOverview.Visible]" />
       <Binding Source="[Application.Config.AutoScrollText]" Target="[Overview.Visible]">
@@ -726,9 +799,9 @@
           <FormatTransformer Format="{0} 10"/>
         </Transformer>
       </Binding>
-      <Condition Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Song"
-                 Target="[DirectorText.Content]" Value="[Application.LocalStrings.#ComposerDetail!cor:String]"/>
       <Binding Target="[DirectorText.Content]" Source="[Application.LocalStrings.#DirectorDetail!cor:String]"/>
+      <Binding Target="[ComposerText.Content]" Source="[Application.LocalStrings.#ComposerDetail!cor:String]"/>
+      <Binding Target="[TrackNumberText.Content]" Source="[Application.LocalStrings.#TrackNumberDetail!cor:String]"/>
       <Binding Target="[RuntimeText.Content]" Source="[Application.LocalStrings.#RuntimeDetail!cor:String]"/>
 
       <!--Get localized text for First Aired-->
@@ -749,10 +822,10 @@
           <!-- Column 1 (Genres)-->
           <Panel Layout="VerticalFlow" Margins="10,0,0,0" >
             <LayoutInput>
-              <FormLayoutInput Left="Parent,0.70" Right="Parent,1" Top="Parent,0" />
+              <FormLayoutInput Left="Parent,0.7,10" Right="Parent,1" Top="Parent,0" />
             </LayoutInput>
             <Children>
-              <Repeater Name="GenreRepeater" Source="[Item.Genres]" Margins="0,0,0,0" MaximumSize="0,150" >
+              <Repeater Name="GenreRepeater" Source="[Item.Genres]" Margins="0,0,0,0" MaximumSize="0,100" >
                 <Layout>
                   <FlowLayout Orientation="Horizontal" AllowWrap="true"  Spacing="25,0"  />
                 </Layout>
@@ -798,7 +871,7 @@
           <!-- Column 2 (IMDB, Director, Rating, Runtime)-->
           <Panel Layout="VerticalFlow" Margins="0,0,0,0" >
             <LayoutInput>
-              <AnchorLayoutInput Left="Parent,0.45" Right="Parent,.71" Top="Parent,0"/>
+              <AnchorLayoutInput Left="Parent,0.45" Right="Parent,0.7,10" Top="Parent,0"/>
             </LayoutInput>
             <Children>
               <Panel>
@@ -824,7 +897,25 @@
                   
                 </Children>
               </Panel>
+              
+              <Panel Name="TrackNumberPanel" Layout="HorizontalFlow" Visible="false">
+                <Children>
+                  <Text Name="TrackNumberText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0" />
+                  <Text Name="TrackNumber" Font="font://f:MM_ItemFont" Color="[ValueColor]" />
+                  <Text Name="TrackCount" Font="font://f:MM_ItemFont" Color="[ValueColor]" />
+                </Children>
+              </Panel>
 
+              <Panel Name="RuntimePanel" Visible="true" >
+                <Layout>
+                  <FlowLayout Orientation="Horizontal"/>
+                </Layout>
+                <Children>
+                  <Text Name="RuntimeText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
+                  <Text Name="Runtime" Content="[Item.RunningTimeString]" Font="font://f:MM_ItemFont" Color="[ValueColor]"/>
+                </Children>
+              </Panel>
+              
               <Panel Name="DirectedByPanel" Layout="HorizontalFlow" Visible="false">
                 <Children>
                   <Text Name="DirectorText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
@@ -848,17 +939,14 @@
 
                 </Children>
               </Panel>
-
-              <Panel Name="RuntimePanel" Visible="true" >
-                <Layout>
-                  <FlowLayout Orientation="Horizontal"/>
-                </Layout>
+              
+              <Panel Name="ComposedByPanel" Layout="HorizontalFlow" Visible="false">
                 <Children>
-                  <Text Name="RuntimeText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
-                  <Text Name="Runtime" Content="[Item.RunningTimeString]" Font="font://f:MM_ItemFont" Color="[ValueColor]"/>
+                  <Text Name="ComposerText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
+                  <Text Name="Composer" Content="[Item.DirectorString]" Font="font://f:MM_ItemTitleFont" Color="[ValueColor]" WordWrap="true" MaximumLines="4"/>
                 </Children>
               </Panel>
-
+              
               <Panel Name="FirstAiredPanel" Visible="true" >
                 <Layout>
                   <FlowLayout Orientation="Horizontal"/>
