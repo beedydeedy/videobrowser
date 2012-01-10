@@ -8,6 +8,7 @@
 	  xmlns:mi="resx://MediaBrowser/MediaBrowser.Resources/MovieInfo"
 	  xmlns:lw="resx://MediaBrowser/MediaBrowser.Resources/LastWatched"
 	  xmlns:ts="resx://MediaBrowser/MediaBrowser.Resources/TitleSet"
+    xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
 	  xmlns:sy="resx://MediaBrowser/MediaBrowser.Resources/Summary"
     xmlns:as="resx://MediaBrowser/MediaBrowser.Resources/AutoScroller"
     xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/ScrollableText"
@@ -178,6 +179,17 @@
         </Actions>
       </Changed>
 
+      <Rule>
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[SelectedItem.Actors.Count]" ConditionOp="GreaterThan" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Value="[SelectedItem.Actors]" Target="[ArtistList.SourceData]"/>
+          <Set Value="true" Target="[ArtistList.Visible]"/>
+        </Actions>
+      </Rule>
+
     </Rules>
 
     <Content>
@@ -194,6 +206,7 @@
             </Layout>
             <Children>
               <ts:TitleSet Name="TitleSet" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:SV_TitleFont" SubFont="font://f:SV_SubTitleFont"/>
+              <al:ArtistList Name="ArtistList" SourceData="[SelectedItem.Actors]" Font="font://f:SV_SubTitleFont" WordWrap="true" Visible="false"/>
               <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" DisplayMediaInfo="false" DisplayMediaInfoPanel="true" />
             </Children>
           </Panel>

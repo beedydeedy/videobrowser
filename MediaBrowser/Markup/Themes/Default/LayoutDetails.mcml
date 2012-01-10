@@ -9,6 +9,7 @@
 	    xmlns:mi="resx://MediaBrowser/MediaBrowser.Resources/MovieInfo"
 	    xmlns:lw="resx://MediaBrowser/MediaBrowser.Resources/LastWatched"
 	    xmlns:ts="resx://MediaBrowser/MediaBrowser.Resources/TitleSet"
+      xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
 	    xmlns:sy="resx://MediaBrowser/MediaBrowser.Resources/Summary"
 	    xmlns:sr="resx://MediaBrowser/MediaBrowser.Resources/StarRating"
 	    xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
@@ -124,6 +125,17 @@
           <Set Target="[ProductionYear.Visible]" Value="false"/>
         </Actions>
       </Rule>
+
+      <Rule>
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[SelectedItem.Actors.Count]" ConditionOp="GreaterThan" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Value="[SelectedItem.Actors]" Target="[ArtistList.SourceData]"/>
+          <Set Value="true" Target="[ArtistList.Visible]"/>
+        </Actions>
+      </Rule>
       
       <!-- Show Proper Overview Panel -->
       <Binding Source="[Application.Config.AutoScrollText]" Target="[AutoScrollOverview.Visible]" />
@@ -192,6 +204,7 @@
             <Children>
               <Text Name="Title1" Color="color://s:FontColorLight" Font="font://f:DV_TitleFont"/>
               <Text Name="Title2" Color="color://s:FontColorLight" Font="font://f:DV_SubTitleFont" Margins="0,0,0,0"/>
+              <al:ArtistList Name="ArtistList" SourceData="[SelectedItem.Actors]" Font="font://f:DV_SubTitleFont" WordWrap="true" Visible="false"/>
               <Panel Name="StarMPAA">
                 <Layout>
                   <FlowLayout Orientation="Horizontal" ItemAlignment="Center" Spacing="0,0"/>
@@ -208,7 +221,7 @@
                 <Children>
                   <Text Name="LastWatched" Color="color://s:FontColorLight" Font="font://f:DV_LastWatchedFont" Margins="0,2,0,0"/>
                   <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:DV_RuntimeFont" Margins="10,2,0,0"/>
-                  <Text Name="ProductionYear" Font="font://f:DV_FirstAiredFont" Color="color://s:FontColorMedium" Margins="10,0,0,-1" Visible="true"/>
+                  <Text Name="ProductionYear" Font="font://f:DV_FirstAiredFont" Color="color://s:FontColorLight" Margins="10,0,0,-1" Visible="true"/>
                 </Children>
               </Panel>
               <Repeater Name="GenreRepeater" Source="[Item.SelectedChild.Genres]" >
