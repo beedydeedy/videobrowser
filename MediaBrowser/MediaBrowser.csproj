@@ -841,6 +841,7 @@
     <Content Include="Markup\Base\Animations.mcml" />
     <Content Include="Markup\Base\Images.mcml" />
     <Content Include="Markup\Controls\ActivityIndicator.mcml" />
+    <Content Include="Markup\Controls\ArtistList.mcml" />
     <Content Include="Markup\Controls\Backdrop.mcml" />
     <Content Include="Markup\Controls\Buttons\PCIndicatorButton.mcml">
       <SubType>Designer</SubType>

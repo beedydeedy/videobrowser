@@ -403,6 +403,13 @@ namespace MediaBrowser {
             }
         }
         
+        internal static byte[] ArtistList {
+            get {
+                object obj = ResourceManager.GetObject("ArtistList", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap aspect_125 {
             get {
                 object obj = ResourceManager.GetObject("aspect_125", resourceCulture);
