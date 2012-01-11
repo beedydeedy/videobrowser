@@ -750,12 +750,21 @@
               <FormatTransformer Format="{0}"/>
             </Transformer>
           </Set>
+          <Set Target="[TrackNumberPanel.Visible]" Value="true"/>
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[Item.PhysicalParent.Children.Count]" ConditionOp="GreaterThan" Value="0"/>
+        </Conditions>
+        <Actions>
           <Set Value="[Item.PhysicalParent.Children.Count]" Target="[TrackCount.Content]">
             <Transformer>
               <FormatTransformer Format=" / {0}"/>
             </Transformer>
           </Set>
-          <Set Target="[TrackNumberPanel.Visible]" Value="true"/>
         </Actions>
       </Rule>
 
