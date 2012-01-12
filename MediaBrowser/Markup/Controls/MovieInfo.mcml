@@ -1,5 +1,6 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
 	  xmlns:cor="assembly://MSCorLib/System"
+    xmlns:col="assembly://MSCorLib/System.Collections"
     xmlns:a="assembly://MediaBrowser/MediaBrowser"
 	  xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
 	  xmlns:sr="resx://MediaBrowser/MediaBrowser.Resources/StarRating"
@@ -26,7 +27,6 @@
     </Properties>
     <Rules>
       <Binding Target="[StarRating.Value]" Source="[Model.ImdbRating]" />
-      <Binding Target="[Genres.SourceData]" Source="[Model.Genres]"/>
       <Binding Target="[Directors.Item]" Source="[Model]"/>
       <Binding Target="[Writers.Item]" Source="[Model]"/>
       <Binding Target="[MPAARating.Value]" Source="[Model.OfficialRating]"/>
@@ -47,6 +47,13 @@
         </Transformer>
       </Binding>
       <Binding Target="[ProductionYear.Content]" Source="[Model.ProductionYearString]"/>
+      
+      <Binding Source="[Model.DynamicProperties.#MusicGenres!col:IList]" Target="[Genres.SourceData]">
+        <Conditions>
+          <Equality Source="[Model.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[Genres.SourceData]" Source="[Model.Genres]"/>
       
       <!--Get localized text for First Aired-->
       <Binding Source="[Application.LocalStrings.#FirstAiredDetail!cor:String]" Target="[FirstAiredText.Content]"/>
