@@ -23,7 +23,7 @@ namespace Diamond
     [Serializable]
     public class MyStrings : LocalizedStringData    
     {
-        const string VERSION = "0.3.1.2"; //this is used to see if we have changed and need to re-save
+        const string VERSION = "0.3.1.3"; //this is used to see if we have changed and need to re-save
 
         //these are our strings keyed by property name
         public string DiamondOptionsDesc = "Options for the Diamond Theme.";
@@ -62,7 +62,7 @@ namespace Diamond
         public string DisplayDetail = "Display";
         public string GenreDetail = "Genre";
         public string StudioDetail = "Studio";
-        public string FirstAiredDetail = "First Aired";
+        //public string FirstAiredDetail = "First Aired";
         public string EpisodesDetail = "Episodes";
         public string MediaDetail = "Media-Details";
 

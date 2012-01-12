@@ -742,7 +742,9 @@
       <Rule>
         <Conditions>
           <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
-          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:Int32]" ConditionOp="GreaterThan" Value="0"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="0"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="00"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="000"/>
         </Conditions>
         <Actions>
           <Set Value="[Item.DynamicProperties.#TrackNo!cor:String]" Target="[TrackNumber.Content]">
@@ -750,12 +752,21 @@
               <FormatTransformer Format="{0}"/>
             </Transformer>
           </Set>
+          <Set Target="[TrackNumberPanel.Visible]" Value="true"/>
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[Item.PhysicalParent.Children.Count]" ConditionOp="GreaterThan" Value="0"/>
+        </Conditions>
+        <Actions>
           <Set Value="[Item.PhysicalParent.Children.Count]" Target="[TrackCount.Content]">
             <Transformer>
               <FormatTransformer Format=" / {0}"/>
             </Transformer>
           </Set>
-          <Set Target="[TrackNumberPanel.Visible]" Value="true"/>
         </Actions>
       </Rule>
 
@@ -850,9 +861,9 @@
                       <FlowLayout Orientation="Horizontal" AllowWrap="true" Spacing="0,0" />
                     </Layout>
                     <Children>
-                      <Text Name="MediaInfoResolution" Font="Arial, 13" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
-                      <Text Name="MediaInfoVideo" Font="Arial, 13" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
-                      <Text Name="MediaInfoAudio" Font="Arial, 13" Color="[ValueColor]" WordWrap="true" />
+                      <Text Name="MediaInfoResolution" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
+                      <Text Name="MediaInfoVideo" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
+                      <Text Name="MediaInfoAudio" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" WordWrap="true" />
                     </Children>
                   </Panel>
                 </Children>
@@ -943,7 +954,7 @@
               <Panel Name="ComposedByPanel" Layout="HorizontalFlow" Visible="false">
                 <Children>
                   <Text Name="ComposerText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
-                  <Text Name="Composer" Content="[Item.DirectorString]" Font="font://f:MM_ItemTitleFont" Color="[ValueColor]" WordWrap="true" MaximumLines="4"/>
+                  <Text Name="Composer" Content="[Item.DirectorString]" Font="font://f:MM_ItemFont" Color="[ValueColor]" WordWrap="true" MaximumLines="4"/>
                 </Children>
               </Panel>
               

@@ -5,7 +5,6 @@
 	  xmlns:ps="resx://MediaBrowser/MediaBrowser.Resources/PosterScroller"
 	  xmlns:ip="resx://MediaBrowser/MediaBrowser.Resources/ItemPoster"
 	  xmlns:mi="resx://MediaBrowser/MediaBrowser.Resources/MovieInfo"
-	  xmlns:lw="resx://MediaBrowser/MediaBrowser.Resources/LastWatched"
 	  xmlns:ts="resx://MediaBrowser/MediaBrowser.Resources/TitleSet"
     xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
 	  xmlns:sy="resx://MediaBrowser/MediaBrowser.Resources/Summary"
@@ -68,11 +67,9 @@
       <Binding Source="[SelectedItem]" Target="[MovieInfo.Model]"/>
       <Binding Source="[SelectedItem]" Target="[Summary.Model]"/>
       <Binding Source="[SelectedItem.Overview]" Target="[AutoScrollOverview.Text]"/>
-      <Binding Source="[SelectedItem]" Target="[LastWatched.Model]"/>
       <Binding Source="[PreSelectedItem]" Target="[TitleSet.ModelFast]"/>
       <Binding Source="[PreSelectedItem]" Target="[MovieInfo.ModelFast]"/>
       <Binding Source="[PreSelectedItem]" Target="[Summary.ModelFast]"/>
-      <Binding Source="[PreSelectedItem]" Target="[LastWatched.ModelFast]"/>
 
       <Binding Target="[Backdrop.Image]" Source="[PreviousSelectedItem.BackdropImage]" />
       <Binding Target="[Split.Right.Offset]" Source="[Application.Config.ThumbStripPosterWidth]" />
@@ -134,8 +131,7 @@
             <Children>
               <ts:TitleSet Name="TitleSet" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:PD_TitleFont" SubFont="font://f:PD_SubTitleFont"/>
               <al:ArtistList Name="ArtistList" SourceData="[SelectedItem.Actors]" Font="font://f:PD_SubTitleFont" WordWrap="true" Visible="false"/>
-              <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" DisplayMediaInfo="false" />
-              <lw:LastWatched Name="LastWatched" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:PD_LastWatchedFont"/>
+              <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" DisplayMediaInfo="false" DisplayLastPlayedPanel="true" />
             </Children>
           </Panel>
 

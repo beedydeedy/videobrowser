@@ -1,5 +1,6 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
 	    xmlns:cor="assembly://MSCorLib/System"
+      xmlns:col="assembly://MSCorLib/System.Collections"
       xmlns:a="assembly://MediaBrowser/MediaBrowser"
       xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
 	    xmlns:s="file://Styles_DoNotEdit.mcml"
@@ -88,7 +89,6 @@
       
       <Binding Target="[Preview.Content]" Source="[SelectedItem.PreferredImageSmall]"/>
       <Binding Target="[StarRating.Value]" Source="[SelectedItem.ImdbRating]" />
-      <Binding Target="[GenreRepeater.Source]" Source="[SelectedItem.Genres]"/>
       <Binding Target="[Title1.Content]" Source="[SelectedItem.Name]"/>
       <Binding Target="[Title2.Content]" Source="[SelectedItem.SubTitle]"/>
       <Binding Target="[Summary.Text]" Source="[SelectedItem.Overview]"/>
@@ -104,8 +104,14 @@
         </Conditions>
       </Binding>
       <Binding Target="[TxtRuntime.Content]" Source="[SelectedItem.RunningTimeString]"/>
-      
 
+      <Binding Source="[SelectedItem.DynamicProperties.#MusicGenres!col:IList]" Target="[GenreRepeater.Source]">
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[GenreRepeater.Source]" Source="[SelectedItem.Genres]"/>
+      
       <Binding Source="[SelectedItem.DynamicProperties.#ProductionYear!cor:String]" Target="[Value]">
         <Conditions>
           <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
@@ -219,9 +225,9 @@
                   <FlowLayout Orientation="Horizontal" ItemAlignment="Far" Spacing="0,0"/>
                 </Layout>
                 <Children>
-                  <Text Name="LastWatched" Color="color://s:FontColorLight" Font="font://f:DV_LastWatchedFont" Margins="0,2,0,0"/>
-                  <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:DV_RuntimeFont" Margins="10,2,0,0"/>
-                  <Text Name="ProductionYear" Font="font://f:DV_FirstAiredFont" Color="color://s:FontColorLight" Margins="10,0,0,-1" Visible="true"/>
+                  <Text Name="LastWatched" Color="color://s:FontColorLight" Font="font://f:DV_LastWatchedFont" Margins="0,0,0,-1"/>
+                  <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:DV_RuntimeFont" Margins="10,0,0,-1"/>
+                  <Text Name="ProductionYear" Font="font://f:DV_ProductionYearFont" Color="color://s:FontColorLight" Margins="10,0,0,-1" Visible="true"/>
                 </Children>
               </Panel>
               <Repeater Name="GenreRepeater" Source="[Item.SelectedChild.Genres]" >
