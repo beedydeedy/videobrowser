@@ -52,7 +52,7 @@
                   <FlowLayout Orientation="Horizontal" Spacing="0,0"/>
                 </Layout>
                 <Children>
-                  <Text Name="Runtime" Content="[SelectedItem.RunningTimeString]" Color="color://s:FontColorLight" Font="[RuntimeFont]" Margins="0,5,15,0" Visible="true"/>
+                  <Text Name="Runtime" Content="[SelectedItem.RunningTimeString]" Color="color://s:FontColorLight" Font="[RuntimeFont]" Margins="0,3,15,0" Visible="true"/>
                   <sr:StarRating Name="StarRating" Value="-1" Margins="0,3,0,0"/>
                 </Children>
               </Panel>

@@ -219,9 +219,9 @@
                   <FlowLayout Orientation="Horizontal" ItemAlignment="Far" Spacing="0,0"/>
                 </Layout>
                 <Children>
-                  <Text Name="LastWatched" Color="color://s:FontColorLight" Font="font://f:DV_LastWatchedFont" Margins="0,2,0,0"/>
-                  <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:DV_RuntimeFont" Margins="10,2,0,0"/>
-                  <Text Name="ProductionYear" Font="font://f:DV_FirstAiredFont" Color="color://s:FontColorLight" Margins="10,0,0,-1" Visible="true"/>
+                  <Text Name="LastWatched" Color="color://s:FontColorLight" Font="font://f:DV_LastWatchedFont" Margins="0,0,0,-1"/>
+                  <Text Name="TxtRuntime" Color="color://s:FontColorLight" WordWrap="true" Font="font://f:DV_RuntimeFont" Margins="10,0,0,-1"/>
+                  <Text Name="ProductionYear" Font="font://f:DV_ProductionYearFont" Color="color://s:FontColorLight" Margins="10,0,0,-1" Visible="true"/>
                 </Children>
               </Panel>
               <Repeater Name="GenreRepeater" Source="[Item.SelectedChild.Genres]" >

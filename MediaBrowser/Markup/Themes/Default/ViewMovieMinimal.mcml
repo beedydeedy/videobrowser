@@ -952,7 +952,7 @@
               <Panel Name="ComposedByPanel" Layout="HorizontalFlow" Visible="false">
                 <Children>
                   <Text Name="ComposerText" Font="font://f:MM_ItemTitleFont" Color="[ItemColor]" MinimumSize="140,0"/>
-                  <Text Name="Composer" Content="[Item.DirectorString]" Font="font://f:MM_ItemTitleFont" Color="[ValueColor]" WordWrap="true" MaximumLines="4"/>
+                  <Text Name="Composer" Content="[Item.DirectorString]" Font="font://f:MM_ItemFont" Color="[ValueColor]" WordWrap="true" MaximumLines="4"/>
                 </Children>
               </Panel>
               
