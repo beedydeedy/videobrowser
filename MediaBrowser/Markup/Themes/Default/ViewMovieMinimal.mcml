@@ -859,9 +859,9 @@
                       <FlowLayout Orientation="Horizontal" AllowWrap="true" Spacing="0,0" />
                     </Layout>
                     <Children>
-                      <Text Name="MediaInfoResolution" Font="Arial, 13" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
-                      <Text Name="MediaInfoVideo" Font="Arial, 13" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
-                      <Text Name="MediaInfoAudio" Font="Arial, 13" Color="[ValueColor]" WordWrap="true" />
+                      <Text Name="MediaInfoResolution" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
+                      <Text Name="MediaInfoVideo" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" Margins="0,0,10,0" WordWrap="true" />
+                      <Text Name="MediaInfoAudio" Font="font://f:MM_MediaInfoFont" Color="[ValueColor]" WordWrap="true" />
                     </Children>
                   </Panel>
                 </Children>

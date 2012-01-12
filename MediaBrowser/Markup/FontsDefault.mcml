@@ -31,6 +31,7 @@
 	<Font Name="MM_TabFont" Font="Segoe Media Center,20" />
   <Font Name="MM_FirstAiredTitleFont" Font="Segoe Media Center, 16"/>
   <Font Name="MM_FirstAiredFont" Font="Segoe Media Center Semibold,16"/>
+  <Font Name="MM_MediaInfoFont" Font="Arial,14"/>
 
 	<!-- Movie Default -->
 	<Font Name="MD_TitleFont" Font="Segoe Media Center Light, 46"/>
@@ -62,7 +63,7 @@
 	<Font Name="TD_MI_GenreFont" Font="Segoe Media Center,16"/>
 	<Font Name="TD_MI_RuntimeFont" Font="Segoe Media Center,16"/>
 	<Font Name="TD_MI_ProductionYearFont" Font="Segoe Media Center Semibold,16"/>
-	<Font Name="TD_MI_MediaInfoFont" Font="Segoe Media Center Semibold,14"/>
+	<Font Name="TD_MI_MediaInfoFont" Font="Arial,14"/>
   <Font Name="TD_MI_FirstAiredTitleFont" Font="Segoe Media Center, 16"/>
   <Font Name="TD_MI_FirstAiredFont" Font="Segoe Media Center Semibold,16"/>
 

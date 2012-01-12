@@ -121,7 +121,7 @@
           </Panel>
           
           <mip:MediaInfoPanel Name="MediaInfoPanel" Item="[Model]" Visible="[DisplayMediaInfoPanel]" MaxIconSize="0,48"/>
-          <Text Name="MediaInfo" Font="Arial, 13" Color="color://s:FontColorMedium" Visible="[DisplayMediaInfo]" />
+          <Text Name="MediaInfo" Font="font://f:TD_MI_MediaInfoFont" Color="color://s:FontColorMedium" Visible="[DisplayMediaInfo]" />
         </Children>
       </Panel>
     </Content>
