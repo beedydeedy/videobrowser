@@ -31,7 +31,7 @@
 	<Font Name="MM_TabFont" Font="Segoe Media Center,20" />
   <Font Name="MM_FirstAiredTitleFont" Font="Segoe Media Center, 16"/>
   <Font Name="MM_FirstAiredFont" Font="Segoe Media Center Semibold,16"/>
-  <Font Name="MM_MediaInfoFont" Font="Arial,14"/>
+  <Font Name="MM_MediaInfoFont" Font="Arial,13"/>
 
 	<!-- Movie Default -->
 	<Font Name="MD_TitleFont" Font="Segoe Media Center Light, 46"/>
