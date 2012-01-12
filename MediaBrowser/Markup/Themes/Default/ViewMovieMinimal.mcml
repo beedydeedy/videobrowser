@@ -742,7 +742,9 @@
       <Rule>
         <Conditions>
           <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
-          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:Int32]" ConditionOp="GreaterThan" Value="0"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="0"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="00"/>
+          <Equality Source="[Item.DynamicProperties.#TrackNo!cor:String]" ConditionOp="NotEquals" Value="000"/>
         </Conditions>
         <Actions>
           <Set Value="[Item.DynamicProperties.#TrackNo!cor:String]" Target="[TrackNumber.Content]">
