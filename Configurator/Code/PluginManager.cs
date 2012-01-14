@@ -71,6 +71,7 @@ namespace Configurator.Code {
                 {"traktmb", new System.Version(0,9,0,38)},
                 {"storageviewer", new System.Version(0,0,4,10)},
                 {"gamebrowser", new System.Version(1,0,0,6)},
+                {"subdued theme", new System.Version(2,8,8,1)},
             };
 
         public PluginManager()
