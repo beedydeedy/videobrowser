@@ -126,7 +126,7 @@ namespace MediaBrowser
         [Group("Playback")]
         [Comment(@"By default we track a videos position to support resume, this can be disabled by setting this for diagnostic purposes")]
         public bool EnableResumeSupport = true; 
-        [Comment(@"Any folder named trailers will be ignored and treated a folder containing trailers")]
+        [Comment(@"Any folder named trailers will be ignored and treated as a folder containing trailers")]
         public bool EnableLocalTrailerSupport = true; 
         [Hidden]
         [Comment(@"If you enable this, make sure System.Data.SQLite.DLL is copied to c:\program data\mediabrowser, make sure you install the right version there is a x32 and x64")]
@@ -143,6 +143,7 @@ namespace MediaBrowser
         [Comment("Show now playing for default mode as text")]
         public bool ShowNowPlayingInText = false;
 
+        [Group("Updates")]
         [Comment("The date auto update last checked for a new version")]
         public DateTime LastAutoUpdateCheck = DateTime.Today.AddYears(-1);
 
@@ -161,69 +162,162 @@ namespace MediaBrowser
         [Comment(@"Identifies where MB will look for the special 'IBN' items.  You can change this to point to a location that is shared by multiple machines.")]
         [PresentationStyle("BrowseFolder")]
         public string ImageByNameLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
+        [Group("Display")]
+        [Comment(@"Scale factor to account for monitor over/underscan. Format: 0,0,0.")]
         public Vector3 OverScanScaling = new Vector3() {X=1, Y=1, Z=1};
+        [Group("Display")]
+        [Comment(@"Extra space to account for monitor over/underscan. Format: 0,0.")]
         public Inset OverScanPadding = new Inset();
         [Comment(@"Turns on logging for all MB components. Recommended you leave this on as it doesn't slow things down and is very helpful in troubleshooting.")]
         public bool EnableTraceLogging = true;
+        [Group("Display")]
         [Comment(@"The default size posters will be shown in any new view.")]
         public Size DefaultPosterSize = new Size() {Width=220, Height=330};
+        [Group("Display")]
         [Comment(@"The amount of space between posters in lists and grids.")]
         public Size GridSpacing = new Size();
+        [Group("Display")]
+        [Comment(@"Maximum amount a poster can be squeezed.")]
         public float MaximumAspectRatioDistortion = 0.2F;
+        [Group("Playback")]
+        [Comment(@"Enable transcoding for 360 extender.")]
         public bool EnableTranscode360 = false;
         [Dangerous]
+        [Group("Playback")]
         [Comment(@"The extensions of file types that the Xbox 360 can play natively (without transcoding).")]
         public string ExtenderNativeTypes = ".dvr-ms,.wmv";
+        [Group("Display")]
+        [Comment(@"Show main background for theme.  If false, Media Center background can show through.")]
         public bool ShowThemeBackground = true;
+        [Group("Display")]
+        [Comment(@"In the default theme, the poster area will 'dim' when menus selected.")]
         public bool DimUnselectedPosters = true;
+        [Comment(@"Allow Movies to reside in sub folders.")]
         public bool EnableNestedMovieFolders = true;
-        public bool EnableMoviePlaylists = true;
+        [Group("Playback")]
+        [Comment(@"Treat multiple video files in a single folder as one movie.")]
+        public bool EnableMoviePlaylists = false;
+        [Group("Playback")]
+        [Comment(@"The maximum number of files that will be treated as one movie if EnableMoviePlaylists is set to true.")]
         public int PlaylistLimit = 2;
         [Hidden]
         public string InitialFolder = ApplicationPaths.AppInitialDirPath;
+        [Group("Updates")]
+        [Comment(@"Enable the automatic checking for updates (both MB and plugins).")]
         public bool EnableUpdates = true;
+        [Group("Updates")]
+        [Comment(@"Look for beta versions of MB in the auto update check.")]
         public bool EnableBetas = false;
         [Dangerous]
         [PresentationStyle("BrowseFolder")]
+        [Group("Playback")]
+        [Comment(@"The location of your ISO mounting program.")]
         public string DaemonToolsLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),"DAEMON Tools Lite\\daemon.exe");
+        [Group("Playback")]
+        [Comment(@"The drive letter to use when mounting an ISO.")]
         public string DaemonToolsDrive = "E";
+        [Group("Display")]
+        [Comment(@"Handle sorts with numbers in the names properly with respect to those numbers.")]
         public bool EnableAlphanumericSorting = true;
+        [Group("Display")]
+        [Comment(@"Show the played tick mark in list views.")]
         public bool EnableListViewTicks = false;
+        [Group("Display")]
+        [Comment(@"The color for played items in list views.")]
         public Colors ListViewWatchedColor = Colors.LightSkyBlue;
+        [Group("Display")]
+        [Comment(@"Use a different color for played items in list views.")]
         public bool EnableListViewWatchedColor = true;
+        [Group("Display")]
+        [Comment(@"Show the number of unplayed items inside a folder.")]
         public bool ShowUnwatchedCount = true;
+        [Group("Display")]
+        [Comment(@"Show an indicator if an entire folder has been played.")]
         public bool ShowWatchedTickOnFolders = true;
+        [Group("Display")]
+        [Comment(@"Show an indicator on the poster if an item has been played.")]
         public bool ShowWatchTickInPosterView = true;
+        [Group("Display")]
+        [Comment(@"Scroll to the first unplayed item when entering a view.")]
         public bool DefaultToFirstUnwatched = false;
+        [Group("Display")]
+        [Comment(@"If a folder contains only one item, automatically enter that item.")]
         public bool AutoEnterSingleDirs = false; 
+        [Group("Display")]
+        [Comment(@"Any item older than this will report it has been played.")]
         public DateTime AssumeWatchedBefore = DateTime.Today.AddYears(-1);
+        [Group("Display")]
+        [Comment(@"Sub-folders will inherit their parent's view if not set specifically.")]
         public bool InheritDefaultView = true;
+        [Dangerous]
+        [Group("Display")]
+        [Comment(@"The default view type to use on new folders.")]
         public string DefaultViewType = ViewType.Poster.ToString();
+        [Group("Display")]
+        [Comment(@"Show the titles of items in poster views.")]
         public bool DefaultShowLabels = false;
+        [Group("Display")]
+        [Comment(@"Scroll poster views vertically instead of horizontally.")]
         public bool DefaultVerticalScroll = false;
+        [Group("Display")]
+        [Comment(@"The number of history items to show in the 'breadcrumbs' (how deep in the structure you are) .")]
         public int BreadcrumbCountLimit = 2;
+        [Dangerous]
+        [Group("Display")]
+        [Comment(@"Characters to be ignored in sorting.")]
         public string SortRemoveCharacters = ",|&|-|{|}";
+        [Group("Display")]
+        [Comment("List of characters to replace with a ' ' in titles for alphanumeric sorting.  Separate each character with a '|'.\nThis allows titles like 'Iron.Man.REPACK.720p.BluRay.x264-SEPTiC.mkv' to be properly sorted.")]
         public string SortReplaceCharacters = ".|+|%";
+        [Group("Display")]
+        [Comment(@"List of words to remove from alphanumeric sorting.  Separate each word with a '|'.  Note that the
+        algorithm appends a ' ' to the end of each word during the search which means words found at the end
+        of each title will not be removed.  This is generally not an issue since most people will only want
+        articles removed and articles are rarely found at the end of media titles.  This, combined with SortReplaceCharacters,
+        allows titles like 'The.Adventures.Of.Baron.Munchausen.1988.720p.BluRay.x264-SiNNERS.mkv' to be properly sorted.")]
         public string SortReplaceWords = "the|a|an";
+        [Comment(@"Allow metadata providers that search the internet (including the internal tmdb/tvdb fetchers).")]
         public bool AllowInternetMetadataProviders = true;
+        [Group("Display")]
+        [Comment(@"Width of the poster area in Thumb view (may only affect default and diamond themes).")]
         public int ThumbStripPosterWidth = 550;
+        [Group("Display")]
+        [Comment(@"Remember (and re-index) the indexing state of a folder so it will stay indexed on subsequent entries.")]
         public bool RememberIndexing = false;
         public bool ShowIndexWarning = true;
         public double IndexWarningThreshold = 0.1;
+        [Comment(@"The two-character language code to use when retrieving metadata (en,fr,it, etc.).")]
         public string PreferredMetaDataLanguage = "en";
         [Hidden]
         public List<ExternalPlayer> ExternalPlayers = new List<ExternalPlayer>();
         [Dangerous]
+        [Group("Display")]
+        [Comment(@"The view theme to use.")]
         public string Theme = "Default";
         [Dangerous]
+        [Group("Display")]
+        [Comment(@"The set of fonts/colors to use.")]
         public string FontTheme = "Default";
         // I love the clock, but it keeps on crashing the app, so disabling it for now
+        [Group("Display")]
+        [Comment(@"Show the current time on some screens (may only affect some themes).")]
         public bool ShowClock = false;
+        [Dangerous]
+        [Group("Advanced")]
+        [Comment(@"Enable the use of some dangerous features.")]
         public bool EnableAdvancedCmds = false;
         [Dangerous]
+        [Group("Advanced")]
+        [Comment(@"Enable deleting content within MB.")]
         public bool Advanced_EnableDelete = false;
+        [Group("Playback")]
+        [Comment(@"Instead of directly mounting an ISO allow the 'autoplay' settings in windows to handle it.")]
         public bool UseAutoPlayForIso = false;
+        [Group("Display")]
+        [Comment(@"Show fan art on views that support it.")]
         public bool ShowBackdrop = true;
+        [Group("Display")]
+        [Comment(@"The name of your top level item that will show in the 'breadcrumbs'.")]
         public string InitialBreadcrumbName = "Media";
 
         [PresentationStyle("BrowseFolder")]
