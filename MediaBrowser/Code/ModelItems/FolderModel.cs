@@ -266,7 +266,11 @@ namespace MediaBrowser.Library {
                 var mySeries = episode.RetrieveSeries();
                 if (mySeries != null)
                 {
-                    mySeason.Parent = mySeries;
+                    if (mySeason != null)
+                        mySeason.Parent = mySeries;
+                    else
+                        episode.Parent = mySeries;
+
                     if (item.PhysicalParent == null)
                         item.PhysicalParent = ItemFactory.Instance.Create(mySeries) as FolderModel;
                     else
