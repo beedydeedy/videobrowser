@@ -77,6 +77,9 @@ namespace MediaBrowser.Library.Providers.TVDB {
 
 
             Item.Overview = seriesNode.SafeGetString("Overview");
+            if (Item.Overview != null)
+                Item.Overview = Item.Overview.Replace("\n\n", "\n");
+
             Item.Name = seriesNode.SafeGetString("SeriesName");
 
             //used for extended actor information. will fetch actors with roles stored in <Persons> tag
