@@ -428,8 +428,11 @@ namespace MediaBrowser.Library {
                     if (show.Studios != null)
                         studios = show.Studios;
                     else
-                        if (baseItem.Parent != null && baseItem.Parent is IShow)
-                            studios = (baseItem.Parent as IShow).Studios;
+                        if (baseItem is Episode)
+                            studios = (baseItem as Episode).Series.Studios;
+                        else
+                            if (baseItem is Season)
+                                studios = (baseItem as Season).OurSeries.Studios;
                 }
 
                 return studios ?? new List<string>();
