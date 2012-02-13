@@ -202,7 +202,7 @@ namespace MediaBrowser.Library {
                                         runtimestr = "";
                                     }
 
-                                    FirePropertiesChanged("RunningTime", "RunningTimeString");
+                                    FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
                                 });
                             }
                         }
