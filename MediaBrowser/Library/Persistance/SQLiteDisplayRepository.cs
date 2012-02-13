@@ -75,7 +75,7 @@ namespace MediaBrowser.Library.Persistance
                     if (Config.Instance.RememberIndexing)
                         dp.IndexBy = reader.GetString(4);
                     else
-                        dp.IndexBy = "None";
+                        dp.IndexBy = Localization.LocalizedStrings.Instance.GetString("NoneDispPref");
 
                     dp.UseBanner.Value = reader.GetBoolean(5);
                     dp.ThumbConstraint.Value = new Microsoft.MediaCenter.UI.Size(reader.GetInt32(6), reader.GetInt32(7));
