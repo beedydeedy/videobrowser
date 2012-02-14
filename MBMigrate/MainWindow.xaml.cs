@@ -38,9 +38,55 @@ namespace MBMigrate
             _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
             Async.Queue("Migration", () =>
             {
-                Migrate25();
+                Migrate253();
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
+        }
+
+        public void Migrate253()
+        {
+            //version 2.5.3 migration
+            Version current = new Version(_config.MBVersion);
+            if (current > new Version(2, 0) && current < new Version(2, 5, 3))
+            {
+                int total = Directory.GetFiles(ApplicationPaths.AppPluginPath).Count();
+                int i = 0;
+                foreach (var file in Directory.GetFiles(ApplicationPaths.AppPluginPath))
+                {
+                    i++;
+                    UpdateProgress("Migrating plugins...", (double)(i / total));
+                    if (file.ToLower().EndsWith(".pgn"))
+                    {
+                        //find dll in ehome and move to plugins
+                        string dll = Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), Path.ChangeExtension(Path.GetFileName(file), ".dll"));
+                        if (File.Exists(dll))
+                        {
+                            try
+                            {
+                                File.Move(dll, Path.Combine(ApplicationPaths.AppPluginPath, Path.GetFileName(dll)));
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                //let it go - someone deleted the dll but not the pgn file
+                            }
+                            catch (Exception e)
+                            {
+                                //nothing we can really do here but warn - have to clean it up manually
+                                Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => MessageBox.Show("Error moving plugin " + dll + ". \n\n" + e.Message)));
+                                continue;
+                            }
+                        }
+                        //and delete the pgn file
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch { }
+                    }
+                }
+            }
+                        
+
         }
 
         public void Migrate25()
