@@ -65,13 +65,13 @@
     <StartProgram>C:\Windows\ehome\ehshell.exe</StartProgram>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.MediaCenter, Version=6.0.6000.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.MediaCenter, Version=6.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\VistaDlls\Microsoft.MediaCenter.dll</HintPath>
+      <HintPath>..\..\..\..\..\Windows\ehome\Microsoft.MediaCenter.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.MediaCenter.UI, Version=6.0.6000.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.MediaCenter.UI, Version=6.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\VistaDlls\Microsoft.MediaCenter.UI.dll</HintPath>
+      <HintPath>..\..\..\..\..\Windows\ehome\Microsoft.MediaCenter.UI.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
@@ -839,7 +839,9 @@
     <Compile Include="Library\Util\BreadCrumbs.cs" />
     <Compile Include="Library\Util\CustomResourceManager.cs" />
     <Content Include="Markup\Base\Animations.mcml" />
-    <Content Include="Markup\Base\Images.mcml" />
+    <Content Include="Markup\Base\Images.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\ActivityIndicator.mcml" />
     <Content Include="Markup\Controls\ArtistList.mcml" />
     <Content Include="Markup\Controls\Backdrop.mcml" />
