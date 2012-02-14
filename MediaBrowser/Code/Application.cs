@@ -1308,10 +1308,18 @@ namespace MediaBrowser
             {
                 PlayableItem playable;
 
-                var playableChildren = folder.RecursiveChildren.Select(i => i as Media).Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path);
+                var playableChildren = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path);
                 if (playableChildren.Count() > 0) //be sure we have something to play
                 {
                     playable = new PlayableMediaCollection<Media>(item.Name, playableChildren);
+                    foreach (var controller in Kernel.Instance.PlaybackControllers)
+                    {
+                        if (controller.CanPlay(playableChildren.Select(i => i.Path)))
+                        {
+                            playable.PlaybackController = controller;
+                            break;
+                        }
+                    }
                     playable.Play(null, false);
                 }
             }

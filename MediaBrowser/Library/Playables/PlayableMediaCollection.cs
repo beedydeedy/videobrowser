@@ -33,8 +33,8 @@ namespace MediaBrowser.Library.Playables
 
         public override void Prepare(bool resume)
         {
-            var files = t.Select(v2 => v2.Files).SelectMany(i => i);
-            base.filename = CreateWPLPlaylist(name, files);
+            PlayableItems = t.Select(v2 => v2.Files).SelectMany(i => i);
+            base.filename = CreateWPLPlaylist(name, PlayableItems);
         }
     }
 }
