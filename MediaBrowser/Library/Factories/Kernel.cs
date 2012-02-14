@@ -269,64 +269,31 @@ namespace MediaBrowser.Library {
             };
         }
 
+        protected static List<System.Reflection.Assembly> PluginAssemblies = new List<System.Reflection.Assembly>();
+
         static List<IPlugin> DefaultPlugins(bool forceShadow) {
             List<IPlugin> plugins = new List<IPlugin>();
             foreach (var file in Directory.GetFiles(ApplicationPaths.AppPluginPath)) {
-                if (file.ToLower().EndsWith(".dll")) {
-                    try {
-                        plugins.Add(new Plugin(Path.Combine(ApplicationPaths.AppPluginPath, file),forceShadow));
-                    } catch (Exception ex) {
+                if (file.ToLower().EndsWith(".dll"))
+                {
+                    try
+                    {
+                        var plugin = new Plugin(Path.Combine(ApplicationPaths.AppPluginPath, file), forceShadow);
+                        plugins.Add(plugin);
+                        PluginAssemblies.Add(plugin.PluginAssembly);
+                        Logger.ReportVerbose("Added Plugin assembly: " + plugin.PluginAssembly.FullName);
+                    }
+                    catch (Exception ex)
+                    {
                         Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
                         Logger.ReportException("Failed to load plugin", ex);
                     }
-                } else
-                    //look for pointer plugin files - load these from ehome or GAC
-                    if (file.ToLower().EndsWith(".pgn"))
-                    {
-                        try
-                        {
-                            plugins.Add(new Plugin(Path.ChangeExtension(Path.GetFileName(file), ".dll"), forceShadow));
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            //couldn't find it in our home directory or GAC (may be called from another process)
-                            //try windows ehome directory
-                            try
-                            {
-                                plugins.Add(new Plugin(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), Path.ChangeExtension(Path.GetFileName(file), ".dll")), forceShadow));
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                                Logger.ReportException("Failed to load plugin", ex);
-                            }
-                        }
-                        catch (ArgumentException)
-                        {
-                            //couldn't find it in our home directory or GAC (may be called from another process)
-                            //try windows ehome directory
-                            try
-                            {
-                                plugins.Add(new Plugin(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), Path.ChangeExtension(Path.GetFileName(file), ".dll")), forceShadow));
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                                Logger.ReportException("Failed to load plugin", ex);
-                            }
-                        }
-
-
-                        catch (Exception ex)
-                        {
-                            Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                            Logger.ReportException("Failed to load plugin", ex);
-                        }
-                    }
-
+                }
             }
             return plugins;
         }
+
+ 
 
         private static bool? _isVista;
         public static bool isVista
@@ -465,6 +432,7 @@ namespace MediaBrowser.Library {
             List<BaseItem> virtualItems = new List<BaseItem>();
             virtualItems.AddRange(kernel.RootFolder.VirtualChildren);
 
+            //kernel.RootFolder = null;
             var root = kernel.GetLocation(ResolveInitialFolder(kernel.ConfigData.InitialFolder));
             kernel.RootFolder = (AggregateFolder)BaseItemFactory<AggregateFolder>.Instance.CreateInstance(root, null);
 
@@ -481,6 +449,9 @@ namespace MediaBrowser.Library {
                     kernel.RootFolder.AddVirtualChild(item);
                 }
             }
+
+            //clear image factory cache to free memory
+            LibraryImageFactory.Instance.ClearCache();
 
             //and re-load the repo
             ItemRepository = GetRepository(this.ConfigData);
@@ -512,9 +483,20 @@ namespace MediaBrowser.Library {
 
 
         static System.Reflection.Assembly OnAssemblyResolve(object sender, ResolveEventArgs args) {
-            if (args.Name.StartsWith("MediaBrowser,")) {
-                Logger.ReportInfo("Plug-in reference to "+args.Name + " is being linked to version "+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            Logger.ReportVerbose("=========System looking for assembly: " + args.Name);
+            if (args.Name.StartsWith("MediaBrowser,"))
+            {
+                Logger.ReportInfo("Plug-in reference to " + args.Name + " is being linked to version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
                 return typeof(Kernel).Assembly;
+            }
+            else
+            {
+                var assembly = PluginAssemblies.Find(a => a.FullName.StartsWith(args.Name+","));
+                if (assembly != null)
+                {
+                    Logger.ReportInfo("Resolving plug-in reference to: " + args.Name);
+                    return assembly;
+                }
             }
             return null;
         }
@@ -804,36 +786,22 @@ namespace MediaBrowser.Library {
 
         public void InstallPlugin(string path)
         {
-            //in case anyone is calling us with old interface
-            InstallPlugin(path, false);
+            InstallPlugin(path, Path.GetFileName(path), null, null, null);
         }
 
-        public void InstallPlugin(string path, bool globalTarget) {
-            InstallPlugin(path, Path.GetFileName(path), globalTarget, null, null, null);
-        }
-
-        public void InstallPlugin(string path, bool globalTarget,
+        public void InstallPlugin(string path,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB)
         {
-            InstallPlugin(path, Path.GetFileName(path), globalTarget, updateCB, doneCB, errorCB);
+            InstallPlugin(path, Path.GetFileName(path), updateCB, doneCB, errorCB);
         }
 
-        public void InstallPlugin(string sourcePath, string targetName, bool globalTarget,
+        public void InstallPlugin(string sourcePath, string targetName,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB) {
-            string target;
-            if (globalTarget) {
-                //install to ehome for now - can change this to GAC if figure out how...
-                target = Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", targetName));
-                //and put our pointer file in "plugins"
-                File.Create(Path.Combine(ApplicationPaths.AppPluginPath, Path.ChangeExtension(Path.GetFileName(targetName), ".pgn")));
-            }
-            else {
-                target = Path.Combine(ApplicationPaths.AppPluginPath, targetName);
-            }
+            string target = Path.Combine(ApplicationPaths.AppPluginPath, targetName);
 
             if (sourcePath.ToLower().StartsWith("http")) {
                 // Initialise Async Web Request

@@ -15,7 +15,7 @@ using System.IO;
 namespace MediaBrowser.Library.Plugins {
     public class Plugin : IPlugin {
         string filename;
-        Assembly assembly;
+        public Assembly PluginAssembly;
         IPlugin pluginInterface;
 
         public static Plugin FromFile(string filename, bool forceShadow) {
@@ -27,15 +27,15 @@ namespace MediaBrowser.Library.Plugins {
 #if DEBUG
             // This will allow us to step through plugins
             if (forceShadow) {
-                assembly = Assembly.Load(System.IO.File.ReadAllBytes(filename));
+                PluginAssembly = Assembly.Load(System.IO.File.ReadAllBytes(filename));
             } else {
-                assembly = Assembly.LoadFile(filename);
+                PluginAssembly = Assembly.LoadFile(filename);
             }
 #else 
             // This will reduce the locking on the plugins files
-            assembly = Assembly.Load(System.IO.File.ReadAllBytes(filename)); 
+            PluginAssembly = Assembly.Load(System.IO.File.ReadAllBytes(filename)); 
 #endif
-            pluginInterface = FindPluginInterface(assembly);
+            pluginInterface = FindPluginInterface(PluginAssembly);
 
         }
 
@@ -111,11 +111,6 @@ namespace MediaBrowser.Library.Plugins {
 
         public void Delete() {
             File.Delete(filename);
-            if (this.InstallGlobally)
-            {
-                //also delete our pointer file
-                File.Delete(Path.Combine(ApplicationPaths.AppPluginPath, Path.ChangeExtension(Path.GetFileName(filename),".pgn")));
-            }
         }
 
         public virtual bool IsConfigurable

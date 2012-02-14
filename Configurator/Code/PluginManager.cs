@@ -173,7 +173,7 @@ namespace Configurator.Code {
 
             if (plugin is RemotePlugin) {
                 try {
-                    Kernel.Instance.InstallPlugin((plugin as RemotePlugin).BaseUrl + "\\" + (plugin as RemotePlugin).SourceFilename, plugin.Filename, plugin.InstallGlobally, updateCB, doneCB, errorCB);
+                    Kernel.Instance.InstallPlugin((plugin as RemotePlugin).BaseUrl + "\\" + (plugin as RemotePlugin).SourceFilename, plugin.Filename, updateCB, doneCB, errorCB);
                 }
                 catch (Exception ex) {
                     MessageBox.Show("Cannot Install Plugin.  If MediaBrowser is running, please close it and try again.\n" + ex.Message, "Install Error");
@@ -184,7 +184,7 @@ namespace Configurator.Code {
                 var local = plugin as Plugin;
                 Debug.Assert(plugin != null);
                 try {
-                    Kernel.Instance.InstallPlugin(local.Filename, plugin.InstallGlobally, null, null, null);
+                    Kernel.Instance.InstallPlugin(local.Filename, null, null, null);
                 }
                 catch (Exception ex) {
                     MessageBox.Show("Cannot Install Plugin.  If MediaBrowser is running, please close it and try again.\n" + ex.Message, "Install Error");
@@ -231,7 +231,7 @@ namespace Configurator.Code {
                     string target = plugin.InstallGlobally ?
                             Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", plugin.Filename)) :
                             Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
-                    Kernel.Instance.InstallPlugin(source, plugin.InstallGlobally, null, null, null);
+                    Kernel.Instance.InstallPlugin(source, null, null, null);
                     MainWindow.Instance.KernelModified = true;
                     UpdateAvailableAttributes(plugin, true);
                     return true;
