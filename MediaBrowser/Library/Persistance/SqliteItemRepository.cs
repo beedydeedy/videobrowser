@@ -396,6 +396,7 @@ namespace MediaBrowser.Library.Persistance {
         {
             //we need to shut down our display repo too...
             displayRepo.ShutdownDatabase();
+            playbackStatus.Dispose();
             base.ShutdownDatabase();
         }
 

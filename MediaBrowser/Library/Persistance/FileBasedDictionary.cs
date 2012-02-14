@@ -288,6 +288,8 @@ namespace MediaBrowser.Library.Persistance {
         public void Dispose() {
             
             if (enableAsyncValidation) asyncValidationDone.WaitOne();
+            watcher.EnableRaisingEvents = false;
+            watcher.Changed -= new FileSystemEventHandler(DirectoryChanged);
             watcher.Dispose();
         }
 

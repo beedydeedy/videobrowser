@@ -391,6 +391,8 @@ namespace MediaBrowser.Library {
         #region IDisposable Members
 
         public void Dispose() {
+            playbackStatus.Dispose();
+            thumbSizes.Dispose();
             GC.SuppressFinalize(this);
         }
 
