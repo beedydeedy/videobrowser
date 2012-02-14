@@ -54,7 +54,7 @@ namespace MediaBrowser.Library.Entities {
                 {
                     //we may have been loaded out of context - retrieve from repo
                     found = RetrieveSeries();
-                    Logging.Logger.ReportVerbose("Episode series loaded from out of context: " + (found != null ? found.Name : ""));
+                    //Logging.Logger.ReportVerbose("Episode series loaded from out of context: " + (found != null ? found.Name : ""));
                 }
                 return found;
             }
