@@ -58,6 +58,7 @@ namespace MediaBrowser.Library.Entities {
             {LocalizedStrings.Instance.GetString("GenreDispPref"), "Genres"},
             {LocalizedStrings.Instance.GetString("DirectorDispPref"), "Directors"},
             {LocalizedStrings.Instance.GetString("YearDispPref"), "ProductionYear"},
+            {LocalizedStrings.Instance.GetString("RatingDispPref"), "MpaaRating"},
             {LocalizedStrings.Instance.GetString("StudioDispPref"), "Studios"}
         };
         /// <summary>
