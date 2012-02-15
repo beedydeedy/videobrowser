@@ -122,8 +122,9 @@ namespace MediaBrowser.Library.Entities {
         {
             if (seriesItem == null)
             {
-                string grandparentPath = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(this.Path)); //parent of parent is series
-                Guid seriesId = (typeof(Series).FullName + grandparentPath.ToLower()).GetMD5();
+                string parentPath = System.IO.Path.GetDirectoryName(this.Path);
+                string grandparentPath = System.IO.Path.GetDirectoryName(parentPath); //parent of parent is series
+                Guid seriesId = (typeof(Series).FullName + (grandparentPath != null ? grandparentPath : parentPath).ToLower()).GetMD5();
                 seriesItem = Kernel.Instance.ItemRepository.RetrieveItem(seriesId) as Series;
             }
             return seriesItem;
