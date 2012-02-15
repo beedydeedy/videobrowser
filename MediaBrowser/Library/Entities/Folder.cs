@@ -201,6 +201,7 @@ namespace MediaBrowser.Library.Entities {
                         if (recentItemOption == "watched")
                             reBuildQuickList = true;  //have to re-build these each time
 
+                        Logger.ReportVerbose("=====Retrieving Quicklist ID: " + QuickListID(recentItemOption));
                         if (!reBuildQuickList) quickListFolder = Kernel.Instance.ItemRepository.RetrieveItem(QuickListID(recentItemOption)) as IndexFolder;
                         if (quickListFolder == null || quickListFolder.Name != "ParentalControl:" + Kernel.Instance.ParentalControls.Enabled)
                         {
@@ -853,7 +854,7 @@ namespace MediaBrowser.Library.Entities {
         void Sort(IComparer<BaseItem> sortFunction, bool notifyChange) {
             this.sortFunction = sortFunction;
             lock (ActualChildren) {
-                //Logger.ReportVerbose("=====sorting actual children for " + Name);
+                //Logger.ReportVerbose("=====sorting actual children for " + Name + " Sort function: "+sortFunction);
                 ActualChildren.Sort(sortFunction);
             }
             if (notifyChange && ChildrenChanged != null)
