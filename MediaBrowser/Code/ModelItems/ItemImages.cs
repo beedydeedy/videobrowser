@@ -415,7 +415,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return preferBanner ? BannerImage : PrimaryImage;
+                return preferBanner ? BannerImage ?? PrimaryImage : PrimaryImage;
             }
         }
 
@@ -424,7 +424,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return preferBanner ? BannerImage : PrimaryImageSmall;
+                return preferBanner ? BannerImage ?? PrimaryImageSmall : PrimaryImageSmall;
             }
         }
 
@@ -572,7 +572,7 @@ namespace MediaBrowser.Library
 
         public bool HasPreferredImage
         {
-            get { return (PreferBanner ? HasBannerImage : HasPrimaryImage); }
+            get { return (HasPrimaryImage); }
         }
 
         bool preferBanner;
