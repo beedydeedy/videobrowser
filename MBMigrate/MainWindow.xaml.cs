@@ -72,7 +72,7 @@ namespace MBMigrate
                             catch (Exception e)
                             {
                                 //nothing we can really do here but warn - have to clean it up manually
-                                Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => MessageBox.Show("Error moving plugin " + dll + ". \n\n" + e.Message)));
+                                Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => MessageBox.Show("Error moving plugin " + dll + ". \n\nYou will have to re-install it from the configurator.\n\n" + e.Message)));
                                 continue;
                             }
                         }
