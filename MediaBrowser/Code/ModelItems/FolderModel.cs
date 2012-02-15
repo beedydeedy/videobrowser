@@ -159,7 +159,7 @@ namespace MediaBrowser.Library {
                         Async.Queue("Newest Item Loader", () =>
                         {
                             //the first time kick off a validation of our whole tree so we pick up anything new
-                            if (!validated)
+                            if (!validated && Config.Instance.AutoValidate)
                             {
                                 Async.Queue(this.Name + " Initial Validation", () =>
                                 {
