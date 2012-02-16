@@ -643,6 +643,17 @@ namespace MediaBrowser
                         ExtSplashBmp = new System.Drawing.Bitmap(Resources.mblogo1000);
                     }
 
+                    //validate that everything at the root level is actually a folder - the UI will blow chow with items
+                    foreach (var item in RootFolder.Children)
+                    {
+                        if (!(item is Folder))
+                        {
+                            string msg = "W A R N I N G: Item " + item.Name + " is resolving to a " + item.GetType().Name + ". All root level items must be folders.\n  Check that this item isn't being mistaken because it is a folder with only a couple items and you have the playlist functionality enabled.";
+                            Logger.ReportError(msg);
+                            DisplayDialog(msg, "Invalid Root Item");
+                        }
+                    }
+
                     // we need to validate the library so that changes in the RAL will get picked up without having to navigate
                     if (Config.AutoValidate)
                     {
