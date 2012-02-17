@@ -24,7 +24,7 @@ namespace MediaBrowser.Library.Entities {
 
         Lazy<List<BaseItem>> children;
         protected IFolderMediaLocation location;
-        IComparer<BaseItem> sortFunction = new BaseItemComparer(SortOrder.Name);
+        protected IComparer<BaseItem> sortFunction = new BaseItemComparer(SortOrder.Name);
         object validateChildrenLock = new object();
         public MBDirectoryWatcher directoryWatcher;
         Type childType;
