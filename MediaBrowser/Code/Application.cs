@@ -1320,19 +1320,19 @@ namespace MediaBrowser
             {
                 PlayableItem playable;
 
-                var playableChildren = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path);
-                if (playableChildren.Count() > 0) //be sure we have something to play
+                var firstUnwatched = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path).FirstOrDefault();
+                if (firstUnwatched != null) //be sure we have something to play
                 {
-                    playable = new PlayableMediaCollection<Media>(item.Name, playableChildren);
+                    playable = PlayableItemFactory.Instance.Create(firstUnwatched);
                     foreach (var controller in Kernel.Instance.PlaybackControllers)
                     {
-                        if (controller.CanPlay(playableChildren.Select(i => i.Path)))
+                        if (controller.CanPlay(firstUnwatched.Path))
                         {
                             playable.PlaybackController = controller;
                             break;
                         }
                     }
-                    playable.Play(null, false);
+                    playable.Play(firstUnwatched.PlaybackStatus, firstUnwatched.PlaybackStatus.CanResume);
                 }
             }
         }
