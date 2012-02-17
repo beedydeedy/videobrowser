@@ -204,7 +204,7 @@ namespace MediaBrowser.Library.Entities {
 
                         Logger.ReportVerbose("=====Retrieving Quicklist ID: " + QuickListID(recentItemOption));
                         if (!reBuildQuickList) quickListFolder = Kernel.Instance.ItemRepository.RetrieveItem(QuickListID(recentItemOption)) as IndexFolder;
-                        if (quickListFolder == null || quickListFolder.Name != "ParentalControl:" + Kernel.Instance.ParentalControls.Enabled)
+                        if (quickListFolder == null || quickListFolder.Name != "ParentalControl:" + Kernel.Instance.ParentalControls.Enabled || quickListFolder.Children.Count == 0)
                         {
                             //re-build
                             using (new MediaBrowser.Util.Profiler("RAL Load for " + this.Name)) UpdateQuickList(recentItemOption);
