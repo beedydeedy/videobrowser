@@ -524,6 +524,13 @@ namespace MediaBrowser.Library.Providers
         internal static string GetComparableName(string name)
         {
             name = name.ToLower();
+            name = name.Replace("á", "a");
+            name = name.Replace("é", "e");
+            name = name.Replace("í", "i");
+            name = name.Replace("ó", "o");
+            name = name.Replace("ú", "u");
+            name = name.Replace("ü", "u");
+            name = name.Replace("ñ", "n");
             name = name.Normalize(NormalizationForm.FormKD);
             StringBuilder sb = new StringBuilder();
             foreach (char c in name)
