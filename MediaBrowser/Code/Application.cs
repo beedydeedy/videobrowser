@@ -1099,7 +1099,7 @@ namespace MediaBrowser
             if (session != null)
             {
                 folder.NavigatingInto();
-                session.GoToPage(CurrentTheme.FolderPage, properties);
+                session.GoToPage(folder.Folder.CustomUI ?? CurrentTheme.FolderPage, properties);
             }
             else
             {
@@ -1185,7 +1185,7 @@ namespace MediaBrowser
                     properties["Application"] = this;
                     properties["Item"] = item;
                     properties["ThemeConfig"] = CurrentTheme.Config;
-                    session.GoToPage(CurrentTheme.DetailPage, properties);
+                    session.GoToPage(item.BaseItem.CustomUI ?? CurrentTheme.DetailPage, properties);
                     return;
                 }
             }

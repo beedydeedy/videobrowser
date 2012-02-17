@@ -308,6 +308,8 @@ namespace MediaBrowser.Library.Entities {
             return true;
         }
 
+        public virtual string CustomUI { get; set; }
+
         bool? isRemoteContent = null;
         public bool IsRemoteContent
         {
