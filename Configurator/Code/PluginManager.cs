@@ -203,9 +203,7 @@ namespace Configurator.Code {
                 if (ip != null && ip.Version != plugin.Version)
                 {
                     if (!Directory.Exists(backupDir)) Directory.CreateDirectory(backupDir);
-                    string oldPluginPath = plugin.InstallGlobally ?
-                        Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", plugin.Filename)) :
-                        Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
+                    string oldPluginPath = Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
                     string bpPath = Path.Combine(backupDir, plugin.Filename);
                     File.Copy(oldPluginPath,bpPath ,true);
                     IPlugin bp = backedUpPlugins.Find(plugin);
@@ -228,9 +226,7 @@ namespace Configurator.Code {
                 string source = Path.Combine(backupDir, plugin.Filename);
                 if (File.Exists(source))
                 {
-                    string target = plugin.InstallGlobally ?
-                            Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", plugin.Filename)) :
-                            Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
+                    string target = Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
                     Kernel.Instance.InstallPlugin(source, null, null, null);
                     MainWindow.Instance.KernelModified = true;
                     UpdateAvailableAttributes(plugin, true);
