@@ -142,6 +142,7 @@ namespace MediaBrowser.Library.Providers
                     if (id == null)
                     {
                         // try with dot and _ turned to space
+                        name = name.Replace(",", " ");
                         name = name.Replace(".", " ");
                         name = name.Replace("  ", " ");
                         name = name.Replace("_", " ");
