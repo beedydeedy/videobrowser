@@ -252,7 +252,7 @@ namespace MediaBrowser.Code.ModelItems {
                     folderIsIndexed = true;
                     lock (this)
                     {
-                        currentChildren = folder.IndexBy(property).Select(i => (BaseItem)i).ToList();
+                        currentChildren = folder.IndexBy(property).Select(i => (BaseItem)i).OrderBy(i => i.SortName).ToList();
                     }
                 }
 
