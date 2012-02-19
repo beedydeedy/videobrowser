@@ -265,7 +265,7 @@ namespace MediaBrowser
         [Dangerous]
         [Group("Display")]
         [Comment(@"Characters to be ignored in sorting.")]
-        public string SortRemoveCharacters = ",|&|-|{|}";
+        public string SortRemoveCharacters = ",|&|-|{|}|'";
         [Group("Display")]
         [Comment("List of characters to replace with a ' ' in titles for alphanumeric sorting.  Separate each character with a '|'.\nThis allows titles like 'Iron.Man.REPACK.720p.BluRay.x264-SEPTiC.mkv' to be properly sorted.")]
         public string SortReplaceCharacters = ".|+|%";
@@ -393,6 +393,7 @@ namespace MediaBrowser
         public int BackdropLoadDelay = 300; //Delays loading of the first backdrop on new item in milliseconds. Helps with performance
 
         public bool ProcessBanners = false; //hook to allow future processing of banners
+        [Hidden]
         public bool ProcessBackdrops = false; //hook to allow future processing of backdrops
 
         public int MinResumeDuration = 0; //minimum duration of video to have resume functionality
