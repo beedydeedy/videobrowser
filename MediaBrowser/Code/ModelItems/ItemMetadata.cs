@@ -120,7 +120,14 @@ namespace MediaBrowser.Library {
             }
         }
 
-        private int? runtime;
+        public void ResetRunTime()
+        {
+            this.runtime = null;
+            this.runtimestr = null;
+            FirePropertiesChanged("RunningTime", "RunningTimeString");
+        }
+
+        protected int? runtime;
         public int RunningTime
         {
             get
@@ -159,7 +166,7 @@ namespace MediaBrowser.Library {
             }
         }
 
-        private string runtimestr;
+        protected string runtimestr;
         public string RunningTimeString {
             get {
                 if (runtimestr == null)

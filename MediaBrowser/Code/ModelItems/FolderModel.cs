@@ -569,7 +569,7 @@ namespace MediaBrowser.Library {
             folderChildren = folderChildren.Clone();
             folderChildren.ListenForChanges();
 
-
+            ResetRunTime();
             FirePropertyChanged("Children");
             FirePropertyChanged("SelectedChildIndex");
             lock (watchLock)
