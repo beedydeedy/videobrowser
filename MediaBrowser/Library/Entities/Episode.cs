@@ -142,6 +142,21 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public int TrueSequenceNumber
+        {
+            get
+            {
+                try
+                {
+                    return (Convert.ToInt32(SeasonNumber) * 1000) + (Convert.ToInt32(EpisodeNumber));
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+        }
+
         #region IGroupInIndex Members
 
         public IContainer MainContainer
