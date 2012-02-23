@@ -650,8 +650,14 @@ namespace MediaBrowser.Library.Entities {
             Sort(sortFunction, false);
             runtime = null;
 
-            if (ChildrenChanged != null) {
+            if (ChildrenChanged != null)
+            {
                 ChildrenChanged(this, args);
+                //Logger.ReportVerbose("Called Childrenchanged for " + Name);
+            }
+            else
+            {
+                //Logger.ReportVerbose("NOT Calling Childrenchanged for " + Name);
             }
         }
 

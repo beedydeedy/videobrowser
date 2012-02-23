@@ -298,7 +298,7 @@ namespace MediaBrowser.Library
 
         private void SetMenu(Item ignore)
         {
-            Application.CurrentInstance.ContextMenu = menuItems;
+            Application.CurrentInstance.ContextMenu = menuItems.Where(m => m.Available).ToList();
         }
     }
 
