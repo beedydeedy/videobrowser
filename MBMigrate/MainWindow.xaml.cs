@@ -46,6 +46,34 @@ namespace MBMigrate
         public void Migrate253()
         {
             //version 2.5.3 migration
+
+            List<string> KnownGlobalDLLs = new List<string>() {
+                "Ascendancy.dll",
+                "BDScreenSaver.dll",
+                "Centrality.dll",
+                "Chocolate.dll",
+                "CoverSS.dll",
+                "Destiny.dll",
+                "Diamond.dll",
+                "Harmony.dll",
+                "Imperium.dll",
+                "Jade.dll",
+                "Kismet.dll",
+                "Lotus.dll",
+                "Maelstrom.dll",
+                "Neo.dll",
+                "Regency.dll",
+                "Sapphire.dll",
+                "Simplicity.dll",
+                "StorageViewer.dll",
+                "Subdued.dll",
+                "Supremacy.dll",
+                "TraktMB.dll",
+                "Vanilla.dll",
+                "gamebrowser.dll",
+
+            };
+
             Version current = new Version(_config.MBVersion);
             if (current > new Version(2, 0) && current < new Version(2, 5, 3))
             {
@@ -83,6 +111,13 @@ namespace MBMigrate
                         }
                         catch { }
                     }
+                }
+
+                //now go through and clean up any old ones that may have been left behind
+                foreach (var dll in KnownGlobalDLLs)
+                {
+                    try { File.Delete(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), dll)); }
+                    catch { }
                 }
             }
                         
