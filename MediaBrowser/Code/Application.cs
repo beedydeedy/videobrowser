@@ -576,6 +576,7 @@ namespace MediaBrowser
                 Logger.ReportWarning("*** AutoValidate is OFF.");
             if (Config.ParentalControlEnabled)
                 Logger.ReportInfo("*** Parental Controls are ON with a max rating of "+Config.ParentalMaxAllowedString+".  Block Unrated is "+Config.ParentalBlockUnrated+" and Hide Content is "+Config.HideParentalDisAllowed);
+            Logger.ReportInfo("*** Internet Providers are "+(Config.AllowInternetMetadataProviders ? "ON." : "OFF."));
             try
             {
                 if (Config.IsFirstRun)
