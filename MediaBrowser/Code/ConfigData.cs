@@ -415,7 +415,8 @@ namespace MediaBrowser
 
         public bool AskIncludeChildrenRefresh = true; //prompt to include children on a folder refresh
         public bool DefaultIncludeChildrenRefresh = true; //if we don't prompt, are children included?
-
+        
+        [Hidden]
         public int NetworkAvailableTimeOut = 5000; //milliseconds to wait for network to be available on validations
 
         //public bool UseSQLImageCache = false; //switch to use the new SQLite image cache

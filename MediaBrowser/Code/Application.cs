@@ -571,6 +571,11 @@ namespace MediaBrowser
         public void GoToMenu()
         {
             Logger.ReportInfo("Media Browser (version " + AppVersion + ") Starting up.");
+            //let's put some useful info in here for diagnostics
+            if (!Config.AutoValidate)
+                Logger.ReportWarning("*** AutoValidate is OFF.");
+            if (Config.ParentalControlEnabled)
+                Logger.ReportInfo("*** Parental Controls are ON with a max rating of "+Config.ParentalMaxAllowedString+".  Block Unrated is "+Config.ParentalBlockUnrated+" and Hide Content is "+Config.HideParentalDisAllowed);
             try
             {
                 if (Config.IsFirstRun)
