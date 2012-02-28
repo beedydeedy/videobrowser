@@ -83,7 +83,7 @@ namespace MediaBrowser.Library
         }
         public int Level(string ratingStr)
         {
-            if (ratings.ContainsKey(ratingStr))
+            if (ratingStr != null && ratings.ContainsKey(ratingStr))
                 return ratings[ratingStr];
             else 
                 return ratings[""]; //return "unknown" level
