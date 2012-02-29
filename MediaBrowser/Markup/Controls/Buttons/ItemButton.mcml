@@ -25,7 +25,6 @@
       <ShortcutHandler Name="RecordBtn" Handle="true" Shortcut="Record" HandlerStage="Bubbled"/>
       <KeyHandler Name="RefreshShortcut" Handle="true" Key="R" Modifiers="Control" HandlerStage="Bubbled"/>
 
-      <KeyHandler Name="TopShortcut" Handle="true" Key="H" Modifiers="Control" HandlerStage="Bubbled"/>
     </Locals>
 
     <Rules>
@@ -56,13 +55,6 @@
       <Changed Source="[Clicker.Invoked]">
         <Actions>
           <Invoke Target="[Item.SelectAction]"/>
-          <PlaySound Sound="sound://sounds:Miniselect" />
-        </Actions>
-      </Changed>
-
-      <Changed Source="[TopShortcut.Invoked]">
-        <Actions>
-          <Invoke Target="[Application.BackToRoot]"/>
           <PlaySound Sound="sound://sounds:Miniselect" />
         </Actions>
       </Changed>
