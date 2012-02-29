@@ -19,7 +19,7 @@
     </Properties>
 
     <Locals>
-      <KeyHandler Name="TopShortcut" Handle="true" Key="H" Modifiers="Control" HandlerStage="Routed"/>
+      <KeyHandler Name="TopShortcut" Handle="true" Key="H" Modifiers="Control" HandlerStage="Bubbled"/>
 
     </Locals>
 

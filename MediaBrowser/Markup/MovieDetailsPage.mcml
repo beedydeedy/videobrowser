@@ -23,7 +23,7 @@
     </Locals>
 
     <Rules>
-      <Binding Source="[Application.Config.ShowThemeBackground]" Target="[MainBG.Visible]" />
+      <!--<Binding Source="[Application.Config.ShowThemeBackground]" Target="[MainBG.Visible]" />-->
 
 
       <!-- Configuration Checks & Display Setup -->
@@ -65,7 +65,7 @@
             </LayoutInput>
           </vd:ViewMovieDefault>
 
-          <Graphic Name="MainBG" Content="image://i:Background" Margins="-50,-20,-150,-20" Layout="Fill"/>
+          <!--<Graphic Name="MainBG" Content="image://i:Background" Margins="-50,-20,-150,-20" Layout="Fill"/>-->
 
         </Children>
       </ColorFill>
