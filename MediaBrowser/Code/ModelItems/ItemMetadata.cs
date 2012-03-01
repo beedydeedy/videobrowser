@@ -124,7 +124,7 @@ namespace MediaBrowser.Library {
         {
             this.runtime = null;
             this.runtimestr = null;
-            FirePropertiesChanged("RunningTime", "RunningTimeString");
+            FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
         }
 
         protected int? runtime;
@@ -156,7 +156,7 @@ namespace MediaBrowser.Library {
                                 Async.Queue("runtime calc", () =>
                                 {
                                     runtime = folder.RunTime;
-                                    FirePropertiesChanged("RunningTime", "RunningTimeString");
+                                    FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
                                 });
                             }
                         }
