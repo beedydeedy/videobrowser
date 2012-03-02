@@ -200,13 +200,23 @@ namespace MediaBrowser.Library {
                 int result;
 
                 //biggest int - 2147483647
-                if (char.IsDigit(space1[0]) && char.IsDigit(space2[0]) && str1.Length < 10 && str2.Length < 10)
+                if (char.IsDigit(space1[0]) && char.IsDigit(space2[0]) /*&& str1.Length < 10 && str2.Length < 10*/) //this assumed the entire string was a number...
                 {
-                    int thisNumericChunk = int.Parse(str1);
-                    int thatNumericChunk = int.Parse(str2);
+                    try
+                    {
+                        int thisNumericChunk = int.Parse(str1);
+                        int thatNumericChunk = int.Parse(str2);
+                        //Logging.Logger.ReportVerbose("Comparing Numbers... " + str1 + "(" + thisNumericChunk + ")/" + str2 + "(" + thatNumericChunk + ")");
+                        result = thisNumericChunk.CompareTo(thatNumericChunk);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logger.ReportException("Error comparing numeric strings: "+str1+"/"+str2,e);
+                        result = String.Compare(str1, str2, compareCulture);
+                    }
                     
-                    result = thisNumericChunk.CompareTo(thatNumericChunk);
                 } else {
+                    //Logging.Logger.ReportVerbose("Comparing Strings... " + str1 + "/" + str2);
                     result = String.Compare(str1,str2,compareCulture);
                 }
 
