@@ -393,6 +393,7 @@ namespace MediaBrowser
         {
             var transport = MediaTransport;
             PlayState state = PlayState.Undefined;
+            decimal pctIn = 0;
             if (transport != null)
             {
                 state = transport.PlayState;
@@ -435,7 +436,7 @@ namespace MediaBrowser
                     //Logger.ReportVerbose("position "+position+ " duration "+duration);
                     if (duration > 0)
                     {
-                        decimal pctIn = Decimal.Divide(position,duration.Value) * 100;
+                        pctIn = Decimal.Divide(position,duration.Value) * 100;
                         //Logger.ReportVerbose("pctIn: " + pctIn + " duration: " + duration);
                         if (pctIn < Config.Instance.MinResumePct || pctIn > Config.Instance.MaxResumePct) position = 0; //don't track in very begginning or very end
                     }
@@ -470,7 +471,7 @@ namespace MediaBrowser
                     Logger.ReportVerbose("Stopped so detaching...");
                     Detach(); //we don't want to continue to get updates if play something outside MB
                     //call hook for end state
-                    if (OnPlayBackFinished != null) OnPlayBackFinished(position != 0);
+                    if (OnPlayBackFinished != null) OnPlayBackFinished(pctIn < Config.Instance.MaxResumePct);
                     //we're done - call post-processor
                     Logger.ReportVerbose("Calling post play...");
                     Application.CurrentInstance.RunPostPlayProcesses();
