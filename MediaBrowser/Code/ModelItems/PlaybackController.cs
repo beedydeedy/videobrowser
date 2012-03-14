@@ -198,14 +198,21 @@ namespace MediaBrowser
         {
             MediaCollection coll = new MediaCollection();
 
-            MediaExperience.GetMediaCollection(coll);
+            try
+            {
+                MediaExperience.GetMediaCollection(coll);
+            }
+            catch (Exception e)
+            {
+                Logger.ReportException("MediaExperience.GetMediaCollection: ", e);
+            }
 
             return coll;
         }
 
         // After calling MediaCenterEnvironment.PlayMedia, playback will begin with a state of Stopped and position 0
         // We'll record it when we see it so we don't get tripped up into thinking playback has actually stopped
-        private bool HasPassedInitialStop = false;
+        private bool HasStartedPlaying = false;
 
         private void PlayPaths(PlaybackArguments playInfo, bool queue)
         {
@@ -221,8 +228,8 @@ namespace MediaBrowser
             {
                 mediaCollection = GetCurrentMediaCollectionFromMediaExperience();
 
-                // If an empty or null MediaCollection comes back, create a new one
-                if (mediaCollection == null || mediaCollection.Count == 0)
+                // If an empty MediaCollection comes back, create a new one
+                if (mediaCollection.Count == 0)
                 {
                     mediaCollection = new MediaCollection();
                 }
@@ -269,10 +276,10 @@ namespace MediaBrowser
                     mediaCollection[playInfo.PlaylistPosition].Start = new TimeSpan(playInfo.PositionTicks);
                 }
 
+                HasStartedPlaying = false;
+
                 try
                 {
-                    HasPassedInitialStop = false;
-
                     if (!AddInHost.Current.MediaCenterEnvironment.PlayMedia(MediaType.MediaCollection, mediaCollection, queue))
                     {
                         Logger.ReportInfo("PlayMedia returned false");
@@ -282,7 +289,6 @@ namespace MediaBrowser
                 {
                     Logger.ReportException("Playing media failed.", ex);
                     Application.ReportBrokenEnvironment();
-                    return;
                 }
             }
 
@@ -295,6 +301,23 @@ namespace MediaBrowser
         /// </summary>
         void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
+            MediaTransport transport = sender as MediaTransport;
+
+            PlayState state = transport.PlayState;
+
+            // Don't get tripped up at the initial state of Stopped with position 0, which occurs with MediaCollections
+            if (!HasStartedPlaying)
+            {
+                if (state == Microsoft.MediaCenter.PlayState.Playing)
+                {
+                    HasStartedPlaying = true;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             // protect against really agressive calls
             var diff = (DateTime.Now - lastCall).TotalMilliseconds;
 
@@ -304,24 +327,7 @@ namespace MediaBrowser
                 return;
             }
 
-            lastCall = DateTime.Now; 
-            
-            MediaTransport transport = sender as MediaTransport;
-
-            long positionTicks = transport.Position.Ticks;
-
-            PlayState state = transport.PlayState;
-
-            // Don't get tripped up at the initial state of Stopped with position 0, which occurs with MediaCollections
-            if (!HasPassedInitialStop)
-            {
-                HasPassedInitialStop = true;
-
-                if (state == Microsoft.MediaCenter.PlayState.Stopped && positionTicks == 0)
-                {
-                    return;
-                }
-            }
+            lastCall = DateTime.Now;
 
             // Determine if playback has stopped. When using MediaCollections, after stopping, 
             // PropertyChanged will still fire once with a PlayState of Playing and a PlayRate of 0, or BufferingProgress of -1
@@ -331,32 +337,31 @@ namespace MediaBrowser
             // but as long as it's part of the enum it probably makes sense to keep it here
             bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Stopped || transport.BufferingProgress == -1 || transport.PlayRate == 0;
 
-            // Get metadata from player
-            MediaMetadata metadata = MediaExperience.MediaMetadata;
-
             MediaCollection mediaCollection = GetCurrentMediaCollectionFromMediaExperience();
 
             // If the MediaCollectionItem is null or empty then playback is occurring due to some other application or plugin
             // Perhaps a single path was passed into PlayMedia
             // OR playback has previously stopped and the collection is no longer available
-            MediaCollectionItem activeItem = mediaCollection == null || mediaCollection.Count == 0 ? null : mediaCollection[mediaCollection.CurrentIndex];
+            MediaCollectionItem activeItem = mediaCollection.Count == 0 ? null : mediaCollection[mediaCollection.CurrentIndex];
 
+            // Get metadata from player
+            MediaMetadata metadata = MediaExperience.MediaMetadata;
+
+            long positionTicks = transport.Position.Ticks;
             Guid playableItemId = activeItem == null ? Guid.Empty : new Guid(activeItem.FriendlyData["itemId"].ToString());
             int playlistIndex = activeItem == null ? 0 : int.Parse(activeItem.FriendlyData["fileIndex"].ToString());
             long duration = activeItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata, activeItem);
 
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
-            if (activeItem != null && positionTicks > 0)
+            if (positionTicks > 0)
             {
-                string title = GetTitleOfCurrentlyPlayingMedia(metadata);
-
                 Logger.ReportVerbose("Playstate is {0} for {1}, PlayRate:{2}, BufferingProgress:{3}, PositionTicks:{4}, Playlist Index:{5}",
-                  transport.PlayState, title, transport.PlayRate, transport.BufferingProgress, positionTicks, playlistIndex);
+                  transport.PlayState, GetTitleOfCurrentlyPlayingMedia(metadata), transport.PlayRate, transport.BufferingProgress, positionTicks, playlistIndex);
 
                 OnProgress(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
             }
 
-            if (property != "Position")
+            if (property == "PlayState")
             {
                 HandlePlaystateChange(isStopped, playableItemId, playlistIndex, positionTicks, duration);
             }
@@ -372,14 +377,8 @@ namespace MediaBrowser
 
             Application.CurrentInstance.ShowNowPlaying = !isStopped;
 
-            Logger.ReportVerbose("Updating Resume status...");
-            Application.CurrentInstance.CurrentItem.UpdateResume();
-
             if (isStopped)
             {
-                //we're done - call post-processor
-                Application.CurrentInstance.ReturnToApplication();
-
                 bool stoppedByUser = true;
 
                 // If we know the duration, use it to make a guess whether playback was forcefully stopped by the user, as opposed to allowing it to finish
@@ -392,6 +391,15 @@ namespace MediaBrowser
 
                 // Fire the OnFinished event for each item
                 OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId, StoppedByUser = stoppedByUser });
+
+                Logger.ReportVerbose("Calling RunPostPlayProcesses...");
+                Application.CurrentInstance.RunPostPlayProcesses();
+
+                //we're done - call post-processor
+                Application.CurrentInstance.ReturnToApplication();
+
+                // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
+                HasStartedPlaying = false;
             }
         }
 
@@ -476,7 +484,7 @@ namespace MediaBrowser
 
         public virtual bool IsPlayingVideo
         {
-            get 
+            get
             {
                 if (IsPlaying)
                 {

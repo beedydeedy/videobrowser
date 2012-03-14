@@ -56,7 +56,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
         {
-            NameValueCollection values = GetINIFileValues();
+            NameValueCollection values = Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
 
             PlaybackStateEventArgs state = GetPlaybackState(values, files);
 
@@ -112,13 +112,6 @@ namespace MediaBrowser.Library.Playables
             }
 
             return base.GetPlaybackState(new string[] { filename });
-        }
-
-        private NameValueCollection GetINIFileValues()
-        {
-            string iniFilePath = Path.Combine(ExternalPlayerConfiguration.DataFolderPath, "mpc-hc.ini");
-
-            return Helper.ParseIniFile(iniFilePath);
         }
 
         public override ConfigData.ExternalPlayer GetDefaultConfiguration()

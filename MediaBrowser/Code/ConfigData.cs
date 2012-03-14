@@ -488,10 +488,10 @@ namespace MediaBrowser
             public string Command { get; set; }
 
             /// <summary>
-            /// The path to the folder that contains play state.
-            /// Not all external players will need this.
+            /// The path to the file or folder that contains play state.
+            /// This will vary per player and not all will need it.
             /// </summary>
-            public string DataFolderPath { get; set; }
+            public string PlayStatePath { get; set; }
 
             public string Args { get; set; }
             public bool MinimizeMCE = true; //whether or not to minimize MCE when starting external player

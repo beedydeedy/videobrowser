@@ -151,9 +151,13 @@ namespace MediaBrowser.Library
                 PlaybackController.PlayMedia(args);
                 PlaybackController.GoToFullScreen();
             }
-            
-            PlaybackController.Progress += OnProgress;
-            PlaybackController.PlaybackFinished += OnPlaybackFinished;
+
+            // Optimization for items that don't have PlayState
+            if (PlayState != null)
+            {
+                PlaybackController.Progress += OnProgress;
+                PlaybackController.PlaybackFinished += OnPlaybackFinished;
+            }
         }
 
         /// <summary>
@@ -190,18 +194,20 @@ namespace MediaBrowser.Library
                 return;
             }
 
-            long duration = e.DurationFromPlayer;
-
-            // The player didn't report the duration, see if we have it in metadata
-            if (duration == 0 && Media != null)
+            if (PlayState != null)
             {
-                duration = TimeSpan.FromMinutes(Media.RunTime).Ticks;
+                long duration = e.DurationFromPlayer;
+
+                // The player didn't report the duration, see if we have it in metadata
+                if (duration == 0 && Media != null)
+                {
+                    duration = TimeSpan.FromMinutes(Media.RunTime).Ticks;
+                }
+
+                Application.CurrentInstance.UpdatePlayState(PlayState, e.PlaylistPosition, e.Position, duration, !IncrementedPlayCount);
+
+                IncrementedPlayCount = true;
             }
-
-            Application.CurrentInstance.UpdatePlayState(PlayState, e.PlaylistPosition, e.Position, duration, !IncrementedPlayCount);
-
-            IncrementedPlayCount = true;
-
         }
 
         /// <summary>
@@ -234,11 +240,20 @@ namespace MediaBrowser.Library
             PlaybackController.Progress -= OnProgress;
             PlaybackController.PlaybackFinished -= OnPlaybackFinished;
 
-            Logger.ReportVerbose("Updating Resume status...");
-            Application.CurrentInstance.CurrentItem.UpdateResume();
+            if (Media != null)
+            {
+                UpdateResumeStatusIfMediaIsCurrentItem(Media);
+            }
 
-            Logger.ReportVerbose("Calling RunPostPlayProcesses...");
-            Application.CurrentInstance.RunPostPlayProcesses();
+        }
+
+        protected void UpdateResumeStatusIfMediaIsCurrentItem(Media media)
+        {
+            if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+            {
+                Logger.ReportVerbose("Updating Resume status...");
+                Application.CurrentInstance.CurrentItem.UpdateResume();
+            }
         }
 
         /// <summary>

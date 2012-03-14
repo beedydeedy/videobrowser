@@ -219,6 +219,19 @@ namespace MediaBrowser.Library.Playables
                 OnMultipleMediaItemsPlaybackFinished();
                 OnPlaybackFinished();
             }
+
+            Logging.Logger.ReportVerbose("Calling RunPostPlayProcesses...");
+            Application.CurrentInstance.RunPostPlayProcesses();
+        }
+
+        public override void OnPlaybackFinished()
+        {
+            base.OnPlaybackFinished();
+
+            foreach (Media media in PlayableMediaItems)
+            {
+                UpdateResumeStatusIfMediaIsCurrentItem(media);
+            }
         }
 
         /// <summary>

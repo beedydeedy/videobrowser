@@ -52,8 +52,11 @@ namespace MediaBrowser.Library.Playables
                 ExecuteResumeCommand(playbackInfo.PlaylistPosition, playbackInfo.PositionTicks);
             }
 
+            // Only monitor PlayState if we have a PlayState object to update
+            bool monitorProgress = PlayableMediaItems.Count > 0 || PlayState != null;
+
             // Wait for it to stop, and start reporting progress
-            WaitForPlayState("stop", true);
+            WaitForPlayState("stop", monitorProgress);
         }
 
         /// <summary>
@@ -128,9 +131,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         private NameValueCollection GetTMTInfoFileValues()
         {
-            string filePath = Path.Combine(ExternalPlayerConfiguration.DataFolderPath, "TMTInfo.set");
-
-            return Helper.ParseIniFile(filePath);
+            return Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
         }
 
         /// <summary>
