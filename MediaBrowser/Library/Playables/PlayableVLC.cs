@@ -5,7 +5,7 @@ using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.Playables
 {
-    class PlayableVLC : PlayableExternal
+    public class PlayableVLC : PlayableExternal
     {
         protected override ConfigData.ExternalPlayerType ExternalPlayerType
         {
@@ -35,12 +35,12 @@ namespace MediaBrowser.Library.Playables
 
             Video video = media as Video;
 
-            if (video != null & video.MediaType == Library.MediaType.DVD)
+            if (video != null && video.MediaType == Library.MediaType.DVD)
             {
                 filesToPlay = filesToPlay.Select(i => "dvd://" + i);
             }
 
-            return files;
+            return filesToPlay;
         }
 
         /// <summary>
@@ -50,7 +50,8 @@ namespace MediaBrowser.Library.Playables
         {
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
 
-            config.Args = "{0} --fullscreen --play-and-exit --no-one-instance";
+            config.Args = "{0} --fullscreen --play-and-exit --no-one-instance --global-key-quit=\"Media Stop\"";
+            config.SupportsMultiFileCommandArguments = true;
 
             return config;
         }

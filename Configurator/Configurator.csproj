@@ -60,9 +60,16 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ExternalPlayerForm.xaml.cs">
+      <DependentUpon>ExternalPlayerForm.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SuppImproveDialog.xaml.cs">
       <DependentUpon>SuppImproveDialog.xaml</DependentUpon>
     </Compile>
+    <Page Include="ExternalPlayerForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SuppImproveDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -153,12 +160,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="PlayerArgsForm.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="PluginSourcesWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -211,9 +212,6 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PermissionDialog.xaml.cs">
       <DependentUpon>PermissionDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="PlayerArgsForm.xaml.cs">
-      <DependentUpon>PlayerArgsForm.xaml</DependentUpon>
     </Compile>
     <Compile Include="PluginSourcesWindow.xaml.cs">
       <DependentUpon>PluginSourcesWindow.xaml</DependentUpon>

@@ -457,7 +457,7 @@ namespace MediaBrowser
             TMT = 2,
 
             // Represents the PlayerLoader WMC add-in
-            TMTMcml = 3,
+            TMTAddInForWMC = 3,
 
             VLC = 4
         }
@@ -494,8 +494,8 @@ namespace MediaBrowser
             public string PlayStatePath { get; set; }
 
             public string Args { get; set; }
-            public bool MinimizeMCE = true; //whether or not to minimize MCE when starting external player
-            public bool ShowSplashScreen = true; //whether or not to show the MB splash screen
+            public bool MinimizeMCE { get; set; } //whether or not to minimize MCE when starting external player
+            public bool ShowSplashScreen { get; set; } //whether or not to show the MB splash screen
 
             public ExternalPlayer()
             {
@@ -503,9 +503,25 @@ namespace MediaBrowser
                 VideoFormats = new List<VideoFormat>();
             }
 
-            public override string ToString()
+            public string CommandFileName
             {
-                return MediaTypes.ToString();
+                get
+                {
+                    return string.IsNullOrEmpty(Command) ? string.Empty : Path.GetFileName(Command);
+                }
+            }
+
+            public string MediaTypesFriendlyString
+            {
+                get
+                {
+                    if (MediaTypes.Count == 0)
+                    {
+                        return "All";
+                    }
+
+                    return string.Join(",", MediaTypes.Select(i => i.ToString()).ToArray());
+                }
             }
         }
 
@@ -550,7 +566,10 @@ namespace MediaBrowser
             MediaBrowser.Library.Threading.Async.Queue("Config notify", () => Kernel.Instance.NotifyConfigChange());
         }
 
-        public static ConfigData.ExternalPlayer GetConfiguredExternalPlayer(ConfigData.ExternalPlayerType externalPlayerType, IEnumerable<string> files)
+        /// <summary>
+        /// Determines if a given external player configuration is configured to play a list of files
+        /// </summary>
+        public static bool CanPlay(ConfigData.ExternalPlayer player, IEnumerable<string> files)
         {
             List<MediaType> types = new List<MediaType>();
 
@@ -562,10 +581,13 @@ namespace MediaBrowser
             // See if there's a configured player matching the ExternalPlayerType and MediaType. 
             // We're not able to evaluate VideoFormat in this scenario
             // If none is found it will return null
-            return GetConfiguredExternalPlayer(externalPlayerType, types, new List<VideoFormat>(), files.Count());
+            return CanPlay(player, types, new List<VideoFormat>(), files.Count());
         }
 
-        public static ConfigData.ExternalPlayer GetConfiguredExternalPlayer(ConfigData.ExternalPlayerType externalPlayerType, IEnumerable<Media> mediaList)
+        /// <summary>
+        /// Determines if a given external player configuration is configured to play a list of files
+        /// </summary>
+        public static bool CanPlay(ConfigData.ExternalPlayer player, IEnumerable<Media> mediaList)
         {
             List<MediaType> types = new List<MediaType>();
             List<VideoFormat> formats = new List<VideoFormat>();
@@ -588,82 +610,57 @@ namespace MediaBrowser
 
             IEnumerable<string> files = mediaList.Select(v2 => v2.Files).SelectMany(i => i);
 
-            return GetConfiguredExternalPlayer(externalPlayerType, types, formats, files.Count());
+            return CanPlay(player, types, formats, files.Count());
         }
 
         /// <summary>
-        /// Searches configuration to find the external player that is configured to play:
+        /// Detmines if a given external player configuration is configured to play:
         /// - ALL of MediaTypes supplied. This filter is ignored if an empty list is provided.
         /// - All of the VideoFormats supplied. This filter is ignored if an empty list is provided.
-        /// - And is able to play the number of files request
-        /// Will return null if none found.
+        /// - And is able to play the number of files requested
         /// </summary>
-        public static ConfigData.ExternalPlayer GetConfiguredExternalPlayer(ConfigData.ExternalPlayerType externalPlayerType, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, int numFilesToPlay)
+        public static bool CanPlay(ConfigData.ExternalPlayer externalPlayer, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, int numFilesToPlay)
         {
             if (Application.RunningOnExtender)
             {
-                return null;
+                return false;
             }
 
-            foreach (ConfigData.ExternalPlayer externalPlayer in Config.Instance.ExternalPlayers)
+            // Check options to see if this is not a match
+
+            // If it's not even capable of playing multiple files in sequence, it's no good
+            if (numFilesToPlay > 1 && !externalPlayer.SupportsMultiFileCommandArguments && !externalPlayer.SupportsPlaylists)
             {
-                if (externalPlayer.ExternalPlayerType == externalPlayerType)
+                return false;
+            }
+
+            // If configuration wants specific MediaTypes, check that here
+            // If no MediaTypes are specified, proceed
+            if (externalPlayer.MediaTypes.Count > 0)
+            {
+                foreach (MediaType mediaType in mediaTypes)
                 {
-                    // Check options to see if this is not a match
-
-                    // If it's not even capable of playing multiple files in sequence, it's no good
-                    if (numFilesToPlay > 1 && !externalPlayer.SupportsMultiFileCommandArguments && !externalPlayer.SupportsPlaylists)
+                    if (!externalPlayer.MediaTypes.Contains(mediaType))
                     {
-                        continue;
+                        return false;
                     }
-
-                    // If configuration wants specific MediaTypes, check that here
-                    // If no MediaTypes are specified, proceed
-                    if (externalPlayer.MediaTypes.Count > 0 && mediaTypes.Count() > 0)
-                    {
-                        bool isValid = true;
-
-                        foreach (MediaType mediaType in mediaTypes)
-                        {
-                            if (!externalPlayer.MediaTypes.Contains(mediaType))
-                            {
-                                isValid = false;
-                                break;
-                            }
-                        }
-
-                        if (!isValid)
-                        {
-                            continue;
-                        }
-                    }
-
-                    // If configuration wants specific VideoFormats, check that here
-                    // If no VideoFormats are specified, proceed
-                    if (externalPlayer.VideoFormats.Count > 0 && videoFormats.Count() > 0)
-                    {
-                        bool isValid = true;
-
-                        foreach (VideoFormat format in videoFormats)
-                        {
-                            if (!externalPlayer.VideoFormats.Contains(format))
-                            {
-                                isValid = false;
-                                break;
-                            }
-                        }
-
-                        if (!isValid)
-                        {
-                            continue;
-                        }
-                    }
-
-                    return externalPlayer;
                 }
             }
 
-            return null;
+            // If configuration wants specific VideoFormats, check that here
+            // If no VideoFormats are specified, proceed
+            if (externalPlayer.VideoFormats.Count > 0)
+            {
+                foreach (VideoFormat format in videoFormats)
+                {
+                    if (!externalPlayer.VideoFormats.Contains(format))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         

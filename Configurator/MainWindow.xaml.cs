@@ -26,6 +26,7 @@ using MediaBrowser;
 using Configurator.Code;
 using MediaBrowser.Code.ShadowTypes;
 using MediaBrowser.Library;
+using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Factories;
@@ -93,9 +94,6 @@ namespace Configurator
 
             LoadComboBoxes();
             lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
-
-            //we're hiding the podcast and plugin detail panels until the user selects one
-            infoPlayerPanel.Visibility = pluginPanel.Visibility = Visibility.Hidden;
 
             //we're showing, but disabling the media collection detail panel until the user selects one
             infoPanel.IsEnabled = false;
@@ -452,7 +450,7 @@ namespace Configurator
         {
             enableTranscode360.IsChecked = config.EnableTranscode360;
             useAutoPlay.IsChecked = config.UseAutoPlayForIso;
-
+            
             cbxOptionClock.IsChecked = config.ShowClock;            
             cbxOptionTransparent.IsChecked = config.ShowThemeBackground;
             cbxOptionIndexing.IsChecked = config.RememberIndexing;
@@ -1187,124 +1185,103 @@ sortorder: {2}
             SaveConfig();
         }
 
-        private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
+        private void btnRemovePlayer_Click(object sender, RoutedEventArgs e)
         {
-            List<MediaType> list = new List<MediaType>();
-            // Provide a list of media types that haven't been used. This is to filter out the selection available to the end user.
-            // Don't display media types for players that we already have. 
-            //
-            // This also makes this scalable, we shouldn't have to adjust this code for new media types.
-            Boolean found;
-            foreach (MediaType item in Enum.GetValues(typeof(MediaType)))
-            {
-                // See if an external player has been configured for this media type.
-                found = false;
-                foreach (ConfigData.ExternalPlayer player in lstExternalPlayers.Items)
-                    if (player.MediaType == item) {
-                        found = true;
-                        break;
-                    }
-                // If a player hasn't been configured then make it an available option to be added
-                if (!found)
-                {
-                    if (item == MediaType.ISO)
-                    {
-                        // do nothing
-                    } else {
-                        list.Add(item);
-                    }
-                }
-            }
+            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
 
-            var form = new SelectMediaTypeForm(list);
-            form.Owner = this;
-            form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            if (form.ShowDialog() == true)
+            var message = "About to remove \"" + mediaPlayer.ExternalPlayerType.ToString() + "\" from the external players.\nAre you sure?";
+            if (MessageBox.Show(message, "Remove Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                ConfigData.ExternalPlayer player = new ConfigData.ExternalPlayer();
-                player.MediaType = (MediaType)form.cbMediaType.SelectedItem;
-                player.Args = "\"{0}\""; // Assign a default parameter
-                config.ExternalPlayers.Add(player);
-                lstExternalPlayers.Items.Add(player);
-                lstExternalPlayers.SelectedItem = player;
+                config.ExternalPlayers.Remove(mediaPlayer);
+                lstExternalPlayers.Items.Remove(mediaPlayer);
                 SaveConfig();
             }
         }
 
-        private void btnRemovePlayer_Click(object sender, RoutedEventArgs e)
+        private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
+            var externalPlayer = new PlayableExternal().GetDefaultConfiguration();
+           
+            EditExternalPlayer(externalPlayer, true);
+        }
+
+        private void lstExternalPlayers_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (lstExternalPlayers.SelectedItem != null)
             {
-                var message = "About to remove the media type \"" + lstExternalPlayers.SelectedItem.ToString() + "\" from the external players.\nAre you sure?";
-                if (MessageBox.Show(message, "Remove Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                {
-                    config.ExternalPlayers.Remove(mediaPlayer);
-                    lstExternalPlayers.Items.Remove(mediaPlayer);
-                    SaveConfig();
-                    infoPlayerPanel.Visibility = Visibility.Hidden;
-                }
+                btnEditPlayer_Click(sender, e);
             }
         }
 
-        private void btnPlayerCommand_Click(object sender, RoutedEventArgs e)
+        private void btnEditPlayer_Click(object sender, RoutedEventArgs e)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
-            {
-                var dialog = new System.Windows.Forms.OpenFileDialog();
-                dialog.Filter = "*.exe|*.exe";
-                if (mediaPlayer.Command != string.Empty)
-                    dialog.FileName = mediaPlayer.Command;
-
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    mediaPlayer.Command = dialog.FileName;
-                    txtPlayerCommand.Text = mediaPlayer.Command;
-                    SaveConfig();
-                }
-            }
+            var externalPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
+            
+            EditExternalPlayer(externalPlayer, false);
         }
 
-        private void btnPlayerArgs_Click(object sender, RoutedEventArgs e)
+        private void EditExternalPlayer(ConfigData.ExternalPlayer externalPlayer, bool isNew)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
+            var form = new ExternalPlayerForm(isNew);
+            form.Owner = this;
+
+            form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            form.FillControlsFromObject(externalPlayer);
+
+            if (form.ShowDialog() == true)
             {
-                var form = new PlayerArgsForm(mediaPlayer.Args);
-                form.Owner = this;
-                form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                if (form.ShowDialog() == true)
+                form.UpdateObjectFromControls(externalPlayer);
+
+                if (isNew)
                 {
-                    mediaPlayer.Args = form.txtArgs.Text;
-                    lblPlayerArgs.Text = mediaPlayer.Args;
-                    SaveConfig();
+                    config.ExternalPlayers.Add(externalPlayer);
                 }
+
+                SaveConfig();
+
+                RefreshPlayers();
+
+                lstExternalPlayers.SelectedItem = externalPlayer;
             }
         }
 
         private void lstExternalPlayers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (lstExternalPlayers.SelectedIndex >= 0)
-            {
-                var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-                if (mediaPlayer != null)
-                {
-                    txtPlayerCommand.Text = mediaPlayer.Command;
-                    lblPlayerArgs.Text = mediaPlayer.Args;
-                    cbxMinMCE.IsChecked = mediaPlayer.MinimizeMCE;
-                    cbxSplash.IsChecked = mediaPlayer.ShowSplashScreen;
-                    infoPlayerPanel.Visibility = Visibility.Visible;
-                    btnRemovePlayer.IsEnabled = true;
-                }
-                else
-                {
-                    txtPlayerCommand.Text = string.Empty;
-                    lblPlayerArgs.Text = string.Empty;
-                    infoPlayerPanel.Visibility = Visibility.Hidden;
-                    btnRemovePlayer.IsEnabled = false;
-                }
-            }
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+            bool hasSelection = selectedIndex >= 0;
+
+            btnRemovePlayer.IsEnabled = hasSelection;
+            btnEditPlayer.IsEnabled = hasSelection;
+            btnMoveExternalPlayerUp.IsEnabled = hasSelection && selectedIndex > 0;
+            btnMoveExternalPlayerDown.IsEnabled = hasSelection && selectedIndex < ( lstExternalPlayers.Items.Count - 1);
+        }
+
+        void btnMoveExternalPlayerUp_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+
+            MoveExternalPlayer(selectedIndex, selectedIndex - 1);
+        }
+
+        void btnMoveExternalPlayerDown_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+
+            MoveExternalPlayer(selectedIndex, selectedIndex + 1);
+        }
+        private void MoveExternalPlayer(int oldIndex, int newIndex)
+        {
+            var externalPlayer = config.ExternalPlayers[oldIndex];
+
+            //remove from current location
+            config.ExternalPlayers.RemoveAt(oldIndex);
+            //add back above item above us
+            config.ExternalPlayers.Insert(newIndex, externalPlayer);
+            SaveConfig();
+            RefreshPlayers();
+            //finally, re-select this item
+            lstExternalPlayers.SelectedItem = externalPlayer;
         }
         #endregion
 
@@ -1437,26 +1414,6 @@ sortorder: {2}
         {
             config.AutoEnterSingleDirs = (bool)cbxOptionAutoEnter.IsChecked;
             SaveConfig();
-        }
-
-        private void cbxMinMCE_Click(object sender, RoutedEventArgs e)
-        {
-            ConfigData.ExternalPlayer player = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (player != null)
-            {
-                player.MinimizeMCE = (bool)cbxMinMCE.IsChecked;
-                SaveConfig();
-            }
-        }
-
-        private void cbxSplash_Click(object sender, RoutedEventArgs e)
-        {
-            ConfigData.ExternalPlayer player = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (player != null)
-            {
-                player.ShowSplashScreen = (bool)cbxSplash.IsChecked;
-                SaveConfig();
-            }
         }
 
         private void cbxAutoValidate_Click(object sender, RoutedEventArgs e)

@@ -13,7 +13,7 @@ namespace MediaBrowser.Library.Factories
     {
         public static PlayableItemFactory Instance = new PlayableItemFactory();
 
-        private List<Type> RegisteredTypes = new List<Type>();
+        private List<KeyValuePair<PlayableItem, Type>> RegisteredTypes = new List<KeyValuePair<PlayableItem, Type>>();
 
         private PlayableItemFactory()
         {
@@ -32,7 +32,32 @@ namespace MediaBrowser.Library.Factories
         public void RegisterType<T>()
             where T : PlayableItem, new()
         {
-            RegisteredTypes.Add(typeof(T));
+            RegisterType<T>(false);
+        }
+
+        /// <summary>
+        /// Registers a new type of PlayableItem to be utilized by the Create methods
+        /// </summary>
+        public void RegisterType<T>(bool prioritize)
+            where T : PlayableItem, new()
+        {
+            RegisterType(new T(), prioritize);
+        }
+
+        /// <summary>
+        /// Registers a new type of PlayableItem to be utilized by the Create methods
+        /// </summary>
+        private void RegisterType<T>(T playable, bool prioritize)
+            where T : PlayableItem, new()
+        {
+            if (prioritize)
+            {
+                RegisteredTypes.Insert(0, new KeyValuePair<PlayableItem, Type>(playable, typeof(T)));
+            }
+            else
+            {
+                RegisteredTypes.Add(new KeyValuePair<PlayableItem, Type>(playable, typeof(T)));
+            }
         }
 
         private void RegisterExternals()
@@ -40,25 +65,25 @@ namespace MediaBrowser.Library.Factories
             // Important - need to register them in the order they are added in configuration
             foreach (ConfigData.ExternalPlayer externalPlayer in Config.Instance.ExternalPlayers)
             {
-                if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.Generic)
+                if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
                 {
-                    RegisterType<PlayableExternal>();
-                }
-                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
-                {
-                    RegisterType<PlayableMpcHc>();
+                    RegisterType(new PlayableMpcHc() { ExternalPlayerConfiguration = externalPlayer }, false);
                 }
                 else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
                 {
-                    RegisterType<PlayableTMT>();
+                    RegisterType(new PlayableTMT() { ExternalPlayerConfiguration = externalPlayer }, false);
                 }
-                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTMcml)
+                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
                 {
-                    RegisterType<PlayableTMTMcml>();
+                    RegisterType(new PlayableTMTAddInForWMC() { ExternalPlayerConfiguration = externalPlayer }, false);
                 }
                 else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
                 {
-                    RegisterType<PlayableVLC>();
+                    RegisterType(new PlayableVLC() { ExternalPlayerConfiguration = externalPlayer }, false);
+                }
+                else
+                {
+                    RegisterType(new PlayableExternal() { ExternalPlayerConfiguration = externalPlayer }, false);
                 }
             }
         }
@@ -76,21 +101,20 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Media media, bool allowExternalPlayers)
         {
-            foreach (Type type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                PlayableItem playable = (PlayableItem)Activator.CreateInstance(type);
-
                 // Skip PlayableExternals if specified to do so
-                if (!allowExternalPlayers && playable is PlayableExternal)
+                if (!allowExternalPlayers && type.Key is PlayableExternal)
                 {
                     continue;
                 }
 
-                if (playable.CanPlay(media))
+                if (type.Key.CanPlay(media))
                 {
+                    PlayableItem playable = InstantiatePlayableItem(type);
                     playable.AddMedia(media);
-                    AttachPlaybackController(playable);
                     return playable;
+
                 }
             }
 
@@ -107,14 +131,12 @@ namespace MediaBrowser.Library.Factories
                 return Create(paths.First());
             }
 
-            foreach (Type type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                PlayableItem playable = (PlayableItem)Activator.CreateInstance(type);
-
-                if (playable.CanPlay(paths))
+                if (type.Key.CanPlay(paths))
                 {
+                    PlayableItem playable = InstantiatePlayableItem(type);
                     playable.AddMedia(paths);
-                    AttachPlaybackController(playable);
                     return playable;
                 }
             }
@@ -132,14 +154,12 @@ namespace MediaBrowser.Library.Factories
                 return Create(mediaList.First());
             }
 
-            foreach (Type type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                PlayableItem playable = (PlayableItem)Activator.CreateInstance(type);
-
-                if (playable.CanPlay(mediaList))
+                if (type.Key.CanPlay(mediaList))
                 {
+                    PlayableItem playable = InstantiatePlayableItem(type);
                     playable.AddMedia(mediaList);
-                    AttachPlaybackController(playable);
                     return playable;
                 }
             }
@@ -152,14 +172,12 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(string path)
         {
-            foreach (Type type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                PlayableItem playable = (PlayableItem)Activator.CreateInstance(type);
-
-                if (playable.CanPlay(path))
+                if (type.Key.CanPlay(path))
                 {
+                    PlayableItem playable = InstantiatePlayableItem(type);
                     playable.AddMedia(path);
-                    AttachPlaybackController(playable);
                     return playable;
                 }
             }
@@ -172,19 +190,31 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Folder folder)
         {
-            foreach (Type type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                PlayableItem playable = (PlayableItem)Activator.CreateInstance(type);
-
-                if (playable.CanPlay(folder))
+                if (type.Key.CanPlay(folder))
                 {
+                    PlayableItem playable = InstantiatePlayableItem(type);
                     playable.AddMedia(folder);
-                    AttachPlaybackController(playable);
                     return playable;
                 }
             }
 
             return null;
+        }
+
+        private PlayableItem InstantiatePlayableItem(KeyValuePair<PlayableItem, Type> type)
+        {
+            PlayableItem playable = (PlayableItem)Activator.CreateInstance(type.Value);
+            AttachPlaybackController(playable);
+
+            // Attach configuration if it's an external player
+            if (type.Key is PlayableExternal)
+            {
+                (playable as PlayableExternal).ExternalPlayerConfiguration = (type.Key as PlayableExternal).ExternalPlayerConfiguration;
+            }
+
+            return playable;
         }
 
         /// <summary>

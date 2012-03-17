@@ -12,7 +12,7 @@ namespace MediaBrowser.Library.Playables
     /// <summary>
     /// Represents an external player that uses the standalone TMT application
     /// </summary>
-    class PlayableTMT : PlayableExternal
+    public class PlayableTMT : PlayableExternal
     {
         protected override ConfigData.ExternalPlayerType ExternalPlayerType
         {

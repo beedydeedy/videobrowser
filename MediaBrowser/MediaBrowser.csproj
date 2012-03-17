@@ -132,7 +132,7 @@
     <Compile Include="Library\Persistance\IPersistableChangeNotifiable.cs" />
     <Compile Include="Library\Playables\PlayableMpcHc.cs" />
     <Compile Include="Library\Playables\PlayableTMT.cs" />
-    <Compile Include="Library\Playables\PlayableTMTMcml.cs" />
+    <Compile Include="Library\Playables\PlayableTMTAddInForWMC.cs" />
     <Compile Include="Library\Playables\PlayableVLC.cs" />
     <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
     <Compile Include="Library\Providers\MBMovieProviderFromXml.cs" />

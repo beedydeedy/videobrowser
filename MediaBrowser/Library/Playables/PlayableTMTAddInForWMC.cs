@@ -8,11 +8,11 @@ namespace MediaBrowser.Library.Playables
     /// <summary>
     /// Represents an external player that uses the WMC add-in
     /// </summary>
-    class PlayableTMTMcml : PlayableTMT
+    public class PlayableTMTAddInForWMC : PlayableTMT
     {
         protected override ConfigData.ExternalPlayerType ExternalPlayerType
         {
-            get { return ConfigData.ExternalPlayerType.TMTMcml; }
+            get { return ConfigData.ExternalPlayerType.TMTAddInForWMC; }
         }
 
         /// <summary>

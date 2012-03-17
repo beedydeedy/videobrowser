@@ -7,8 +7,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Filesystem;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
+using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter.Hosting;
 
 namespace MediaBrowser.Library.Playables
@@ -66,12 +68,12 @@ namespace MediaBrowser.Library.Playables
         #region CanPlay
         public override bool CanPlay(IEnumerable<string> files)
         {
-            return ConfigData.GetConfiguredExternalPlayer(ExternalPlayerType, files) != null;
+            return ConfigData.CanPlay(ExternalPlayerConfiguration, files);
         }
 
         public override bool CanPlay(IEnumerable<Media> mediaList)
         {
-            return ConfigData.GetConfiguredExternalPlayer(ExternalPlayerType, mediaList) != null;
+            return ConfigData.CanPlay(ExternalPlayerConfiguration, mediaList);
         }
 
         public override bool CanPlay(Media media)
@@ -98,35 +100,13 @@ namespace MediaBrowser.Library.Playables
             get { return ConfigData.ExternalPlayerType.Generic; }
         }
 
-        private ConfigData.ExternalPlayer _ExternalPlayerConfiguration = null;
         /// <summary>
         /// Gets the ExternalPlayer configuration for this instance
         /// </summary>
-        protected ConfigData.ExternalPlayer ExternalPlayerConfiguration
+        public ConfigData.ExternalPlayer ExternalPlayerConfiguration
         {
-            get
-            {
-                if (_ExternalPlayerConfiguration == null)
-                {
-                    if (PlayableMediaItems.Count > 0)
-                    {
-                        // Playing a list of Media
-                        _ExternalPlayerConfiguration = ConfigData.GetConfiguredExternalPlayer(ExternalPlayerType, PlayableMediaItems);
-                    }
-                    else if (Media != null)
-                    {
-                        // Playing a single Media object
-                        _ExternalPlayerConfiguration = ConfigData.GetConfiguredExternalPlayer(ExternalPlayerType, new Media[] { Media });
-                    }
-                    else
-                    {
-                        // Playing a list of files
-                        _ExternalPlayerConfiguration = ConfigData.GetConfiguredExternalPlayer(ExternalPlayerType, PlayableItems);
-                    }
-                }
-
-                return _ExternalPlayerConfiguration;
-            }
+            get;
+            set;
         }
 
         protected override void Prepare(bool resume)
@@ -146,7 +126,6 @@ namespace MediaBrowser.Library.Playables
         protected override void SendFilesToPlayer(PlaybackArguments args)
         {
             // Two different launch methods depending on how the player is configured
-
             if (ExternalPlayerConfiguration.LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
                 PlayUsingWMCNavigation(args);
@@ -188,10 +167,10 @@ namespace MediaBrowser.Library.Playables
 
             if (configuredPlayer.MinimizeMCE)
             {
-                wp.showCmd = 2; // 1- Normal; 2 - Minimize; 3 - Maximize;
+                wp.showCmd = 2; // 1 - Normal; 2 - Minimize; 3 - Maximize;
                 SetWindowPlacement(mceWnd, ref wp);
             }
-
+            
             //give the player focus
             Async.Queue("Ext Player Focus", () => GiveFocusToExtPlayer(player, playbackInfo));
 
@@ -199,7 +178,7 @@ namespace MediaBrowser.Library.Playables
             player.WaitForExit();
 
             //now restore MCE 
-            wp.showCmd = 1; // 1- Normal; 2 - Minimize; 3 - Maximize;
+            wp.showCmd = 1; // 1 - Normal; 2 - Minimize; 3 - Maximize;
             SetWindowPlacement(mceWnd, ref wp);
             ExternalSplashForm.Hide();
             SetForegroundWindow(mceWnd);
@@ -276,6 +255,13 @@ namespace MediaBrowser.Library.Playables
 
         protected virtual IEnumerable<string> GetFilesToSendToPlayer(Media media, PlaybackStatus playstate, IEnumerable<string> files, bool resume)
         {
+            Video video = media as Video;
+
+            if (video != null && video.MediaType == MediaType.ISO && video.MediaLocation is IFolderMediaLocation)
+            {
+                files = Helper.GetIsoFiles(video.Path);
+            }
+
             return resume && playstate != null ? files.Skip(playstate.PlaylistPosition) : files;
 
         }
@@ -426,7 +412,7 @@ namespace MediaBrowser.Library.Playables
             config.ExternalPlayerType = ExternalPlayerType;
             config.LaunchType = ConfigData.ExternalPlayerLaunchType.CommandLine;
             config.SupportsPlaylists = true;
-            config.SupportsMultiFileCommandArguments = true;
+            config.SupportsMultiFileCommandArguments = false;
             config.ShowSplashScreen = true;
             config.MinimizeMCE = true;
             config.Args = "{0}";

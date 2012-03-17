@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.RemoteControl;
@@ -9,7 +8,7 @@ using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Playables
 {
-    class PlayableMpcHc : PlayableExternal
+    public class PlayableMpcHc : PlayableExternal
     {
         protected override ConfigData.ExternalPlayerType ExternalPlayerType
         {
@@ -119,6 +118,7 @@ namespace MediaBrowser.Library.Playables
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
 
             config.Args = "{0} /play /close /fullscreen";
+            config.SupportsMultiFileCommandArguments = true;
 
             return config;
         }

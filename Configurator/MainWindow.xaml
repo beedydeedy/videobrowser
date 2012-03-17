@@ -19,9 +19,6 @@
                 <SplineDoubleKeyFrame KeyTime="00:00:01" Value="0"/>
             </DoubleAnimationUsingKeyFrames>-->
         </Storyboard>
-        <DataTemplate x:Key="EPStyle">
-            <TextBlock Text="{Binding Path=MediaType}" />
-        </DataTemplate>
         
         <!-- DataTemplate used for Media Collection ListBox-->
         <DataTemplate x:Key="folderListTemplate">
@@ -338,43 +335,33 @@
                 </Grid>
             </TabItem>
 
-
-            
-            <TabItem Header="external players" x:Name="externalPlayersTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed" IsSelected="True">
-                <Grid>
-                    <ListBox HorizontalAlignment="Left" Margin="20,45,0,60" x:Name="lstExternalPlayers" Width="260" FontSize="14" Grid.ColumnSpan="2" SelectionChanged="lstExternalPlayers_SelectionChanged" ItemTemplate="{StaticResource EPStyle}" />
-                    <Button Height="32" HorizontalAlignment="Left" Margin="20,0,0,20" x:Name="btnAddPlayer" VerticalAlignment="Bottom" Width="80" FontSize="14" ToolTip="Add a new media type for external playback" Content="Add" Click="btnAddPlayer_Click" Grid.ColumnSpan="2" />
-                    <Button Height="32" HorizontalAlignment="Left" Margin="200,0,0,20" x:Name="btnRemovePlayer" VerticalAlignment="Bottom" Width="80" FontSize="14" ToolTip="Remove media type" Content="Remove" Click="btnRemovePlayer_Click" IsEnabled="False"/>
-                    <Grid Margin="300,0,20,20" x:Name="infoPlayerPanel">
-                        <Label Margin="0,6,0,0" Height="34" Width="34" VerticalAlignment="Top" HorizontalAlignment="Left" x:Name="lblPlayerStep2" Foreground="#FFA8A8A8" Content="❷" FontSize="14" />
-                        <Label Margin="34,6,0,0" Height="34" VerticalAlignment="Top" HorizontalAlignment="Left" x:Name="lblPlayerStep2b" Foreground="#FF000000" Content="Configure external player" FontSize="14" />
-                        <Label Margin="10,40,0,0" Height="32" Width="240" VerticalAlignment="Top" Content="External Player Location"  HorizontalAlignment="Left" IsTabStop="True" />
-                        <TextBox Margin="10,75,0,0" Height="28" VerticalAlignment="Top" x:Name="txtPlayerCommand" IsReadOnly="True" />
-                        <Button Margin="0,40,0,0" Height="28" Width="150" Content="Select Player" HorizontalAlignment="Right" x:Name="btnPlayerCommand" VerticalAlignment="Top" FontSize="14" Click="btnPlayerCommand_Click" ToolTip="Select an external player to play selected media" />
-                        <Label Margin="10,120,0,0" Height="32" Width="240" VerticalAlignment="Top" Content="Optional Parameters" HorizontalAlignment="Left" />
-                        <TextBox Margin="10,155,0,0" Height="28" VerticalAlignment="Top" Name="lblPlayerArgs" IsEnabled="False">"0"</TextBox>
-                        <Button Margin="0,120,0,0" Height="28" Width="150" Content="Change Parameters" HorizontalAlignment="Right" x:Name="btnPlayerArgs" VerticalAlignment="Top" FontSize="14" Click="btnPlayerArgs_Click" />
-                            <CheckBox Height="24" Margin="10,215,74,0" Name="cbxMinMCE" VerticalAlignment="Top" Checked="cbxMinMCE_Click" Unchecked="cbxMinMCE_Click" ToolTip="Some external players have trouble gaining focus unless MC is minimized.  If your remote doesn't work or the player comes up behind Media Center, turn this option on." Content="Minimize MediaCenter when starting"></CheckBox>
-                            <CheckBox Content="Show splash screen when starting" Height="24" Margin="10,245,74,0" Name="cbxSplash" Checked="cbxSplash_Click" Unchecked="cbxSplash_Click" ToolTip="This will show a splash screen to cover the desktop while an external player is starting." VerticalAlignment="Top" />
-                        </Grid>
-                    <Label Height="34" HorizontalAlignment="Left" Margin="20,6,0,0" x:Name="lblPlayerStep1" VerticalAlignment="Top" Width="34" Foreground="#FFA8A8A8" Opacity="1" Content="❶" FontSize="14" />
-                    <Label Height="34" HorizontalAlignment="Left" Margin="54,6,0,0" x:Name="lblPlayerStep1b" VerticalAlignment="Top" Width="226" Foreground="#FF030303" Content="Add media type for external player" Grid.ColumnSpan="2" FontSize="14" />
-                </Grid>
-            </TabItem>
-            
-            <!-- old folder security tab. left for reference purposes -->
-            <!--<TabItem Header="folder security" Name="folderSecurityTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed">
-                <Grid>
-                    <TreeView Margin="35,56,321,52" Name="tvwLibraryFolders" SelectedValuePath="MPAARating" SelectedItemChanged="tvwLibraryFolders_SelectedItemChanged" TreeViewItem.Expanded="tvwLibraryFolders_ItemExpanded"/>
-                    <Label Height="28" HorizontalAlignment="Left" Margin="35,22,0,0" Name="label4" VerticalAlignment="Top" Width="120">Library Folders</Label>
-                    <Button Height="32" HorizontalAlignment="Left" Margin="35,0,0,14" Click="btnFolderTree_Click" Name="btnFolderTree" VerticalAlignment="Bottom" Width="102">Refresh Folders</Button>
-                    <ComboBox Height="25" HorizontalAlignment="Right" Margin="0,138,151,0" IsEnabled="False" SelectionChanged="ddlFolderRating_SelectionChanged" Name="ddlFolderRating" VerticalAlignment="Top" Width="113" />
-                    <Label Height="28" HorizontalAlignment="Right" Margin="0,104,144,0" Name="label5" VerticalAlignment="Top" Width="120">Folder Rating</Label>
-                    <TextBlock HorizontalAlignment="Right" Margin="0,199,24,52" Text="To set up folders to respond to Parental Controls, select a folder in the list and give it a valid rating.  A Rating of 'CS' will always require a PIN if Parental Control is enabled." Name="textBlock1" Width="268" TextWrapping="WrapWithOverflow" />
-                    <Button Height="25" Margin="0,138,56,0" Name="btnDelFolderRating" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" IsEnabled="False" Click="btnDelFolderRating_Click" >Remove</Button>
-                </Grid>
-            </TabItem>-->
-            <TabItem Header="cache" Name="cacheTab" FontSize="14" Visibility="Collapsed" IsSelected="True">
+                <TabItem Header="external players" x:Name="externalPlayersTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed" IsSelected="True">
+                    <StackPanel Orientation="Vertical" Margin="20 20 20 20">
+                        <ListView x:Name="lstExternalPlayers" Height="325" FontSize="12" SelectionChanged="lstExternalPlayers_SelectionChanged" MouseDoubleClick="lstExternalPlayers_MouseDoubleClick">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Type" DisplayMemberBinding="{Binding ExternalPlayerType}" Width="150" />
+                                    <GridViewColumn Header="Command" DisplayMemberBinding="{Binding CommandFileName}" Width="200" />
+                                    <GridViewColumn Header="Media Types" DisplayMemberBinding="{Binding MediaTypesFriendlyString}" Width="354" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel Orientation="Horizontal" Margin="0 20 0 0">
+                            <StackPanel.Resources>
+                                <Style TargetType="{x:Type Button}">
+                                    <Setter Property="Margin" Value="0 0 10 0"/>
+                                    <Setter Property="Padding" Value="20 5 20 5"/>
+                                </Style>
+                            </StackPanel.Resources>
+                            <Button x:Name="btnAddPlayer" ToolTip="Add an external player" Content="Add" Click="btnAddPlayer_Click" />
+                            <Button x:Name="btnEditPlayer" ToolTip="Edit an external player" Content="Edit" Click="btnEditPlayer_Click" IsEnabled="False"/>
+                            <Button x:Name="btnRemovePlayer" ToolTip="Remove an external player" Content="Remove" Click="btnRemovePlayer_Click" IsEnabled="False"/>
+                            <Button x:Name="btnMoveExternalPlayerUp" ToolTip="Move external player up" Content="Move Up" Click="btnMoveExternalPlayerUp_Click" IsEnabled="False"/>
+                            <Button x:Name="btnMoveExternalPlayerDown" ToolTip="Move external player down" Content="Move Down" Click="btnMoveExternalPlayerDown_Click" IsEnabled="False"/>
+                        </StackPanel>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="cache" Name="cacheTab" FontSize="14" Visibility="Collapsed" IsSelected="True">
                 <Grid>
                     <CheckBox Height="22" HorizontalAlignment="Left" Margin="20,10,0,0" Name="cbxItemCache" VerticalAlignment="Top" Width="60" Click="cbxCache_Click" IsChecked="True">Items</CheckBox>
                     <TextBox Height="45" Margin="20,35,20,0" Name="textBox1" VerticalAlignment="Top" TextWrapping="Wrap" Focusable="False" ToolTip="Clears the Items, Children and ProviderData directories" Cursor="Arrow">This option will clear out the stored information about all of the items in your library collection - causing them to be re-built from either local or remote metadata</TextBox>
