@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
+using Microsoft.Win32;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -55,13 +57,23 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
         {
-            NameValueCollection values = Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
+            NameValueCollection values = GetMPCHCSettings();
 
             PlaybackStateEventArgs state = GetPlaybackState(values, files);
 
             state.PlayableItemId = PlayableItemId;
 
             return state;
+        }
+
+        private NameValueCollection GetMPCHCSettings()
+        {
+            if (File.Exists(ExternalPlayerConfiguration.PlayStatePath))
+            {
+                return Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
+            }
+
+            return Helper.GetRegistryKeyValues(Registry.CurrentUser, "Software\\Gabest\\Media Player Classic\\Settings");
         }
 
         /// <summary>
@@ -93,20 +105,11 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         private PlaybackStateEventArgs GetPlaybackState(NameValueCollection values, string filename)
         {
-            bool isNextKey = false;
-
-            foreach (string key in values.AllKeys)
+            for (int i = 0; i <= 19; i++)
             {
-                string value = values[key];
-
-                if (isNextKey)
+                if (values["File Name " + i] == filename)
                 {
-                    return new PlaybackStateEventArgs() { Position = long.Parse(value) };
-                }
-
-                if (key.StartsWith("File Name ") && value == filename)
-                {
-                    isNextKey = true;
+                    return new PlaybackStateEventArgs() { Position = long.Parse(values["File Position " + i]) };
                 }
             }
 

@@ -387,6 +387,12 @@ namespace MediaBrowser.Library.Playables
             {
                 Media media = PlayableMediaItems.ElementAt(i);
 
+                // Perhaps not a resumable item
+                if (media.PlaybackStatus == null)
+                {
+                    continue;
+                }
+
                 long currentPositionTicks = 0;
                 int currentPlaylistPosition = 0;
 

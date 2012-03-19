@@ -13,15 +13,15 @@
         </ComboBox>
 
         <Label Name="lblCommand" Margin="20,60,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Player Path:</Label>
-        <TextBox Name="txtCommand" Margin="120,62,0,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left"></TextBox>
-        <Button Name="btnCommand" Margin="522,62,0,0" Padding="10 1 10 0" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <TextBox Name="txtCommand" Margin="120,62,0,0" Width="440" VerticalAlignment="Top" HorizontalAlignment="Left"></TextBox>
+        <Button Name="btnCommand" Margin="562,62,0,0" Padding="10 1 10 0" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" />
 
         <Label Name="lblArguments" Margin="20,90,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Arguments:</Label>
-        <TextBox Name="txtArguments" Margin="120,92,0,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="The arguments that should be sent to the player. Use {0} as the file path. Do not wrap it in quotes."></TextBox>
+        <TextBox Name="txtArguments" Margin="120,92,0,0" Width="440" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="The arguments that should be sent to the player. Use {0} as the file path. Do not wrap it in quotes."></TextBox>
 
         <Label Name="lblPlayStatePath" Margin="20,120,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">PlayState Path:</Label>
-        <TextBox Name="txtPlayStatePath" Margin="120,122,0,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left"></TextBox>
-        <Button Name="btnPlayStatePath" Margin="522,122,0,0" Padding="10 1 10 0" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <TextBox Name="txtPlayStatePath" Margin="120,122,0,0" Width="440" VerticalAlignment="Top" HorizontalAlignment="Left"></TextBox>
+        <Button Name="btnPlayStatePath" Margin="562,122,0,0" Padding="10 1 10 0" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" />
 
         <Label Name="lblMediaTypes" Margin="20,160,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Supported Media Types:</Label>
         <ListBox Name="lstMediaTypes" Margin="26,185,0,0" Width="150" Height="150" VerticalAlignment="Top" HorizontalAlignment="Left">
