@@ -17,36 +17,37 @@ namespace MediaBrowser.Library.Playables
             get { return ConfigData.ExternalPlayerType.MpcHc; }
         }
 
-        protected override List<string> GetAdditionalCommandArguments(bool resume)
+        /// <summary>
+        /// Gets arguments to be passed to the command line.
+        /// </summary>
+        protected override List<string> GetCommandArgumentsList(bool resume)
         {
-            List<string> args = base.GetAdditionalCommandArguments(resume);
+            List<string> args = new List<string>();
 
+            args.Add("{0}");
+            args.Add("/play");
+            args.Add("/close");
+            args.Add("/fullscreen");
+            
             // Determine MediaType
-            MediaType mediaType = MediaTypeResolver.DetermineType(PlayableItems.First());
-
             Video video = Media as Video;
 
-            if (video != null)
-            {
-                mediaType = video.MediaType;
-            }
-
+            MediaType mediaType = video != null ? video.MediaType : MediaTypeResolver.DetermineType(PlayableItems.First());
+            
             if (mediaType == MediaType.DVD)
             {
                 args.Add("/dvd");
             }
 
-            if (resume)
-            {
-                TimeSpan time = new TimeSpan(PlayState.PositionTicks);
+            // Be explicit about start time, to avoid any possible player auto-resume settings
+            double startTimeInMs = resume ? new TimeSpan(PlayState.PositionTicks).TotalMilliseconds : 0;
 
-                args.Add("/start " + time.TotalMilliseconds.ToString());
-            }
+            args.Add("/start " + startTimeInMs);
 
             return args;
         }
 
-        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, Entities.PlaybackStatus playstate, IEnumerable<string> files, bool resume)
+        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, PlaybackStatus playstate, IEnumerable<string> files, bool resume)
         {
             // For folder-based playback, such as dvd, mpc doesn't like trailing slashes
             return base.GetFilesToSendToPlayer(media, playstate, files, resume).Select(i => i.TrimEnd('\\'));
@@ -68,9 +69,12 @@ namespace MediaBrowser.Library.Playables
 
         private NameValueCollection GetMPCHCSettings()
         {
-            if (File.Exists(ExternalPlayerConfiguration.PlayStatePath))
+            // mpc-hc.ini will only exist if the user has enabled "Store settings to ini file"
+            string playstatePath = Path.ChangeExtension(ExternalPlayerConfiguration.Command, ".ini");
+
+            if (File.Exists(playstatePath))
             {
-                return Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
+                return Helper.ParseIniFile(playstatePath);
             }
 
             return Helper.GetRegistryKeyValues(Registry.CurrentUser, "Software\\Gabest\\Media Player Classic\\Settings");
@@ -120,7 +124,6 @@ namespace MediaBrowser.Library.Playables
         {
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
 
-            config.Args = "{0} /play /close /fullscreen";
             config.SupportsMultiFileCommandArguments = true;
 
             return config;

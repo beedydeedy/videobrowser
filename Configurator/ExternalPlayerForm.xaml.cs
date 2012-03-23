@@ -32,9 +32,47 @@ namespace Configurator
 
             lstPlayerType.SelectionChanged += new SelectionChangedEventHandler(lstPlayerType_SelectionChanged);
             lstLaunchType.SelectionChanged += new SelectionChangedEventHandler(lstLaunchType_SelectionChanged);
-            btnPlayStatePath.Click += new RoutedEventHandler(btnPlayStatePath_Click);
             btnCommand.Click += new RoutedEventHandler(btnCommand_Click);
-            txtCommand.TextChanged += new TextChangedEventHandler(txtCommand_TextChanged);
+            lnkSelectAllMediaTypes.Click += new RoutedEventHandler(lnkSelectAllMediaTypes_Click);
+            lnkSelectAllVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
+            lnkSelectNoneMediaTypes.Click += new RoutedEventHandler(lnkSelectNoneMediaTypes_Click);
+            lnkSelectNoneVideoFormats.Click += new RoutedEventHandler(lnkSelectNoneVideoFormats_Click);
+        }
+
+        void lnkSelectNoneVideoFormats_Click(object sender, RoutedEventArgs e)
+        {
+            EnumWrapperList<VideoFormat> source = lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>;
+
+            source.SelectAll(false);
+            lstVideoFormats.ItemsSource = null;
+            lstVideoFormats.ItemsSource = source;
+        }   
+
+        void lnkSelectNoneMediaTypes_Click(object sender, RoutedEventArgs e)
+        {
+            EnumWrapperList<MediaType> source = lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>;
+
+            source.SelectAll(false);
+            lstMediaTypes.ItemsSource = null;
+            lstMediaTypes.ItemsSource = source;
+        }
+
+        void lnkSelectAllVideoFormats_Click(object sender, RoutedEventArgs e)
+        {
+            EnumWrapperList<VideoFormat> source = lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>;
+
+            source.SelectAll(true);
+            lstVideoFormats.ItemsSource = null;
+            lstVideoFormats.ItemsSource = source;
+        }
+
+        void lnkSelectAllMediaTypes_Click(object sender, RoutedEventArgs e)
+        {
+            EnumWrapperList<MediaType> source = lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>;
+
+            source.SelectAll(true);
+            lstMediaTypes.ItemsSource = null;
+            lstMediaTypes.ItemsSource = source;
         }
 
         private ConfigData.ExternalPlayerType ExternalPlayerType
@@ -68,21 +106,6 @@ namespace Configurator
             }
         }
 
-        void btnPlayStatePath_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new System.Windows.Forms.OpenFileDialog();
-
-            if (!string.IsNullOrEmpty(txtPlayStatePath.Text))
-            {
-                dialog.FileName = txtPlayStatePath.Text;
-            }
-
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                txtPlayStatePath.Text = dialog.FileName;
-            }
-        }
-
         void lstPlayerType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ConfigData.ExternalPlayer externalPlayer = null;
@@ -100,17 +123,6 @@ namespace Configurator
         {
             chkMinimizeMce.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
             chkShowSplashScreen.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
-        }
-
-        void txtCommand_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
-            {
-                if (!string.IsNullOrEmpty(txtCommand.Text) && File.Exists(txtCommand.Text))
-                {
-                    txtPlayStatePath.Text = Path.ChangeExtension(txtCommand.Text, ".ini");
-                }
-            }
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
@@ -145,7 +157,6 @@ namespace Configurator
 
             txtArguments.Text = externalPlayer.Args;
             txtCommand.Text = externalPlayer.Command;
-            txtPlayStatePath.Text = externalPlayer.PlayStatePath;
 
             chkMinimizeMce.IsChecked = externalPlayer.MinimizeMCE;
             chkShowSplashScreen.IsChecked = externalPlayer.ShowSplashScreen;
@@ -168,7 +179,6 @@ namespace Configurator
 
             externalPlayer.Args = txtArguments.Text;
             externalPlayer.Command = txtCommand.Text;
-            externalPlayer.PlayStatePath = txtPlayStatePath.Text;
 
             externalPlayer.MinimizeMCE = chkMinimizeMce.IsChecked.Value;
             externalPlayer.ShowSplashScreen = chkShowSplashScreen.IsChecked.Value;
@@ -207,19 +217,6 @@ namespace Configurator
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Hidden;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Hidden;
             }
-
-            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT || externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-            {
-                lblPlayStatePath.Visibility = System.Windows.Visibility.Visible;
-                txtPlayStatePath.Visibility = System.Windows.Visibility.Visible;
-                btnPlayStatePath.Visibility = System.Windows.Visibility.Visible;
-            }
-            else
-            {
-                lblPlayStatePath.Visibility = System.Windows.Visibility.Hidden;
-                txtPlayStatePath.Visibility = System.Windows.Visibility.Hidden;
-                btnPlayStatePath.Visibility = System.Windows.Visibility.Hidden;
-            }
         }
 
         private void SetTips(ConfigData.ExternalPlayer externalPlayer)
@@ -229,26 +226,24 @@ namespace Configurator
             if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
             {
                 lblTipsHeader.Content = "MPC-HC Tips:";
-                txtTips.Text = "You will need to enable \"keep history of recently opened files\". You will also need to map \"MEDIA_STOP\" to the \"exit\" command. It is recommended to enable \"always on top\".";
+                txtTips.Text = "Please enable the following settings in MPC-HC: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward when only one item in playlist\". You will also need to map \"MEDIA_STOP\" to the \"exit\" command.";
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
             {
                 lblTipsHeader.Content = "TMT Tips:";
                 txtTips.Text = "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
                 txtCommand.ToolTip = btnCommand.ToolTip = "The path to uTotalMediaTheatre5.exe within the TMT installation directory.";
-                txtPlayStatePath.ToolTip = btnPlayStatePath.ToolTip = "The path to TMTInfo.set within AppData\\Roaming\\ArcSoft\\ArcSoft TotalMedia Theatre 5.";
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
             {
                 lblTipsHeader.Content = "TMT for WMC Tips:";
                 txtTips.Text = "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
                 txtCommand.ToolTip = btnCommand.ToolTip = "The path to PlayerLoader.htm within the TMT installation directory.";
-                txtPlayStatePath.ToolTip = btnPlayStatePath.ToolTip = "The path to TMTInfo.set within AppData\\Roaming\\ArcSoft\\ArcSoft TotalMedia Theatre 5(Media Center).";
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
             {
                 lblTipsHeader.Content = "VLC Tips:";
-                txtTips.Text = "It is recommended to enable \"always on top\". There is no resume support at this time.";               
+                txtTips.Text = "Version 2.0+ required. No special configuration is required.";               
             }
             else
             {
@@ -264,16 +259,6 @@ namespace Configurator
             {
                 MessageBox.Show("Please enter a valid player path.");
                 return false;
-            }
-
-            // Validate PlayState Path
-            if (ExternalPlayerType == ConfigData.ExternalPlayerType.TMT || ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-            {
-                if (!IsPathValid(txtPlayStatePath.Text))
-                {
-                    MessageBox.Show("Please enter the path to the playstate file. See the field's tooltip for details.");
-                    return false;
-                }
             }
 
             if ((lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues().Count == 0)
@@ -304,6 +289,56 @@ namespace Configurator
             }
 
             return true;
+        }
+
+        private void AutoFillPaths(ConfigData.ExternalPlayer externalPlayer)
+        {
+            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
+            {
+                AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc.exe");
+            }
+            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
+            {
+                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\uTotalMediaTheatre5.exe");
+            }
+            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
+            {
+                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
+            }
+            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
+            {
+                AutoFillProgramFilesPath(txtCommand, "VideoLAN\\VLC\\vlc.exe");
+            }
+        }
+
+        private void AutoFillProgramFilesPath(TextBox textBox, string pathSuffix)
+        {
+            string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), pathSuffix);
+            string path2 = Path.Combine(GetProgramFilesx86Path(), pathSuffix);
+
+            AutoFillPath(txtCommand, new string[] { path1, path2 });
+        }
+
+        private void AutoFillPath(TextBox textBox, IEnumerable<string> paths)
+        {
+            foreach (string path in paths)
+            {
+                if (File.Exists(path))
+                {
+                    textBox.Text = path;
+                    break;
+                }
+            }
+        }
+
+        private static string GetProgramFilesx86Path()
+        {
+            if (8 == IntPtr.Size || (!String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432"))))
+            {
+                return Environment.GetEnvironmentVariable("ProgramFiles(x86)");
+            }
+
+            return Environment.GetEnvironmentVariable("ProgramFiles");
         }
 
         private class EnumWrapper<TEnumType>
@@ -360,79 +395,15 @@ namespace Configurator
                     wrapper.IsChecked = values.Count == 0 || values.Contains(wrapper.Value);
                 }
             }
-        }
 
-        private void AutoFillPaths(ConfigData.ExternalPlayer externalPlayer)
-        {
-            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
+            public void SelectAll(bool selected)
             {
-                AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc.exe");
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
-            {
-                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\uTotalMediaTheatre5.exe");
-                AutoFillTMTPlayStatePath("ArcSoft TotalMedia Theatre 5");
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-            {
-                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
-                AutoFillTMTPlayStatePath("ArcSoft TotalMedia Theatre 5(Media Center)");
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
-            {
-                AutoFillProgramFilesPath(txtCommand, "VideoLAN\\VLC\\vlc.exe");
-            }
-        }
-
-        private void AutoFillTMTPlayStatePath(string appName)
-        {
-            string playStatePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft\\" + appName);
-
-            if (!Directory.Exists(playStatePath))
-            {
-                return;
-            }
-
-            string[] directories = Directory.GetDirectories(playStatePath);
-           
-            if (directories.Length == 0)
-            {
-                return;
-            }
-
-            playStatePath = Path.Combine(playStatePath, directories[directories.Length- 1] + "\\TMTInfo.set");
-
-            AutoFillPath(txtPlayStatePath, new string[] { playStatePath });
-        }
-
-        private void AutoFillProgramFilesPath(TextBox textBox, string pathSuffix)
-        {
-            string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), pathSuffix);
-            string path2 = Path.Combine(GetProgramFilesx86Path(), pathSuffix);
-
-            AutoFillPath(txtCommand, new string[] { path1, path2 });
-        }
-
-        private void AutoFillPath(TextBox textBox, IEnumerable<string> paths)
-        {
-            foreach (string path in paths)
-            {
-                if (File.Exists(path))
+                foreach (EnumWrapper<TEnumType> wrapper in this)
                 {
-                    textBox.Text = path;
-                    break;
+                    wrapper.IsChecked = selected;
                 }
             }
         }
 
-        private static string GetProgramFilesx86Path()
-        {
-            if (8 == IntPtr.Size || (!String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432"))))
-            {
-                return Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            }
-
-            return Environment.GetEnvironmentVariable("ProgramFiles");
-        }
     }
 }

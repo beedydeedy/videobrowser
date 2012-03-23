@@ -1,7 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -16,6 +13,18 @@ namespace MediaBrowser.Library.Playables
         }
 
         /// <summary>
+        /// Gets arguments to be passed to the command line.
+        /// </summary>
+        protected override List<string> GetCommandArgumentsList(bool resume)
+        {
+            List<string> args = new List<string>();
+
+            args.Add("uri={0}");
+
+            return args;
+        }
+        
+        /// <summary>
         /// Removes double quotes and flips slashes
         /// </summary>
         protected override string GetFilePathCommandArgument(IEnumerable<string> filesToPlay)
@@ -23,12 +32,12 @@ namespace MediaBrowser.Library.Playables
             return base.GetFilePathCommandArgument(filesToPlay).Replace("\"", string.Empty).Replace('\\', '/');
         }
 
-        protected override void SendFilesToPlayer(PlaybackArguments args)
+        protected override string PlayStatePathAppName
         {
-            base.SendFilesToPlayer(args);
-
-            WaitForPlaybackToStartThenStop(args);
-            OnExternalPlayerClosed();
+            get
+            {
+                return "ArcSoft TotalMedia Theatre 5(Media Center)";
+            }
         }
 
         /// <summary>
@@ -38,10 +47,7 @@ namespace MediaBrowser.Library.Playables
         {
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
 
-            config.ShowSplashScreen = false;
-            config.MinimizeMCE = false;
             config.LaunchType = ConfigData.ExternalPlayerLaunchType.WMCNavigate;
-            config.Args = "uri={0}";
 
             return config;
         }

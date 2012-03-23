@@ -487,12 +487,6 @@ namespace MediaBrowser
             public List<VideoFormat> VideoFormats { get; set; }
             public string Command { get; set; }
 
-            /// <summary>
-            /// The path to the file or folder that contains play state.
-            /// This will vary per player and not all will need it.
-            /// </summary>
-            public string PlayStatePath { get; set; }
-
             public string Args { get; set; }
             public bool MinimizeMCE { get; set; } //whether or not to minimize MCE when starting external player
             public bool ShowSplashScreen { get; set; } //whether or not to show the MB splash screen

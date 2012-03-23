@@ -379,18 +379,8 @@ namespace MediaBrowser
 
             if (isStopped)
             {
-                bool stoppedByUser = true;
-
-                // If we know the duration, use it to make a guess whether playback was forcefully stopped by the user, as opposed to allowing it to finish
-                if (duration > 0)
-                {
-                    decimal pctIn = Decimal.Divide(positionTicks, duration) * 100;
-
-                    stoppedByUser = pctIn < Config.Instance.MaxResumePct;
-                }
-
                 // Fire the OnFinished event for each item
-                OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId, StoppedByUser = stoppedByUser });
+                OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
 
                 Logger.ReportVerbose("Calling RunPostPlayProcesses...");
                 Application.CurrentInstance.RunPostPlayProcesses();

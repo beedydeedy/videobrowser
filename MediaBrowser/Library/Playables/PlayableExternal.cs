@@ -129,6 +129,8 @@ namespace MediaBrowser.Library.Playables
             if (ExternalPlayerConfiguration.LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
                 PlayUsingWMCNavigation(args);
+
+                OnExternalPlayerLaunched(args);
             }
             else
             {
@@ -144,7 +146,7 @@ namespace MediaBrowser.Library.Playables
             Logging.Logger.ReportInfo("Starting command line " + ExternalPlayerConfiguration.Command + " " + commandArgs);
 
             Process player = Process.Start(ExternalPlayerConfiguration.Command, commandArgs);
-
+                        
             Async.Queue("Ext Player Mgmt", () => ManageExtPlayer(player, ExternalPlayerConfiguration, args));
         }
 
@@ -280,15 +282,15 @@ namespace MediaBrowser.Library.Playables
             //set external player to foreground
             player.Refresh();
             player.WaitForInputIdle(5000); //give the external player 5 secs to show up and then minimize MCE
-            OnCommandLinePlayerLaunched(playbackInfo);
+            OnExternalPlayerLaunched(playbackInfo);
             SetForegroundWindow(player.MainWindowHandle);
         }
 
         /// <summary>
-        /// Subclasses can use this to execute code after the external command line player has launched
+        /// Subclasses can use this to execute code after the player has launched
         /// </summary>
         /// <param name="playbackInfo"></param>
-        protected virtual void OnCommandLinePlayerLaunched(PlaybackArguments playbackInfo)
+        protected virtual void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
         {
         }
 
@@ -316,19 +318,25 @@ namespace MediaBrowser.Library.Playables
 
         private string GetCommandArguments(bool resume)
         {
-            List<string> args = new List<string>();
+            List<string> argsList = GetCommandArgumentsList(resume);
 
-            string baseArgs = string.Format(ExternalPlayerConfiguration.Args, GetFilePathCommandArgument(GetFilesToSendToPlayer(resume)));
+            string args = string.Join(" ", argsList.ToArray());
 
-            args.Add(baseArgs);
-            args.AddRange(GetAdditionalCommandArguments(resume));
-            
-            return string.Join(" ", args.ToArray());
+            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(resume)));
+
+            return args;
         }
 
-        protected virtual List<string> GetAdditionalCommandArguments(bool resume)
+        protected virtual List<string> GetCommandArgumentsList(bool resume)
         {
-            return new List<string>();
+            List<string> args = new List<string>();
+
+            if (!string.IsNullOrEmpty(ExternalPlayerConfiguration.Args))
+            {
+                args.Add(ExternalPlayerConfiguration.Args);
+            }
+
+            return args;
         }
 
         /// <summary>

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
-using System.Diagnostics;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -14,6 +13,16 @@ namespace MediaBrowser.Library.Playables
     /// </summary>
     public class PlayableTMT : PlayableExternal
     {
+        // All of these hold state about what's being played. They're all reset when playback starts
+        private bool _HasStartedPlaying = false;
+        private PlaybackStateEventArgs _LastPlaybackState;
+        private FileSystemWatcher _TMTInfoFileWatcher;
+
+        private PlaybackArguments _PlaybackArguments;
+
+        // Protect against really aggressive event handling
+        private DateTime _LastFileSystemUpdate = DateTime.Now;
+
         protected override ConfigData.ExternalPlayerType ExternalPlayerType
         {
             get { return ConfigData.ExternalPlayerType.TMT; }
@@ -24,66 +33,146 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
         {
-            NameValueCollection infoValues = GetTMTInfoFileValues();
-
-            return GetPlaybackState(infoValues);
-        }
-
-        protected override void OnCommandLinePlayerLaunched(PlaybackArguments playbackInfo)
-        {
-            base.OnCommandLinePlayerLaunched(playbackInfo);
-
-            WaitForPlaybackToStartThenStop(playbackInfo);
-
-            // Close the player
-            ClosePlayer(ExternalPlayerConfiguration);
+            return _LastPlaybackState ?? base.GetPlaybackState(files);
         }
 
         /// <summary>
-        /// Waits for playback to begin, then executes a resume command, then waits for it to finally stop
+        /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected void WaitForPlaybackToStartThenStop(PlaybackArguments playbackInfo)
+        protected override List<string> GetCommandArgumentsList(bool resume)
         {
-            // Wait for playback to begin
-            WaitForPlayState("play", false);
+            List<string> args = new List<string>();
 
-            if (playbackInfo.Resume)
+            args.Add("{0}");
+
+            return args;
+        }
+        
+        protected override void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
+        {
+            base.OnExternalPlayerLaunched(playbackInfo);
+
+            _PlaybackArguments = playbackInfo;
+
+            _HasStartedPlaying = false;
+
+            // If the playstate directory exists, start watching it
+            if (Directory.Exists(PlayStateDirectory))
             {
-                ExecuteResumeCommand(playbackInfo.PlaylistPosition, playbackInfo.PositionTicks);
+                StartWatchingTMTInfoFile();
+            }
+        }
+
+        private void StartWatchingTMTInfoFile()
+        {
+            Logging.Logger.ReportVerbose("Watching TMT folder: " + PlayStateDirectory);
+            _TMTInfoFileWatcher = new FileSystemWatcher(PlayStateDirectory, "*.set");
+            
+            // Need to include subdirectories since there are subfolders undearneath this with the TMT version #.
+            _TMTInfoFileWatcher.IncludeSubdirectories = true;
+
+            _TMTInfoFileWatcher.Changed += _TMTInfoFileWatcher_Changed;
+            _TMTInfoFileWatcher.EnableRaisingEvents = true;
+        }
+
+        void _TMTInfoFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            NameValueCollection values;
+
+            try
+            {
+                values = Helper.ParseIniFile(e.FullPath);
+            }
+            catch (IOException)
+            {
+                // This can happen if the file is being written to at the exact moment we're trying to access it
+                // Unfortunately we kind of have to just eat it
+                return;
             }
 
-            // Only monitor PlayState if we have a PlayState object to update
-            bool monitorProgress = PlayableMediaItems.Count > 0 || PlayState != null;
+            string tmtPlayState = values["State"];
 
-            // Wait for it to stop, and start reporting progress
-            WaitForPlayState("stop", monitorProgress);
-        }
-
-        /// <summary>
-        /// Waits until the TMTInfo.set file reports a certain play state
-        /// </summary>
-        private void WaitForPlayState(string stateToWaitFor, bool updateProgress)
-        {
-            NameValueCollection info = GetTMTInfoFileValues();
-
-            if (info["State"] != stateToWaitFor)
+            if (tmtPlayState == "play")
             {
-                Thread.Sleep(1000);
-
-                if (updateProgress)
+                // Playback just started
+                if (!_HasStartedPlaying)
                 {
-                    OnProgress(null, GetPlaybackState(info));
+                    if (_PlaybackArguments.Resume)
+                    {
+                        ExecuteResumeCommand(_PlaybackArguments.PlaylistPosition, _PlaybackArguments.PositionTicks);
+                    }
                 }
 
-                WaitForPlayState(stateToWaitFor, updateProgress);
+                _HasStartedPlaying = true;
+
+                // Protect against really agressive calls
+                var diff = (DateTime.Now - _LastFileSystemUpdate).TotalMilliseconds;
+
+                if (diff < 1000 && diff >= 0)
+                {
+                    return;
+                }
+
+                _LastFileSystemUpdate = DateTime.Now;
             }
+
+            // If playback has previously started...
+            // First notify the Progress event handler
+            // Then check if playback has stopped
+            if (_HasStartedPlaying)
+            {
+                _LastPlaybackState = GetPlaybackState(values);
+
+                // Only monitor PlayState if playback has already started and if we have a PlayState object to update
+                if (PlayableMediaItems.Count > 0 || PlayState != null)
+                {
+                    OnProgress(null, _LastPlaybackState);
+                }
+
+                // Playback has stopped
+                if (tmtPlayState == "stop")
+                {
+                    DisposeFileSystemWatcher();
+                    
+                    // If using the command line player, send a command to the MMC console to close the player
+                    if (ExternalPlayerConfiguration.LaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine)
+                    {
+                        ClosePlayer();
+                    }
+                    else
+                    {
+                        // But we can't do that with the internal TMT player since it will shut down WMC
+                        // So just notify the base class that playback stopped
+                        OnExternalPlayerClosed();
+                    }
+                }
+            }
+        }
+
+        private void DisposeFileSystemWatcher()
+        {
+            if (_TMTInfoFileWatcher != null)
+            {
+                _TMTInfoFileWatcher.EnableRaisingEvents = false;
+                _TMTInfoFileWatcher.Changed -= _TMTInfoFileWatcher_Changed;
+                _TMTInfoFileWatcher.Dispose();
+                _TMTInfoFileWatcher = null;
+            }
+        }
+
+        public override void OnPlaybackFinished()
+        {
+            // In case anything went wrong trying to do this during the event
+            DisposeFileSystemWatcher();
+
+            base.OnPlaybackFinished();
         }
         
         /// <summary>
         /// Sends a command to the MMC console to close the player.
         /// Do not use this for the WMC add-in because it will close WMC
         /// </summary>
-        private void ClosePlayer(ConfigData.ExternalPlayer externalPlayerConfiguration)
+        private void ClosePlayer()
         {
             SendCommandToMMC("-close");
         }
@@ -126,12 +215,20 @@ namespace MediaBrowser.Library.Playables
             };
         }
 
-        /// <summary>
-        /// Reads the TMTInfo.set file and returns the current play state
-        /// </summary>
-        private NameValueCollection GetTMTInfoFileValues()
+        private string PlayStateDirectory
         {
-            return Helper.ParseIniFile(ExternalPlayerConfiguration.PlayStatePath);
+            get
+            {
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft\\" + PlayStatePathAppName);
+            }
+        }
+
+        protected virtual string PlayStatePathAppName
+        {
+            get
+            {
+                return "ArcSoft TotalMedia Theatre 5";
+            }
         }
 
         /// <summary>
