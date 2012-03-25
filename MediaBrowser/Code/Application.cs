@@ -1,32 +1,27 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Microsoft.MediaCenter;
-using Microsoft.MediaCenter.UI;
-using MediaBrowser.Util;
-using System;
-using System.Reflection;
 using System.IO;
-using System.Resources;
-using Microsoft.MediaCenter.AddIn;
+using System.Linq;
+using System.Reflection;
+using MediaBrowser.Code;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library;
-using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Factories;
-using MediaBrowser.Library.Filesystem;
-using MediaBrowser.Code;
-using MediaBrowser.Library.Playables;
-using System.Linq;
-using MediaBrowser.Library.Threading;
-using MediaBrowser.Library.Metadata;
-using MediaBrowser.Library.Plugins;
-using MediaBrowser.Library.EntityDiscovery;
-using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.Library.UI;
 using MediaBrowser.Library.Input;
 using MediaBrowser.Library.Localization;
-
+using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Metadata;
+using MediaBrowser.Library.RemoteControl;
+using MediaBrowser.Library.Threading;
+using MediaBrowser.Library.UI;
+using MediaBrowser.LibraryManagement;
+using MediaBrowser.Util;
+using Microsoft.MediaCenter;
+using Microsoft.MediaCenter.AddIn;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser
 {
@@ -72,6 +67,58 @@ namespace MediaBrowser
         public System.Drawing.Bitmap ExtSplashBmp;
         private Item lastPlayed;
 
+        #region FolderOpened EventHandler
+        volatile EventHandler<GenericEventArgs<FolderModel>> _FolderOpened;
+        /// <summary>
+        /// Fires whenever a folder is navigated into
+        /// </summary>
+        public event EventHandler<GenericEventArgs<FolderModel>> FolderOpened
+        {
+            add
+            {
+                _FolderOpened += value;
+            }
+            remove
+            {
+                _FolderOpened -= value;
+            }
+        }
+
+        private void OnFolderOpened(FolderModel folder)
+        {
+            if (_FolderOpened != null)
+            {
+                _FolderOpened(this, new GenericEventArgs<FolderModel>() { Item = folder });
+            }
+        }
+        #endregion
+
+        #region ItemDetailPageOpened EventHandler
+        volatile EventHandler<GenericEventArgs<Show>> _ItemDetailPageOpened;
+        /// <summary>
+        /// Fires whenever a movie is navigated into
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Show>> ItemDetailPageOpened
+        {
+            add
+            {
+                _ItemDetailPageOpened += value;
+            }
+            remove
+            {
+                _ItemDetailPageOpened -= value;
+            }
+        }
+
+        private void OnItemDetailPageOpened(Show show)
+        {
+            if (_ItemDetailPageOpened != null)
+            {
+                _ItemDetailPageOpened(this, new GenericEventArgs<Show>() { Item = show });
+            }
+        }
+        #endregion
+        
         public bool PluginUpdatesAvailable
         {
             get
@@ -719,7 +766,6 @@ namespace MediaBrowser
 
             if (this.EntryPointPath.ToLower() == ConfigEntryPointVal) //specialized case for config page
             {
-                //OpenFolderPage((MediaBrowser.Library.FolderModel)ItemFactory.Instance.Create(this.RootFolder));
                 OpenConfiguration(true);
             }
             else
@@ -1104,20 +1150,24 @@ namespace MediaBrowser
             properties["ThemeConfig"] = CurrentTheme.Config;
             CurrentFolder = folder; //store our current folder
             CurrentItem = null; //blank this out in case it was messed with in the last screen
+
             if (folder.IsRoot)
                 RootFolderModel = folder; //store the root as well
 
             if (session != null)
             {
                 folder.NavigatingInto();
+
                 session.GoToPage(folder.Folder.CustomUI ?? CurrentTheme.FolderPage, properties);
+
+                // Fire Event
+                OnFolderOpened(folder);
             }
             else
             {
                 Logger.ReportError("Session is null in OpenPage");
             }
         }
-
 
         private Folder GetStartingFolder(BaseItem item)
         {
@@ -1196,7 +1246,12 @@ namespace MediaBrowser
                     properties["Application"] = this;
                     properties["Item"] = item;
                     properties["ThemeConfig"] = CurrentTheme.Config;
+                    
                     session.GoToPage(item.BaseItem.CustomUI ?? CurrentTheme.DetailPage, properties);
+
+                    // Fire the ShowOpened event handler
+                    OnItemDetailPageOpened(item.BaseItem as Show);
+
                     return;
                 }
             }
@@ -1411,6 +1466,7 @@ namespace MediaBrowser
             {
                 if (!process(item, intros)) return false;
             }
+
             return true;
         }
 
@@ -1613,7 +1669,7 @@ namespace MediaBrowser
         /// This is a helper to update Playstate for an item.
         /// It honors all of the various resume options within configuration
         /// </summary>
-        public void UpdatePlayState(PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, bool incrementPlayCount)
+        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, bool incrementPlayCount)
         {
             if (duration.HasValue && duration > 0)
             {
@@ -1651,7 +1707,7 @@ namespace MediaBrowser
             if (duration == 0 || (duration / TimeSpan.TicksPerMinute) >= Config.Instance.MinResumeDuration)
             {
                 Logger.ReportVerbose("Playstate saved at position: " + new TimeSpan(positionTicks).ToString() + " with playlist position: " + playlistPosition);
-                playstate.Save();
+                Kernel.Instance.SavePlayState(media, playstate);
             }
         }
     }

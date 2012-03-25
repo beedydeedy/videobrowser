@@ -204,7 +204,7 @@ namespace MediaBrowser.Library
                     duration = TimeSpan.FromMinutes(Media.RunTime).Ticks;
                 }
 
-                Application.CurrentInstance.UpdatePlayState(PlayState, e.PlaylistPosition, e.Position, duration, !IncrementedPlayCount);
+                Application.CurrentInstance.UpdatePlayState(Media, PlayState, e.PlaylistPosition, e.Position, duration, !IncrementedPlayCount);
 
                 IncrementedPlayCount = true;
             }
@@ -269,7 +269,7 @@ namespace MediaBrowser.Library
             if (PlayState != null)
             {
                 Logger.ReportVerbose("Marking watched");
-                Application.CurrentInstance.UpdatePlayState(PlayState, 0, 0, 0, true);
+                Application.CurrentInstance.UpdatePlayState(Media, PlayState, 0, 0, 0, true);
             }
         }
 

@@ -64,11 +64,6 @@ namespace MediaBrowser.Library.Entities {
             }
             wasPlayedCache = WasPlayed;
         }
-
-
-        public void Save() {
-            Kernel.Instance.ItemRepository.SavePlayState(this);
-        }
     }
 }
 

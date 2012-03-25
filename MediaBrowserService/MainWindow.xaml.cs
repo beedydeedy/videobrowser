@@ -1090,7 +1090,7 @@ namespace MediaBrowserService
             {
                 Logger.ReportInfo("Migrating playstate for: " + item.Name);
                 status.Id = item.Id;
-                status.Save();
+                Kernel.Instance.SavePlayState(item, status);
             }
         }
 

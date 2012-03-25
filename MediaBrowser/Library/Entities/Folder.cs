@@ -408,7 +408,7 @@ namespace MediaBrowser.Library.Entities {
                     var video = item as Video;
                     if (video != null) {
                         video.PlaybackStatus.WasPlayed = value;
-                        video.PlaybackStatus.Save();
+                        Kernel.Instance.SavePlayState(video, video.PlaybackStatus);
                     }
                     var folder = item as Folder;
                     if (folder != null) {
@@ -698,6 +698,10 @@ namespace MediaBrowser.Library.Entities {
                         ActualChildren.Add(item);
                         item.RefreshMetadata(MediaBrowser.Library.Metadata.MetadataRefreshOptions.Force); //necessary to get it to show up without user intervention
                         Kernel.Instance.ItemRepository.SaveItem(item);
+                        
+                        // Notify the kernel that a new item was added
+                        Kernel.Instance.OnItemAddedToLibrary(item);
+
                         if (item is Folder)
                         {
                             (item as Folder).ValidateChildren();

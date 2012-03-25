@@ -87,6 +87,9 @@ namespace MediaBrowser
 
                             app.GoToMenu();
                         }
+
+                        Kernel.Instance.OnApplicationInitialized(Application.CurrentInstance);
+
                         mutex.ReleaseMutex();
                     }
                     else

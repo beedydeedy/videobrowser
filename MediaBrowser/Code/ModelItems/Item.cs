@@ -639,7 +639,7 @@ namespace MediaBrowser.Library
                         }
                         Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("ClearWatchedProf"), this.Name));
                     }
-                    PlayState.Save();
+                    Kernel.Instance.SavePlayState(BaseItem, PlayState);
                     lock (watchLock)
                         unwatchedCountCache = -1;
                 }

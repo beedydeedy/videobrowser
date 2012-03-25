@@ -18,6 +18,7 @@ using MediaBrowser.Library.Extensions;
 using MediaBrowser.Library.UI;
 using MediaBrowser.Library.Localization;
 using MediaBrowser.Library.Input;
+using MediaBrowser.Library.Events;
 using System.IO;
 using System.Diagnostics;
 using System.Net;
@@ -237,7 +238,76 @@ namespace MediaBrowser.Library {
             }
         }
 
-        private static string ResolveInitialFolder(string start) {
+        #region OnItemAddedToLibrary EventHandler
+        volatile EventHandler<GenericEventArgs<BaseItem>> _ItemAddedToLibrary;
+        /// <summary>
+        /// Fires whenever a folder is navigated into
+        /// </summary>
+        public event EventHandler<GenericEventArgs<BaseItem>> ItemAddedToLibrary
+        {
+            add
+            {
+                _ItemAddedToLibrary += value;
+            }
+            remove
+            {
+                _ItemAddedToLibrary -= value;
+            }
+        }
+
+        internal void OnItemAddedToLibrary(BaseItem item)
+        {
+            if (_ItemAddedToLibrary != null)
+            {
+                _ItemAddedToLibrary(this, new GenericEventArgs<BaseItem>() { Item = item });
+            }
+        }
+        #endregion
+
+        #region PlayStateSaved EventHandler
+        volatile EventHandler<PlayStateSaveEventArgs> _PlayStateSaved;
+        public event EventHandler<PlayStateSaveEventArgs> PlayStateSaved
+        {
+            add
+            {
+                _PlayStateSaved += value;
+            }
+            remove
+            {
+                _PlayStateSaved -= value;
+            }
+        }
+        #endregion
+
+
+        #region ApplicationInitialized EventHandler
+        volatile EventHandler<GenericEventArgs<Application>> _ApplicationInitialized;
+        /// <summary>
+        /// Fires when Application.CurrentInstance is created.
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Application>> ApplicationInitialized
+        {
+            add
+            {
+                _ApplicationInitialized += value;
+            }
+            remove
+            {
+                _ApplicationInitialized -= value;
+            }
+        }
+
+        internal void OnApplicationInitialized(Application app)
+        {
+            if (_ApplicationInitialized != null)
+            {
+                _ApplicationInitialized(this, new GenericEventArgs<Application>() { Item = app });
+            }
+        }
+        #endregion
+        
+        private static string ResolveInitialFolder(string start)
+        {
             if (start == Helper.MY_VIDEOS)
                 start = Helper.MyVideosPath;
             return start;
@@ -945,6 +1015,21 @@ namespace MediaBrowser.Library {
                 if (requestState.errorCB != null) {
                     requestState.errorCB(ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Persists a PlaybackStatus object
+        /// </summary>
+        /// <param name="media">The item it belongs to. This can be null, but it's used to notify listeners of PlayStateSaved which item it belongs to.</param>
+        public void SavePlayState(BaseItem media, PlaybackStatus playstate)
+        {
+            Kernel.Instance.ItemRepository.SavePlayState(playstate);
+
+            // Fire off event
+            if (_PlayStateSaved != null)
+            {
+                _PlayStateSaved(this, new PlayStateSaveEventArgs() { PlaybackStatus = playstate, Item = media });
             }
         }
 

@@ -361,7 +361,7 @@ namespace MediaBrowser.Library.Playables
             {
                 foreach (Media media in PlayableMediaItems)
                 {
-                    Application.CurrentInstance.UpdatePlayState(media.PlaybackStatus, 0, 0, 0, true);
+                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, 0, true);
                 }
             }
             else
@@ -411,7 +411,7 @@ namespace MediaBrowser.Library.Playables
                     currentPositionTicks = state.Position;
                 }
 
-                Application.CurrentInstance.UpdatePlayState(media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, TimeSpan.FromMinutes(media.RunTime).Ticks, true);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, TimeSpan.FromMinutes(media.RunTime).Ticks, true);
             }
 
         }
