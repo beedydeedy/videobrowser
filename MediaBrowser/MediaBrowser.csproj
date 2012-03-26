@@ -838,7 +838,9 @@
     <Compile Include="Library\UI\ViewTheme.cs" />
     <Compile Include="Library\Util\BreadCrumbs.cs" />
     <Compile Include="Library\Util\CustomResourceManager.cs" />
-    <Content Include="Markup\Base\Animations.mcml" />
+    <Content Include="Markup\Base\Animations.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Base\Images.mcml">
       <SubType>Designer</SubType>
     </Content>
@@ -932,7 +934,9 @@
     <Content Include="Markup\Themes\Default\ViewMovieMinimal.mcml">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Markup\Themes\Default\Selectors\PageDetailArea.mcml" />
+    <Content Include="Markup\Themes\Default\Selectors\PageDetailArea.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\LayoutDetails.mcml" />
     <Content Include="Markup\Page.mcml">
       <SubType>Designer</SubType>
