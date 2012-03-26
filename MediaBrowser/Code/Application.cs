@@ -1316,66 +1316,29 @@ namespace MediaBrowser
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => session.GoToPage(page, properties));
         }
 
-        public void Shuffle(Item item)
+        public void PlayFolderBeginningWithItem(Item item)
         {
-            Folder folder = item.BaseItem as Folder;
-            if (folder != null)
-            {
-                if (folder.ParentalAllowed)
-                {
-                    ShuffleSecure(item);
-                }
-                else // need to prompt for a PIN - this routine will call back if pin is correct
-                {
-                    this.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.ShuffleProtected(item);
-                }
-            }
+            FolderModel folder = item.PhysicalParent;
+
+            Play(folder, false, false, true, false, item.BaseItem);
         }
 
-        public void ShuffleSecure(Item item)
+        public void Shuffle(Item item)
         {
-            Folder folder = item.BaseItem as Folder;
-            if (folder != null)
-            {
-                PlayableItem playable = PlayableItemFactory.Instance.Create(folder);
-                playable.Shuffle = true;
-                playable.Play(false);
-            }
+            Play(item, false, false, true, true, null);
         }
 
         public void Unwatched(Item item)
         {
             Folder folder = item.BaseItem as Folder;
-            if (folder != null)
+
+            Media firstUnwatched = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path).FirstOrDefault();
+
+            if (firstUnwatched != null)
             {
-                if (folder.ParentalAllowed)
-                {
-                    PlayUnwatchedSecure(item);
-                }
-                else // need to prompt for a PIN - this routine will call back if pin is correct
-                {
-                    this.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.PlayUnwatchedProtected(item);
-                }
-            }
-        }
+                Item unwatchedItem = (item as FolderModel).Children.Where(v => v.BaseItem == firstUnwatched).FirstOrDefault();
 
-        public void PlayUnwatchedSecure(Item item)
-        {
-            Folder folder = item.BaseItem as Folder;
-
-            if (folder != null)
-            {
-                PlayableItem playable;
-
-                var firstUnwatched = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path).FirstOrDefault();
-                
-                if (firstUnwatched != null) //be sure we have something to play
-                {
-                    playable = PlayableItemFactory.Instance.Create(firstUnwatched);
-                    playable.Play(firstUnwatched.PlaybackStatus.CanResume);
-                }
+                Play(unwatchedItem, false, false, true, false, null);
             }
         }
 
@@ -1406,12 +1369,19 @@ namespace MediaBrowser
 
         public void Play(Item item, bool queue, bool intros)
         {
+            Play(item, false, queue, intros, false, null);
+        }
+
+        private void Play(Item item, bool resume, bool queue, bool intros, bool shuffle, BaseItem startFrom)
+        {
             if (item.IsPlayable || item.IsFolder)
             {
                 currentPlaybackController = item.PlaybackController;
 
                 if (queue)
+                {
                     item.Queue();
+                }
                 else
                 {
                     //async this so it doesn't slow us down if the service isn't responding for some reason
@@ -1424,13 +1394,9 @@ namespace MediaBrowser
                     {
                         if (Application.CurrentInstance.RunPrePlayProcesses(item, intros))
                         {
-                            item.Play();
+                            item.Play(resume, false, shuffle, startFrom);
+
                             this.lastPlayed = item;
-                        }
-                        else
-                        {
-                            //be sure we run finished process
-                            item.PlayableItem.OnPlaybackFinished();
                         }
                     });
                 }
@@ -1439,24 +1405,7 @@ namespace MediaBrowser
 
         public void Resume(Item item)
         {
-            if (item.IsPlayable)
-            {
-                currentPlaybackController = item.PlaybackController;
-                //async this so it doesn't slow us down if the service isn't responding for some reason
-                MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
-                {
-                    MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
-                });
-                //put this on a thread so that we can run it sychronously, but not tie up the UI
-                MediaBrowser.Library.Threading.Async.Queue("Resume Action", () =>
-                {
-                    if (Application.CurrentInstance.RunPrePlayProcesses(item, false))
-                    {
-                        item.Resume();
-                        this.lastPlayed = item;
-                    }
-                });
-            }
+            Play(item, true, false, false, false, null);
         }
 
         public bool RunPrePlayProcesses(Item item, bool intros)

@@ -205,7 +205,7 @@ namespace MediaBrowser.Library.Playables
             Application.CurrentInstance.RunPostPlayProcesses();
         }
 
-        public override void OnPlaybackFinished()
+        protected override void OnPlaybackFinished()
         {
             base.OnPlaybackFinished();
 

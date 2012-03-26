@@ -357,31 +357,40 @@ namespace MediaBrowser.Library
             }
         }
 
-        private void Play(bool resume, bool queue)
+        public void Play(bool resume, bool queue, bool shuffle, BaseItem startFrom)
         {
             if (this.IsPlayable || this.IsFolder)
             {
                 if (Config.Instance.ParentalControlEnabled && !this.ParentalAllowed)
                 {
                     Application.CurrentInstance.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.PlayProtected(this, resume, queue);
+                    Kernel.Instance.ParentalControls.PlayProtected(this, resume, queue, shuffle, startFrom);
                 }
-                else PlaySecure(resume, queue);
+                else PlaySecure(resume, queue, shuffle, startFrom);
             }
         }
 
-        public void PlaySecure(bool resume, bool queue)
+        public void PlaySecure(bool resume, bool queue, bool shuffle, BaseItem startFrom)
         {
             try
             {
                 if (this.IsPlayable || this.IsFolder)
                 {
+                    if (IsFolder && startFrom != null)
+                    {
+                        lock (this)
+                        {
+                            IEnumerable<Media> items = (BaseItem as Folder).RecursiveMedia.SkipWhile(v => v.Id != startFrom.Id);
+                            playable = PlayableItemFactory.Instance.Create(items);
+                        }
+                    }
 
                     if (PlayableItem.PlaybackController != Application.CurrentInstance.PlaybackController && PlayableItem.PlaybackController.RequiresExternalPage)
                     {
                         Application.CurrentInstance.OpenExternalPlaybackPage(this);
                     }
                     this.PlayableItem.QueueItem = queue;
+                    this.PlayableItem.Shuffle = shuffle;
                     this.PlayableItem.Play(resume);
                     if (!this.IsFolder && this.TopParent != null) this.TopParent.AddNewlyWatched(this); //add to watched list if not a whole folder
                 }
@@ -401,13 +410,13 @@ namespace MediaBrowser.Library
 
         private void Play(bool resume)
         {
-            Play(resume, false);
+            Play(resume, false, false, null);
         }
 
 
         public void Queue()
         {
-            Play(false, true);
+            Play(false, true, false, null);
         }
 
         public void Play()
@@ -509,7 +518,7 @@ namespace MediaBrowser.Library
         }
 
 
-        private PlaybackStatus PlayState
+        public PlaybackStatus PlayState
         {
             get
             {

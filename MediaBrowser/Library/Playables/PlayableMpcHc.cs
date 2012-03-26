@@ -29,16 +29,6 @@ namespace MediaBrowser.Library.Playables
             args.Add("/close");
             args.Add("/fullscreen");
             
-            // Determine MediaType
-            Video video = Media as Video;
-
-            MediaType mediaType = video != null ? video.MediaType : MediaTypeResolver.DetermineType(PlayableItems.First());
-            
-            if (mediaType == MediaType.DVD)
-            {
-                args.Add("/dvd");
-            }
-
             // Be explicit about start time, to avoid any possible player auto-resume settings
             double startTimeInMs = resume ? new TimeSpan(PlayState.PositionTicks).TotalMilliseconds : 0;
 

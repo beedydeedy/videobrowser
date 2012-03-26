@@ -54,6 +54,8 @@ namespace MediaBrowser.Library
             Kernel.Instance.AddMenuItem(new MenuItem(playText, "resx://MediaBrowser/MediaBrowser.Resources/IconPlay", Application.CurrentInstance.Play, allPlayables, new List<MenuType>() { MenuType.Item, MenuType.Play }), 1);
             Kernel.Instance.AddMenuItem(new MenuItem(Kernel.Instance.StringData.GetString("ShufflePlayCMenu"), "resx://MediaBrowser/MediaBrowser.Resources/IconShuffle", Application.CurrentInstance.Shuffle, playableFolders, new List<MenuType>() { MenuType.Item, MenuType.Play }), 2);
             Kernel.Instance.AddMenuItem(new MenuItem(watchedText, "resx://MediaBrowser/MediaBrowser.Resources/Tick", toggleWatched, allPlayables, new List<MenuType>() { MenuType.Item }), 3);
+
+            Kernel.Instance.AddMenuItem(new MenuItem(Kernel.Instance.StringData.GetString("PlayAllFromHereCMenu"), "resx://MediaBrowser/MediaBrowser.Resources/IconPlay", Application.CurrentInstance.PlayFolderBeginningWithItem, new List<Type>() { typeof(Episode) }, new List<MenuType>() { MenuType.Item, MenuType.Play }), 2);
         }
     }
 

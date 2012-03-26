@@ -190,17 +190,7 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Folder folder)
         {
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
-            {
-                if (type.Key.CanPlay(folder))
-                {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(folder);
-                    return playable;
-                }
-            }
-
-            return null;
+            return Create(folder.RecursiveMedia);
         }
 
         private PlayableItem InstantiatePlayableItem(KeyValuePair<PlayableItem, Type> type)

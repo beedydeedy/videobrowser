@@ -191,6 +191,7 @@ namespace MediaBrowser.Library.Localization
         public string PlayMenuCMenu = "Play Menu";
         public string ItemMenuCMenu = "Item Menu";
         public string PlayAllCMenu = "Play All";
+        public string PlayAllFromHereCMenu = "Play All From Here";
         public string ResumeCMenu = "Resume";
         public string MarkUnwatchedCMenu = "Mark Unplayed";
         public string MarkWatchedCMenu = "Mark Played";

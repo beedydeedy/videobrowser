@@ -160,7 +160,7 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        public override void OnPlaybackFinished()
+        protected override void OnPlaybackFinished()
         {
             // In case anything went wrong trying to do this during the event
             DisposeFileSystemWatcher();

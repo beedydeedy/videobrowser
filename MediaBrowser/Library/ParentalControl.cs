@@ -36,6 +36,8 @@ namespace MediaBrowser.Library
         private Item anItem;
         protected bool resume;
         protected bool queue;
+        protected bool shuffle;
+        protected BaseItem folderPlaybackStartItem;
 
         public void Initialize()
         {
@@ -212,77 +214,14 @@ namespace MediaBrowser.Library
             }
         }
 
-        public void ShuffleProtected(Item folder)
-        {
-            //save parameters where we can get at them after pin entry
-            this.anItem = folder;
-
-            //now present pin screen - it will call our callback after finished
-            pinCallback = ShufflePinEntered;
-            if (folder.BaseItem.CustomPIN != "" && folder.BaseItem.CustomPIN != null)
-                customPIN = folder.BaseItem.CustomPIN; // use custom pin for this item
-            else
-                customPIN = Config.Instance.ParentalPIN; // use global pin
-            Logger.ReportInfo("Request to shuffle protected content " + folder.Name);
-            PromptForPin(pinCallback, Application.CurrentInstance.StringData("EnterPINToPlayDial"));
-        }
-
-        public void ShufflePinEntered(bool pinCorrect)
-        {
-            Application.CurrentInstance.Back(); //clear the PIN page before playing
-            MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-            if (pinCorrect)
-            {
-                Logger.ReportInfo("Shuffling protected content " + anItem.Name);
-                //add to list of protected folders we've entered
-                addProtectedFolder(anItem as FolderModel);
-                Application.CurrentInstance.ShuffleSecure(anItem);
-            }
-            else
-            {
-                env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("PIN Incorrect attempting to shuffle play " + anItem.Name);
-            }
-        }
-
-        public void PlayUnwatchedProtected(Item folder)
-        {
-            //save parameters where we can get at them after pin entry
-            this.anItem = folder;
-
-            //now present pin screen - it will call our callback after finished
-            pinCallback = UnwatchedPinEntered;
-            if (folder.BaseItem.CustomPIN != "" && folder.BaseItem.CustomPIN != null)
-                customPIN = folder.BaseItem.CustomPIN; // use custom pin for this item
-            else
-                customPIN = Config.Instance.ParentalPIN; // use global pin
-            Logger.ReportInfo("Request to play protected content " + folder.Name);
-            PromptForPin(pinCallback, Application.CurrentInstance.StringData("EnterPINToPlayDial"));
-        }
-
-        public void UnwatchedPinEntered(bool pinCorrect)
-        {
-            Application.CurrentInstance.Back(); //clear the PIN page before playing
-            MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-            if (pinCorrect)
-            {
-                Logger.ReportInfo("Playing protected unwatched content " + anItem.Name);
-                //add to list of protected folders we've entered
-                addProtectedFolder(anItem as FolderModel);
-                Application.CurrentInstance.PlayUnwatchedSecure(anItem);
-            }
-            else
-            {
-                env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("PIN Incorrect attempting to play unwatched in " + anItem.Name);
-            }
-        }
-        public void PlayProtected(Item item, bool resume, bool queue)
+        public void PlayProtected(Item item, bool resume, bool queue, bool shuffle, BaseItem startFrom)
         {
             //save parameters where we can get at them after pin entry
             this.anItem = item;
             this.resume = resume;
             this.queue = queue;
+            this.shuffle = shuffle;
+            this.folderPlaybackStartItem = startFrom;
 
             //now present pin screen - it will call our callback after finished
             pinCallback = PlayPinEntered;
@@ -301,7 +240,7 @@ namespace MediaBrowser.Library
             if (pinCorrect)
             {
                 Logger.ReportInfo("Playing protected content " + anItem.Name);
-                this.anItem.PlaySecure(resume, queue);
+                this.anItem.PlaySecure(resume, queue, shuffle, folderPlaybackStartItem);
             }
             else
             {

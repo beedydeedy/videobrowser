@@ -67,11 +67,6 @@ namespace MediaBrowser.Library
         {
             AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
         }
-
-        public virtual void AddMedia(Folder folder)
-        {
-            AddMedia(GetMediaItems(folder));
-        }
         #endregion
 
         #region CanPlay
@@ -87,14 +82,6 @@ namespace MediaBrowser.Library
         /// Subclasses will have to override this if they want to be able to play a list of Media objects
         /// </summary>
         public virtual bool CanPlay(IEnumerable<Media> mediaList)
-        {
-            return false;
-        }
-
-        /// <summary>
-        /// Subclasses will have to override this if they want to be able to play an entire Folder object
-        /// </summary>
-        public virtual bool CanPlay(Folder folder)
         {
             return false;
         }
@@ -163,7 +150,7 @@ namespace MediaBrowser.Library
         /// <summary>
         /// Generates an arguments object to send to the PlaybackController
         /// </summary>
-        protected PlaybackArguments GetPlaybackArguments(IEnumerable<string> files, PlaybackStatus playstate, bool resume)
+        private PlaybackArguments GetPlaybackArguments(IEnumerable<string> files, PlaybackStatus playstate, bool resume)
         {
             PlaybackArguments info = new PlaybackArguments();
 
@@ -234,7 +221,7 @@ namespace MediaBrowser.Library
             OnPlaybackFinished();
         }
 
-        public virtual void OnPlaybackFinished()
+        protected virtual void OnPlaybackFinished()
         {
             // Clean up event handlers
             PlaybackController.Progress -= OnProgress;
@@ -287,14 +274,6 @@ namespace MediaBrowser.Library
         public bool CanBePlayedByController(IPlaybackController controller)
         {
             return controller.CanPlay(PlayableItems);
-        }
-
-        /// <summary>
-        /// Gets all Media within a given folder, recusively
-        /// </summary>
-        protected IEnumerable<Media> GetMediaItems(Folder folder)
-        {
-            return folder.RecursiveChildren.Select(i => i as Media).Where(v => v != null && v.IsPlaylistCapable() && v.ParentalAllowed).OrderBy(v => v.Path);
         }
     }
 

@@ -30,17 +30,14 @@ namespace MediaBrowser.Library.Playables
         {
             List<PlayableItem> playables = new List<PlayableItem>();
 
-            bool queue = QueueItem;
-
-            foreach (Media media in PlayableMediaItems)
+            for (int i = 0; i < PlayableMediaItems.Count; i++)
             {
-                PlayableItem playable = PlayableItemFactory.Instance.Create(media, false);
-                playable.QueueItem = queue;
-
-                playables.Add(playable);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(PlayableMediaItems[i], false);
 
                 // Each one after the first will be queued
-                queue = true;
+                playable.QueueItem = i == 0 ? QueueItem : true;
+
+                playables.Add(playable);
             }
 
             return playables;
@@ -71,11 +68,6 @@ namespace MediaBrowser.Library.Playables
             PlayableMediaItems.Clear();
 
             AddMedia(newList);
-        }
-
-        public override bool CanPlay(Folder folder)
-        {
-            return CanPlay(GetMediaItems(folder));
         }
 
         /// <summary>

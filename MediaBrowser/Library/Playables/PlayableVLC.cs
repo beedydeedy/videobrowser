@@ -72,25 +72,6 @@ namespace MediaBrowser.Library.Playables
         }
 
         /// <summary>
-        /// Gets the list of files to send to the player
-        /// </summary>
-        /// <param name="media">The accompanying Media object, which could be null</param>
-        /// <param name="files">The original list passsed into the PlayableItem</param>
-        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, PlaybackStatus playstate, IEnumerable<string> files, bool resume)
-        {
-            IEnumerable<string> filesToPlay = base.GetFilesToSendToPlayer(media, playstate, files, resume);
-
-            Video video = media as Video;
-
-            if (video != null && video.MediaType == Library.MediaType.DVD)
-            {
-                filesToPlay = filesToPlay.Select(i => "dvd://" + i);
-            }
-
-            return filesToPlay;
-        }
-
-        /// <summary>
         /// Starts monitoring playstate using the VLC Http interface
         /// </summary>
         protected override void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
@@ -151,7 +132,7 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        public override void OnPlaybackFinished()
+        protected override void OnPlaybackFinished()
         {
             // Stop sending requests to VLC's http interface
             _MonitorVlcHttpServer = false;
