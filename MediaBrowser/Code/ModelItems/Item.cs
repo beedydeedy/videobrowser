@@ -615,6 +615,11 @@ namespace MediaBrowser.Library
 
         public virtual void SetWatched(bool value)
         {
+            SetWatched(value, true);
+        }
+        
+        public virtual void SetWatched(bool value, bool displayMessage)
+        {
             if (IsPlayable)
             {
                 if (value != HaveWatched)
@@ -628,7 +633,7 @@ namespace MediaBrowser.Library
                             this.PhysicalParent.RemoveRecentlyUnwatched(this); //thought about asynch'ing this but its a list of 20 items...
                         }
                         //don't add to watched list as we didn't really watch it (and it might just clutter up the list)
-                        Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("SetWatchedProf"), this.Name));
+                        if (displayMessage) Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("SetWatchedProf"), this.Name));
                     }
                     else
                     {
@@ -638,7 +643,7 @@ namespace MediaBrowser.Library
                         {
                             this.PhysicalParent.RemoveNewlyWatched(this); //thought about asynch'ing this but its a list of 20 items...
                         }
-                        Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("ClearWatchedProf"), this.Name));
+                        if (displayMessage) Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("ClearWatchedProf"), this.Name));
                     }
                     PlayState.Save();
                     lock (watchLock)

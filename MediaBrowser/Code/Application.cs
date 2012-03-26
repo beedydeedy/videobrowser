@@ -235,7 +235,7 @@ namespace MediaBrowser
             set
             {
                 currentContextMenu = value;
-                Logger.ReportVerbose("Context Menu Changed.  Items: " + currentContextMenu.Count);
+                //Logger.ReportVerbose("Context Menu Changed.  Items: " + currentContextMenu.Count);
                 FirePropertyChanged("ContextMenu");
             }
         }
