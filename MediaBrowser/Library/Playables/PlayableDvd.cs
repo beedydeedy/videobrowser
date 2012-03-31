@@ -8,9 +8,21 @@ namespace MediaBrowser.Library.Playables
     {
         protected override void SendFilesToPlayer(PlaybackArguments args)
         {
-            args.Files = args.Files.Select(i => "DVD://" + i);
+            args.Files = args.Files.Select(i => GetDVDPath(i));
             
             base.SendFilesToPlayer(args);
+        }
+
+        private string GetDVDPath(string path)
+        {
+            if (path.StartsWith("\\\\"))
+            {
+                path = path.Substring(2);
+            }
+
+            path = path.Replace("\\", "/").TrimEnd('/');
+ 
+            return "DVD://" + path + "/";
         }
 
         public override bool CanPlay(Media media)

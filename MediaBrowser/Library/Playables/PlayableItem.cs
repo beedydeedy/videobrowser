@@ -42,9 +42,14 @@ namespace MediaBrowser.Library
         public bool Shuffle { get; set; }
 
         /// <summary>
-        /// PlayState will be saved many times during Progress, but we only want to increment play count once.
+        /// Holds the time that playback was started
         /// </summary>
-        private bool IncrementedPlayCount { get; set; }
+        protected DateTime PlaybackStartTime { get; private set; }
+
+        /// <summary>
+        /// If we're not able to track playstate at all, we'll at least mark watched once playback stops
+        /// </summary>
+        protected bool HasUpdatedPlayState { get; set; }
 
         #region AddMedia
         public void AddMedia(string file)
@@ -125,6 +130,8 @@ namespace MediaBrowser.Library
             {
                 ShufflePlayableItems();
             }
+
+            PlaybackStartTime = DateTime.Now;
         }
 
         protected virtual void SendFilesToPlayer(PlaybackArguments args)
@@ -136,7 +143,6 @@ namespace MediaBrowser.Library
             else
             {
                 PlaybackController.PlayMedia(args);
-                PlaybackController.GoToFullScreen();
             }
 
             // Optimization for items that don't have PlayState
@@ -162,9 +168,9 @@ namespace MediaBrowser.Library
                 info.PlaylistPosition = playstate.PlaylistPosition;
             }
 
+            info.GoFullScreen = true;
             info.Resume = resume;
             info.PlayableItemId = PlayableItemId;
-            info.MetaDurationTicks = Media == null ? 0 : TimeSpan.FromMinutes(Media.RunTime).Ticks;
 
             return info;
         }
@@ -173,7 +179,7 @@ namespace MediaBrowser.Library
         /// Fires whenever the PlaybackController reports that playback has changed position
         /// Subclasses which don't use the PlaybackController can also call this manually
         /// </summary>
-        protected void OnProgress(object sender, PlaybackStateEventArgs e)
+        protected virtual void OnProgress(object sender, PlaybackStateEventArgs e)
         {
             // Something else is currently playing
             if (!IsPlaybackEventOnCurrentInstance(e))
@@ -183,17 +189,9 @@ namespace MediaBrowser.Library
 
             if (PlayState != null)
             {
-                long duration = e.DurationFromPlayer;
+                Application.CurrentInstance.UpdatePlayState(Media, PlayState, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);
 
-                // The player didn't report the duration, see if we have it in metadata
-                if (duration == 0 && Media != null)
-                {
-                    duration = TimeSpan.FromMinutes(Media.RunTime).Ticks;
-                }
-
-                Application.CurrentInstance.UpdatePlayState(Media, PlayState, e.PlaylistPosition, e.Position, duration, !IncrementedPlayCount);
-
-                IncrementedPlayCount = true;
+                HasUpdatedPlayState = true;
             }
         }
 
@@ -201,44 +199,34 @@ namespace MediaBrowser.Library
         /// Fires whenever the PlaybackController reports that playback has stopped
         /// Subclasses which don't use the PlaybackController can also call this manually
         /// </summary>
-        protected void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
+        protected virtual void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
         {
-            if (IsPlaybackEventOnCurrentInstance(e) && PlayState != null)
+            // If it has a position then update it one last time
+            if (e.Position > 0)
             {
-                // If it has a position then update it one last time
-                if (e.Position > 0)
-                {
-                    OnProgress(sender, e);
-                }
-
+                OnProgress(sender, e);
+            }
+           
+            if (IsPlaybackEventOnCurrentInstance(e))
+            {
                 // If we haven't been able to update position, at least mark it watched
-                if (!IncrementedPlayCount)
+                if (!HasUpdatedPlayState)
                 {
                     MarkWatched();
                 }
             }
 
-            OnPlaybackFinished();
-        }
-
-        protected virtual void OnPlaybackFinished()
-        {
             // Clean up event handlers
             PlaybackController.Progress -= OnProgress;
             PlaybackController.PlaybackFinished -= OnPlaybackFinished;
 
-            if (Media != null)
-            {
-                UpdateResumeStatusIfMediaIsCurrentItem(Media);
-            }
-
+            UpdateResumeStatusInUI();
         }
 
-        protected void UpdateResumeStatusIfMediaIsCurrentItem(Media media)
+        protected virtual void UpdateResumeStatusInUI()
         {
-            if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+            if (Media != null && Media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
             {
-                Logger.ReportVerbose("Updating Resume status...");
                 Application.CurrentInstance.CurrentItem.UpdateResume();
             }
         }
@@ -256,7 +244,7 @@ namespace MediaBrowser.Library
             if (PlayState != null)
             {
                 Logger.ReportVerbose("Marking watched");
-                Application.CurrentInstance.UpdatePlayState(Media, PlayState, 0, 0, 0, true);
+                Application.CurrentInstance.UpdatePlayState(Media, PlayState, 0, 0, null, PlaybackStartTime);
             }
         }
 

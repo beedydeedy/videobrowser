@@ -19,7 +19,7 @@ namespace MediaBrowser.Library.RemoteControl
 
         public Guid PlayableItemId { get; set; }
 
-        public long MetaDurationTicks { get; set; }
+        public bool GoFullScreen { get; set; }
 
     }
 }

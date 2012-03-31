@@ -19,8 +19,16 @@ namespace MediaBrowser.Library.Playables
 
         public override void AddMedia(IEnumerable<Media> mediaItems)
         {
-            PlayableMediaItems.AddRange(mediaItems);
-            base.AddMedia(mediaItems);
+            // Keep it simple and don't use PlayableMediaItems if there's only one
+            if (mediaItems.Count() == 1)
+            {
+                AddMedia(mediaItems.First());
+            }
+            else
+            {
+                PlayableMediaItems.AddRange(mediaItems);
+                base.AddMedia(mediaItems);
+            }
         }
 
         /// <summary>

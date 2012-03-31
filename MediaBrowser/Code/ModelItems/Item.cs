@@ -405,6 +405,7 @@ namespace MediaBrowser.Library
 
         public void UpdateResume()
         {
+            Logger.ReportVerbose("Updating Resume status...");
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => FirePropertyChanged("CanResume")); //force UI to update
         }
 

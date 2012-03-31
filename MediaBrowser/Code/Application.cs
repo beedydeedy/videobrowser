@@ -67,58 +67,32 @@ namespace MediaBrowser
         public System.Drawing.Bitmap ExtSplashBmp;
         private Item lastPlayed;
 
-        #region FolderOpened EventHandler
-        volatile EventHandler<GenericEventArgs<FolderModel>> _FolderOpened;
+        #region NavigatedInto EventHandler
+        volatile EventHandler<GenericEventArgs<Item>> _NavigationInto;
         /// <summary>
-        /// Fires whenever a folder is navigated into
+        /// Fires whenever an Item is navigated into
         /// </summary>
-        public event EventHandler<GenericEventArgs<FolderModel>> FolderOpened
+        public event EventHandler<GenericEventArgs<Item>> NavigationInto
         {
             add
             {
-                _FolderOpened += value;
+                _NavigationInto += value;
             }
             remove
             {
-                _FolderOpened -= value;
+                _NavigationInto -= value;
             }
         }
 
-        private void OnFolderOpened(FolderModel folder)
+        internal void OnNavigationInto(Item item)
         {
-            if (_FolderOpened != null)
+            if (_NavigationInto != null)
             {
-                _FolderOpened(this, new GenericEventArgs<FolderModel>() { Item = folder });
+                _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
             }
         }
         #endregion
 
-        #region ItemDetailPageOpened EventHandler
-        volatile EventHandler<GenericEventArgs<Show>> _ItemDetailPageOpened;
-        /// <summary>
-        /// Fires whenever a movie is navigated into
-        /// </summary>
-        public event EventHandler<GenericEventArgs<Show>> ItemDetailPageOpened
-        {
-            add
-            {
-                _ItemDetailPageOpened += value;
-            }
-            remove
-            {
-                _ItemDetailPageOpened -= value;
-            }
-        }
-
-        private void OnItemDetailPageOpened(Show show)
-        {
-            if (_ItemDetailPageOpened != null)
-            {
-                _ItemDetailPageOpened(this, new GenericEventArgs<Show>() { Item = show });
-            }
-        }
-        #endregion
-        
         public bool PluginUpdatesAvailable
         {
             get
@@ -387,7 +361,7 @@ namespace MediaBrowser
         {
             if (Config.EnableScreenSaver) 
             {
-                if (!this.PlaybackController.IsPlayingVideo && !this.PlaybackController.IsPaused)
+                if (!this.PlaybackController.IsPlayingVideo)
                 {
                     if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
                     {
@@ -446,8 +420,9 @@ namespace MediaBrowser
             {
                 try
                 {
-                    bool isLocal = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities.ContainsKey("Console") &&
-                             (bool)Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities["Console"];
+                    Dictionary<string,object> capabilities = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities;
+
+                    bool isLocal = capabilities.ContainsKey("Console") && (bool)capabilities["Console"];
                     return !isLocal;
                 }
                 catch (Exception ex)
@@ -684,10 +659,17 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
+                    Microsoft.MediaCenter.MediaExperience exp = MediaCenterEnvironment.MediaExperience;
+
                     // set npv visibility according to current state
-                    if (MediaCenterEnvironment.MediaExperience != null && MediaCenterEnvironment.MediaExperience.Transport != null)
+                    if (exp != null)
                     {
-                        ShowNowPlaying = MediaCenterEnvironment.MediaExperience.Transport.PlayState == Microsoft.MediaCenter.PlayState.Playing;
+                        Microsoft.MediaCenter.MediaTransport transport = exp.Transport;
+
+                        if (transport != null)
+                        {
+                            ShowNowPlaying = transport.PlayState == Microsoft.MediaCenter.PlayState.Playing;
+                        }
                     }
 
                     // setup image to use in external splash screen
@@ -989,16 +971,31 @@ namespace MediaBrowser
         {
             get
             {
-                string showName = "";
+                string showName = string.Empty;
+
                 try
                 {
+                    MediaCenterEnvironment env = MediaCenterEnvironment;
+                    Microsoft.MediaCenter.MediaExperience exp = env.MediaExperience;
+
+                    if (exp == null)
+                    {
+                        return "Unknown";
+                    }
+
+                    MediaMetadata metadata = exp.MediaMetadata;
+
+                    if (metadata == null)
+                    {
+                        return "Unknown";
+                    }
 
                     string name = null;
 
                     // the API works in win7 and is borked on Vista.
-                    if (MediaCenterEnvironment.MediaExperience.MediaMetadata.ContainsKey("Name"))
+                    if (metadata.ContainsKey("Name"))
                     {
-                        name = MediaCenterEnvironment.MediaExperience.MediaMetadata["Name"] as string;
+                        name = metadata["Name"] as string;
                         if (name != null && name.Contains(".wpl"))
                         {
                             int start = name.LastIndexOf('/') + 1;
@@ -1021,7 +1018,7 @@ namespace MediaBrowser
                         }
                     }
 
-                    showName = name ?? MediaCenterEnvironment.MediaExperience.MediaMetadata["Title"] as string;
+                    showName = name ?? metadata["Title"] as string;
 
                     // playlist fix {filename without extension)({playlist name})
                     int lastParan = showName.LastIndexOf('(');
@@ -1159,9 +1156,6 @@ namespace MediaBrowser
                 folder.NavigatingInto();
 
                 session.GoToPage(folder.Folder.CustomUI ?? CurrentTheme.FolderPage, properties);
-
-                // Fire Event
-                OnFolderOpened(folder);
             }
             else
             {
@@ -1248,9 +1242,6 @@ namespace MediaBrowser
                     properties["ThemeConfig"] = CurrentTheme.Config;
                     
                     session.GoToPage(item.BaseItem.CustomUI ?? CurrentTheme.DetailPage, properties);
-
-                    // Fire the ShowOpened event handler
-                    OnItemDetailPageOpened(item.BaseItem as Show);
 
                     return;
                 }
@@ -1591,10 +1582,12 @@ namespace MediaBrowser
         {
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
             {
-                if (!Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.IsForegroundApplication)
+                Microsoft.MediaCenter.Hosting.ApplicationContext context = Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext;
+
+                if (!context.IsForegroundApplication)
                 {
                     Logger.ReportVerbose("Ensuring MB is front-most app");
-                    Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.ReturnToApplication();
+                    context.ReturnToApplication();
                 }
 
             });
@@ -1616,18 +1609,34 @@ namespace MediaBrowser
 
         /// <summary>
         /// This is a helper to update Playstate for an item.
-        /// It honors all of the various resume options within configuration
+        /// It honors all of the various resume options within configuration.
+        /// Play count will be incremented if the last played date doesn't match what's currently in the object
         /// </summary>
-        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, bool incrementPlayCount)
+        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, DateTime datePlayed)
         {
-            if (duration.HasValue && duration > 0)
+            // Increment play count if dates don't match
+            bool incrementPlayCount = !playstate.LastPlayed.Equals(datePlayed);
+
+            // The player didn't report the duration, see if we have it in metadata
+            if (!duration.HasValue || duration == 0 && media != null)
+            {
+                duration = TimeSpan.FromMinutes(media.RunTime).Ticks;
+            }
+
+            // If we know the duration then enforce MinResumePct/MaxResumePct
+            if (duration.HasValue && duration > 0 && positionTicks > 0)
             {
                 decimal pctIn = Decimal.Divide(positionTicks, duration.Value) * 100;
 
-                // don't track in very beginning
+                // Don't track in very beginning
                 if (pctIn < Config.Instance.MinResumePct)
                 {
                     positionTicks = 0;
+
+                    if (playlistPosition == 0)
+                    {
+                        incrementPlayCount = false;
+                    }
                 }
 
                 // If we're at the end, assume completed
@@ -1649,7 +1658,7 @@ namespace MediaBrowser
 
             if (incrementPlayCount)
             {
-                playstate.LastPlayed = DateTime.Now;
+                playstate.LastPlayed = datePlayed;
                 playstate.PlayCount++;
             }
 

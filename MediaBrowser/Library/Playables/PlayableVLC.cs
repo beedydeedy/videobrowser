@@ -129,10 +129,12 @@ namespace MediaBrowser.Library.Playables
                 _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
 
                 _CurrentPlayingFile = fileNameNode.InnerText;
+
+                OnProgress(null, GetPlaybackState(PlayableItems));
             }
         }
 
-        protected override void OnPlaybackFinished()
+        protected override void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
         {
             // Stop sending requests to VLC's http interface
             _MonitorVlcHttpServer = false;
@@ -146,8 +148,7 @@ namespace MediaBrowser.Library.Playables
             _WebClient.DownloadStringCompleted -= client_DownloadStringCompleted;
             _WebClient.Dispose();
 
-
-            base.OnPlaybackFinished();
+            base.OnPlaybackFinished(sender, e);
         }
 
         protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)

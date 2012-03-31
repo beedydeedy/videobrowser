@@ -677,6 +677,7 @@ namespace MediaBrowser.Library {
                     selectedchildIndex = 0;
                 }
                 SelectedChildChanged();
+                Application.CurrentInstance.OnNavigationInto(SelectedChild);
                 return SelectedChild;
             }
         }
@@ -695,6 +696,7 @@ namespace MediaBrowser.Library {
                     selectedchildIndex = Children.Count - 1;
                 }
                 SelectedChildChanged();
+                Application.CurrentInstance.OnNavigationInto(SelectedChild);
                 return SelectedChild;
             }
         }

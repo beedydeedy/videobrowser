@@ -86,7 +86,7 @@ namespace MediaBrowser.Library.Playables
             return CanPlay(new string[] { path });
         }
         #endregion
-
+        
         /// <summary>
         /// If multiple files will be played we'll have to create a PLS file if they can't all be passed on the command line
         /// </summary>
@@ -190,28 +190,24 @@ namespace MediaBrowser.Library.Playables
 
         protected void OnExternalPlayerClosed()
         {
-            if (PlayableMediaItems.Count == 0)
-            {
-                // Just use base method
-                OnPlaybackFinished(null, GetPlaybackState(PlayableItems));
-            }
-            else
-            {
-                OnMultipleMediaItemsPlaybackFinished();
-                OnPlaybackFinished();
-            }
-
+            // Just use base method
+            OnPlaybackFinished(null, GetPlaybackState(PlayableItems));
+            
             Logging.Logger.ReportVerbose("Calling RunPostPlayProcesses...");
             Application.CurrentInstance.RunPostPlayProcesses();
         }
 
-        protected override void OnPlaybackFinished()
+        protected override void UpdateResumeStatusInUI()
         {
-            base.OnPlaybackFinished();
+            base.UpdateResumeStatusInUI();
 
             foreach (Media media in PlayableMediaItems)
             {
-                UpdateResumeStatusIfMediaIsCurrentItem(media);
+                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+                {
+                    Application.CurrentInstance.CurrentItem.UpdateResume();
+                    break;
+                }
             }
         }
 
@@ -294,6 +290,25 @@ namespace MediaBrowser.Library.Playables
         {
         }
 
+        protected override void OnProgress(object sender, PlaybackStateEventArgs e)
+        {
+            // Just use base method if multiple media items are not involved
+            if (PlayableMediaItems.Count == 0)
+            {
+                base.OnProgress(sender, e);
+            }
+            else
+            {
+                // Something else is currently playing
+                if (IsPlaybackEventOnCurrentInstance(e))
+                {
+                    UpdateProgressForMultipleMediaItems(e);
+                }
+
+                HasUpdatedPlayState = true;
+            }
+        }
+
         /// <summary>
         /// Creates a PLS file based on the list of PlayableItems
         /// </summary>
@@ -361,7 +376,7 @@ namespace MediaBrowser.Library.Playables
             {
                 foreach (Media media in PlayableMediaItems)
                 {
-                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, 0, true);
+                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, PlaybackStartTime);
                 }
             }
             else
@@ -373,10 +388,8 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Goes through each Media object within PlayableMediaItems and updates Playstate for each individually
         /// </summary>
-        protected virtual void OnMultipleMediaItemsPlaybackFinished()
+        private void UpdateProgressForMultipleMediaItems(PlaybackStateEventArgs state)
         {
-            PlaybackStateEventArgs state = GetPlaybackState(PlayableItems);
-
             string currentFile = PlayableItems.ElementAt(state.PlaylistPosition);
 
             int foundIndex = -1;
@@ -411,7 +424,7 @@ namespace MediaBrowser.Library.Playables
                     currentPositionTicks = state.Position;
                 }
 
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, TimeSpan.FromMinutes(media.RunTime).Ticks, true);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, null, PlaybackStartTime);
             }
 
         }

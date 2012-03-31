@@ -123,11 +123,7 @@ namespace MediaBrowser.Library.Playables
             {
                 _LastPlaybackState = GetPlaybackState(values);
 
-                // Only monitor PlayState if playback has already started and if we have a PlayState object to update
-                if (PlayableMediaItems.Count > 0 || PlayState != null)
-                {
-                    OnProgress(null, _LastPlaybackState);
-                }
+                OnProgress(null, _LastPlaybackState);
 
                 // Playback has stopped
                 if (tmtPlayState == "stop")
@@ -160,12 +156,12 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        protected override void OnPlaybackFinished()
+        protected override void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
         {
             // In case anything went wrong trying to do this during the event
             DisposeFileSystemWatcher();
 
-            base.OnPlaybackFinished();
+            base.OnPlaybackFinished(sender, e);
         }
         
         /// <summary>
