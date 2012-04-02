@@ -436,7 +436,7 @@ namespace MediaBrowser.Library {
                         studios = show.Studios;
                     else
                         if (baseItem is Episode)
-                            studios = (baseItem as Episode).Series.Studios;
+                            studios = (baseItem as Episode).OurSeries.Studios;
                         else
                             if (baseItem is Season)
                                 studios = (baseItem as Season).OurSeries.Studios;
