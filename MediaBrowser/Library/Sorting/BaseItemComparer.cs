@@ -204,8 +204,8 @@ namespace MediaBrowser.Library {
                 {
                     try
                     {
-                        int thisNumericChunk = int.Parse(str1);
-                        int thatNumericChunk = int.Parse(str2);
+                        int thisNumericChunk = int.Parse(str1.Substring(0,str1.Length > 9 ? 10 : str1.Length));
+                        int thatNumericChunk = int.Parse(str2.Substring(0,str2.Length > 9 ? 10 : str2.Length));
                         //Logging.Logger.ReportVerbose("Comparing Numbers... " + str1 + "(" + thisNumericChunk + ")/" + str2 + "(" + thatNumericChunk + ")");
                         result = thisNumericChunk.CompareTo(thatNumericChunk);
                     }
