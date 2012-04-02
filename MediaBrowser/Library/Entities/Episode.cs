@@ -107,7 +107,7 @@ namespace MediaBrowser.Library.Entities {
         Season seasonItem;
         public Season RetrieveSeason()
         {
-            if (seasonItem == null)
+            if (seasonItem == null && !string.IsNullOrEmpty(this.Path))
             {
                 //derive id of what would be our season - hate this but don't have to store and maintain pointers this way
                 string parentPath = System.IO.Path.GetDirectoryName(this.Path);
@@ -120,7 +120,7 @@ namespace MediaBrowser.Library.Entities {
         Series seriesItem;
         public Series RetrieveSeries()
         {
-            if (seriesItem == null)
+            if (seriesItem == null && !string.IsNullOrEmpty(this.Path))
             {
                 string parentPath = System.IO.Path.GetDirectoryName(this.Path);
                 string grandparentPath = System.IO.Path.GetDirectoryName(parentPath); //parent of parent is series
