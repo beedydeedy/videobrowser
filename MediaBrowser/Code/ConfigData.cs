@@ -509,7 +509,7 @@ namespace MediaBrowser
             {
                 get
                 {
-                    if (MediaTypes.Count == 0)
+                    if (MediaTypes.Count == Enum.GetNames(typeof(MediaType)).Count())
                     {
                         return "All";
                     }
@@ -630,27 +630,21 @@ namespace MediaBrowser
 
             // If configuration wants specific MediaTypes, check that here
             // If no MediaTypes are specified, proceed
-            if (externalPlayer.MediaTypes.Count > 0)
+            foreach (MediaType mediaType in mediaTypes)
             {
-                foreach (MediaType mediaType in mediaTypes)
+                if (!externalPlayer.MediaTypes.Contains(mediaType))
                 {
-                    if (!externalPlayer.MediaTypes.Contains(mediaType))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 
             // If configuration wants specific VideoFormats, check that here
             // If no VideoFormats are specified, proceed
-            if (externalPlayer.VideoFormats.Count > 0)
+            foreach (VideoFormat format in videoFormats)
             {
-                foreach (VideoFormat format in videoFormats)
+                if (!externalPlayer.VideoFormats.Contains(format))
                 {
-                    if (!externalPlayer.VideoFormats.Contains(format))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
 

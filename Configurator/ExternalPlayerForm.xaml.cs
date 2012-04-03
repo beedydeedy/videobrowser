@@ -185,8 +185,8 @@ namespace Configurator
             externalPlayer.SupportsMultiFileCommandArguments = chkSupportsMultiFileCommand.IsChecked.Value;
             externalPlayer.SupportsPlaylists = chkSupportsPLS.IsChecked.Value;
 
-            externalPlayer.MediaTypes = (lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetValues();
-            externalPlayer.VideoFormats = (lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>).GetValues();
+            externalPlayer.MediaTypes = (lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues();
+            externalPlayer.VideoFormats = (lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>).GetCheckedValues();
         }
 
         private void SetControlVisibility(ConfigData.ExternalPlayer externalPlayer)
@@ -231,7 +231,7 @@ namespace Configurator
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
             {
                 lblTipsHeader.Content = "TMT Tips:";
-                txtTips.Text = "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
+                txtTips.Text = "You will need to enable \"always on top\" and \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
                 txtCommand.ToolTip = btnCommand.ToolTip = "The path to uTotalMediaTheatre5.exe within the TMT installation directory.";
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
@@ -296,6 +296,11 @@ namespace Configurator
             if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
             {
                 AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc.exe");
+
+                if (string.IsNullOrEmpty(txtCommand.Text))
+                {
+                    AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc64.exe");
+                }
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
             {
@@ -371,18 +376,6 @@ namespace Configurator
                     {
                         values.Add(wrapper.Value);
                     }
-                }
-
-                return values;
-            }
-
-            public List<TEnumType> GetValues()
-            {
-                List<TEnumType> values = GetCheckedValues();
-
-                if (values.Count == Count)
-                {
-                    values.Clear();
                 }
 
                 return values;

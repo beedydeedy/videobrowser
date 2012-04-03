@@ -60,14 +60,35 @@ namespace MediaBrowser.Library.Playables
         private NameValueCollection GetMPCHCSettings()
         {
             // mpc-hc.ini will only exist if the user has enabled "Store settings to ini file"
-            string playstatePath = Path.ChangeExtension(ExternalPlayerConfiguration.Command, ".ini");
+            string playstatePath = GetIniFilePath();
 
-            if (File.Exists(playstatePath))
+            if (!string.IsNullOrEmpty(playstatePath))
             {
                 return Helper.ParseIniFile(playstatePath);
             }
 
             return Helper.GetRegistryKeyValues(Registry.CurrentUser, "Software\\Gabest\\Media Player Classic\\Settings");
+        }
+
+        private string GetIniFilePath()
+        {
+            string directory = Path.GetDirectoryName(ExternalPlayerConfiguration.Command);
+
+            string path = Path.Combine(directory, "mpc-hc.ini");
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            path = Path.Combine(directory, "mpc-hc64.ini");
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
@@ -101,7 +122,7 @@ namespace MediaBrowser.Library.Playables
         {
             for (int i = 0; i <= 19; i++)
             {
-                if (values["File Name " + i] == filename)
+                if (values["File Name " + i].StartsWith(filename))
                 {
                     return new PlaybackStateEventArgs() { Position = long.Parse(values["File Position " + i]) };
                 }
