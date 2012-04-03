@@ -21,8 +21,26 @@ namespace MediaBrowser.Library.Playables
             // Play the DVD video that was mounted.
             if (!Config.Instance.UseAutoPlayForIso)
             {
-                playableExternal = PlayableItemFactory.Instance.Create(mountedPath);
-                playableExternal.PlayState = PlayState;
+                playableExternal = CreatePlayableItemFromMountedPath(mountedPath);
+            }
+        }
+
+        protected virtual PlayableItem CreatePlayableItemFromMountedPath(string mountedPath)
+        {
+            if (Media == null)
+            {
+                return PlayableItemFactory.Instance.Create(mountedPath);
+            }
+            else
+            {
+                Media.Path = mountedPath;
+
+                Video video = Media as Video;
+
+                video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
+                Media.DisplayMediaType = video.MediaType.ToString();
+
+                return PlayableItemFactory.Instance.Create(Media);
             }
         }
 
@@ -58,7 +76,7 @@ namespace MediaBrowser.Library.Playables
         {
             return MediaTypeResolver.DetermineType(path) == MediaType.ISO;
         }
-
+        
         protected override void SendFilesToPlayer(PlaybackArguments args)
         {
             if (!Config.Instance.UseAutoPlayForIso)

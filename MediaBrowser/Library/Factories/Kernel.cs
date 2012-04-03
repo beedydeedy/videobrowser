@@ -281,11 +281,11 @@ namespace MediaBrowser.Library {
 
 
         #region ApplicationInitialized EventHandler
-        volatile EventHandler<GenericEventArgs<Application>> _ApplicationInitialized;
+        volatile EventHandler<EventArgs> _ApplicationInitialized;
         /// <summary>
         /// Fires when Application.CurrentInstance is created.
         /// </summary>
-        public event EventHandler<GenericEventArgs<Application>> ApplicationInitialized
+        public event EventHandler<EventArgs> ApplicationInitialized
         {
             add
             {
@@ -297,11 +297,11 @@ namespace MediaBrowser.Library {
             }
         }
 
-        internal void OnApplicationInitialized(Application app)
+        internal void OnApplicationInitialized()
         {
             if (_ApplicationInitialized != null)
             {
-                _ApplicationInitialized(this, new GenericEventArgs<Application>() { Item = app });
+                _ApplicationInitialized(this, new EventArgs());
             }
         }
         #endregion

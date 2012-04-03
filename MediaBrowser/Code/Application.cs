@@ -1385,7 +1385,7 @@ namespace MediaBrowser
                     {
                         if (Application.CurrentInstance.RunPrePlayProcesses(item, intros))
                         {
-                            item.Play(resume, false, shuffle, startFrom);
+                            item.Play(resume, queue, shuffle, startFrom);
 
                             this.lastPlayed = item;
                         }
