@@ -118,7 +118,9 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            return null;
+            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
+            defaultPlayableItem.AddMedia(media);
+            return defaultPlayableItem;
         }
 
         /// <summary>
@@ -141,7 +143,9 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            return null;
+            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
+            defaultPlayableItem.AddMedia(paths);
+            return defaultPlayableItem;
         }
 
         /// <summary>
@@ -164,7 +168,9 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            return null;
+            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
+            defaultPlayableItem.AddMedia(mediaList);
+            return defaultPlayableItem;
         }
 
         /// <summary>
@@ -182,7 +188,9 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            return null;
+            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
+            defaultPlayableItem.AddMedia(path);
+            return defaultPlayableItem;
         }
 
         /// <summary>
@@ -191,6 +199,13 @@ namespace MediaBrowser.Library.Factories
         public PlayableItem Create(Folder folder)
         {
             return Create(folder.RecursiveMedia);
+        }
+
+        private PlayableItem GetDefaultPlayableItem()
+        {
+            PlayableItem playable = new PlayableVideo();
+            AttachPlaybackController(playable);
+            return playable;
         }
 
         private PlayableItem InstantiatePlayableItem(KeyValuePair<PlayableItem, Type> type)
