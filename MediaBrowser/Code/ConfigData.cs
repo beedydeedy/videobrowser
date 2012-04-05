@@ -494,7 +494,18 @@ namespace MediaBrowser
             public ExternalPlayer()
             {
                 MediaTypes = new List<MediaType>();
+
+                foreach (MediaType val in Enum.GetValues(typeof(MediaType)))
+                {
+                    MediaTypes.Add(val);
+                }
+
                 VideoFormats = new List<VideoFormat>();
+
+                foreach (VideoFormat val in Enum.GetValues(typeof(VideoFormat)))
+                {
+                    VideoFormats.Add(val);
+                }
             }
 
             public string CommandFileName

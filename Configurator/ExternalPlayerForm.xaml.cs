@@ -35,44 +35,34 @@ namespace Configurator
             btnCommand.Click += new RoutedEventHandler(btnCommand_Click);
             lnkSelectAllMediaTypes.Click += new RoutedEventHandler(lnkSelectAllMediaTypes_Click);
             lnkSelectAllVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
-            lnkSelectNoneMediaTypes.Click += new RoutedEventHandler(lnkSelectNoneMediaTypes_Click);
-            lnkSelectNoneVideoFormats.Click += new RoutedEventHandler(lnkSelectNoneVideoFormats_Click);
-        }
-
-        void lnkSelectNoneVideoFormats_Click(object sender, RoutedEventArgs e)
-        {
-            EnumWrapperList<VideoFormat> source = lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>;
-
-            source.SelectAll(false);
-            lstVideoFormats.ItemsSource = null;
-            lstVideoFormats.ItemsSource = source;
-        }   
-
-        void lnkSelectNoneMediaTypes_Click(object sender, RoutedEventArgs e)
-        {
-            EnumWrapperList<MediaType> source = lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>;
-
-            source.SelectAll(false);
-            lstMediaTypes.ItemsSource = null;
-            lstMediaTypes.ItemsSource = source;
+            lnkSelectNoneMediaTypes.Click += new RoutedEventHandler(lnkSelectAllMediaTypes_Click);
+            lnkSelectNoneVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
         }
 
         void lnkSelectAllVideoFormats_Click(object sender, RoutedEventArgs e)
         {
             EnumWrapperList<VideoFormat> source = lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>;
 
-            source.SelectAll(true);
-            lstVideoFormats.ItemsSource = null;
-            lstVideoFormats.ItemsSource = source;
+            bool selectAll = (sender as Hyperlink) == lnkSelectAllVideoFormats;
+
+            source.SelectAll(selectAll);
+            SetListDataSource(lstVideoFormats, source);
         }
 
         void lnkSelectAllMediaTypes_Click(object sender, RoutedEventArgs e)
         {
             EnumWrapperList<MediaType> source = lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>;
 
-            source.SelectAll(true);
-            lstMediaTypes.ItemsSource = null;
-            lstMediaTypes.ItemsSource = source;
+            bool selectAll = (sender as Hyperlink) == lnkSelectAllMediaTypes;
+
+            source.SelectAll(selectAll);
+            SetListDataSource(lstMediaTypes, source);
+        }
+
+        private void SetListDataSource<T>(ListBox listbox, EnumWrapperList<T> source)
+        {
+            listbox.ItemsSource = null;
+            listbox.ItemsSource = source;
         }
 
         private ConfigData.ExternalPlayerType ExternalPlayerType
@@ -116,7 +106,7 @@ namespace Configurator
             else if (ExternalPlayerType == ConfigData.ExternalPlayerType.VLC) externalPlayer = new PlayableVLC().GetDefaultConfiguration();
             else externalPlayer = new PlayableExternal().GetDefaultConfiguration();
 
-            FillControlsFromObject(externalPlayer);
+            FillControlsFromObject(externalPlayer, false, false);
         }
 
         void lstLaunchType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -146,11 +136,16 @@ namespace Configurator
             lstPlayerType.ItemsSource = Enum.GetValues(typeof(ConfigData.ExternalPlayerType));
             lstLaunchType.ItemsSource = Enum.GetValues(typeof(ConfigData.ExternalPlayerLaunchType));
 
-            lstMediaTypes.ItemsSource = EnumWrapperList<MediaType>.Create();
-            lstVideoFormats.ItemsSource = EnumWrapperList<VideoFormat>.Create();
+            SetListDataSource(lstMediaTypes, EnumWrapperList<MediaType>.Create());
+            SetListDataSource(lstVideoFormats, EnumWrapperList<VideoFormat>.Create());
         }
 
         public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer)
+        {
+            FillControlsFromObject(externalPlayer, true, true);
+        }
+
+        public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer, bool refreshMediaTypes, bool refreshVideoFormats)
         {
             lstPlayerType.SelectedItem = externalPlayer.ExternalPlayerType;
             lstLaunchType.SelectedItem = externalPlayer.LaunchType;
@@ -163,8 +158,19 @@ namespace Configurator
             chkSupportsMultiFileCommand.IsChecked = externalPlayer.SupportsMultiFileCommandArguments;
             chkSupportsPLS.IsChecked = externalPlayer.SupportsPlaylists;
 
-            (lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).SetValues(externalPlayer.MediaTypes);
-            (lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>).SetValues(externalPlayer.VideoFormats);
+            if (refreshMediaTypes)
+            {
+                EnumWrapperList<MediaType> mediaTypes = lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>;
+                mediaTypes.SetValues(externalPlayer.MediaTypes);
+                SetListDataSource(lstMediaTypes, mediaTypes);
+            }
+
+            if (refreshVideoFormats)
+            {
+                EnumWrapperList<VideoFormat> videoFormats = lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>;
+                videoFormats.SetValues(externalPlayer.VideoFormats);
+                SetListDataSource(lstVideoFormats, videoFormats);
+            }
 
             SetControlVisibility(externalPlayer);
             SetTips(externalPlayer);
@@ -221,8 +227,8 @@ namespace Configurator
 
         private void SetTips(ConfigData.ExternalPlayer externalPlayer)
         {
-            txtCommand.ToolTip = btnCommand.ToolTip = "The path to the player's executable file."; 
-            
+            txtCommand.ToolTip = btnCommand.ToolTip = "The path to the player's executable file.";
+
             if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
             {
                 lblTipsHeader.Content = "MPC-HC Tips:";
@@ -243,7 +249,7 @@ namespace Configurator
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
             {
                 lblTipsHeader.Content = "VLC Tips:";
-                txtTips.Text = "Version 2.0+ required. No special configuration is required.";               
+                txtTips.Text = "Version 2.0+ required. No special configuration is required.";
             }
             else
             {
