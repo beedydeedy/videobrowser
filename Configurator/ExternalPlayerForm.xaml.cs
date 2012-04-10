@@ -37,6 +37,35 @@ namespace Configurator
             lnkSelectAllVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
             lnkSelectNoneMediaTypes.Click += new RoutedEventHandler(lnkSelectAllMediaTypes_Click);
             lnkSelectNoneVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
+            lnkConfigureMyPlayer.Click += new RoutedEventHandler(lnkConfigureMyPlayer_Click);
+        }
+
+        void lnkConfigureMyPlayer_Click(object sender, RoutedEventArgs e)
+        {
+            if (!ValidateUserInput())
+            {
+                return;
+            }
+
+            string msg = "The following settings will be configured for you:";
+
+            msg += "\n\n-Enable: Keep history of recently opened files";
+            msg += "\n-Disable: Remember file position";
+            msg += "\n-Disable: Remember DVD position";
+            msg += "\n-Enable: Use global media keys";
+            msg += "\n-Enable: Don't use 'search in folder' on commands 'Skip back/forward' when only one item in playlist";
+            msg += "\n-Set medium jump size to 30 seconds (for rewind/ff buttons)";
+            msg += "\n-Configure basic media center remote buttons";
+
+            msg += "\n\nAre you sure you would like to continue?";
+
+            if (MessageBox.Show(msg, "Configure Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {               
+                var playable = new PlayableMpcHc();
+                playable.ExternalPlayerConfiguration = playable.GetDefaultConfiguration();
+                playable.ExternalPlayerConfiguration.Command = txtCommand.Text;
+                playable.ConfigurePlayer();
+            }
         }
 
         void lnkSelectAllVideoFormats_Click(object sender, RoutedEventArgs e)
@@ -223,6 +252,8 @@ namespace Configurator
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Hidden;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Hidden;
             }
+
+            lbConfigureMyPlayer.Visibility = externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
         }
 
         private void SetTips(ConfigData.ExternalPlayer externalPlayer)
@@ -277,6 +308,19 @@ namespace Configurator
             {
                 MessageBox.Show("Please select at least one video format.");
                 return false;
+            }
+
+            if ((lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues().Contains(MediaType.ISO))
+            {
+                if (ExternalPlayerType == ConfigData.ExternalPlayerType.Generic || ExternalPlayerType == ConfigData.ExternalPlayerType.TMT || ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
+                {
+                    string msg = "Selecting ISO as a media type will allow ISO's to be passed directly to the player without having to mount them. Be sure your player supports this. As of this release, MPC-HC and VLC support this, but TMT does not. Are you sure you wish to continue?";
+
+                    if (MessageBox.Show(msg, "Confirm ISO Media Type", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                    {
+                        return false;
+                    }
+                }
             }
 
             return true;

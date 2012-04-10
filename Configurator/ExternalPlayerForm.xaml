@@ -5,11 +5,11 @@
     <Grid>
         
         <Label Name="lblPlayerType" Margin="20,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">External Player Type:</Label>
-        <ComboBox Name="lstPlayerType" Margin="140,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <ComboBox Name="lstPlayerType" Margin="160,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
         </ComboBox>
         
-        <Label Name="lblLaunchType" Margin="300,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Launch Type:</Label>
-        <ComboBox Name="lstLaunchType" Margin="400,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <Label Name="lblLaunchType" Margin="320,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Launch Type:</Label>
+        <ComboBox Name="lstLaunchType" Margin="420,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
         </ComboBox>
 
         <Label Name="lblCommand" Margin="20,60,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Player Path:</Label>
@@ -66,10 +66,13 @@
             </CheckBox.ToolTip>
         </CheckBox>
 
-        <Label Name="lblTipsHeader" Margin="20,330,0,0" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Left">Tips:</Label>
+        <Label Name="lblTipsHeader" Margin="20,325,0,0" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Left">Tips:</Label>
 
-        <TextBlock Name="txtTips" Margin="25,355,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="400" TextWrapping="Wrap">Tips will go here</TextBlock>
-        
+        <TextBlock Name="txtTips" Margin="25,350,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="405" TextWrapping="Wrap">Tips will go here</TextBlock>
+        <TextBlock Name="lbConfigureMyPlayer" Margin="25,415,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <Hyperlink Name="lnkConfigureMyPlayer">Configure my player</Hyperlink>
+        </TextBlock>
+
         <Button Padding="20 5 20 5" HorizontalAlignment="Right" Margin="0,0,110,20" Name="btnOK" VerticalAlignment="Bottom" Click="btnOK_Click">OK</Button>
         <Button Padding="20 5 20 5" HorizontalAlignment="Right" Margin="0,0,20,20" Name="btnCancel" VerticalAlignment="Bottom" Click="btnCancel_Click">Cancel</Button>
     </Grid>

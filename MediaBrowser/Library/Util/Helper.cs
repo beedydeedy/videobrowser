@@ -630,22 +630,5 @@ namespace MediaBrowser.LibraryManagement
             return values;
         }
 
-        /// <summary>
-        /// Gets all names and values of a registry key
-        /// </summary>
-        public static NameValueCollection GetRegistryKeyValues(RegistryKey key, string subPath)
-        {
-            NameValueCollection values = new NameValueCollection();
-
-            key = key.OpenSubKey(subPath);
-
-            foreach (string keyName in key.GetValueNames())
-            {
-                values[keyName] = key.GetValue(keyName).ToString();
-            }
-
-            return values;
-        }
-
     }
 }

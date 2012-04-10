@@ -67,7 +67,7 @@ namespace MediaBrowser.Library.Playables
                 return Helper.ParseIniFile(playstatePath);
             }
 
-            return Helper.GetRegistryKeyValues(Registry.CurrentUser, "Software\\Gabest\\Media Player Classic\\Settings");
+            return GetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings"));
         }
 
         private string GetIniFilePath()
@@ -138,6 +138,113 @@ namespace MediaBrowser.Library.Playables
             config.SupportsMultiFileCommandArguments = true;
 
             return config;
+        }
+
+        public void ConfigurePlayer()
+        {
+            // General settings
+            SetBaseSettings();
+
+            // Remote settings
+            SetCommandSettings();
+        }
+
+        /// <summary>
+        /// Configures basic settings to allow mpc-hc to work nicely with MB
+        /// </summary>
+        private void SetBaseSettings()
+        {
+            Dictionary<string, object> values = new Dictionary<string, object>();
+
+            values["KeepHistory"] = 1; 
+            values["RememberPlaylistItems"] = 1;
+            values["Remember DVD Pos"] = 0;
+            values["Remember File Pos"] = 0;
+            values["SearchInDirAfterPlayBack"] = 0;
+            values["DontUseSearchInFolder"] = 1;
+            values["UseGlobalMedia"] = 1;
+            values["JumpDistM"] = 30000;
+
+            string iniPath = GetIniFilePath();
+
+            if (string.IsNullOrEmpty(iniPath))
+            {
+                SetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings", true), values);
+            }
+            else
+            {
+                SetIniFileValues(iniPath, "Settings", values);
+            }
+        }
+
+        /// <summary>
+        /// Configures MPC-HC to work with a media center remote
+        /// </summary>
+        private void SetCommandSettings()
+        {
+            Dictionary<string, object> values = new Dictionary<string, object>();
+
+            // These are unreadable, but they setup basic functions such as play, pause, stop, back, next, ff, rw, etc
+            values["CommandMod0"] = "816 13 58 \"\" 5 0 13 0";
+            values["CommandMod1"] = "890 3 be \"\" 5 0 0 0";
+            values["CommandMod2"] = "902 b 0 \"\" 5 0 49 0";
+            values["CommandMod3"] = "901 b 0 \"\" 5 0 50 0";
+            values["CommandMod4"] = "904 b 27 \"\" 5 0 0 0";
+            values["CommandMod5"] = "903 b 25 \"\" 5 0 0 0";
+            values["CommandMod6"] = "32778 b 49 \"\" 5 0 66057 0";
+            values["CommandMod7"] = "32780 3 59 \"\" 5 0 0 0";
+            values["CommandMod8"] = "32781 3 55 \"\" 5 0 0 0";
+
+            string iniPath = GetIniFilePath();
+
+            if (string.IsNullOrEmpty(iniPath))
+            {
+                SetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Commands2", true), values);
+            }
+            else
+            {
+                SetIniFileValues(iniPath, "Commands2", values);
+            }
+        }
+
+        /// <summary>
+        /// Gets all names and values of a registry key
+        /// </summary>
+        private static NameValueCollection GetRegistryKeyValues(RegistryKey key)
+        {
+            NameValueCollection values = new NameValueCollection();
+
+            foreach (string keyName in key.GetValueNames())
+            {
+                values[keyName] = key.GetValue(keyName).ToString();
+            }
+
+            return values;
+        }
+
+        /// <summary>
+        /// Sets values within a registry key
+        /// </summary>
+        private static void SetRegistryKeyValues(RegistryKey key, Dictionary<string, object> values)
+        {
+            foreach (string keyName in values.Keys)
+            {
+                key.SetValue(keyName, values[keyName]);
+            }
+        }
+
+        private void SetIniFileValues(string path, string sectionName, Dictionary<string, object> values)
+        {
+            IniFile instance = new IniFile();
+
+            instance.Load(path);
+
+            foreach (string keyName in values.Keys)
+            {
+                instance.SetKeyValue(sectionName, keyName, values[keyName].ToString());
+            }
+
+            instance.Save(path);
         }
     }
 }
