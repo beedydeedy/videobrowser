@@ -158,6 +158,9 @@ namespace MediaBrowser.Library.Factories
                 return Create(mediaList.First());
             }
 
+            // First filter out items that can't be queued in a playlist
+            mediaList = mediaList.Where(m => m.IsPlaylistCapable());
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(mediaList))
@@ -168,7 +171,9 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
+            // Return default
+            PlayableItem defaultPlayableItem = new PlayableMultiMediaVideo();
+            AttachPlaybackController(defaultPlayableItem);
             defaultPlayableItem.AddMedia(mediaList);
             return defaultPlayableItem;
         }
