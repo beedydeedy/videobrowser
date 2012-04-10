@@ -197,20 +197,6 @@ namespace MediaBrowser.Library.Playables
             Application.CurrentInstance.RunPostPlayProcesses();
         }
 
-        protected override void UpdateResumeStatusInUI()
-        {
-            base.UpdateResumeStatusInUI();
-
-            foreach (Media media in PlayableMediaItems)
-            {
-                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
-                {
-                    Application.CurrentInstance.CurrentItem.UpdateResume();
-                    break;
-                }
-            }
-        }
-
         /// <summary>
         /// Play by launching another WMC app
         /// </summary>

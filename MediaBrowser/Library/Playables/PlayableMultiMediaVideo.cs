@@ -93,5 +93,19 @@ namespace MediaBrowser.Library.Playables
 
             return true;
         }
+
+        protected override void UpdateResumeStatusInUI()
+        {
+            base.UpdateResumeStatusInUI();
+
+            foreach (Media media in PlayableMediaItems)
+            {
+                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+                {
+                    Application.CurrentInstance.CurrentItem.UpdateResume();
+                    break;
+                }
+            }
+        }
     }
 }
