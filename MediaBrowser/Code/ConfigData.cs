@@ -190,7 +190,7 @@ namespace MediaBrowser
         [Comment(@"Show main background for theme.  If false, Media Center background can show through.")]
         public bool ShowThemeBackground = true;
         [Group("Display")]
-        [Comment(@"In the default theme, the poster area will 'dim' when menus selected.")]
+        [Comment(@"Apply a 'dimming' effect on non-selected posters leaving the active one appearing brighter.")]
         public bool DimUnselectedPosters = true;
         [Comment(@"Allow Movies to consist of nested folders with videos in them - this is trouble, keep it off...")]
         public bool EnableNestedMovieFolders = false;
