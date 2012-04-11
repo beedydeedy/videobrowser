@@ -15,6 +15,14 @@ namespace MediaBrowser.Library.Entities {
             return true;
         }
 
+        public override bool IsPlayable
+        {
+            get
+            {
+                return true;
+            }
+        }
+
         public bool IsPlaylistCapable()
         {
             Video us = this as Video;

@@ -80,7 +80,7 @@ namespace MediaBrowser.Library.Entities {
 
         public LibraryImage PrimaryImage {
             get {
-                if (this is Media || this is Folder || this is Person )
+                if (IsPlayable || this is Folder || this is Person )
                     return GetImage(PrimaryImagePath, true);
                 else
                     return GetImage(PrimaryImagePath);
@@ -328,6 +328,14 @@ namespace MediaBrowser.Library.Entities {
             {
                 //default baseItem has no series - return a valid blank item so MCML won't blow chow
                 return Series.BlankSeries;
+            }
+        }
+
+        public virtual bool IsPlayable
+        {
+            get
+            {
+                return false;
             }
         }
 

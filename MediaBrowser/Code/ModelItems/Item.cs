@@ -703,7 +703,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return baseItem is Media;
+                return baseItem.IsPlayable;
             }
         }
 

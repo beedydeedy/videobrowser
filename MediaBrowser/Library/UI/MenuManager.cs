@@ -33,7 +33,7 @@ namespace MediaBrowser.Library
 
         private string playText(Item item)
         {
-            if (item.BaseItem is Folder)
+            if (item.IsFolder)
                 return Kernel.Instance.StringData.GetString("PlayAllCMenu");
             else return Kernel.Instance.StringData.GetString("Playstr");
         }
