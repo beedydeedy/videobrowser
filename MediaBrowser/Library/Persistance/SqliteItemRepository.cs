@@ -340,6 +340,18 @@ namespace MediaBrowser.Library.Persistance {
 
         }
 
+        //cascade delete triggers
+        protected string triggerSQL =
+            @"CREATE TRIGGER if not exists delete_item
+                AFTER DELETE
+                ON items
+                FOR EACH ROW
+                BEGIN
+                    DELETE FROM children WHERE children.guid = old.id;
+                    DELETE FROM children WHERE children.child = old.id;
+                    DELETE FROM list_items WHERE list_items.guid = old.id;
+                END";
+
         // Display repo
         SQLiteDisplayRepository displayRepo;
         // Playstate repo
@@ -368,10 +380,9 @@ namespace MediaBrowser.Library.Persistance {
                                 "create index if not exists idx_list on list_items(guid, property)",
                                 "create unique index if not exists idx_list_constraint on list_items(guid, property, value)",
                                 "create table if not exists schema_version (table_name primary key, version)",
-                                //"create table if not exists recent_list(top_parent, child, date_added)",
-                                //"create index if not exists idx_recent on recent_list(top_parent, child)",
-                                //"attach database '"+playStateDBPath+"' as playstate_db",
-                                //"create table if not exists playstate_db.play_states (guid primary key, play_count, position_ticks, playlist_position, last_played)",
+                                //triggers
+                                triggerSQL,
+                                //pragmas
                                 "pragma temp_store = memory",
                                // @"create table display_prefs (guid primary key, view_type, show_labels, vertical_scroll 
                                //        sort_order, index_by, use_banner, thumb_constraint_width, thumb_constraint_height, use_coverflow, use_backdrop )" 
@@ -449,6 +460,8 @@ namespace MediaBrowser.Library.Persistance {
                 Directory.CreateDirectory(path);
             return path;
         }
+
+
 
         public void MigrateItems()
         {
@@ -1233,6 +1246,8 @@ namespace MediaBrowser.Library.Persistance {
 
         public bool ClearEntireCache() {
             lock (connection) {
+                //first drop our cascade delete triggers to speed this up
+                connection.Exec("drop trigger delete_item");
                 var tran = connection.BeginTransaction();
                 connection.Exec("delete from provider_data"); 
                 connection.Exec("delete from items");
@@ -1242,6 +1257,8 @@ namespace MediaBrowser.Library.Persistance {
                 // People will get annoyed if this is lost
                 // connection.Exec("delete from play_states");
                 tran.Commit(); 
+                //and put back the triggers
+                connection.Exec(triggerSQL);
                 connection.Exec("vacuum");
             }
 
