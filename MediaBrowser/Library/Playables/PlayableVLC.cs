@@ -130,7 +130,7 @@ namespace MediaBrowser.Library.Playables
 
                 _CurrentPlayingFile = fileNameNode.InnerText;
 
-                OnProgress(null, GetPlaybackState(PlayableItems));
+                OnProgress(null, GetPlaybackState(PlayableFiles));
             }
         }
 

@@ -28,7 +28,7 @@ namespace MediaBrowser.Library
         /// <summary>
         /// This holds the list of files that will be sent to the player.
         /// </summary>
-        protected List<string> PlayableItems = new List<string>();
+        protected List<string> PlayableFiles = new List<string>();
 
         public IPlaybackController PlaybackController { get; set; }
 
@@ -54,12 +54,12 @@ namespace MediaBrowser.Library
         #region AddMedia
         public void AddMedia(string file)
         {
-            PlayableItems.Add(file);
+            PlayableFiles.Add(file);
         }
 
         public void AddMedia(IEnumerable<string> files)
         {
-            PlayableItems.AddRange(files);
+            PlayableFiles.AddRange(files);
         }
 
         public void AddMedia(Media media)
@@ -71,6 +71,10 @@ namespace MediaBrowser.Library
         public virtual void AddMedia(IEnumerable<Media> mediaItems)
         {
             AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
+        }
+        public virtual void AddMedia(Folder folder)
+        {
+            AddMedia(folder.RecursiveMedia);
         }
         #endregion
 
@@ -89,6 +93,14 @@ namespace MediaBrowser.Library
         public virtual bool CanPlay(IEnumerable<Media> mediaList)
         {
             return false;
+        }
+
+        /// <summary>
+        /// Subclasses will have to override this if they want to be able to play a Folder
+        /// </summary>
+        public virtual bool CanPlay(Folder folder)
+        {
+            return CanPlay(folder.RecursiveMedia);
         }
 
         /// <summary>
@@ -112,16 +124,16 @@ namespace MediaBrowser.Library
         {
             this.Prepare(resume);
 
-            if (PlayableItems.Count() == 0)
+            if (PlayableFiles.Count() == 0)
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
 
-            Logger.ReportInfo("About to play : " + string.Join(",", PlayableItems.ToArray()));
+            Logger.ReportInfo("About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
-            SendFilesToPlayer(GetPlaybackArguments(PlayableItems, PlayState, resume));
+            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, PlayState, resume));
         }
 
         protected virtual void Prepare(bool resume)
@@ -252,16 +264,16 @@ namespace MediaBrowser.Library
         {
             Random rnd = new Random();
 
-            IEnumerable<string> newList = PlayableItems.OrderBy(i => rnd.Next());
+            IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next());
 
-            PlayableItems.Clear();
+            PlayableFiles.Clear();
 
             AddMedia(newList);
         }
 
         public bool CanBePlayedByController(IPlaybackController controller)
         {
-            return controller.CanPlay(PlayableItems);
+            return controller.CanPlay(PlayableFiles);
         }
     }
 

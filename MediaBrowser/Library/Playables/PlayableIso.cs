@@ -54,7 +54,7 @@ namespace MediaBrowser.Library.Playables
             }
             else
             {
-                return Helper.GetIsoFiles(PlayableItems.First())[0];
+                return Helper.GetIsoFiles(PlayableFiles.First())[0];
             }
 
         }

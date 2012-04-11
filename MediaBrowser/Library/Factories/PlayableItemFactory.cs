@@ -128,11 +128,6 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<string> paths)
         {
-            if (paths.Count() == 1)
-            {
-                return Create(paths.First());
-            }
-
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(paths))
@@ -153,14 +148,6 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
-            if (mediaList.Count() == 1)
-            {
-                return Create(mediaList.First());
-            }
-
-            // First filter out items that can't be queued in a playlist
-            mediaList = mediaList.Where(m => m.IsPlaylistCapable());
-
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(mediaList))
@@ -203,7 +190,21 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Folder folder)
         {
-            return Create(folder.RecursiveMedia);
+            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
+            {
+                if (type.Key.CanPlay(folder))
+                {
+                    PlayableItem playable = InstantiatePlayableItem(type);
+                    playable.AddMedia(folder);
+                    return playable;
+                }
+            }
+
+            // Return default
+            PlayableItem defaultPlayableItem = new PlayableMultiMediaVideo();
+            AttachPlaybackController(defaultPlayableItem);
+            defaultPlayableItem.AddMedia(folder);
+            return defaultPlayableItem;
         }
 
         private PlayableItem GetDefaultPlayableItem()

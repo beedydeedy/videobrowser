@@ -117,7 +117,7 @@ namespace MediaBrowser.Library.Playables
             Application.CurrentInstance.StopAllPlayback();
 
             // Create a playlist if needed
-            if (PlayableItems.Count() > 1 && !ExternalPlayerConfiguration.SupportsMultiFileCommandArguments && ExternalPlayerConfiguration.SupportsPlaylists)
+            if (PlayableFiles.Count() > 1 && !ExternalPlayerConfiguration.SupportsMultiFileCommandArguments && ExternalPlayerConfiguration.SupportsPlaylists)
             {
                 PlaylistFile = CreatePlaylist(resume);
             }
@@ -191,7 +191,7 @@ namespace MediaBrowser.Library.Playables
         protected void OnExternalPlayerClosed()
         {
             // Just use base method
-            OnPlaybackFinished(null, GetPlaybackState(PlayableItems));
+            OnPlaybackFinished(null, GetPlaybackState(PlayableFiles));
             
             Logging.Logger.ReportVerbose("Calling RunPostPlayProcesses...");
             Application.CurrentInstance.RunPostPlayProcesses();
@@ -218,9 +218,10 @@ namespace MediaBrowser.Library.Playables
 
         private IEnumerable<string> GetFilesToSendToPlayer(bool resume)
         {
+            // If playback is based off a single Media object
             if (PlayableMediaItems.Count == 0)
             {
-                return GetFilesToSendToPlayer(Media, PlayState, PlayableItems, resume);
+                return GetFilesToSendToPlayer(Media, PlayState, PlayableFiles, resume);
             }
 
             List<string> files = new List<string>();
@@ -376,7 +377,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         private void UpdateProgressForMultipleMediaItems(PlaybackStateEventArgs state)
         {
-            string currentFile = PlayableItems.ElementAt(state.PlaylistPosition);
+            string currentFile = PlayableFiles.ElementAt(state.PlaylistPosition);
 
             int foundIndex = -1;
 

@@ -17,18 +17,28 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected List<Media> PlayableMediaItems = new List<Media>();
 
+        /// <summary>
+        /// If playback is folder-based this will hold a reference to the original Folder object
+        /// </summary>
+        protected Folder Folder { get; set; }
+
         public override void AddMedia(IEnumerable<Media> mediaItems)
         {
-            // Keep it simple and don't use PlayableMediaItems if there's only one
-            if (mediaItems.Count() == 1)
+            if (mediaItems.Count() > 1)
             {
-                AddMedia(mediaItems.First());
+                // First filter out items that can't be queued in a playlist
+                mediaItems = mediaItems.Where(m => m.IsPlaylistCapable());
             }
-            else
-            {
-                PlayableMediaItems.AddRange(mediaItems);
-                base.AddMedia(mediaItems);
-            }
+
+            PlayableMediaItems.AddRange(mediaItems);
+            base.AddMedia(mediaItems);
+        }
+
+        public override void AddMedia(Folder folder)
+        {
+            base.AddMedia(folder);
+
+            Folder = folder;
         }
 
         /// <summary>
