@@ -263,7 +263,7 @@ namespace Configurator
             if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
             {
                 lblTipsHeader.Content = "MPC-HC Tips:";
-                txtTips.Text = "Please enable the following settings in MPC-HC: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward when only one item in playlist\". You will also need to map \"MEDIA_STOP\" to the \"exit\" command.";
+                txtTips.Text = "Enable the following settings: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward\". Also map \"MEDIA_STOP\" to the \"exit\" command.";
             }
             else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
             {

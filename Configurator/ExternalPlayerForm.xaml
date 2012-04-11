@@ -32,7 +32,7 @@
                 <TextBlock Width="250" TextWrapping="Wrap">Select the media types supported by the player. Selecting ISO will allow ISO's to be passed directly to the player without having to mount it first, but be sure your player supports that. Currently MPC and VLC are known to support this.</TextBlock>
             </ListBox.ToolTip>
         </ListBox>
-        <TextBlock Name="lblSelectMediaTypes" Margin="26,305,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <TextBlock Name="lblSelectMediaTypes" Margin="26,310,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
             Select
             <Hyperlink Name="lnkSelectAllMediaTypes">All</Hyperlink>
             <Hyperlink Name="lnkSelectNoneMediaTypes">None</Hyperlink>
@@ -48,7 +48,7 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock Name="lblSelectVideoFormats" Margin="196,305,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <TextBlock Name="lblSelectVideoFormats" Margin="196,310,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
             Select
             <Hyperlink Name="lnkSelectAllVideoFormats">All</Hyperlink>
             <Hyperlink Name="lnkSelectNoneVideoFormats">None</Hyperlink>
@@ -66,9 +66,9 @@
             </CheckBox.ToolTip>
         </CheckBox>
 
-        <Label Name="lblTipsHeader" Margin="20,325,0,0" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Left">Tips:</Label>
+        <Label Name="lblTipsHeader" Margin="20,335,0,0" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Left">Tips:</Label>
 
-        <TextBlock Name="txtTips" Margin="25,350,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="405" TextWrapping="Wrap">Tips will go here</TextBlock>
+        <TextBlock Name="txtTips" Margin="25,360,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="405" TextWrapping="Wrap">Tips will go here</TextBlock>
         <TextBlock Name="lbConfigureMyPlayer" Margin="25,415,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
             <Hyperlink Name="lnkConfigureMyPlayer">Configure my player</Hyperlink>
         </TextBlock>
