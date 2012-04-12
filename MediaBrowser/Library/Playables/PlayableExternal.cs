@@ -141,7 +141,7 @@ namespace MediaBrowser.Library.Playables
         // Launch the external player using the command line
         private void PlayUsingCommandLine(PlaybackArguments args)
         {
-            string commandArgs = GetCommandArguments(args.Resume);
+            string commandArgs = GetCommandArguments(args);
 
             Logging.Logger.ReportInfo("Starting command line " + ExternalPlayerConfiguration.Command + " " + commandArgs);
 
@@ -202,7 +202,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected void PlayUsingWMCNavigation(PlaybackArguments args)
         {
-            string commandArgs = GetCommandArguments(args.Resume);
+            string commandArgs = GetCommandArguments(args);
 
             string url = ExternalPlayerConfiguration.Command;
 
@@ -218,17 +218,19 @@ namespace MediaBrowser.Library.Playables
 
         private IEnumerable<string> GetFilesToSendToPlayer(bool resume)
         {
-            // If playback is based off a single Media object
-            if (PlayableMediaItems.Count == 0)
+            // If playback is based off a path
+            if (PlayableMediaItems.Count() == 0)
             {
-                return GetFilesToSendToPlayer(Media, PlayState, PlayableFiles, resume);
+                return GetFilesToSendToPlayer(null, PlayableFiles, resume);
             }
 
             List<string> files = new List<string>();
 
-            for (int i = 0; i < PlayableMediaItems.Count; i++)
+            for (int i = 0; i < PlayableMediaItems.Count(); i++)
             {
-                files.AddRange(GetFilesToSendToPlayer(PlayableMediaItems[i], PlayableMediaItems[i].PlaybackStatus, PlayableMediaItems[i].Files, resume));
+                Media media = PlayableMediaItems.ElementAt(i);
+
+                files.AddRange(GetFilesToSendToPlayer(media, media.Files, resume));
 
                 // Only allow resume on first Media object
                 resume = false;
@@ -238,13 +240,20 @@ namespace MediaBrowser.Library.Playables
 
         }
 
-        protected virtual IEnumerable<string> GetFilesToSendToPlayer(Media media, PlaybackStatus playstate, IEnumerable<string> files, bool resume)
+        protected virtual IEnumerable<string> GetFilesToSendToPlayer(Media media, IEnumerable<string> files, bool resume)
         {
             Video video = media as Video;
 
             if (video != null && video.MediaType == MediaType.ISO && video.MediaLocation is IFolderMediaLocation)
             {
                 files = Helper.GetIsoFiles(video.Path);
+            }
+
+            PlaybackStatus playstate = null;
+
+            if (media != null)
+            {
+                playstate = media.PlaybackStatus;
             }
 
             return resume && playstate != null ? files.Skip(playstate.PlaylistPosition) : files;
@@ -280,7 +289,7 @@ namespace MediaBrowser.Library.Playables
         protected override void OnProgress(object sender, PlaybackStateEventArgs e)
         {
             // Just use base method if multiple media items are not involved
-            if (PlayableMediaItems.Count == 0)
+            if (PlayableMediaItems.Count() < 2)
             {
                 base.OnProgress(sender, e);
             }
@@ -318,18 +327,18 @@ namespace MediaBrowser.Library.Playables
             return playListFile;
         }
 
-        private string GetCommandArguments(bool resume)
+        private string GetCommandArguments(PlaybackArguments playInfo)
         {
-            List<string> argsList = GetCommandArgumentsList(resume);
+            List<string> argsList = GetCommandArgumentsList(playInfo);
 
             string args = string.Join(" ", argsList.ToArray());
 
-            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(resume)));
+            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(playInfo.Resume)));
 
             return args;
         }
 
-        protected virtual List<string> GetCommandArgumentsList(bool resume)
+        protected virtual List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
         {
             List<string> args = new List<string>();
 
@@ -354,22 +363,6 @@ namespace MediaBrowser.Library.Playables
             filesToPlay = filesToPlay = filesToPlay.Select(i => "\"" + i + "\"");
 
             return string.Join(" ", filesToPlay.ToArray());
-        }
-
-        protected override void MarkWatched()
-        {
-            // If multiple Media objects are involved then update them all individually
-            if (PlayableMediaItems.Count > 0)
-            {
-                foreach (Media media in PlayableMediaItems)
-                {
-                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, PlaybackStartTime);
-                }
-            }
-            else
-            {
-                base.MarkWatched();
-            }
         }
 
         /// <summary>

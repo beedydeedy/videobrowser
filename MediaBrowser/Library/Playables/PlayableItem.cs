@@ -20,10 +20,16 @@ namespace MediaBrowser.Library
         /// </summary>
         protected Guid PlayableItemId = Guid.NewGuid();
 
+        private List<Media> _PlayableMediaItems = new List<Media>();
         /// <summary>
-        /// The current Media object. Will be null if this playable was created to play a file path
+        /// This holds the list of Media objects from which PlayableItems will be created.
         /// </summary>
-        protected Media Media { get; private set; }
+        protected List<Media> PlayableMediaItems { get { return _PlayableMediaItems; } }
+
+        /// <summary>
+        /// If Playback is Folder Based this will hold a reference to the Folder object
+        /// </summary>
+        protected Folder Folder { get; private set; }
 
         /// <summary>
         /// This holds the list of files that will be sent to the player.
@@ -33,8 +39,6 @@ namespace MediaBrowser.Library
         public IPlaybackController PlaybackController { get; set; }
 
         public bool QueueItem { get; set; }
-
-        public PlaybackStatus PlayState { get; set; }
 
         /// <summary>
         /// If true, the PlayableItems will be shuffled before playback
@@ -65,16 +69,23 @@ namespace MediaBrowser.Library
         public void AddMedia(Media media)
         {
             AddMedia(media.Files);
-            Media = media;
-            PlayState = media.PlaybackStatus;
+            _PlayableMediaItems = new Media[] { media }.ToList();
         }
         public virtual void AddMedia(IEnumerable<Media> mediaItems)
         {
+            if (mediaItems.Count() > 1)
+            {
+                // First filter out items that can't be queued in a playlist
+                mediaItems = mediaItems.Where(m => m.IsPlaylistCapable());
+            } 
+            
+            _PlayableMediaItems = mediaItems.ToList();
             AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
         }
         public virtual void AddMedia(Folder folder)
         {
             AddMedia(folder.RecursiveMedia);
+            Folder = folder;
         }
         #endregion
 
@@ -133,7 +144,15 @@ namespace MediaBrowser.Library
 
             Logger.ReportInfo("About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
-            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, PlayState, resume));
+            Media media = PlayableMediaItems.FirstOrDefault();
+            PlaybackStatus playstate = null;
+
+            if (media != null)
+            {
+                playstate = media.PlaybackStatus;
+            }
+
+            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, playstate, resume));
         }
 
         protected virtual void Prepare(bool resume)
@@ -158,7 +177,7 @@ namespace MediaBrowser.Library
             }
 
             // Optimization for items that don't have PlayState
-            if (PlayState != null)
+            if (PlayableMediaItems.Count() > 0)
             {
                 PlaybackController.Progress += OnProgress;
                 PlaybackController.PlaybackFinished += OnPlaybackFinished;
@@ -199,9 +218,11 @@ namespace MediaBrowser.Library
                 return;
             }
 
-            if (PlayState != null)
+            Media media = PlayableMediaItems.FirstOrDefault();
+
+            if (media != null)
             {
-                Application.CurrentInstance.UpdatePlayState(Media, PlayState, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);
 
                 HasUpdatedPlayState = true;
             }
@@ -218,7 +239,7 @@ namespace MediaBrowser.Library
             {
                 OnProgress(sender, e);
             }
-           
+
             if (IsPlaybackEventOnCurrentInstance(e))
             {
                 // If we haven't been able to update position, at least mark it watched
@@ -235,11 +256,15 @@ namespace MediaBrowser.Library
             UpdateResumeStatusInUI();
         }
 
-        protected virtual void UpdateResumeStatusInUI()
+        protected void UpdateResumeStatusInUI()
         {
-            if (Media != null && Media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+            foreach (Media media in PlayableMediaItems)
             {
-                Application.CurrentInstance.CurrentItem.UpdateResume();
+                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+                {
+                    Application.CurrentInstance.CurrentItem.UpdateResume();
+                    break;
+                }
             }
         }
 
@@ -253,10 +278,10 @@ namespace MediaBrowser.Library
 
         protected virtual void MarkWatched()
         {
-            if (PlayState != null)
+            foreach (Media media in PlayableMediaItems)
             {
-                Logger.ReportVerbose("Marking watched");
-                Application.CurrentInstance.UpdatePlayState(Media, PlayState, 0, 0, null, PlaybackStartTime);
+                Logger.ReportVerbose("Marking watched: " + media.Name);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, PlaybackStartTime);
             }
         }
 
@@ -264,11 +289,23 @@ namespace MediaBrowser.Library
         {
             Random rnd = new Random();
 
-            IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next());
+            if (PlayableMediaItems.Count > 0)
+            {
+                IEnumerable<Media> newList = PlayableMediaItems.OrderBy(i => rnd.Next());
 
-            PlayableFiles.Clear();
+                PlayableMediaItems.Clear();
+                PlayableFiles.Clear();
 
-            AddMedia(newList);
+                AddMedia(newList);
+            }
+            else
+            {
+                IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next());
+
+                PlayableFiles.Clear();
+
+                AddMedia(newList);
+            }
         }
 
         public bool CanBePlayedByController(IPlaybackController controller)

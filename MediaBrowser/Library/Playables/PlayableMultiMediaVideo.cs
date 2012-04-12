@@ -13,44 +13,15 @@ namespace MediaBrowser.Library.Playables
     public class PlayableMultiMediaVideo : PlayableItem
     {
         /// <summary>
-        /// This holds the list of Media objects from which PlayableItems will be created.
-        /// </summary>
-        protected List<Media> PlayableMediaItems = new List<Media>();
-
-        /// <summary>
-        /// If playback is folder-based this will hold a reference to the original Folder object
-        /// </summary>
-        protected Folder Folder { get; set; }
-
-        public override void AddMedia(IEnumerable<Media> mediaItems)
-        {
-            if (mediaItems.Count() > 1)
-            {
-                // First filter out items that can't be queued in a playlist
-                mediaItems = mediaItems.Where(m => m.IsPlaylistCapable());
-            }
-
-            PlayableMediaItems.AddRange(mediaItems);
-            base.AddMedia(mediaItems);
-        }
-
-        public override void AddMedia(Folder folder)
-        {
-            base.AddMedia(folder);
-
-            Folder = folder;
-        }
-
-        /// <summary>
         /// Creates a list of PlayableItems that use PlaybackController, and thus, the internal player
         /// </summary>
         private IEnumerable<PlayableItem> CreatePlayableItemsFromInternalPlayer()
         {
             List<PlayableItem> playables = new List<PlayableItem>();
 
-            for (int i = 0; i < PlayableMediaItems.Count; i++)
+            for (int i = 0; i < PlayableMediaItems.Count(); i++)
             {
-                PlayableItem playable = PlayableItemFactory.Instance.Create(PlayableMediaItems[i], false);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(PlayableMediaItems.ElementAt(i), false);
 
                 // Each one after the first will be queued
                 playable.QueueItem = i == 0 ? QueueItem : true;
@@ -77,17 +48,6 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        protected override void ShufflePlayableItems()
-        {
-            Random rnd = new Random();
-
-            IEnumerable<Media> newList = PlayableMediaItems.OrderBy(i => rnd.Next());
-
-            PlayableMediaItems.Clear();
-
-            AddMedia(newList);
-        }
-
         /// <summary>
         /// We can play a list of Media provided they're all video
         /// </summary>
@@ -102,20 +62,6 @@ namespace MediaBrowser.Library.Playables
             }
 
             return true;
-        }
-
-        protected override void UpdateResumeStatusInUI()
-        {
-            base.UpdateResumeStatusInUI();
-
-            foreach (Media media in PlayableMediaItems)
-            {
-                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
-                {
-                    Application.CurrentInstance.CurrentItem.UpdateResume();
-                    break;
-                }
-            }
         }
     }
 }

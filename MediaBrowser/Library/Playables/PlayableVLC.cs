@@ -27,14 +27,14 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(bool resume)
+        protected override List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
         {
             List<string> args = new List<string>();
 
             args.Add("{0}");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInSeconds = resume ? new TimeSpan(PlayState.PositionTicks).TotalSeconds : 0;
+            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.PositionTicks).TotalSeconds : 0;
 
             args.Add("--start-time=" + startTimeInSeconds);
 

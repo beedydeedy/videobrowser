@@ -20,7 +20,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(bool resume)
+        protected override List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
         {
             List<string> args = new List<string>();
 
@@ -30,17 +30,17 @@ namespace MediaBrowser.Library.Playables
             args.Add("/fullscreen");
             
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInMs = resume ? new TimeSpan(PlayState.PositionTicks).TotalMilliseconds : 0;
+            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.PositionTicks).TotalMilliseconds : 0;
 
             args.Add("/start " + startTimeInMs);
 
             return args;
         }
 
-        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, PlaybackStatus playstate, IEnumerable<string> files, bool resume)
+        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, IEnumerable<string> files, bool resume)
         {
             // For folder-based playback, such as dvd, mpc doesn't like trailing slashes
-            return base.GetFilesToSendToPlayer(media, playstate, files, resume).Select(i => i.TrimEnd('\\'));
+            return base.GetFilesToSendToPlayer(media, files, resume).Select(i => i.TrimEnd('\\'));
         }
 
         /// <summary>

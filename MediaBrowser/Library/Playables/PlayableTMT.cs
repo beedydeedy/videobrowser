@@ -39,7 +39,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(bool resume)
+        protected override List<string> GetCommandArgumentsList(PlaybackArguments playbackInfo)
         {
             List<string> args = new List<string>();
 

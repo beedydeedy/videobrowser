@@ -27,26 +27,26 @@ namespace MediaBrowser.Library.Playables
 
         protected virtual PlayableItem CreatePlayableItemFromMountedPath(string mountedPath)
         {
-            if (Media == null)
+            Video video = PlayableMediaItems.FirstOrDefault() as Video;
+
+            if (video == null)
             {
                 return PlayableItemFactory.Instance.Create(mountedPath);
             }
             else
             {
-                Media.Path = mountedPath;
-
-                Video video = Media as Video;
+                video.Path = mountedPath;
 
                 video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
-                Media.DisplayMediaType = video.MediaType.ToString();
+                video.DisplayMediaType = video.MediaType.ToString();
 
-                return PlayableItemFactory.Instance.Create(Media);
+                return PlayableItemFactory.Instance.Create(video);
             }
         }
 
         private string GetIsoPath()
         {
-            Video video = Media as Video;
+            Video video = PlayableMediaItems.FirstOrDefault() as Video;
 
             if (video != null && video.MediaLocation is IFolderMediaLocation)
             {
