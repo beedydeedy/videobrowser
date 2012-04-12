@@ -128,6 +128,12 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<string> paths)
         {
+            // Keep it simple if we can
+            if (paths.Count() < 2)
+            {
+                return Create(paths.FirstOrDefault());
+            }
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(paths))
@@ -148,6 +154,12 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
+            // Keep it simple if we can
+            if (mediaList.Count() < 2)
+            {
+                return Create(mediaList.FirstOrDefault());
+            }
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(mediaList))
