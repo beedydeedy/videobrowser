@@ -1445,13 +1445,13 @@ namespace MediaBrowser
 
         internal void PlaySecure(PlayableItem playable, bool intros)
         {
-            IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
-            BaseItem originalBaseItem = playable.PrimaryBaseItem;
-            Item originalItem = ItemFactory.Instance.Create(originalBaseItem);
-
             //put this on a thread so that we can run it sychronously, but not tie up the UI
             MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
             {
+                IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
+                BaseItem originalBaseItem = playable.PrimaryBaseItem;
+                Item originalItem = ItemFactory.Instance.Create(originalBaseItem);
+
                 // Run all pre-play processes
                 if (!RunPrePlayProcesses(originalItem, intros))
                 {
