@@ -357,7 +357,6 @@ namespace MediaBrowser
                 // Fire the OnFinished event for each item
                 OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
 
-                Logger.ReportVerbose("Calling RunPostPlayProcesses...");
                 Application.CurrentInstance.RunPostPlayProcesses();
 
                 //we're done - call post-processor

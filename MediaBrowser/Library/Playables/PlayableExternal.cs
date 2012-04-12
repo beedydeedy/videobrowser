@@ -193,7 +193,6 @@ namespace MediaBrowser.Library.Playables
             // Just use base method
             OnPlaybackFinished(null, GetPlaybackState(PlayableFiles));
             
-            Logging.Logger.ReportVerbose("Calling RunPostPlayProcesses...");
             Application.CurrentInstance.RunPostPlayProcesses();
         }
 
