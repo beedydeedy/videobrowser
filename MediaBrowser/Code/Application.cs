@@ -1307,18 +1307,29 @@ namespace MediaBrowser
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => session.GoToPage(page, properties));
         }
 
+        /// <summary>
+        /// Takes an item and plays all items within the same folder, starting with the supplied Item
+        /// </summary>
         public void PlayFolderBeginningWithItem(Item item)
         {
-            FolderModel folder = item.PhysicalParent;
+            Folder folder = item.PhysicalParent.BaseItem as Folder;
 
-            Play(folder, false, false, true, false, item.BaseItem);
+            IEnumerable<BaseItem> items = folder.RecursiveMedia.SkipWhile(v => v.Id != item.Id).Select(v => v as BaseItem);
+            Play(items, false, false, false, false);
+
         }
 
+        /// <summary>
+        /// Plays an item while shuffling it's contents
+        /// </summary>
         public void Shuffle(Item item)
         {
-            Play(item, false, false, true, true, null);
+            Play(item, false, false, true, true);
         }
 
+        /// <summary>
+        /// Plays the first unwatched item within a Folder
+        /// </summary>
         public void Unwatched(Item item)
         {
             Folder folder = item.BaseItem as Folder;
@@ -1329,19 +1340,29 @@ namespace MediaBrowser
             {
                 Item unwatchedItem = (item as FolderModel).Children.Where(v => v.BaseItem == firstUnwatched).FirstOrDefault();
 
-                Play(unwatchedItem, false, false, true, false, null);
+                Play(unwatchedItem, false, false, true, false);
             }
         }
 
+        /// <summary>
+        /// Queues an item for playback
+        /// </summary>
         public void AddToQueue(Item item)
         {
             Play(item, true);
         }
+
+        /// <summary>
+        /// Plays an Item
+        /// </summary>
         public void Play(Item item)
         {
             Play(item, false);
         }
 
+        /// <summary>
+        /// Plays all trailers for an Item
+        /// </summary>
         public void PlayLocalTrailer(Item item)
         {
             var movie = item.BaseItem as Movie;
@@ -1349,59 +1370,133 @@ namespace MediaBrowser
             {
                 var trailerFiles = movie.TrailerFiles.ToArray();
 
-                PlayableItemFactory.Instance.Create(trailerFiles).Play(false);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(trailerFiles);
+
+                Play(playable, false);
             }
         }
 
+        /// <summary>
+        /// Plays an Item
+        /// </summary>
+        /// <param name="queue">Whether the item should be queued</param>
         public void Play(Item item, bool queue)
         {
-            Play(item, queue, true);
+            Play(item, false, queue, true, false);
         }
 
-        public void Play(Item item, bool queue, bool intros)
+        public void Play(Item item, bool resume, bool queue, bool intros, bool shuffle)
         {
-            Play(item, false, queue, intros, false, null);
-        }
-
-        private void Play(Item item, bool resume, bool queue, bool intros, bool shuffle, BaseItem startFrom)
-        {
-            if (item.IsPlayable || item.IsFolder)
+            if (item.IsFolder)
             {
-                currentPlaybackController = item.PlaybackController;
+                Folder folder = item.BaseItem as Folder;
 
-                if (queue)
+                Play(folder, resume, queue, intros, shuffle);
+            }
+
+            else if (item.IsPlayable)
+            {
+                Play(new BaseItem[] { item.BaseItem }, resume, queue, intros, shuffle);
+            }
+        }
+
+        /// <summary>
+        /// Resumes an Item
+        /// </summary>
+        public void Resume(Item item)
+        {
+            Play(item, true, false, false, false);
+        }
+
+        public void Play(Folder folder, bool resume, bool queue, bool intros, bool shuffle)
+        {
+            PlayableItem playable = PlayableItemFactory.Instance.Create(folder);
+        
+            playable.QueueItem = queue;
+            playable.Shuffle = shuffle;
+            playable.Resume = resume;
+
+            Play(playable, intros);
+        }
+
+        public void Play(IEnumerable<BaseItem> items, bool resume, bool queue, bool intros, bool shuffle)
+        {
+            PlayableItem playable = PlayableItemFactory.Instance.Create(items.Select(i => i as Media));
+           
+            playable.QueueItem = queue;
+            playable.Shuffle = shuffle;
+            playable.Resume = resume;
+          
+            Play(playable, intros);
+        }
+
+        public void Play(PlayableItem playable, bool intros)
+        {
+            if (Config.Instance.ParentalControlEnabled && !playable.ParentalAllowed)
+            {
+                Application.CurrentInstance.DisplayPopupPlay = false; //PIN screen mucks with turning this off
+                Kernel.Instance.ParentalControls.PlayProtected(playable, intros);
+            }
+            else
+            {
+                PlaySecure(playable, intros);
+            }
+        }
+
+        internal void PlaySecure(PlayableItem playable, bool intros)
+        {
+            IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
+            BaseItem originalBaseItem = playable.PrimaryBaseItem;
+            Item originalItem = ItemFactory.Instance.Create(originalBaseItem);
+
+            //put this on a thread so that we can run it sychronously, but not tie up the UI
+            MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
+            {
+                // Run all pre-play processes
+                if (!RunPrePlayProcesses(originalItem, intros))
                 {
-                    item.Queue();
+                    // Abort playback if one of them returns false
+                    return;
                 }
-                else
+
+                if (!playable.QueueItem)
                 {
+                    if (originalItem != null && PlaybackController != playable.PlaybackController && playable.PlaybackController.RequiresExternalPage)
+                    {
+                        OpenExternalPlaybackPage(originalItem);
+                    }
+
                     //async this so it doesn't slow us down if the service isn't responding for some reason
                     MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
                     {
                         MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
                     });
-                    //put this on a thread so that we can run it sychronously, but not tie up the UI
-                    MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
-                    {
-                        if (Application.CurrentInstance.RunPrePlayProcesses(item, intros))
-                        {
-                            item.Play(resume, queue, shuffle, startFrom);
-
-                            this.lastPlayed = item;
-                        }
-                    });
                 }
-            }
-        }
 
-        public void Resume(Item item)
-        {
-            Play(item, true, false, false, false, null);
+                currentPlaybackController = playable.PlaybackController;
+
+                playable.Play();
+
+                // Add each item to the newly watched list
+                foreach (BaseItem baseItem in itemsToPlay)
+                {
+                    Logger.ReportVerbose("Adding newly watched for: " + baseItem.Name);
+                    ItemFactory.Instance.Create(baseItem).AddNewlyWatched();
+                }
+
+                // Set last played if not null, which could happen if playback is path-based (e.g. trailers)
+                if (originalItem != null)
+                {
+                    Logger.ReportVerbose("Setting last played to: " + originalItem.Name);
+                    this.lastPlayed = originalItem;
+                }
+            });
         }
 
         public bool RunPrePlayProcesses(Item item, bool intros)
         {
-            //Logger.ReportInfo("Running pre-play processes");
+            Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+
             foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
             {
                 if (!process(item, intros)) return false;

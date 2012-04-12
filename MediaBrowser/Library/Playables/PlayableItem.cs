@@ -29,7 +29,7 @@ namespace MediaBrowser.Library
         /// <summary>
         /// If Playback is Folder Based this will hold a reference to the Folder object
         /// </summary>
-        protected Folder Folder { get; private set; }
+        public Folder Folder { get; private set; }
 
         /// <summary>
         /// This holds the list of files that will be sent to the player.
@@ -46,6 +46,11 @@ namespace MediaBrowser.Library
         public bool Shuffle { get; set; }
 
         /// <summary>
+        /// If true, Playback will be resumed from the last known position
+        /// </summary>
+        public bool Resume { get; set; }
+
+        /// <summary>
         /// Holds the time that playback was started
         /// </summary>
         protected DateTime PlaybackStartTime { get; private set; }
@@ -54,6 +59,78 @@ namespace MediaBrowser.Library
         /// If we're not able to track playstate at all, we'll at least mark watched once playback stops
         /// </summary>
         protected bool HasUpdatedPlayState { get; set; }
+
+        /// <summary>
+        /// Gets all Media objects that will be played by this item
+        /// </summary>
+        public IEnumerable<Media> GetPlayableMediaItems()
+        {
+            return PlayableMediaItems.Select(m => m);
+        }
+
+        /// <summary>
+        /// Gets the name of this item that can be used for display or logging purposes
+        /// </summary>
+        public string Name
+        {
+            get
+            {
+                BaseItem item = PrimaryBaseItem;
+
+                if (item == null)
+                {
+                    return PlayableFiles.FirstOrDefault();
+                }
+
+                return item.Name;
+            }
+        }
+
+        /// <summary>
+        /// Gets the primary BaseItem object that was passed into AddMedia
+        /// If playback is folder-based, this will return the Folder
+        /// Otherwise it will return the Media object (or null if playback is path-based).
+        /// </summary>
+        public BaseItem PrimaryBaseItem
+        {
+            get
+            {
+                // If playback is folder-based, return the Folder
+                if (Folder != null)
+                {
+                    return Folder;
+                }
+
+                // Return the first item
+                return PlayableMediaItems.FirstOrDefault();
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not this item is restricted by parental controls
+        /// </summary>
+        public bool ParentalAllowed
+        {
+            get
+            {
+                BaseItem item = PrimaryBaseItem;
+
+                return item == null ? true : item.ParentalAllowed;
+            }
+        }
+
+        /// <summary>
+        /// Gets the parental control pin that would need to be entered in order to play the item
+        /// </summary>
+        public string ParentalControlPin
+        {
+            get
+            {
+                BaseItem item = PrimaryBaseItem;
+
+                return item == null ? string.Empty : item.CustomPIN;                
+            }
+        }
 
         #region AddMedia
         public void AddMedia(string file)
@@ -77,8 +154,8 @@ namespace MediaBrowser.Library
             {
                 // First filter out items that can't be queued in a playlist
                 mediaItems = mediaItems.Where(m => m.IsPlaylistCapable());
-            } 
-            
+            }
+
             _PlayableMediaItems = mediaItems.ToList();
             AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
         }
@@ -131,9 +208,9 @@ namespace MediaBrowser.Library
         }
         #endregion
 
-        public void Play(bool resume)
+        internal void Play()
         {
-            this.Prepare(resume);
+            this.Prepare();
 
             if (PlayableFiles.Count() == 0)
             {
@@ -142,7 +219,7 @@ namespace MediaBrowser.Library
                 return;
             }
 
-            Logger.ReportInfo("About to play : " + string.Join(",", PlayableFiles.ToArray()));
+            Logger.ReportInfo(GetType().Name +  " About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
             Media media = PlayableMediaItems.FirstOrDefault();
             PlaybackStatus playstate = null;
@@ -152,10 +229,10 @@ namespace MediaBrowser.Library
                 playstate = media.PlaybackStatus;
             }
 
-            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, playstate, resume));
+            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, playstate));
         }
 
-        protected virtual void Prepare(bool resume)
+        protected virtual void Prepare()
         {
             if (Shuffle)
             {
@@ -187,7 +264,7 @@ namespace MediaBrowser.Library
         /// <summary>
         /// Generates an arguments object to send to the PlaybackController
         /// </summary>
-        private PlaybackArguments GetPlaybackArguments(IEnumerable<string> files, PlaybackStatus playstate, bool resume)
+        private PlaybackArguments GetPlaybackArguments(IEnumerable<string> files, PlaybackStatus playstate)
         {
             PlaybackArguments info = new PlaybackArguments();
 
@@ -200,7 +277,7 @@ namespace MediaBrowser.Library
             }
 
             info.GoFullScreen = true;
-            info.Resume = resume;
+            info.Resume = Resume;
             info.PlayableItemId = PlayableItemId;
 
             return info;

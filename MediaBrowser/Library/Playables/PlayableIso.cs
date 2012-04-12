@@ -11,9 +11,9 @@ namespace MediaBrowser.Library.Playables
     {
         PlayableItem playableExternal = null;
 
-        protected override void Prepare(bool resume)
+        protected override void Prepare()
         {
-            base.Prepare(resume);
+            base.Prepare();
 
             string isoPath = GetIsoPath();
             string mountedPath = Application.CurrentInstance.MountISO(isoPath);
@@ -22,6 +22,7 @@ namespace MediaBrowser.Library.Playables
             if (!Config.Instance.UseAutoPlayForIso)
             {
                 playableExternal = CreatePlayableItemFromMountedPath(mountedPath);
+                playableExternal.Resume = Resume;
             }
         }
 
@@ -81,7 +82,7 @@ namespace MediaBrowser.Library.Playables
         {
             if (!Config.Instance.UseAutoPlayForIso)
             {
-                playableExternal.Play(args.Resume);
+                playableExternal.Play();
             }
         }
     }

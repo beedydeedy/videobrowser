@@ -46,7 +46,6 @@ namespace MediaBrowser.Library
         object loadMetadatLock = new object();
         protected object watchLock = new object();
 
-        PlayableItem playable;
         private PlaybackStatus playstate;
         protected BaseItem baseItem;
 
@@ -357,49 +356,24 @@ namespace MediaBrowser.Library
             }
         }
 
-        public void Play(bool resume, bool queue, bool shuffle, BaseItem startFrom)
+        public void Play(bool resume, bool queue)
         {
-            if (this.IsPlayable || this.IsFolder)
+            if (resume)
             {
-                if (Config.Instance.ParentalControlEnabled && !this.ParentalAllowed)
-                {
-                    Application.CurrentInstance.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.PlayProtected(this, resume, queue, shuffle, startFrom);
-                }
-                else PlaySecure(resume, queue, shuffle, startFrom);
+                Application.CurrentInstance.Resume(this);
+            }
+            else
+            {
+                Application.CurrentInstance.Play(this, queue);
             }
         }
 
-        public void PlaySecure(bool resume, bool queue, bool shuffle, BaseItem startFrom)
+        public void AddNewlyWatched()
         {
-            try
+            if (!this.IsFolder && this.TopParent != null)
             {
-                if (this.IsPlayable || this.IsFolder)
-                {
-                    if (IsFolder && startFrom != null)
-                    {
-                        lock (this)
-                        {
-                            IEnumerable<Media> items = (BaseItem as Folder).RecursiveMedia.SkipWhile(v => v.Id != startFrom.Id);
-                            playable = PlayableItemFactory.Instance.Create(items);
-                        }
-                    }
-
-                    if (PlayableItem.PlaybackController != Application.CurrentInstance.PlaybackController && PlayableItem.PlaybackController.RequiresExternalPage)
-                    {
-                        Application.CurrentInstance.OpenExternalPlaybackPage(this);
-                    }
-                    this.PlayableItem.QueueItem = queue;
-                    this.PlayableItem.Shuffle = shuffle;
-                    this.PlayableItem.Play(resume);
-                    if (!this.IsFolder && this.TopParent != null) this.TopParent.AddNewlyWatched(this); //add to watched list if not a whole folder
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.ReportException("Error playing item " + this.Name, e);
-                MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-                ev.Dialog(Application.CurrentInstance.StringData("ContentErrorDial") + "\n" + baseItem.Path, Application.CurrentInstance.StringData("ContentErrorCapDial"), DialogButtons.Ok, 60, true);
+                //add to watched list if not a whole folder
+                this.TopParent.AddNewlyWatched(this);
             }
         }
 
@@ -411,13 +385,13 @@ namespace MediaBrowser.Library
 
         private void Play(bool resume)
         {
-            Play(resume, false, false, null);
+            Play(resume, false);
         }
 
 
         public void Queue()
         {
-            Play(false, true, false, null);
+            Play(false, true);
         }
 
         public void Play()
@@ -781,45 +755,7 @@ namespace MediaBrowser.Library
         // this is a shortcut for MCML
         public void ProcessCommand(RemoteCommand command)
         {
-            PlayableItem.PlaybackController.ProcessCommand(command);
-        }
-
-        public IPlaybackController PlaybackController
-        {
-            get
-            {
-                return this.PlayableItem.PlaybackController;
-            }
-        }
-
-        public PlayableItem PlayableItem
-        {
-            get
-            {
-                if (!IsPlayable && !IsFolder) return null;
-
-                Media media = baseItem as Media;
-
-                if (media != null && playable == null)
-                    lock (this)
-                        if (playable == null)
-                        {
-                            playable = PlayableItemFactory.Instance.Create(media);
-                        }
-
-                if (playable != null)
-                    return playable;
-
-                Folder folder = baseItem as Folder;
-                if (folder != null && playable == null)
-                    lock (this)
-                        if (playable == null)
-                        {
-                            playable = PlayableItemFactory.Instance.Create(folder);
-                        }
-
-                return playable;
-            }
+            Application.CurrentInstance.PlaybackController.ProcessCommand(command);
         }
 
         public bool ContainsTrailers

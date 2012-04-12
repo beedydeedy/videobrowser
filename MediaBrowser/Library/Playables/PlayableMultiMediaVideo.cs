@@ -26,6 +26,9 @@ namespace MediaBrowser.Library.Playables
                 // Each one after the first will be queued
                 playable.QueueItem = i == 0 ? QueueItem : true;
 
+                // Only the first can be resumed
+                playable.Resume = i == 0 ? Resume : false;
+
                 playables.Add(playable);
             }
 
@@ -37,14 +40,9 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected override void SendFilesToPlayer(PlaybackArguments playbackInfo)
         {
-            IEnumerable<PlayableItem> playables = CreatePlayableItemsFromInternalPlayer();
-
-            for (int i = 0; i < playables.Count(); i++)
+            foreach (PlayableItem playable in CreatePlayableItemsFromInternalPlayer())
             {
-                // Only the first one is allowed to resume, obviously
-                bool resume = i == 0 ? playbackInfo.Resume : false;
-
-                playables.ElementAt(i).Play(resume);
+                playable.Play();
             }
         }
 

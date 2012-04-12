@@ -109,9 +109,9 @@ namespace MediaBrowser.Library.Playables
             set;
         }
 
-        protected override void Prepare(bool resume)
+        protected override void Prepare()
         {
-            base.Prepare(resume);
+            base.Prepare();
 
             // Need to stop other players, in particular the internal 7MC player
             Application.CurrentInstance.StopAllPlayback();
@@ -119,7 +119,7 @@ namespace MediaBrowser.Library.Playables
             // Create a playlist if needed
             if (PlayableFiles.Count() > 1 && !ExternalPlayerConfiguration.SupportsMultiFileCommandArguments && ExternalPlayerConfiguration.SupportsPlaylists)
             {
-                PlaylistFile = CreatePlaylist(resume);
+                PlaylistFile = CreatePlaylist(Resume);
             }
         }
 

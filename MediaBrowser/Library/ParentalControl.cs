@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Collections;
 using Microsoft.MediaCenter;
 using MediaBrowser.Util;
+using System.Linq;
 
 namespace MediaBrowser.Library
 {
@@ -34,10 +35,8 @@ namespace MediaBrowser.Library
 
         //item and properties to operate upon after pin entered
         private Item anItem;
-        protected bool resume;
-        protected bool queue;
-        protected bool shuffle;
-        protected BaseItem folderPlaybackStartItem;
+        private PlayableItem playable;
+        protected bool intros;
 
         public void Initialize()
         {
@@ -214,19 +213,16 @@ namespace MediaBrowser.Library
             }
         }
 
-        public void PlayProtected(Item item, bool resume, bool queue, bool shuffle, BaseItem startFrom)
+        public void PlayProtected(PlayableItem playable, bool intros)
         {
             //save parameters where we can get at them after pin entry
-            this.anItem = item;
-            this.resume = resume;
-            this.queue = queue;
-            this.shuffle = shuffle;
-            this.folderPlaybackStartItem = startFrom;
+            this.playable = playable;
+            this.intros = intros;
 
             //now present pin screen - it will call our callback after finished
             pinCallback = PlayPinEntered;
-            if (item.BaseItem.CustomPIN != "" && item.BaseItem.CustomPIN != null)
-                customPIN = item.BaseItem.CustomPIN; // use custom pin for this item
+            if (!string.IsNullOrEmpty(playable.ParentalControlPin))
+                customPIN = playable.ParentalControlPin; // use custom pin for this item
             else
                 customPIN = Config.Instance.ParentalPIN; // use global pin
             Logger.ReportInfo("Request to play protected content");
@@ -237,15 +233,18 @@ namespace MediaBrowser.Library
         {
             Application.CurrentInstance.Back(); //clear the PIN page before playing
             MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
+
+            string name = playable.Name;
+
             if (pinCorrect)
             {
-                Logger.ReportInfo("Playing protected content " + anItem.Name);
-                this.anItem.PlaySecure(resume, queue, shuffle, folderPlaybackStartItem);
+                Logger.ReportInfo("Playing protected content " + name);
+                Application.CurrentInstance.PlaySecure(playable, intros);
             }
             else
             {
                 env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("Pin Incorrect attempting to play " + anItem.Name);
+                Logger.ReportInfo("Pin Incorrect attempting to play " + name);
             }
         }
 
