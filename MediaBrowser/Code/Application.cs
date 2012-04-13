@@ -1434,7 +1434,9 @@ namespace MediaBrowser
         {
             if (Config.Instance.ParentalControlEnabled && !playable.ParentalAllowed)
             {
-                Application.CurrentInstance.DisplayPopupPlay = false; //PIN screen mucks with turning this off
+                //PIN screen mucks with turning this off
+                Application.CurrentInstance.DisplayPopupPlay = false; 
+                
                 Kernel.Instance.ParentalControls.PlayProtected(playable, intros);
             }
             else
@@ -1443,6 +1445,8 @@ namespace MediaBrowser
             }
         }
 
+        private volatile List<KeyValuePair<Media, int>> _ItemsSentToPlayer = new List<KeyValuePair<Media, int>>();
+
         internal void PlaySecure(PlayableItem playable, bool intros)
         {
             //put this on a thread so that we can run it sychronously, but not tie up the UI
@@ -1450,10 +1454,16 @@ namespace MediaBrowser
             {
                 IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
                 BaseItem originalBaseItem = playable.PrimaryBaseItem;
-                Item originalItem = ItemFactory.Instance.Create(originalBaseItem);
+
+                Item originalItem = null;
+
+                if (originalBaseItem != null)
+                {
+                    originalItem = ItemFactory.Instance.Create(originalBaseItem);
+                }
 
                 // Run all pre-play processes
-                if (!RunPrePlayProcesses(originalItem, intros))
+                if (originalItem != null && !RunPrePlayProcesses(originalItem, intros))
                 {
                     // Abort playback if one of them returns false
                     return;
@@ -1471,25 +1481,16 @@ namespace MediaBrowser
                     {
                         MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
                     });
+
+                    _ItemsSentToPlayer.Clear();
                 }
+
+                // Record the current play count of each item
+                _ItemsSentToPlayer.AddRange(itemsToPlay.Select(i => new KeyValuePair<Media, int>(i, i.PlaybackStatus.PlayCount)));
 
                 currentPlaybackController = playable.PlaybackController;
 
                 playable.Play();
-
-                // Add each item to the newly watched list
-                foreach (BaseItem baseItem in itemsToPlay)
-                {
-                    Logger.ReportVerbose("Adding newly watched for: " + baseItem.Name);
-                    ItemFactory.Instance.Create(baseItem).AddNewlyWatched();
-                }
-
-                // Set last played if not null, which could happen if playback is path-based (e.g. trailers)
-                if (originalItem != null)
-                {
-                    Logger.ReportVerbose("Setting last played to: " + originalItem.Name);
-                    this.lastPlayed = originalItem;
-                }
             });
         }
 
@@ -1507,7 +1508,28 @@ namespace MediaBrowser
 
         public void RunPostPlayProcesses()
         {
-            //Logger.ReportInfo("Running post-play processes");
+            // Loop through the items that were sent to the player
+            foreach (KeyValuePair<Media, int> itemSentToPlayer in _ItemsSentToPlayer)
+            {
+                Media media = itemSentToPlayer.Key;
+                int oldPlayCount = itemSentToPlayer.Value;
+
+                // If playcount was incremented then that means it was actually played
+                if (media.PlaybackStatus.PlayCount > oldPlayCount)
+                {
+                    Item item = ItemFactory.Instance.Create(media);
+
+                    Logger.ReportVerbose("Adding newly watched for: " + media.Name);
+                    item.AddNewlyWatched();
+
+                    this.lastPlayed = item;
+                }
+            }
+
+            _ItemsSentToPlayer.Clear();
+            
+            Logger.ReportInfo("Running post-play processes");
+
             foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
             {
                 process();
