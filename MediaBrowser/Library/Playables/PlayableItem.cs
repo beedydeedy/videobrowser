@@ -79,7 +79,7 @@ namespace MediaBrowser.Library
 
                 if (item == null)
                 {
-                    return PlayableFiles.FirstOrDefault();
+                    return PlayableFiles.Count > 0 ? PlayableFiles.First() : string.Empty;
                 }
 
                 return item.Name;
@@ -333,7 +333,7 @@ namespace MediaBrowser.Library
             UpdateResumeStatusInUI();
         }
 
-        protected void UpdateResumeStatusInUI()
+        private void UpdateResumeStatusInUI()
         {
             foreach (Media media in PlayableMediaItems)
             {
@@ -353,7 +353,7 @@ namespace MediaBrowser.Library
             return Guid.Equals(e.PlayableItemId, PlayableItemId);
         }
 
-        protected virtual void MarkWatched()
+        private void MarkWatched()
         {
             foreach (Media media in PlayableMediaItems)
             {
@@ -362,7 +362,7 @@ namespace MediaBrowser.Library
             }
         }
 
-        protected virtual void ShufflePlayableItems()
+        private void ShufflePlayableItems()
         {
             Random rnd = new Random();
 

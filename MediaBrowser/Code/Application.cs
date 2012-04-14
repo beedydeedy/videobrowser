@@ -1279,7 +1279,6 @@ namespace MediaBrowser
             }
         }
 
-
         public void NavigateSecure(FolderModel folder)
         {
             //just call method on parentalControls - it will callback if secure
@@ -1494,7 +1493,7 @@ namespace MediaBrowser
             });
         }
 
-        public bool RunPrePlayProcesses(Item item, bool intros)
+        private bool RunPrePlayProcesses(Item item, bool intros)
         {
             Logger.ReportInfo("Running pre-play processes for: " + item.Name);
 
