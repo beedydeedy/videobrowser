@@ -101,7 +101,15 @@ namespace MediaBrowser.Library.Playables
 
             while (_MonitorVlcHttpServer)
             {
-                _WebClient.DownloadStringAsync(uri);
+                try
+                {
+                    _WebClient.DownloadStringAsync(uri);
+                }
+                catch (Exception ex)
+                {
+                    Logging.Logger.ReportException("Error connecting to VLC http server", ex);
+                }
+                
                 Thread.Sleep(1000);
             }
         }
@@ -114,7 +122,7 @@ namespace MediaBrowser.Library.Playables
             {
                 return;
             }
-
+            
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(e.Result);
             XmlElement docElement = doc.DocumentElement;
