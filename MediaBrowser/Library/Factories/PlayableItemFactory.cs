@@ -101,6 +101,8 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Media media, bool allowExternalPlayers)
         {
+            PlayableItem playable = null;
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 // Skip PlayableExternals if specified to do so
@@ -111,16 +113,15 @@ namespace MediaBrowser.Library.Factories
 
                 if (type.Key.CanPlay(media))
                 {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(media);
-                    return playable;
-
+                    playable = InstantiatePlayableItem(type);
+                    break;
                 }
             }
 
-            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
-            defaultPlayableItem.AddMedia(media);
-            return defaultPlayableItem;
+            if (playable == null) playable = GetDefaultPlayableItem(false);
+            playable.AddMedia(media);
+            AttachPlaybackController(playable);
+            return playable;
         }
 
         /// <summary>
@@ -134,19 +135,21 @@ namespace MediaBrowser.Library.Factories
                 return Create(paths.FirstOrDefault());
             }
 
+            PlayableItem playable = null;
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(paths))
                 {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(paths);
-                    return playable;
+                    playable = InstantiatePlayableItem(type);
+                    break;
                 }
             }
 
-            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
-            defaultPlayableItem.AddMedia(paths);
-            return defaultPlayableItem;
+            if (playable == null) playable = GetDefaultPlayableItem(false);
+            playable.AddMedia(paths);
+            AttachPlaybackController(playable);
+            return playable;
         }
 
         /// <summary>
@@ -160,21 +163,22 @@ namespace MediaBrowser.Library.Factories
                 return Create(mediaList.FirstOrDefault());
             }
 
+            PlayableItem playable = null;
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(mediaList))
                 {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(mediaList);
-                    return playable;
+                    playable = InstantiatePlayableItem(type);
+                    break;
                 }
             }
 
             // Return default
-            PlayableItem defaultPlayableItem = new PlayableMultiMediaVideo();
-            AttachPlaybackController(defaultPlayableItem);
-            defaultPlayableItem.AddMedia(mediaList);
-            return defaultPlayableItem;
+            if (playable == null) playable = GetDefaultPlayableItem(true);
+            playable.AddMedia(mediaList);
+            AttachPlaybackController(playable);
+            return playable;
         }
 
         /// <summary>
@@ -182,19 +186,22 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(string path)
         {
+            PlayableItem playable = null;
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(path))
                 {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(path);
-                    return playable;
+                    playable = InstantiatePlayableItem(type);
+                    break;
                 }
             }
 
-            PlayableItem defaultPlayableItem = GetDefaultPlayableItem();
-            defaultPlayableItem.AddMedia(path);
-            return defaultPlayableItem;
+            // Return default
+            if (playable == null) playable = GetDefaultPlayableItem(false);
+            playable.AddMedia(path);
+            AttachPlaybackController(playable);
+            return playable;
         }
 
         /// <summary>
@@ -202,34 +209,37 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Folder folder)
         {
+            PlayableItem playable = null;
+
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
                 if (type.Key.CanPlay(folder))
                 {
-                    PlayableItem playable = InstantiatePlayableItem(type);
-                    playable.AddMedia(folder);
-                    return playable;
+                    playable = InstantiatePlayableItem(type);
+                    break;
                 }
             }
 
             // Return default
-            PlayableItem defaultPlayableItem = new PlayableMultiMediaVideo();
-            AttachPlaybackController(defaultPlayableItem);
-            defaultPlayableItem.AddMedia(folder);
-            return defaultPlayableItem;
-        }
-
-        private PlayableItem GetDefaultPlayableItem()
-        {
-            PlayableItem playable = new PlayableVideo();
+            if (playable == null) playable = GetDefaultPlayableItem(true);
+            playable.AddMedia(folder);
             AttachPlaybackController(playable);
             return playable;
+        }
+
+        private PlayableItem GetDefaultPlayableItem(bool hasMultipleMediaItems)
+        {
+            if (hasMultipleMediaItems)
+            {
+                return new PlayableMultiMediaVideo();
+            }
+
+            return new PlayableVideo();
         }
 
         private PlayableItem InstantiatePlayableItem(KeyValuePair<PlayableItem, Type> type)
         {
             PlayableItem playable = (PlayableItem)Activator.CreateInstance(type.Value);
-            AttachPlaybackController(playable);
 
             // Attach configuration if it's an external player
             if (type.Key is PlayableExternal)
