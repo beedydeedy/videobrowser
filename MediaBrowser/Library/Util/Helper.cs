@@ -397,6 +397,48 @@ namespace MediaBrowser.LibraryManagement
             return null;
         }
 
+        /// <summary>
+        /// Fetch json from an url
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns>dictionary<string,object> on success, null on failure</returns>
+        public static Dictionary<string,object> FetchJson(string url) {
+            try
+            {
+
+                int attempt = 0;
+                while (attempt < 2)
+                {
+                    attempt++;
+                    try
+                    {
+                        using (WebClient client = new WebClient())
+                        {
+                            client.Headers.Add("Accept", "application/json");
+                            client.Headers.Add("AcceptEncoding", "gzip,deflate");
+                            
+                            client.Encoding = Encoding.UTF8;
+
+                            string payload = client.DownloadString(url);
+                            Dictionary<string, object> jsonDict = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(payload);
+                            return jsonDict;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error getting json response from "+url, ex);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportWarning("Failed to fetch url: " + url + "\n" + ex.ToString());
+            }
+
+            return null;
+        }
+
         public static string GetNameFromFile(string filename)
         {
             string temp;
