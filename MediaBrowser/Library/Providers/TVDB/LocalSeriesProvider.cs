@@ -159,6 +159,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 //}
             }
 
+            series.CustomRating = seriesNode.SafeGetString("CustomRating");
+            series.CustomPIN = seriesNode.SafeGetString("CustomPIN");
 
             // Some XML files may have incorrect series ids so do not try to set the item, 
             // this would really mess up the internet provid
