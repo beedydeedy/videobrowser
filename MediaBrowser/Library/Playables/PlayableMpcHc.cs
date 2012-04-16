@@ -191,9 +191,19 @@ namespace MediaBrowser.Library.Playables
             values["CommandMod3"] = "901 b 0 \"\" 5 0 50 0";
             values["CommandMod4"] = "904 b 27 \"\" 5 0 0 0";
             values["CommandMod5"] = "903 b 25 \"\" 5 0 0 0";
-            values["CommandMod6"] = "32778 b 49 \"\" 5 0 66057 0";
-            values["CommandMod7"] = "32780 3 59 \"\" 5 0 0 0";
-            values["CommandMod8"] = "32781 3 55 \"\" 5 0 0 0";
+            values["CommandMod6"] = "920 b 22 \"\" 5 0 51 0";
+            values["CommandMod7"] = "919 b 21 \"\" 5 0 52 0";
+            values["CommandMod8"] = "907 1 0 \"\" 5 16 10 16";
+            values["CommandMod9"] = "908 1 0 \"\" 5 17 9 17";
+            values["CommandMod10"] = "929 1 25 \"\" 5 0 0 0";
+            values["CommandMod11"] = "930 1 27 \"\" 5 0 0 0";
+            values["CommandMod12"] = "931 1 26 \"\" 5 0 0 0";
+            values["CommandMod13"] = "932 1 28 \"\" 5 0 0 0";
+            values["CommandMod15"] = "933 1 d \"\" 5 0 0 0";
+            values["CommandMod15"] = "934 1 8 \"\" 5 0 1 0";
+            values["CommandMod16"] = "32778 b 49 \"\" 5 0 66057 0";
+            values["CommandMod17"] = "32780 3 59 \"\" 5 0 0 0";
+            values["CommandMod18"] = "32781 3 55 \"\" 5 0 0 0";
 
             string iniPath = GetIniFilePath();
 
