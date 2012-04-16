@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Xml;
-using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables
@@ -15,7 +15,7 @@ namespace MediaBrowser.Library.Playables
         private string _CurrentPlayingFile = string.Empty;
         private long _CurrentFileDuration = 0;
         private long _CurrentPlayingPosition = 0;
-        private bool _MonitorVlcHttpServer;
+        private bool _MonitorPlayback;
         private WebClient _WebClient;
         private Thread _WebRequestThread;
 
@@ -65,8 +65,14 @@ namespace MediaBrowser.Library.Playables
             args.Add("--global-key-vol-up=\"Volume Up\"");
             args.Add("--global-key-vol-mute=\"Mute\"");
 
-            args.Add("--global-key-chapter-prev=\"Media Prev Track\"");
-            args.Add("--global-key-chapter-next=\"Media Next Track\"");
+            args.Add("--key-nav-up=\"Up\"");
+            args.Add("--key-nav-down=\"Down\"");
+            args.Add("--key-nav-left=\"Left\"");
+            args.Add("--key-nav-right=\"Right\"");
+            args.Add("--key-nav-activate=\"Enter\"");
+
+            args.Add("--global-key-jump-long=\"Media Prev Track\"");
+            args.Add("--global-key-jump+long=\"Media Next Track\"");
 
             return args;
         }
@@ -79,7 +85,7 @@ namespace MediaBrowser.Library.Playables
             base.OnExternalPlayerLaunched(playbackInfo);
 
             // Reset these fields since they hold state
-            _MonitorVlcHttpServer = true;
+            _MonitorPlayback = true;
             _CurrentPlayingFile = string.Empty;
             _CurrentPlayingPosition = 0;
             _CurrentFileDuration = 0;
@@ -92,6 +98,11 @@ namespace MediaBrowser.Library.Playables
             _WebRequestThread.Start();
         }
 
+        void PlayableVLC_KeyBoardKeyPressed(object sender, GenericEventArgs<int> e)
+        {
+            Logging.Logger.ReportVerbose("Got code: " + e.Item);
+        }
+
         /// <summary>
         /// Sends out requests to VLC's Http interface
         /// </summary>
@@ -99,7 +110,7 @@ namespace MediaBrowser.Library.Playables
         {
             Uri uri = new Uri(VlcStatusXmlUrl);
 
-            while (_MonitorVlcHttpServer)
+            while (_MonitorPlayback)
             {
                 try
                 {
@@ -118,7 +129,7 @@ namespace MediaBrowser.Library.Playables
         {
 
             // If playback just finished, or if there was some type of error, skip it
-            if (!_MonitorVlcHttpServer || e.Cancelled || e.Error != null || string.IsNullOrEmpty(e.Result))
+            if (!_MonitorPlayback || e.Cancelled || e.Error != null || string.IsNullOrEmpty(e.Result))
             {
                 return;
             }
@@ -145,7 +156,7 @@ namespace MediaBrowser.Library.Playables
         protected override void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
         {
             // Stop sending requests to VLC's http interface
-            _MonitorVlcHttpServer = false;
+            _MonitorPlayback = false;
 
             if (_WebClient.IsBusy)
             {
