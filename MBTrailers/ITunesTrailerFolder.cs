@@ -193,7 +193,8 @@ namespace MBTrailers {
                                     break;
 
                                 case "releasedate":
-                                    //  trailer.ProductionYear = DateTime.Parse(ReadToValue(reader), dateFormat).Year;
+                                    try { trailer.ProductionYear = DateTime.Parse(ReadToValue(reader), dateFormat).Year; }
+                                    catch { }
                                     break;
 
                                 case "director":
