@@ -115,7 +115,7 @@ namespace MediaBrowser.Library.ImageManagement {
                             var image = OriginalImage;
                             if (image == null) {
                                 Corrupt = true;
-                                if (Debugger.IsAttached) Debugger.Break();
+                                //if (Debugger.IsAttached) Debugger.Break();
                                 return;
                             }
                             ImageCache.Instance.CacheImage(Id, ProcessImage(image));
