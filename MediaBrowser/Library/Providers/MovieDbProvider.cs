@@ -265,6 +265,10 @@ namespace MediaBrowser.Library.Providers
 
             url = string.Format(castInfo, id, ApiKey);
             var cast = Helper.FetchJson(url);
+            int castStart = cast.IndexOf("\"cast\":");
+            int castEnd = cast.IndexOf("]",castStart)+1;
+            int crewStart = cast.IndexOf("\"crew\":");
+            int crewEnd = cast.IndexOf("]", crewStart)+1;
 
             url = string.Format(releaseInfo, id, ApiKey);
             var releases = Helper.FetchJson(url);
@@ -274,7 +278,8 @@ namespace MediaBrowser.Library.Providers
             //combine main info, releases and cast info into one json string
             json = info.Substring(0, info.LastIndexOf("}")) + ","
                 + releases.Substring(releasesStart, releasesEnd - releasesStart) + ","
-                + cast.Substring(cast.IndexOf("{") + 1);
+                + cast.Substring(castStart, castEnd - castStart) + ","
+                + cast.Substring(crewStart, crewEnd - crewStart) + "}";
 
             ProcessMainInfo(json);
 
@@ -539,154 +544,6 @@ namespace MediaBrowser.Library.Providers
             }
 
         }
-
-        protected virtual void ProcessDocument(XmlDocument doc, bool ignoreImages) 
-        {
-            Movie movie = Item as Movie;
-            if (doc != null)
-            {
-                // This is problematic for foreign films we want to keep the alt title. 
-                //if (store.Name == null)
-                //    store.Name = doc.SafeGetString("//movie/title");
-
-                movie.Name = doc.SafeGetString("//movie/name");
-
-                movie.Overview = doc.SafeGetString("//movie/overview");
-                if (movie.Overview != null)
-                    movie.Overview = movie.Overview.Replace("\n\n", "\n");
-
-                movie.TagLine = doc.SafeGetString("//movie/tagline");
-                movie.ImdbID = doc.SafeGetString("//movie/imdb_id");
-
-                movie.ImdbRating = doc.SafeGetSingle("//movie/rating", -1, 10);
-
-                string release = doc.SafeGetString("//movie/released");
-                if (!string.IsNullOrEmpty(release))
-                    movie.ProductionYear = Int32.Parse(release.Substring(0, 4));
-
-                movie.RunningTime = doc.SafeGetInt32("//movie/runtime");
-                if (movie.MediaInfo != null && movie.MediaInfo.RunTime > 0) movie.RunningTime = movie.MediaInfo.RunTime;
-
-                movie.MpaaRating = doc.SafeGetString("//movie/certification");
-
-                movie.Studios = null;
-                foreach (XmlNode n in doc.SelectNodes("//studios/studio"))
-                {
-                    if (movie.Studios == null)
-                        movie.Studios = new List<string>();
-                    string name = n.SafeGetString("@name");
-                    if (!string.IsNullOrEmpty(name))
-                        movie.Studios.Add(name);
-                }
-
-                movie.Directors = null;
-                foreach (XmlNode n in doc.SelectNodes("//cast/person[@job='Director']"))
-                {
-                    if (movie.Directors == null)
-                        movie.Directors = new List<string>();
-                    string name = n.SafeGetString("@name");
-                    if (!string.IsNullOrEmpty(name))
-                        movie.Directors.Add(name);
-                }
-
-                movie.Writers = null;
-                foreach (XmlNode n in doc.SelectNodes("//cast/person[@job='Author']"))
-                {
-                    if (movie.Writers == null)
-                        movie.Writers = new List<string>();
-                    string name = n.SafeGetString("@name");
-                    if (!string.IsNullOrEmpty(name))
-                        movie.Writers.Add(name);
-                }
-
-
-                movie.Actors = null;
-                foreach (XmlNode n in doc.SelectNodes("//cast/person[@job='Actor']"))
-                {
-                    if (movie.Actors == null)
-                        movie.Actors = new List<Actor>();
-                    string name = n.SafeGetString("@name");
-                    string role = n.SafeGetString("@character");
-                    if (!string.IsNullOrEmpty(name))
-                        movie.Actors.Add(new Actor { Name = name, Role = role });
-                }
-
-                XmlNodeList nodes = doc.SelectNodes("//movie/categories/category[@type='genre']/@name");
-                List<string> genres = new List<string>();
-                foreach (XmlNode node in nodes)
-                {
-                    string n = MapGenre(node.InnerText);
-                    if ((!string.IsNullOrEmpty(n)) && (!genres.Contains(n)))
-                        genres.Add(n);
-                }
-                movie.Genres = genres;
-
-                if (!ignoreImages)
-                {
-                    string img = doc.SafeGetString("//movie/images/image[@type='poster' and @size='" + Kernel.Instance.ConfigData.FetchedPosterSize + "']/@url");
-                    if (img == null)
-                    {
-                        img = doc.SafeGetString("//movie/images/image[@type='poster' and @size='original']/@url"); //couldn't find preferred size
-                    }
-                    if (img != null)
-                    {
-                        if (Kernel.Instance.ConfigData.SaveLocalMeta)
-                        {
-                            //download and save locally
-                            RemoteImage cover = new RemoteImage() { Path = img };
-                            string ext = Path.GetExtension(img).ToLower();
-                            string fn = (Path.Combine(Item.Path,"folder" + ext));
-                            try
-                            {
-                                Kernel.IgnoreFileSystemMods = true;
-                                cover.DownloadImage().Save(fn, ext == ".png" ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg);
-                                Kernel.IgnoreFileSystemMods = false;
-                                movie.PrimaryImagePath = fn;
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.ReportException("Error downloading and saving image " + fn, e);
-                            }
-                        }
-                        else
-                        {
-                            movie.PrimaryImagePath = img;
-                        }
-                    }
-                    movie.BackdropImagePaths = new List<string>();
-                    int bdNo = 0;
-                    RemoteImage bd;
-                    foreach (XmlNode n in doc.SelectNodes("//movie/images/image[@type='backdrop' and @size='original']/@url"))
-                    {
-                        if (Kernel.Instance.ConfigData.SaveLocalMeta)
-                        {
-                            bd = new RemoteImage() { Path = n.InnerText };
-                            string ext = Path.GetExtension(n.InnerText).ToLower();
-                            string fn = Path.Combine(Item.Path,"backdrop" + (bdNo > 0 ? bdNo.ToString() : "") + ext);
-                            try
-                            {
-                                Kernel.IgnoreFileSystemMods = true;
-                                bd.DownloadImage().Save(fn, ext == ".png" ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg);
-                                Kernel.IgnoreFileSystemMods = false;
-                                movie.BackdropImagePaths.Add(fn);
-                            }
-                            catch (Exception e)
-                            {
-                                Logger.ReportException("Error downloading/saving image " + n.InnerText, e);
-                            }
-                            bdNo++;
-                            if (bdNo >= Kernel.Instance.ConfigData.MaxBackdrops) break;
-                        }
-                        else
-                        {
-                            movie.BackdropImagePaths.Add(n.InnerText);
-                        }
-                    }
-                }
-            }
-        }
-        
-            
 
         #endregion
 

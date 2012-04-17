@@ -43,8 +43,8 @@ namespace MediaBrowser.Library.Providers
 
         public override void Fetch()
         {
-            //only try if we don't have the new format
-            if (!HasNewMeta)
+            //only try if we don't have the new format and do have this one
+            if (!HasNewMeta && File.Exists(XmlLocation()))
             {
                 Logging.Logger.ReportVerbose("Getting meta from legacy xml file...");
                 base.Fetch();
