@@ -13,6 +13,7 @@ using MediaBrowser.Library.Persistance;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.LibraryManagement;
 using MediaBrowser.Library.ImageManagement;
+using MediaBrowser.Library.Configuration;
 
 namespace MediaBrowser.Library.Providers
 {
@@ -392,6 +393,9 @@ namespace MediaBrowser.Library.Providers
                     }
                 }
 
+                //we will need this if we save people images
+                string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedProfileSize;
+
                 //actors
                 System.Collections.ArrayList cast = (System.Collections.ArrayList)jsonDict["cast"];
                 SortedList<int, Actor> sortedActors = new SortedList<int,Actor>();
@@ -405,6 +409,19 @@ namespace MediaBrowser.Library.Providers
                         if (name != null)
                         {
                             sortedActors.Add(Convert.ToInt32(person["order"].ToString()), new Actor() { Name = name, Role = role });
+                            if (Kernel.Instance.ConfigData.DownloadPeopleImages && person["profile_path"] != null && !File.Exists(Path.Combine(ApplicationPaths.AppIBNPath, "People/"+name)+"/folder.jpg"))
+                            {
+                                try 
+                                {
+                                    string dir = Path.Combine(ApplicationPaths.AppIBNPath, "People/"+name);
+                                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                                    DownloadAndSaveImage(tmdbImageUrl+person["profile_path"].ToString(), dir, "folder");
+                                } 
+                                catch (Exception e) 
+                                {
+                                    Logger.ReportException("Error attempting to download/save actor image",e);
+                                }
+                            }
                         }
                     }
                     //now add them to movie in proper order
@@ -492,21 +509,7 @@ namespace MediaBrowser.Library.Providers
                 if (Kernel.Instance.ConfigData.SaveLocalMeta)
                 {
                     //download and save locally
-                    RemoteImage cover = new RemoteImage() { Path = tmdbPath };
-                    string ext = Path.GetExtension(tmdbPath).ToLower();
-                    string fn = (Path.Combine(Item.Path, targetName + ext));
-                    try
-                    {
-                        Kernel.IgnoreFileSystemMods = true;
-                        cover.DownloadImage().Save(fn, ext == ".png" ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg);
-                        Kernel.IgnoreFileSystemMods = false;
-                        return fn;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.ReportException("Error downloading and saving image " + fn, e);
-                        return null;
-                    }
+                    return DownloadAndSaveImage(tmdbPath, Item.Path, targetName);
                 }
                 else
                 {
@@ -515,6 +518,28 @@ namespace MediaBrowser.Library.Providers
             }
             return null;
         }
+
+        protected virtual string DownloadAndSaveImage(string source, string targetPath, string targetName)
+        {
+            //download and save locally
+            RemoteImage img = new RemoteImage() { Path = source };
+            string ext = Path.GetExtension(source).ToLower();
+            string fn = (Path.Combine(targetPath, targetName + ext));
+            try
+            {
+                Kernel.IgnoreFileSystemMods = true;
+                img.DownloadImage().Save(fn, ext == ".png" ? System.Drawing.Imaging.ImageFormat.Png : System.Drawing.Imaging.ImageFormat.Jpeg);
+                Kernel.IgnoreFileSystemMods = false;
+                return fn;
+            }
+            catch (Exception e)
+            {
+                Logger.ReportException("Error downloading and saving image " + fn, e);
+                return null;
+            }
+
+        }
+
         protected virtual void ProcessDocument(XmlDocument doc, bool ignoreImages) 
         {
             Movie movie = Item as Movie;

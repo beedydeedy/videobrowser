@@ -447,11 +447,17 @@ namespace MediaBrowser
         [Hidden]
         public int MaxBackdrops = 4; //maximum number of backdrops to be saved by the inet providers
 
+        [Comment("Download people images to IBN")]
+        public bool DownloadPeopleImages = true;
+
         [Hidden]
         public string FetchedPosterSize = "w500"; //w500, w342, w185 or original
 
         [Comment("The size of backdrops to fetch from tmdb")]
         public string FetchedBackdropSize = "w1280"; //w1280, w780 or original
+
+        [Comment("The size of people profile images to fetch from tmdb")]
+        public string FetchedProfileSize = "w185"; //w185 w45 h632 or original
 
         [Comment("The country to fetch release date and certification for (ISO 3166.1 code - US, DE, GB, etc.)")]
         public string MetadataCountryCode = "US"; //ISO 3166.1 code
