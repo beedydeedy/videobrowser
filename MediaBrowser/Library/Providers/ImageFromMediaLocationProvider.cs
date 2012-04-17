@@ -44,9 +44,8 @@ namespace MediaBrowser.Library.Providers
             if (Location == null) return;
 
             bool isDir = Directory.Exists(Location);
-            bool isFile = File.Exists(Location);
 
-            if (isDir || isFile)
+            if (isDir || File.Exists(Location))
             {
                 Item.PrimaryImagePath = primaryPath = FindImage(Primary);
             }
