@@ -450,7 +450,7 @@ namespace MediaBrowser.LibraryManagement
             return result;
         }
 
-        public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
+        private static Microsoft.MediaCenter.UI.Image GetMediaInfoImage_Internal(string name)
         {
             name = name.ToLower().Replace('/','-');
             string baseLocation = Config.Instance.ImageByNameLocation;
@@ -483,6 +483,23 @@ namespace MediaBrowser.LibraryManagement
                 }                    
                 return new Image(resourceRef + name);
             }
+        }
+
+        private static Dictionary<string, Microsoft.MediaCenter.UI.Image> _cachedMediaInfoImages = new Dictionary<string, Microsoft.MediaCenter.UI.Image>();
+        
+        public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
+        {
+            if (!Config.Instance.CacheAllImagesInMemory)
+            {
+                return GetMediaInfoImage_Internal(name);
+            }
+
+            if (!_cachedMediaInfoImages.ContainsKey(name))
+            {
+                _cachedMediaInfoImages[name] = GetMediaInfoImage_Internal(name);
+            }
+
+            return _cachedMediaInfoImages[name];
         }
 
         public static string FirstCap(string aStr)
