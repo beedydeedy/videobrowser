@@ -59,7 +59,6 @@ namespace MediaBrowser
         private static object syncObj = new object();
         private bool navigatingForward;
         private IPlaybackController currentPlaybackController = null;
-        private static string _background;
         private static Timer ScreenSaverTimer;
         //tracks whether to show recently added or watched items
         public string RecentItemOption { get { return Config.Instance.RecentItemOption; } set { Config.Instance.RecentItemOption = value; Kernel.Instance.ConfigData.RecentItemOption = value; } }
@@ -1624,32 +1623,37 @@ namespace MediaBrowser
         }
 
 
+        private static string _background = null;
+
         public string MainBackdrop
         {
             get
             {
-                string pngImage = this.Config.InitialFolder + "\\backdrop.png";
-                string jpgImage = this.Config.InitialFolder + "\\backdrop.jpg";
+                if (_background == null)
+                {
+                    string pngImage = this.Config.InitialFolder + "\\backdrop.png";
+                    string jpgImage = this.Config.InitialFolder + "\\backdrop.jpg";
 
-                if (!string.IsNullOrEmpty(_background))
-                {
-                    return _background;
-                }
-                else
-                {
                     if (File.Exists(pngImage))
                     {
                         _background = "file://" + pngImage;
-                        return _background;
                     }
                     else if (File.Exists(jpgImage))
                     {
                         _background = "file://" + jpgImage;
-                        return _background;
                     }
                     else
-                        return null;
+                    {
+                        _background = string.Empty;
+                    }
                 }
+
+                if (string.IsNullOrEmpty(_background))
+                {
+                    return null;
+                }
+
+                return _background;
             }
         }
 
