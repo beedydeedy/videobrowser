@@ -120,7 +120,6 @@ namespace MediaBrowser.Library.Factories
 
             if (playable == null) playable = GetDefaultPlayableItem(false);
             playable.AddMedia(media);
-            AttachPlaybackController(playable);
             return playable;
         }
 
@@ -148,7 +147,6 @@ namespace MediaBrowser.Library.Factories
 
             if (playable == null) playable = GetDefaultPlayableItem(false);
             playable.AddMedia(paths);
-            AttachPlaybackController(playable);
             return playable;
         }
 
@@ -157,6 +155,12 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
+            if (mediaList.Count() > 1)
+            {
+                // First filter out items that can't be queued in a playlist
+                mediaList = mediaList.Where(m => m.IsPlaylistCapable());
+            }
+
             // Keep it simple if we can
             if (mediaList.Count() < 2)
             {
@@ -177,7 +181,6 @@ namespace MediaBrowser.Library.Factories
             // Return default
             if (playable == null) playable = GetDefaultPlayableItem(true);
             playable.AddMedia(mediaList);
-            AttachPlaybackController(playable);
             return playable;
         }
 
@@ -200,7 +203,6 @@ namespace MediaBrowser.Library.Factories
             // Return default
             if (playable == null) playable = GetDefaultPlayableItem(false);
             playable.AddMedia(path);
-            AttachPlaybackController(playable);
             return playable;
         }
 
@@ -209,21 +211,10 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Folder folder)
         {
-            PlayableItem playable = null;
+            PlayableItem playable = Create(folder.RecursiveMedia);
 
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
-            {
-                if (type.Key.CanPlay(folder))
-                {
-                    playable = InstantiatePlayableItem(type);
-                    break;
-                }
-            }
+            playable.Folder = folder;
 
-            // Return default
-            if (playable == null) playable = GetDefaultPlayableItem(true);
-            playable.AddMedia(folder);
-            AttachPlaybackController(playable);
             return playable;
         }
 
@@ -248,22 +239,6 @@ namespace MediaBrowser.Library.Factories
             }
 
             return playable;
-        }
-
-        /// <summary>
-        /// Finds the appropiate PlayBackController for a PlayableItem and attaches it
-        /// </summary>
-        /// <param name="playable"></param>
-        private void AttachPlaybackController(PlayableItem playable)
-        {
-            foreach (var controller in Kernel.Instance.PlaybackControllers)
-            {
-                if (playable.CanBePlayedByController(controller))
-                {
-                    playable.PlaybackController = controller;
-                    break;
-                }
-            }
         }
     }
 }

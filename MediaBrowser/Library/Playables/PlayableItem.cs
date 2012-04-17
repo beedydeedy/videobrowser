@@ -29,14 +29,14 @@ namespace MediaBrowser.Library
         /// <summary>
         /// If Playback is Folder Based this will hold a reference to the Folder object
         /// </summary>
-        public Folder Folder { get; private set; }
+        public Folder Folder { get; set; }
 
         /// <summary>
         /// This holds the list of files that will be sent to the player.
         /// </summary>
         protected List<string> PlayableFiles = new List<string>();
 
-        public IPlaybackController PlaybackController { get; set; }
+        public IPlaybackController PlaybackController { get; private set; }
 
         public bool QueueItem { get; set; }
 
@@ -136,11 +136,13 @@ namespace MediaBrowser.Library
         public void AddMedia(string file)
         {
             PlayableFiles.Add(file);
+            PlaybackController = GetPlaybackController();
         }
 
         public void AddMedia(IEnumerable<string> files)
         {
             PlayableFiles.AddRange(files);
+            PlaybackController = GetPlaybackController();
         }
 
         public void AddMedia(Media media)
@@ -148,7 +150,7 @@ namespace MediaBrowser.Library
             AddMedia(media.Files);
             _PlayableMediaItems = new Media[] { media }.ToList();
         }
-        public virtual void AddMedia(IEnumerable<Media> mediaItems)
+        public void AddMedia(IEnumerable<Media> mediaItems)
         {
             if (mediaItems.Count() > 1)
             {
@@ -158,11 +160,6 @@ namespace MediaBrowser.Library
 
             _PlayableMediaItems = mediaItems.ToList();
             AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
-        }
-        public virtual void AddMedia(Folder folder)
-        {
-            AddMedia(folder.RecursiveMedia);
-            Folder = folder;
         }
         #endregion
 
@@ -181,14 +178,6 @@ namespace MediaBrowser.Library
         public virtual bool CanPlay(IEnumerable<Media> mediaList)
         {
             return false;
-        }
-
-        /// <summary>
-        /// Subclasses will have to override this if they want to be able to play a Folder
-        /// </summary>
-        public virtual bool CanPlay(Folder folder)
-        {
-            return CanPlay(folder.RecursiveMedia);
         }
 
         /// <summary>
@@ -240,6 +229,19 @@ namespace MediaBrowser.Library
             }
 
             PlaybackStartTime = DateTime.Now;
+        }
+
+        protected virtual IPlaybackController GetPlaybackController()
+        {
+            foreach (var controller in Kernel.Instance.PlaybackControllers)
+            {
+                if (controller.CanPlay(PlayableFiles))
+                {
+                    return controller;
+                }
+            }
+
+            return null;
         }
 
         protected virtual void SendFilesToPlayer(PlaybackArguments args)
@@ -383,11 +385,6 @@ namespace MediaBrowser.Library
 
                 AddMedia(newList);
             }
-        }
-
-        public bool CanBePlayedByController(IPlaybackController controller)
-        {
-            return controller.CanPlay(PlayableFiles);
         }
     }
 
