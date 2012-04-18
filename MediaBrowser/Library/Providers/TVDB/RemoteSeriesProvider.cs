@@ -10,6 +10,7 @@ using System.Web;
 using System.IO;
 using System.Diagnostics;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Providers.TVDB {
     [RequiresInternet]
@@ -57,11 +58,9 @@ namespace MediaBrowser.Library.Providers.TVDB {
             {
                 seriesId = GetSeriesId();
 
-                // we may want to consider giving up on this item if we find no series id 
-
                 if (!string.IsNullOrEmpty(seriesId))
                 {
-                    if (!HasCompleteMetadata() && FetchSeriesData())
+                    if (!HasCompleteMetadata() && FetchSeriesData(seriesId))
                     {
                         downloadDate = DateTime.Today;
                         Series.TVDBSeriesId = seriesId;
@@ -82,7 +81,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
 
         }
 
-        private bool FetchSeriesData() {
+        private bool FetchSeriesData(string seriesId) {
             bool success = false;
             Series series = Item as Series;
 
@@ -90,7 +89,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
             Logger.ReportVerbose("TvDbProvider: Fetching series data: " + name);
 
             if (string.IsNullOrEmpty(seriesId)) {
-                seriesId = FindSeries(name);
+                Logger.ReportInfo("TvDbProvider: Ignoring series: " + name + " because id is forced blank.");
+                return false;
             }
 
             if (!string.IsNullOrEmpty(seriesId)) {
@@ -274,7 +274,16 @@ namespace MediaBrowser.Library.Providers.TVDB {
         }
 
 
-        public static string FindSeries(string name) {
+        public string FindSeries(string name) {
+            //if id is specified in the file name return it directly
+            string id = Helper.GetAttributeFromPath(Item.Path, "tvdbid");
+            if (id != null)
+            {
+                Logger.ReportInfo("TVDbProvider: TVDb ID specified in file path.  Using: " + id);
+                return id;
+            }
+
+            //nope - search for it
             string url = string.Format(rootUrl + seriesQuery, HttpUtility.UrlEncode(name));
             XmlDocument doc = TVUtils.Fetch(url);
             XmlNodeList nodes = doc.SelectNodes("//Series");

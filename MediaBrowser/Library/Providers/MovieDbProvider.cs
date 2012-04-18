@@ -239,7 +239,6 @@ namespace MediaBrowser.Library.Providers
                     }
                 }
             }
-            matchedName = null;
             return null;
         }
 
@@ -250,7 +249,11 @@ namespace MediaBrowser.Library.Providers
 
         void FetchMovieData(string id)
         {
-
+            if (String.IsNullOrEmpty(id))
+            {
+                Logger.ReportInfo("MoviedbProvider: Ignoring " + Item.Name + " because ID forced blank.");
+                return;
+            }
             string url = string.Format(getInfo, id, ApiKey, Config.Instance.PreferredMetaDataLanguage);
             moviedbId = id;
             XmlDocument doc = Helper.Fetch(url);
