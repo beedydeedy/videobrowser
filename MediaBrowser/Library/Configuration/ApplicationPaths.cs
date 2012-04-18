@@ -42,7 +42,8 @@ namespace MediaBrowser.Library.Configuration {
                     { "AppLogPath",          "AppConfigPath",    "Logs"},
                     { "DefaultPodcastPath", "AppConfigPath", "Podcasts"    },
                     { "AppLocalizationPath","AppConfigPath", "Localization" },
-                    { "PluginConfigPath", "AppPluginPath", "Configurations"}
+                    { "PluginConfigPath", "AppPluginPath", "Configurations"},
+                    { "CustomImagePath", "AppImagePath", "Custom"}
             };
 
 
@@ -131,6 +132,12 @@ namespace MediaBrowser.Library.Configuration {
         public static string AppUserSettingsPath {
             get {
                 return pathMap["AppUserSettingsPath"];
+            }
+        }
+
+        public static string CustomImagePath {
+            get {
+                return pathMap["CustomImagePath"];
             }
         }
 

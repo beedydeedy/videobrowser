@@ -127,7 +127,10 @@ namespace MediaBrowser.Library.ImageManagement {
 
         Dictionary<Guid, ImageSet> imageInfoCache = new Dictionary<Guid, ImageSet>();
 
-        public string Path { get; private set; }
+        public string Path { get; protected set; }
+        public ImageCache()
+        { }
+
         public ImageCache(string path) {
             this.Path = path;
             LoadInfo(); 
@@ -137,7 +140,7 @@ namespace MediaBrowser.Library.ImageManagement {
 
         static Regex infoRegex = new Regex(@"(z)?([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.?([0-9]*)x?([0-9]*)", RegexOptions.Compiled);
 
-        private void LoadInfo() {
+        protected void LoadInfo() {
             
           
             foreach (var item in Kernel.Instance.GetLocation<IFolderMediaLocation>(Path).Children) {
@@ -262,7 +265,7 @@ namespace MediaBrowser.Library.ImageManagement {
            
         }
 
-        public string GetImagePath(Guid id) {
+        public virtual string GetImagePath(Guid id) {
             ImageSet set = GetImageSet(id);
             return set != null && set.PrimaryImage != null ? set.PrimaryImage.Path : null;
         }
