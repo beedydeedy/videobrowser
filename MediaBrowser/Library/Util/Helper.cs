@@ -402,8 +402,8 @@ namespace MediaBrowser.LibraryManagement
         /// Fetch json from an url
         /// </summary>
         /// <param name="url"></param>
-        /// <returns>dictionary<string,object> on success, null on failure</returns>
-        public static Dictionary<string,object> FetchJson(string url) {
+        /// <returns>json string on success, null on failure</returns>
+        public static string FetchJson(string url) {
             try
             {
 
@@ -421,8 +421,7 @@ namespace MediaBrowser.LibraryManagement
                             client.Encoding = Encoding.UTF8;
 
                             string payload = client.DownloadString(url);
-                            Dictionary<string, object> jsonDict = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(payload);
-                            return jsonDict;
+                            return payload;
                         }
                     }
                     catch (Exception ex)
@@ -438,6 +437,11 @@ namespace MediaBrowser.LibraryManagement
             }
 
             return null;
+        }
+
+        public static Dictionary<string, object> ToJsonDict(string json)
+        {
+            return json != null ? new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json) : null;
         }
 
         public static string GetNameFromFile(string filename)

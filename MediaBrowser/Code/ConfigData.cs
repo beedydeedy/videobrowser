@@ -442,7 +442,16 @@ namespace MediaBrowser
         public int MaxBackdrops = 4; //maximum number of backdrops to be saved by the inet providers
 
         [Hidden]
-        public string FetchedPosterSize = "mid"; //mid, original or thumb
+        public string FetchedPosterSize = "w500"; //w500, w342, w185 or original
+
+        [Comment("The size of backdrops to fetch from tmdb")]
+        public string FetchedBackdropSize = "w1280"; //w1280, w780 or original
+
+        [Comment("The country to fetch release date and certification for (ISO 3166.1 code - US, DE, GB, etc.)")]
+        public string MetadataCountryCode = "US"; //ISO 3166.1 code
+
+        [Comment("The base url for tmdb images")]
+        public string TmdbImageUrl = "http://cf2.imgobject.com/t/p/"; 
 
         [Dangerous]
         public List<string> PluginSources = new List<string>() { "http://www.mediabrowser.tv/plugins/multi/plugin_info.xml" };
