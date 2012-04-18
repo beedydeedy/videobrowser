@@ -21,6 +21,8 @@ namespace MediaBrowser.Library.Providers
     public class MovieDbProvider : BaseMetadataProvider
     {
         private static string search = @"http://api.themoviedb.org/2.1/Movie.search/{2}/xml/{1}/{0}";
+        private static string search3 = @"http://api.themoviedb.org/3/search/movie?api_key={1}&query={0}&language={2}";
+        private static string altTitleSearch = @"http://api.themoviedb.org/3/movie/{0}?api_key={1}";
         private static string getInfo = @"http://api.themoviedb.org/2.1/Movie.getInfo/{2}/xml/{1}/{0}";
         private static readonly string ApiKey = "f6bd687ffa63cd282b6ff2c6877f2669";
         static readonly Regex[] nameMatches = new Regex[] {
@@ -94,8 +96,7 @@ namespace MediaBrowser.Library.Providers
         {
             string id;
             string matchedName;
-            string[] possibles;
-            id = FindId(Item.Name, ((Movie)Item).ProductionYear ,out matchedName, out possibles);
+            id = FindId(Item.Name, ((Movie)Item).ProductionYear ,out matchedName);
             if (id != null)
             {
                 Item.Name = matchedName;
@@ -107,35 +108,35 @@ namespace MediaBrowser.Library.Providers
             }
         }
 
-        public static string FindId(string name, int? productionYear , out string matchedName, out string[] possibles)
+        public static string FindId(string name, int? productionYear , out string matchedName)
         {
-            string year = null;
+            int? year = null;
             foreach (Regex re in nameMatches)
             {
                 Match m = re.Match(name);
                 if (m.Success)
                 {
                     name = m.Groups["name"].Value.Trim();
-                    year = m.Groups["year"] != null ? m.Groups["year"].Value : null;
+                    string y = m.Groups["year"] != null ? m.Groups["year"].Value : null;
+                    int temp;
+                    year = Int32.TryParse(y, out temp) ? temp : (int?)null;
                     break;
                 }
             }
-            if (year == "")
-                year = null;
 
             if (year == null && productionYear != null) {
-                year = productionYear.ToString();
+                year = productionYear;
             }
 
             Logger.ReportInfo("MovieDbProvider: Finding id for movie data: " + name);
             string language = Kernel.Instance.ConfigData.PreferredMetaDataLanguage.ToLower();
-            string id = AttemptFindId(name, year, out matchedName, out possibles, language);
+            string id = AttemptFindId(name, year, out matchedName, language);
             if (id == null)
             {
                 //try in english if wasn't before
                 if (language != "en")
                 {
-                    id = AttemptFindId(name, year, out matchedName, out possibles, "en");
+                    id = AttemptFindId(name, year, out matchedName, "en");
                 }
                 else
                 {
@@ -148,12 +149,11 @@ namespace MediaBrowser.Library.Providers
                         name = name.Replace("_", " ");
                         name = name.Replace("-", "");
                         matchedName = null;
-                        possibles = null;
-                        id = AttemptFindId(name, year, out matchedName, out possibles, language);
+                        id = AttemptFindId(name, year, out matchedName, language);
                         if (id == null && language != "en")
                         {
                             //finally again, in english
-                            id = AttemptFindId(name, year, out matchedName, out possibles, "en");
+                            id = AttemptFindId(name, year, out matchedName, "en");
                         }
                     }
                 }
@@ -161,47 +161,60 @@ namespace MediaBrowser.Library.Providers
             return id;
         }
 
-        public static string AttemptFindId(string name, string year, out string matchedName, out string[] possibles, string language)
+        public static string AttemptFindId(string name, int? year, out string matchedName, string language)
         {
 
+            string url3 = string.Format(search3, UrlEncode(name), ApiKey, language);
+            var json = Helper.FetchJson(url3);
             string id = null;
-            string url = string.Format(search, UrlEncode(name), ApiKey, language);
-            XmlDocument doc = Helper.Fetch(url);
             List<string> possibleTitles = new List<string>();
-            if (doc != null)
+            if (json != null)
             {
-                XmlNodeList nodes = doc.SelectNodes("//movie");
-                foreach (XmlNode node in nodes)
-                {
-                    matchedName = null;
-                    id = null;
-                    List<string> titles = new List<string>();
-                    string mainTitle = null;
-                    XmlNode n = node.SelectSingleNode("./name");
-                    if (n != null)
+                System.Collections.ArrayList results = (System.Collections.ArrayList)json["results"];
+                if (results != null) {
+                    string compName = GetComparableName(name);
+                    foreach (Dictionary<string,object> possible in results)
                     {
-                        titles.Add(n.InnerText);
-                        mainTitle = n.InnerText;
-                    }
-
-                    var alt_titles = node.SelectNodes("./alternative_name");
-                    {
-                        foreach (XmlNode title in alt_titles)
+                        matchedName = null;
+                        id = possible["id"].ToString();
+                        string n = (string)possible["title"];
+                        if (n != null)
                         {
-                            titles.Add(title.InnerText);
-                        }
-                    }
-
-                    if (titles.Count > 0)
-                    {
-
-                        var comparable_name = GetComparableName(name);
-                        foreach (var title in titles)
-                        {
-                            if (GetComparableName(title) == comparable_name)
+                            //if main title matches we don't have to look for alternatives
+                            if (GetComparableName(n) == compName)
                             {
-                                matchedName = title;
-                                break;
+                                matchedName = n;
+                            }
+                            else
+                            {
+                                n = (string)possible["original_title"];
+                                if (n != null)
+                                {
+                                    if (GetComparableName(n) == compName)
+                                    {
+                                        matchedName = n;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matchedName == null)
+                        {
+                            //that title didn't match - look for alternatives
+                            url3 = string.Format(altTitleSearch, ApiKey, id);
+                            var response = Helper.FetchJson(url3);
+                            if (response != null)
+                            {
+                                Dictionary<string, object> altTitles = (Dictionary<string, object>)response["Titles"];
+                                foreach (var title in altTitles)
+                                {
+                                    string t = GetComparableName(((Dictionary<string, string>)title.Value)["title"]);
+                                    if (t == compName)
+                                    {
+                                        matchedName = t;
+                                        break;
+                                    }
+                                }
                             }
                         }
 
@@ -210,41 +223,24 @@ namespace MediaBrowser.Library.Providers
                             Logger.ReportVerbose("Match " + matchedName + " for " + name);
                             if (year != null)
                             {
-                                string r = node.SafeGetString("released");
-                                if ((r != null) && r.Length >= 4)
+                                DateTime r;
+                                DateTime.TryParse(possible["release_date"].ToString(), out r);
+                                if ((r != null))
                                 {
-                                    int db;
-                                    if (Int32.TryParse(r.Substring(0, 4), out db))
+                                    if (Math.Abs(r.Year - year.Value) > 1) // allow a 1 year tolerance on release date
                                     {
-                                        int y;
-                                        if (Int32.TryParse(year, out y))
-                                        {
-                                            if (Math.Abs(db - y) > 1) // allow a 1 year tollerance on release date
-                                            {
-                                                Logger.ReportVerbose("Result " + matchedName + " release on " + r + " did not match year " + year);
-                                                continue;
-                                            }
-                                        }
+                                        Logger.ReportVerbose("Result " + matchedName + " release on " + r + " did not match year " + year);
+                                        continue;
                                     }
                                 }
                             }
-                            id = node.SafeGetString("./id");
-                            possibles = null;
-                            return id;
+                        }
 
-                        }
-                        else
-                        {
-                            foreach (var title in titles)
-                            {
-                                possibleTitles.Add(title);
-                                Logger.ReportVerbose("Result " + title + " did not match " + name);
-                            }
-                        }
+                        //matched name and year
+                        return id;
                     }
                 }
             }
-            possibles = possibleTitles.ToArray();
             matchedName = null;
             return null;
         }
