@@ -513,7 +513,8 @@ namespace MediaBrowser.LibraryManagement
         public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
         {
             if (name.EndsWith("_")) return null; //blank codec or other type
-            name = name.ToLower().Replace('/','-');
+            name = name.ToLower().Replace("-", "_");
+            name = name.Replace('/','-');
             Guid id = ("MiImage" + Config.Instance.ViewTheme + name).GetMD5();
 
             //try to load from image cache first

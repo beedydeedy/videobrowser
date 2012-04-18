@@ -882,7 +882,9 @@
     <Content Include="Markup\Controls\ListView.mcml" />
     <Content Include="Markup\Controls\MediaInfoPanel.mcml" />
     <Content Include="Markup\Controls\MovieInfo.mcml" />
-    <Content Include="Markup\Controls\MPAARating.mcml" />
+    <Content Include="Markup\Controls\MPAARating.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\NowPlayingViewport.mcml" />
     <Content Include="Markup\Controls\PINEdit.mcml" />
     <Content Include="Markup\Controls\Pivots\Pivot.mcml" />
