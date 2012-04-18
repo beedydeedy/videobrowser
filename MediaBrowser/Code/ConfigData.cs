@@ -186,8 +186,8 @@ namespace MediaBrowser
         [Group("Display")]
         [Comment(@"In the default theme, the poster area will 'dim' when menus selected.")]
         public bool DimUnselectedPosters = true;
-        [Comment(@"Allow Movies to reside in sub folders.")]
-        public bool EnableNestedMovieFolders = true;
+        [Comment(@"Allow Movies to consist of nested folders with videos in them - this is trouble, keep it off...")]
+        public bool EnableNestedMovieFolders = false;
         [Group("Playback")]
         [Comment(@"Treat multiple video files in a single folder as one movie.")]
         public bool EnableMoviePlaylists = false;
