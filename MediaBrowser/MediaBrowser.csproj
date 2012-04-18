@@ -138,7 +138,7 @@
     <Compile Include="Library\Playables\PlayableTMTAddInForWMC.cs" />
     <Compile Include="Library\Playables\PlayableVLC.cs" />
     <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
-    <Compile Include="Library\Providers\MBMovieProviderFromXml.cs" />
+    <Compile Include="Library\Providers\MBMovieProviderFromJson.cs" />
     <Compile Include="Library\Providers\VideoFormatProvider.cs" />
     <Compile Include="Library\RemoteControl\IPlaybackController.cs" />
     <Compile Include="Library\Entities\Actor.cs" />

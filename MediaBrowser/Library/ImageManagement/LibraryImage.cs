@@ -133,7 +133,7 @@ namespace MediaBrowser.Library.ImageManagement {
                         {
                             if (info != null)
                             {
-                                if (ImageOutOfDate(info.Date))
+                                if (ImageOutOfDate(info.Date + TimeSpan.FromMinutes(2)))  //fudge this to account for descrepancies between systems
                                 {
                                     Logger.ReportVerbose("Image out of date for " + item.Name + " mod date: " + info.Date);
                                     ClearLocalImages();

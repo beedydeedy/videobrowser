@@ -13,7 +13,7 @@ using MediaBrowser.Library.Logging;
 namespace MediaBrowser.Library.Providers
 {
     [SupportedType(typeof(Movie))]
-    public class MBMovieProviderFromXml : MovieDbProvider
+    public class MBMovieProviderFromJson : MovieDbProvider
     {
 
         [Persist]
@@ -23,7 +23,7 @@ namespace MediaBrowser.Library.Providers
         public override bool NeedsRefresh()
         {
 
-            string mfile = XmlLocation();
+            string mfile = MetaLocation();
             if (!File.Exists(mfile))
                 return false;
 
@@ -32,23 +32,22 @@ namespace MediaBrowser.Library.Providers
             if (modTime <= lastWriteTime)
                return false;
 
-            Logger.ReportVerbose("XML changed for " + Item.Name + " mod time: " + modTime + " last update time: " + lastWriteTime);
+            Logger.ReportVerbose("Metadata changed for " + Item.Name + " mod time: " + modTime + " last update time: " + lastWriteTime);
             return true;
         }
 
-        protected virtual string XmlLocation()
+        protected virtual string MetaLocation()
         {
             return Path.Combine(Item.Path, LOCAL_META_FILE_NAME);
         }
 
         public override void Fetch()
         {
-            string metaFile = XmlLocation();
+            string metaFile = MetaLocation();
             if (File.Exists(metaFile))
             {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(metaFile);
-                ProcessDocument(doc, true);
+                string json = File.ReadAllText(metaFile);
+                ProcessMainInfo(json);
                 lastWriteTime = new FileInfo(metaFile).LastWriteTimeUtc + TimeSpan.FromMinutes(1); //fudge this slightly because the system sometimes reports this a few seconds behind
             }
         }
