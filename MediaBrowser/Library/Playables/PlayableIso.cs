@@ -47,14 +47,25 @@ namespace MediaBrowser.Library.Playables
 
         private string GetIsoPath()
         {
-            Video video = PlayableMediaItems.FirstOrDefault() as Video;
+            Media media = PlayableMediaItems.FirstOrDefault();
 
-            if (video != null && video.MediaLocation is IFolderMediaLocation)
+            if (media != null)
             {
-                return Helper.GetIsoFiles(video.Path)[0];
+                // Playback is based on a strongly typed Media object
+
+                Video video = media as Video;
+
+                if (video != null && video.MediaLocation is IFolderMediaLocation)
+                {
+                    return Helper.GetIsoFiles(video.Path)[0];
+                }
+
+                return Helper.GetIsoFiles(media.Files.First())[0];
             }
             else
             {
+                // Playback is based on a string path to the ISO
+
                 return Helper.GetIsoFiles(PlayableFiles.First())[0];
             }
 
