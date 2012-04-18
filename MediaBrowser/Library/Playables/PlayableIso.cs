@@ -47,20 +47,12 @@ namespace MediaBrowser.Library.Playables
 
         private string GetIsoPath()
         {
-            Media media = PlayableMediaItems.FirstOrDefault();
+            Video video = PlayableMediaItems.FirstOrDefault() as Video;
 
-            if (media != null)
+            if (video != null)
             {
                 // Playback is based on a strongly typed Media object
-
-                Video video = media as Video;
-
-                if (video != null && video.MediaLocation is IFolderMediaLocation)
-                {
-                    return Helper.GetIsoFiles(video.Path)[0];
-                }
-
-                return Helper.GetIsoFiles(media.Files.First())[0];
+                return video.IsoFiles.First();
             }
             else
             {

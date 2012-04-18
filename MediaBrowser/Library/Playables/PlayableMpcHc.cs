@@ -128,7 +128,7 @@ namespace MediaBrowser.Library.Playables
                 }
             }
 
-            return base.GetPlaybackState(new string[] { filename });
+            return new PlaybackStateEventArgs() { PlayableItemId = PlayableItemId };
         }
 
         public override ConfigData.ExternalPlayer GetDefaultConfiguration()

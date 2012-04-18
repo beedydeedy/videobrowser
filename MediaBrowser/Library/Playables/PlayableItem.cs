@@ -20,11 +20,10 @@ namespace MediaBrowser.Library
         /// </summary>
         protected Guid PlayableItemId = Guid.NewGuid();
 
-        private List<Media> _PlayableMediaItems = new List<Media>();
         /// <summary>
         /// This holds the list of Media objects from which PlayableItems will be created.
         /// </summary>
-        protected List<Media> PlayableMediaItems { get { return _PlayableMediaItems; } }
+        protected List<Media> PlayableMediaItems = new List<Media>();
 
         /// <summary>
         /// If Playback is Folder Based this will hold a reference to the Folder object
@@ -148,7 +147,7 @@ namespace MediaBrowser.Library
         public void AddMedia(Media media)
         {
             AddMedia(media.Files);
-            _PlayableMediaItems = new Media[] { media }.ToList();
+            PlayableMediaItems.Add(media);
         }
         public void AddMedia(IEnumerable<Media> mediaItems)
         {
@@ -158,8 +157,8 @@ namespace MediaBrowser.Library
                 mediaItems = mediaItems.Where(m => m.IsPlaylistCapable());
             }
 
-            _PlayableMediaItems = mediaItems.ToList();
-            AddMedia(mediaItems.Select(v2 => v2.Files).SelectMany(i => i));
+            PlayableMediaItems = mediaItems.ToList();
+            AddMedia(mediaItems.Select(m => m.Files).SelectMany(i => i));
         }
         #endregion
 
@@ -201,24 +200,16 @@ namespace MediaBrowser.Library
         {
             this.Prepare();
 
-            if (PlayableFiles.Count() == 0)
+            if (PlayableFiles.Count() == 0 && PlayableMediaItems.Count() == 0)
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
 
-            Logger.ReportInfo(GetType().Name +  " About to play : " + string.Join(",", PlayableFiles.ToArray()));
+            Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
-            Media media = PlayableMediaItems.FirstOrDefault();
-            PlaybackStatus playstate = null;
-
-            if (media != null)
-            {
-                playstate = media.PlaybackStatus;
-            }
-
-            SendFilesToPlayer(GetPlaybackArguments(PlayableFiles, playstate));
+            SendFilesToPlayer(GetPlaybackArguments());
         }
 
         protected virtual void Prepare()
@@ -266,11 +257,19 @@ namespace MediaBrowser.Library
         /// <summary>
         /// Generates an arguments object to send to the PlaybackController
         /// </summary>
-        private PlaybackArguments GetPlaybackArguments(IEnumerable<string> files, PlaybackStatus playstate)
+        private PlaybackArguments GetPlaybackArguments()
         {
             PlaybackArguments info = new PlaybackArguments();
 
-            info.Files = files;
+            info.Files = PlayableFiles;
+
+            Media media = PlayableMediaItems.FirstOrDefault();
+            PlaybackStatus playstate = null;
+
+            if (media != null)
+            {
+                playstate = media.PlaybackStatus;
+            }
 
             if (playstate != null)
             {

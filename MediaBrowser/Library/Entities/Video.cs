@@ -110,6 +110,19 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public IEnumerable<string> IsoFiles
+        {
+            get
+            {
+                if (MediaLocation is IFolderMediaLocation)
+                {
+                    return Helper.GetIsoFiles(Path);
+                }
+
+                return Helper.GetIsoFiles(Files.First());
+            }
+        }
+
         public static bool IsRippedMedia(MediaType type)
         {
             return type == MediaType.BluRay ||

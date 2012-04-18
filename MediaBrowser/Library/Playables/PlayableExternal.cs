@@ -243,9 +243,9 @@ namespace MediaBrowser.Library.Playables
         {
             Video video = media as Video;
 
-            if (video != null && video.MediaType == MediaType.ISO && video.MediaLocation is IFolderMediaLocation)
+            if (video != null && video.MediaType == MediaType.ISO)
             {
-                files = Helper.GetIsoFiles(video.Path);
+                files = new string[] { video.IsoFiles.First() };
             }
 
             PlaybackStatus playstate = null;
@@ -265,7 +265,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected virtual PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
         {
-            return new PlaybackStateEventArgs() { Position = 0, PlaylistPosition = 0, PlayableItemId = PlayableItemId };
+            return new PlaybackStateEventArgs() { PlayableItemId = PlayableItemId };
         }
 
         private void GiveFocusToExtPlayer(Process player, PlaybackArguments playbackInfo)
