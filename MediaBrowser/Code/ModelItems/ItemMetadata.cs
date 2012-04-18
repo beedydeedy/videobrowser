@@ -327,7 +327,7 @@ namespace MediaBrowser.Library {
 
                     List<Actor> actors = new List<Actor>();
 
-                    var show = baseItem as Show;
+                    var show = baseItem as IShow;
                     if (show != null)
                     {
 
