@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 using System.Threading;
 using System.IO;
+using System.Xml;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library;
 using MediaBrowser;
@@ -38,10 +39,141 @@ namespace MBMigrate
             _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
             Async.Queue("Migration", () =>
             {
-                Migrate253();
+                Migrate26();
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
         }
+
+        public void BackupConfig(Version ver)
+        {
+            string backupName = Path.Combine(ApplicationPaths.AppConfigPath,
+                Path.GetFileNameWithoutExtension(ApplicationPaths.ConfigFile) + " (" + ver.ToString() + ").config");
+            if (!File.Exists(backupName))
+            {
+                try
+                {
+                    File.Copy(ApplicationPaths.ConfigFile, backupName);
+                }
+                catch 
+                {
+                    // no biggie...
+                }
+            }
+        }
+
+        public void Migrate26()
+        {
+            //version 2.6 migration
+            Version current = new Version(_config.MBVersion);
+            if (current > new Version(2, 0) && current < new Version(2, 6))
+            {
+                BackupConfig(current);
+                //external config
+                UpgradeExternalPlayerXml();
+            }
+        }
+
+        /// <summary>
+        /// Upgrades extenral player xml from version 2.5.3 and below
+        /// </summary>
+        private void UpgradeExternalPlayerXml()
+        {
+            UpdateProgress("External Players", .5);
+            XmlDocument doc = new XmlDocument();
+            string xmlPath = ApplicationPaths.ConfigFile;
+            doc.Load(xmlPath);
+            XmlNode externalPlayersNode = doc.DocumentElement.SelectSingleNode("ExternalPlayers");
+
+            if (externalPlayersNode == null || externalPlayersNode.InnerXml.Contains("<MediaTypes>"))
+            {
+                // Either no external players or we've already been converted (MediaTypes exist)
+                return;
+            }
+
+            // Wrap <MediaType> with <MediaTypes>
+            externalPlayersNode.InnerXml = externalPlayersNode.InnerXml.Replace("<MediaType>", "<MediaTypes><MediaType>").Replace("</MediaType>", "</MediaType></MediaTypes>");
+
+            // Remove quotes from Args
+            externalPlayersNode.InnerXml = externalPlayersNode.InnerXml.Replace("\"{0}\"", "{0}");
+
+            // Loop through each one and try to detect the ExternalPlayerType based on the command
+            foreach (XmlNode node in externalPlayersNode.SelectNodes("ExternalPlayer"))
+            {
+                string command = node.SelectSingleNode("Command").InnerText.ToLower();
+
+                XmlElement typeElement = doc.CreateElement("ExternalPlayerType");
+
+                if (command.Contains("mpc-hc"))
+                {
+                    typeElement.InnerText = "MpcHc";
+                }
+                else if (command.Contains("vlc"))
+                {
+                    typeElement.InnerText = "VLC";
+                }
+                else if (command.Contains("utotalmediatheatre5"))
+                {
+                    typeElement.InnerText = "TMT";
+                }
+                else
+                {
+                    typeElement.InnerText = "Generic";
+                }
+
+                node.AppendChild(typeElement);
+            }
+
+            MergeExternalPlayers(doc, externalPlayersNode);
+            doc.Save(xmlPath);
+        }
+
+        /// <summary>
+        /// In version 2.5.3 and below, external players were defined individually by MediaType.
+        /// Now you define a player once and select multipe MediaTypes
+        /// This will attempt to merge the multiple definitions into a single one
+        /// </summary>
+        private void MergeExternalPlayers(XmlDocument doc, XmlNode externalPlayersNode)
+        {
+            XmlNodeList nodes = externalPlayersNode.SelectNodes("ExternalPlayer");
+
+            // Loop through each node starting with the last and counting down
+            for (int i = nodes.Count - 1; i > 0; i--)
+            {
+                XmlNode node = nodes[i];
+
+                // Get the command and MediaType
+                string command = node.SelectSingleNode("Command").InnerText.ToLower();
+                string mediaType = node.SelectSingleNode("MediaTypes/MediaType").InnerText;
+
+                XmlNode nodeToMergeWith = null;
+
+                // Now go through each one from the beginning and see if there's another player using the same command
+                foreach (XmlNode testNode in nodes)
+                {
+                    if (testNode == node)
+                    {
+                        continue;
+                    }
+
+                    // Found a match
+                    if (testNode.SelectSingleNode("Command").InnerText.ToLower() == command)
+                    {
+                        nodeToMergeWith = testNode;
+                        break;
+                    }
+                }
+
+                // If we found a match, add the MediaType to the one we found and delete the current node
+                if (nodeToMergeWith != null)
+                {
+                    XmlElement mediaTypeElem = doc.CreateElement("MediaType");
+                    mediaTypeElem.InnerText = mediaType;
+                    nodeToMergeWith.SelectSingleNode("MediaTypes").AppendChild(mediaTypeElem);
+                    externalPlayersNode.RemoveChild(node);
+                }
+            }
+        }
+
 
         public void Migrate253()
         {
