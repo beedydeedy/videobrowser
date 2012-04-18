@@ -14,6 +14,8 @@ using System.Drawing.Imaging;
 using System.Linq;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library;
+using MediaBrowser.Library.Extensions;
+using MediaBrowser.Library.ImageManagement;
 using Microsoft.MediaCenter.UI;
 using MediaBrowser.Interop;
 
@@ -511,11 +513,16 @@ namespace MediaBrowser.LibraryManagement
 
         private static Microsoft.MediaCenter.UI.Image GetMediaInfoImage_Internal(string name)
         {
+            if (name.EndsWith("_")) return null; //blank codec or other type
             name = name.ToLower().Replace('/','-');
-            string baseLocation = Config.Instance.ImageByNameLocation;
-            if ((baseLocation == null) || (baseLocation.Length == 0))
-                baseLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
-            baseLocation += "\\MediaInfo";
+            Guid id = ("MiImage" + Config.Instance.ViewTheme + name).GetMD5();
+
+            //try to load from image cache first
+            string path = CustomImageCache.Instance.GetImagePath(id);
+            if (path != null) return new Image(path); //was already cached
+
+            //not cached - look in IBN - this is inefficient but only the first time as we will pull from cache next
+            string baseLocation = ApplicationPaths.AppIBNPath + "\\MediaInfo";
 
             //we'll look first in a theme-specific folder if it exists
             string ibnLocation = Path.Combine(baseLocation, Config.Instance.ViewTheme);
@@ -525,7 +532,9 @@ namespace MediaBrowser.LibraryManagement
             string fileName = Path.Combine(ibnLocation, RemoveInvalidFileChars(name) + ".png");
             if (File.Exists(fileName))
             {
-                return new Image("file://" + fileName);
+                Logger.ReportVerbose("===CustomImage " + fileName + " being cached on first access.  Shouldn't have to do this again...");
+                //cache it and return resulting cached image
+                return new Image("file://" + CustomImageCache.Instance.CacheImage(id, System.Drawing.Image.FromFile(fileName)));
             }
             else
             {
@@ -539,7 +548,10 @@ namespace MediaBrowser.LibraryManagement
                 else
                 {
                     resourceRef = "resx://MediaBrowser/MediaBrowser.Resources/";
-                }                    
+                }
+                //cache it
+                Logger.ReportVerbose("===CustomImage " + resourceRef+name + " being cached on first access.  Should only have to do this once per session...");
+                CustomImageCache.Instance.CacheResource(id, resourceRef+name);
                 return new Image(resourceRef + name);
             }
         }
