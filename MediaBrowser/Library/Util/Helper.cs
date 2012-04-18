@@ -460,6 +460,19 @@ namespace MediaBrowser.LibraryManagement
             return fn;
         }
 
+        public static string GetAttributeFromPath(string path, string attrib)
+        {
+            string ret = null;
+            if (path.ToLower().Contains(attrib.ToLower()))
+            {
+                string search = "[" + attrib.ToLower() + "=";
+                int start = path.ToLower().IndexOf(search) + search.Length;
+                int end = path.IndexOf("]", start);
+                ret = path.Substring(start, end - start).ToLower();
+            }
+            return ret;
+        }
+
         public static string[] GetStringInBetween(string strBegin,
             string strEnd, string strSource,
             bool includeBegin, bool includeEnd)

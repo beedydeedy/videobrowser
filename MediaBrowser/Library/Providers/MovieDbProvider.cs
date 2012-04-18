@@ -94,12 +94,9 @@ namespace MediaBrowser.Library.Providers
 
         private void FetchMovieData()
         {
-            string id;
-            string matchedName;
-            id = FindId(Item.Name, ((Movie)Item).ProductionYear ,out matchedName);
+            string id = FindId(Item.Name, ((Movie)Item).ProductionYear);
             if (id != null)
             {
-                Item.Name = matchedName;
                 FetchMovieData(id);
             }
             else
@@ -108,7 +105,7 @@ namespace MediaBrowser.Library.Providers
             }
         }
 
-        public static string FindId(string name, int? productionYear , out string matchedName)
+        public string FindId(string name, int? productionYear)
         {
             int? year = null;
             foreach (Regex re in nameMatches)
@@ -128,15 +125,15 @@ namespace MediaBrowser.Library.Providers
                 year = productionYear;
             }
 
-            Logger.ReportInfo("MovieDbProvider: Finding id for movie data: " + name);
+            Logger.ReportInfo("MovieDbProvider: Finding id for movie: " + name);
             string language = Kernel.Instance.ConfigData.PreferredMetaDataLanguage.ToLower();
-            string id = AttemptFindId(name, year, out matchedName, language);
+            string id = AttemptFindId(name, year, language);
             if (id == null)
             {
                 //try in english if wasn't before
                 if (language != "en")
                 {
-                    id = AttemptFindId(name, year, out matchedName, "en");
+                    id = AttemptFindId(name, year, "en");
                 }
                 else
                 {
@@ -148,12 +145,11 @@ namespace MediaBrowser.Library.Providers
                         name = name.Replace("  ", " ");
                         name = name.Replace("_", " ");
                         name = name.Replace("-", "");
-                        matchedName = null;
-                        id = AttemptFindId(name, year, out matchedName, language);
+                        id = AttemptFindId(name, year, language);
                         if (id == null && language != "en")
                         {
                             //finally again, in english
-                            id = AttemptFindId(name, year, out matchedName, "en");
+                            id = AttemptFindId(name, year, "en");
                         }
                     }
                 }
@@ -161,12 +157,20 @@ namespace MediaBrowser.Library.Providers
             return id;
         }
 
-        public static string AttemptFindId(string name, int? year, out string matchedName, string language)
+        public string AttemptFindId(string name, int? year, string language)
         {
+            //if id is specified in the file name return it directly
+            string id = Helper.GetAttributeFromPath(Item.Path, "tmdbid");
+            if (id != null)
+            {
+                Logger.ReportInfo("MovieDbProvider: tMDb ID specified in file path.  Using: " + id);
+                return id;
+            }
 
+            //nope - search for it
+            string matchedName = null;
             string url3 = string.Format(search3, UrlEncode(name), ApiKey, language);
             var json = Helper.FetchJson(url3);
-            string id = null;
             List<string> possibleTitles = new List<string>();
             if (json != null)
             {
@@ -178,26 +182,20 @@ namespace MediaBrowser.Library.Providers
                         matchedName = null;
                         id = possible["id"].ToString();
                         string n = (string)possible["title"];
-                        if (n != null)
+                        if (GetComparableName(n) == compName)
                         {
-                            //if main title matches we don't have to look for alternatives
+                            matchedName = n;
+                        }
+                        else
+                        {
+                            n = (string)possible["original_title"];
                             if (GetComparableName(n) == compName)
                             {
                                 matchedName = n;
                             }
-                            else
-                            {
-                                n = (string)possible["original_title"];
-                                if (n != null)
-                                {
-                                    if (GetComparableName(n) == compName)
-                                    {
-                                        matchedName = n;
-                                    }
-                                }
-                            }
                         }
 
+                        //if main title matches we don't have to look for alternatives
                         if (matchedName == null)
                         {
                             //that title didn't match - look for alternatives
@@ -229,7 +227,7 @@ namespace MediaBrowser.Library.Providers
                                 {
                                     if (Math.Abs(r.Year - year.Value) > 1) // allow a 1 year tolerance on release date
                                     {
-                                        Logger.ReportVerbose("Result " + matchedName + " release on " + r + " did not match year " + year);
+                                        Logger.ReportVerbose("Result " + matchedName + " released on " + r + " did not match year " + year);
                                         continue;
                                     }
                                 }
