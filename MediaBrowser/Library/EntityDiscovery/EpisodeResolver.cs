@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.IO;
 using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Filesystem;
-using MediaBrowser.Library.Factories;
-using MediaBrowser.LibraryManagement;
-using MediaBrowser.Library.Providers.TVDB;
 using MediaBrowser.Library.Extensions;
+using MediaBrowser.Library.Factories;
+using MediaBrowser.Library.Filesystem;
+using MediaBrowser.Library.Providers.TVDB;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.EntityDiscovery {
     public class EpisodeResolver : EntityResolver {
@@ -21,12 +19,15 @@ namespace MediaBrowser.Library.EntityDiscovery {
 
             if (!location.IsHidden()) {
 
-                bool containsIfo;
-                bool isDvd = IsDvd(location, out containsIfo);
-                bool isIso = Helper.IsIso(location.Path); 
-                bool isBD = Helper.IsFolder(location.Path) ? Helper.IsBluRayFolder(location.Path, null) : false;
+                bool isFolder = !Path.HasExtension(location.Path);
+
+                bool containsIfo = false;
+                bool isDvd = isFolder ? IsDvd(location, out containsIfo) : false;
+                bool isIso = isFolder ? false : Helper.IsIso(location.Path);
+                bool isBD = isFolder ? Helper.IsBluRayFolder(location.Path, null) : false;
+                
                 bool isVideo = !(location is IFolderMediaLocation) &&
-                    (Helper.IsVideo(location.Path) || isIso || isBD || location.IsVob());
+                    (isIso || isBD || Helper.IsVideo(location.Path) || location.IsVob());
 
                 if ( (isDvd || isBD || isVideo ) &&
                     TVUtils.IsEpisode(location.Path)) {
