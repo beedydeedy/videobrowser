@@ -511,11 +511,11 @@ namespace MediaBrowser.LibraryManagement
             return result;
         }
 
-        private static Microsoft.MediaCenter.UI.Image GetMediaInfoImage_Internal(string name)
+        public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
         {
             if (name.EndsWith("_")) return null; //blank codec or other type
             name = name.ToLower().Replace("-", "_");
-            name = name.Replace('/','-');
+            name = name.Replace('/', '-');
             Guid id = ("MiImage" + Config.Instance.ViewTheme + name).GetMD5();
 
             //try to load from image cache first
@@ -551,27 +551,10 @@ namespace MediaBrowser.LibraryManagement
                     resourceRef = "resx://MediaBrowser/MediaBrowser.Resources/";
                 }
                 //cache it
-                Logger.ReportVerbose("===CustomImage " + resourceRef+name + " being cached on first access.  Should only have to do this once per session...");
-                CustomImageCache.Instance.CacheResource(id, resourceRef+name);
+                Logger.ReportVerbose("===CustomImage " + resourceRef + name + " being cached on first access.  Should only have to do this once per session...");
+                CustomImageCache.Instance.CacheResource(id, resourceRef + name);
                 return new Image(resourceRef + name);
             }
-        }
-
-        private static Dictionary<string, Microsoft.MediaCenter.UI.Image> _cachedMediaInfoImages = new Dictionary<string, Microsoft.MediaCenter.UI.Image>();
-        
-        public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
-        {
-            if (!Config.Instance.CacheAllImagesInMemory)
-            {
-                return GetMediaInfoImage_Internal(name);
-            }
-
-            if (!_cachedMediaInfoImages.ContainsKey(name))
-            {
-                _cachedMediaInfoImages[name] = GetMediaInfoImage_Internal(name);
-            }
-
-            return _cachedMediaInfoImages[name];
         }
 
         public static string FirstCap(string aStr)
