@@ -73,6 +73,14 @@ namespace MediaBrowser.Library.Playables
 
         public override bool CanPlay(IEnumerable<Media> mediaList)
         {
+            foreach (Media media in mediaList)
+            {
+                if (!(media is Video))
+                {
+                    return false;
+                }
+            }
+
             return ConfigData.CanPlay(ExternalPlayerConfiguration, mediaList);
         }
 
