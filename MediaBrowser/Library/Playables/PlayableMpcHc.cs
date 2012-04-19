@@ -45,11 +45,11 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Gets the watched state after playback has stopped.
         /// </summary>
-        protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
+        protected override PlaybackStateEventArgs GetPlaybackState()
         {
             NameValueCollection values = GetMPCHCSettings();
 
-            PlaybackStateEventArgs state = GetPlaybackState(values, files);
+            PlaybackStateEventArgs state = GetPlaybackState(values, PlayableFiles);
 
             state.PlayableItemId = PlayableItemId;
 

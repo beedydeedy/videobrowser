@@ -7,10 +7,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Filesystem;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
-using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter.Hosting;
 
 namespace MediaBrowser.Library.Playables
@@ -199,9 +197,7 @@ namespace MediaBrowser.Library.Playables
         protected void OnExternalPlayerClosed()
         {
             // Just use base method
-            OnPlaybackFinished(null, GetPlaybackState(PlayableFiles));
-            
-            Application.CurrentInstance.RunPostPlayProcesses();
+            OnPlaybackFinished(null, GetPlaybackState());
         }
 
         /// <summary>
@@ -245,7 +241,7 @@ namespace MediaBrowser.Library.Playables
         /// Gets the watched state after playback has stopped.
         /// Subclasses will need to provide their own support for this.
         /// </summary>
-        protected virtual PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
+        protected virtual PlaybackStateEventArgs GetPlaybackState()
         {
             return new PlaybackStateEventArgs() { PlayableItemId = PlayableItemId };
         }

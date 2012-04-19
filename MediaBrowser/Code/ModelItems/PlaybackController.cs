@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.RemoteControl;
@@ -314,7 +313,7 @@ namespace MediaBrowser
 
                 Guid playableItemId = activeItem == null ? Guid.Empty : new Guid(activeItem.FriendlyData["itemId"].ToString());
                 int playlistIndex = activeItem == null ? 0 : int.Parse(activeItem.FriendlyData["fileIndex"].ToString());
-                long duration = activeItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata, activeItem);
+                long duration = activeItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
 
                 // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
                 if (positionTicks > 0)
@@ -356,8 +355,6 @@ namespace MediaBrowser
 
                 // Fire the OnFinished event for each item
                 OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
-
-                Application.CurrentInstance.RunPostPlayProcesses();
 
                 //we're done - call post-processor
                 Application.CurrentInstance.ReturnToApplication();
@@ -598,7 +595,7 @@ namespace MediaBrowser
         /// <summary>
         /// Gets the duration, in ticks, of the currently playing content
         /// </summary>
-        private long GetDurationOfCurrentlyPlayingMedia(MediaMetadata metadataFromPlayer, MediaCollectionItem item)
+        private long GetDurationOfCurrentlyPlayingMedia(MediaMetadata metadataFromPlayer)
         {
             if (metadataFromPlayer != null)
             {

@@ -55,16 +55,6 @@ namespace MediaBrowser.Library.Playables
             return video.MediaType == MediaType.ISO;
         }
 
-        public override bool CanPlay(IEnumerable<Media> mediaList)
-        {
-            if (mediaList.Count() == 1)
-            {
-                return CanPlay(mediaList.First());
-            }
-
-            return false;
-        }
-        
         protected override void SendFilesToPlayer(PlaybackArguments args)
         {
             if (!Config.Instance.UseAutoPlayForIso)

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables;
 

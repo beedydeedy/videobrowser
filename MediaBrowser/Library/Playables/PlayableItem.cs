@@ -178,6 +178,11 @@ namespace MediaBrowser.Library
         /// </summary>
         public virtual bool CanPlay(IEnumerable<string> files)
         {
+            if (files.Count() == 1)
+            {
+                return CanPlay(files.First());
+            }
+            
             return false;
         }
 
@@ -186,6 +191,11 @@ namespace MediaBrowser.Library
         /// </summary>
         public virtual bool CanPlay(IEnumerable<Media> mediaList)
         {
+            if (mediaList.Count() == 1)
+            {
+                return CanPlay(mediaList.First());
+            }
+
             return false;
         }
 
@@ -363,6 +373,8 @@ namespace MediaBrowser.Library
                 }
             }
 
+            Application.CurrentInstance.RunPostPlayProcesses();
+
             // Clean up event handlers
             PlaybackController.Progress -= OnProgress;
             PlaybackController.PlaybackFinished -= OnPlaybackFinished;
@@ -419,11 +431,14 @@ namespace MediaBrowser.Library
         /// </summary>
         private void UpdateResumeStatusInUI()
         {
+            Item item = Application.CurrentInstance.CurrentItem;
+            Guid currentMediaId = item.BaseItem.Id;
+
             foreach (Media media in PlayableMediaItems)
             {
-                if (media.Id == Application.CurrentInstance.CurrentItem.BaseItem.Id)
+                if (media.Id == currentMediaId)
                 {
-                    Application.CurrentInstance.CurrentItem.UpdateResume();
+                    item.UpdateResume();
                     break;
                 }
             }

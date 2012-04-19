@@ -31,9 +31,9 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Gets the watched state after playback has stopped.
         /// </summary>
-        protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
+        protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            return _LastPlaybackState ?? base.GetPlaybackState(files);
+            return _LastPlaybackState ?? base.GetPlaybackState();
         }
 
         /// <summary>

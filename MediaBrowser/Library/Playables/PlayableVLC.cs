@@ -149,7 +149,7 @@ namespace MediaBrowser.Library.Playables
 
                 _CurrentPlayingFile = fileNameNode.InnerText;
 
-                OnProgress(null, GetPlaybackState(PlayableFiles));
+                OnProgress(null, GetPlaybackState());
             }
         }
 
@@ -170,12 +170,14 @@ namespace MediaBrowser.Library.Playables
             base.OnPlaybackFinished(sender, e);
         }
 
-        protected override PlaybackStateEventArgs GetPlaybackState(IEnumerable<string> files)
+        protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            PlaybackStateEventArgs state = base.GetPlaybackState(files);
+            PlaybackStateEventArgs state = base.GetPlaybackState();
 
             state.Position = _CurrentPlayingPosition;
             state.DurationFromPlayer = _CurrentFileDuration;
+
+            IEnumerable<string> files = PlayableFiles;
 
             // Get the playlist position by matching the filename that VLC reported with the original
             for (int i = 0; i < files.Count(); i++)
