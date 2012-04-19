@@ -244,25 +244,25 @@
   <data name="Directors" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>markup\controls\directors.mcml;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="TV_14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_14" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-14.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_G" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_g" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-g.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_MA" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_ma" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-ma.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_PG" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_pg" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-pg.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_Y" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_y" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-y.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_Y7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_y7" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-y7.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TV_Y7_FV" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_tv_y7_fv" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\tv-y7-fv.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Writers" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -1135,22 +1135,22 @@
   <data name="InfoStrip" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Markup\Controls\InfoStrip.mcml;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="Rated_G" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_g" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-g.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Rated_NC_17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_nc_17" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-nc-17.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Rated_NR" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_nr" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-nr.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Rated_PG" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_pg" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-pg.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Rated_PG_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_pg_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-pg-13.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Rated_R" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="rated_r" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Images\Ratings\rated-r.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Locked" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -1171,7 +1171,6 @@
   <data name="ExtendedPagination" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Markup\Controls\ExtendedPagination.mcml;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="ArtistList" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Markup\Controls\ArtistList.mcml;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
