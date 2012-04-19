@@ -18,7 +18,7 @@ namespace MediaBrowser.Library.Playables
     /// <summary>
     /// Represents an abstract base class for all externally playable items
     /// </summary>
-    public class PlayableExternal : PlayableMultiMediaVideo
+    public class PlayableExternal : PlayableItem
     {
         #region Unmanaged methods
         //alesbal: begin
@@ -119,7 +119,7 @@ namespace MediaBrowser.Library.Playables
             // Create a playlist if needed
             if (PlayableFiles.Count() > 1 && !ExternalPlayerConfiguration.SupportsMultiFileCommandArguments && ExternalPlayerConfiguration.SupportsPlaylists)
             {
-                PlaylistFile = CreatePlaylist(Resume);
+                PlaylistFile = CreatePlaylist();
             }
         }
 
@@ -215,47 +215,21 @@ namespace MediaBrowser.Library.Playables
             AddInHost.Current.MediaCenterEnvironment.NavigateToPage(Microsoft.MediaCenter.PageId.ExtensibilityUrl, url);
         }
 
-        private IEnumerable<string> GetFilesToSendToPlayer(bool resume)
+        private IEnumerable<string> GetFilesToSendToPlayer()
         {
-            // If playback is based off a path
-            if (PlayableMediaItems.Count() == 0)
+            IEnumerable<string> files = PlayableFiles;
+
+            if (Resume)
             {
-                return GetFilesToSendToPlayer(null, PlayableFiles, resume);
-            }
+                Media media = PlayableMediaItems.FirstOrDefault();
 
-            List<string> files = new List<string>();
-
-            for (int i = 0; i < PlayableMediaItems.Count(); i++)
-            {
-                Media media = PlayableMediaItems.ElementAt(i);
-
-                files.AddRange(GetFilesToSendToPlayer(media, media.Files, resume));
-
-                // Only allow resume on first Media object
-                resume = false;
+                if (media != null && media.PlaybackStatus != null)
+                {
+                    files = files.Skip(media.PlaybackStatus.PlaylistPosition);
+                }
             }
 
             return files;
-
-        }
-
-        protected virtual IEnumerable<string> GetFilesToSendToPlayer(Media media, IEnumerable<string> files, bool resume)
-        {
-            Video video = media as Video;
-
-            if (video != null && video.MediaType == MediaType.ISO)
-            {
-                files = new string[] { video.IsoFiles.First() };
-            }
-
-            PlaybackStatus playstate = null;
-
-            if (media != null)
-            {
-                playstate = media.PlaybackStatus;
-            }
-
-            return resume && playstate != null ? files.Skip(playstate.PlaylistPosition) : files;
 
         }
 
@@ -285,36 +259,17 @@ namespace MediaBrowser.Library.Playables
         {
         }
 
-        protected override void OnProgress(object sender, PlaybackStateEventArgs e)
-        {
-            // Just use base method if multiple media items are not involved
-            if (PlayableMediaItems.Count() < 2)
-            {
-                base.OnProgress(sender, e);
-            }
-            else
-            {
-                // Something else is currently playing
-                if (IsPlaybackEventOnCurrentInstance(e))
-                {
-                    UpdateProgressForMultipleMediaItems(e);
-                }
-
-                HasUpdatedPlayState = true;
-            }
-        }
-
         /// <summary>
         /// Creates a PLS file based on the list of PlayableItems
         /// </summary>
-        private string CreatePlaylist(bool resume)
+        private string CreatePlaylist()
         {
             string randomName = "pls_" + DateTime.Now.Ticks;
             string playListFile = Path.Combine(ApplicationPaths.AutoPlaylistPath, randomName + ".pls");
 
             StringBuilder contents = new StringBuilder("[playlist]\n");
             int x = 1;
-            foreach (string file in GetFilesToSendToPlayer(resume))
+            foreach (string file in GetFilesToSendToPlayer())
             {
                 contents.Append("File" + x + "=" + file + "\n");
                 contents.Append("Title" + x + "=Part " + x + "\n\n");
@@ -332,7 +287,7 @@ namespace MediaBrowser.Library.Playables
 
             string args = string.Join(" ", argsList.ToArray());
 
-            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(playInfo.Resume)));
+            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer()));
 
             return args;
         }
@@ -362,50 +317,6 @@ namespace MediaBrowser.Library.Playables
             filesToPlay = filesToPlay = filesToPlay.Select(i => "\"" + i + "\"");
 
             return string.Join(" ", filesToPlay.ToArray());
-        }
-
-        /// <summary>
-        /// Goes through each Media object within PlayableMediaItems and updates Playstate for each individually
-        /// </summary>
-        private void UpdateProgressForMultipleMediaItems(PlaybackStateEventArgs state)
-        {
-            string currentFile = PlayableFiles.ElementAt(state.PlaylistPosition);
-
-            int foundIndex = -1;
-
-            // First find which media item we left off at
-            for (int i = 0; i < PlayableMediaItems.Count(); i++)
-            {
-                if (PlayableMediaItems.ElementAt(i).Files.Contains(currentFile))
-                {
-                    foundIndex = i;
-                }
-            }
-
-            // Go through each media item up until the current one and update playstate
-            for (int i = 0; i <= foundIndex; i++)
-            {
-                Media media = PlayableMediaItems.ElementAt(i);
-
-                // Perhaps not a resumable item
-                if (media.PlaybackStatus == null)
-                {
-                    continue;
-                }
-
-                long currentPositionTicks = 0;
-                int currentPlaylistPosition = 0;
-
-                if (foundIndex == i)
-                {
-                    // If this is where playback is, update position and playlist
-                    currentPlaylistPosition = media.Files.ToList().IndexOf(currentFile);
-                    currentPositionTicks = state.Position;
-                }
-
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, null, PlaybackStartTime);
-            }
-
         }
 
         /// <summary>

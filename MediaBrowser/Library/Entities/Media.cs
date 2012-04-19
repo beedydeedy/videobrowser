@@ -23,16 +23,6 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        public bool IsPlaylistCapable()
-        {
-            Video us = this as Video;
-            if (us != null)
-            {
-                return !us.ContainsRippedMedia;
-            }
-            return true;
-        }
-
         public virtual int RunTime
         {
             get { return 0; }

@@ -21,9 +21,7 @@ namespace MediaBrowser.Library.Factories
             RegisterExternals();
 
             RegisterType<PlayableIso>();
-            RegisterType<PlayableDvd>();
-            RegisterType<PlayableMultiMediaVideo>();
-            RegisterType<PlayableVideo>();
+            RegisterType<PlayableInternal>();
         }
 
         /// <summary>
@@ -93,24 +91,10 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Media media)
         {
-            return Create(media, true);
-        }
-
-        /// <summary>
-        /// Creates a PlayableItem based on a Media object
-        /// </summary>
-        public PlayableItem Create(Media media, bool allowExternalPlayers)
-        {
             PlayableItem playable = null;
 
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
             {
-                // Skip PlayableExternals if specified to do so
-                if (!allowExternalPlayers && type.Key is PlayableExternal)
-                {
-                    continue;
-                }
-
                 if (type.Key.CanPlay(media))
                 {
                     playable = InstantiatePlayableItem(type);
@@ -118,7 +102,7 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            if (playable == null) playable = GetDefaultPlayableItem(false);
+            if (playable == null) playable = GetDefaultPlayableItem();
             playable.AddMedia(media);
             return playable;
         }
@@ -128,12 +112,6 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<string> paths)
         {
-            // Keep it simple if we can
-            if (paths.Count() < 2)
-            {
-                return Create(paths.FirstOrDefault());
-            }
-
             PlayableItem playable = null;
 
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
@@ -145,7 +123,7 @@ namespace MediaBrowser.Library.Factories
                 }
             }
 
-            if (playable == null) playable = GetDefaultPlayableItem(false);
+            if (playable == null) playable = GetDefaultPlayableItem();
             playable.AddMedia(paths);
             return playable;
         }
@@ -155,18 +133,6 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
-            if (mediaList.Count() > 1)
-            {
-                // First filter out items that can't be queued in a playlist
-                mediaList = mediaList.Where(m => m.IsPlaylistCapable());
-            }
-
-            // Keep it simple if we can
-            if (mediaList.Count() < 2)
-            {
-                return Create(mediaList.FirstOrDefault());
-            }
-
             PlayableItem playable = null;
 
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
@@ -179,7 +145,7 @@ namespace MediaBrowser.Library.Factories
             }
 
             // Return default
-            if (playable == null) playable = GetDefaultPlayableItem(true);
+            if (playable == null) playable = GetDefaultPlayableItem();
             playable.AddMedia(mediaList);
             return playable;
         }
@@ -201,7 +167,7 @@ namespace MediaBrowser.Library.Factories
             }
 
             // Return default
-            if (playable == null) playable = GetDefaultPlayableItem(false);
+            if (playable == null) playable = GetDefaultPlayableItem();
             playable.AddMedia(path);
             return playable;
         }
@@ -218,14 +184,9 @@ namespace MediaBrowser.Library.Factories
             return playable;
         }
 
-        private PlayableItem GetDefaultPlayableItem(bool hasMultipleMediaItems)
+        private PlayableItem GetDefaultPlayableItem()
         {
-            if (hasMultipleMediaItems)
-            {
-                return new PlayableMultiMediaVideo();
-            }
-
-            return new PlayableVideo();
+            return new PlayableInternal();
         }
 
         private PlayableItem InstantiatePlayableItem(KeyValuePair<PlayableItem, Type> type)

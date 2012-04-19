@@ -37,10 +37,9 @@ namespace MediaBrowser.Library.Playables
             return args;
         }
 
-        protected override IEnumerable<string> GetFilesToSendToPlayer(Media media, IEnumerable<string> files, bool resume)
+        protected override IEnumerable<string> GetPlayableFiles(Media media)
         {
-            // For folder-based playback, such as dvd, mpc doesn't like trailing slashes
-            return base.GetFilesToSendToPlayer(media, files, resume).Select(i => i.TrimEnd('\\'));
+            return base.GetPlayableFiles(media).Select(i => i.TrimEnd('\\'));
         }
 
         /// <summary>

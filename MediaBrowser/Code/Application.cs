@@ -353,7 +353,6 @@ namespace MediaBrowser
             //initialize screen saver
             ScreenSaverTimer = new Timer() { AutoRepeat = true, Enabled = true, Interval = 60000 };
             ScreenSaverTimer.Tick += new EventHandler(ScreenSaverTimer_Tick);
-
         }
 
         void ScreenSaverTimer_Tick(object sender, EventArgs e)
@@ -413,26 +412,31 @@ namespace MediaBrowser
             }
         }
 
+        private static bool? _RunningOnExtender;
         public static bool RunningOnExtender
         {
             get
             {
-                try
+                if (!_RunningOnExtender.HasValue)
                 {
-                    Dictionary<string,object> capabilities = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities;
+                    try
+                    {
+                        Dictionary<string, object> capabilities = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities;
 
-                    bool isLocal = capabilities.ContainsKey("Console") && (bool)capabilities["Console"];
-                    return !isLocal;
+                        bool isLocal = capabilities.ContainsKey("Console") && (bool)capabilities["Console"];
+                        _RunningOnExtender = !isLocal;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error in RunningOnExtender.", ex);
+                        Logger.ReportError("Application has broken MediaCenterEnvironment.  Hopefully, this is a temporary situation...");
+                        //don't crash - just assume we are on a regular install and something went wrong momentarily - it'll have a problem later if it is real
+                        return false;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error in RunningOnExtender.", ex);
-                    Logger.ReportError("Application has broken MediaCenterEnvironment.  Hopefully, this is a temporary situation...");
-                    //don't crash - just assume we are on a regular install and something went wrong momentarily - it'll have a problem later if it is real
-                    return false;
-                    //Application.ReportBrokenEnvironment();
-                    //throw;
-                }
+
+                return _RunningOnExtender.Value;
+
             }
         }
 
@@ -1455,15 +1459,8 @@ namespace MediaBrowser
                 IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
                 BaseItem originalBaseItem = playable.PrimaryBaseItem;
 
-                Item originalItem = null;
-
-                if (originalBaseItem != null)
-                {
-                    originalItem = ItemFactory.Instance.Create(originalBaseItem);
-                }
-
                 // Run all pre-play processes
-                if (originalItem != null && !RunPrePlayProcesses(originalItem, intros))
+                if (originalBaseItem != null && !RunPrePlayProcesses(ItemFactory.Instance.Create(originalBaseItem), intros))
                 {
                     // Abort playback if one of them returns false
                     return;
@@ -1471,11 +1468,6 @@ namespace MediaBrowser
 
                 if (!playable.QueueItem)
                 {
-                    if (originalItem != null && PlaybackController != playable.PlaybackController && playable.PlaybackController.RequiresExternalPage)
-                    {
-                        OpenExternalPlaybackPage(originalItem);
-                    }
-
                     //async this so it doesn't slow us down if the service isn't responding for some reason
                     MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
                     {

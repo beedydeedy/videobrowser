@@ -4,9 +4,13 @@ using MediaBrowser.Library.Factories;
 using MediaBrowser.Library.Filesystem;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
+using System.Collections.Generic;
 
 namespace MediaBrowser.Library.Playables
 {
+    /// <summary>
+    /// This is a unique PlayableItem in that it mounts the ISO and then passes the new path off to another PlayableItem
+    /// </summary>
     class PlayableIso : PlayableItem
     {
         PlayableItem playableExternal = null;
@@ -15,7 +19,7 @@ namespace MediaBrowser.Library.Playables
         {
             base.Prepare();
 
-            string isoPath = GetIsoPath();
+            string isoPath = PlayableFiles.First();
             string mountedPath = Application.CurrentInstance.MountISO(isoPath);
             
             // Play the DVD video that was mounted.
@@ -30,37 +34,12 @@ namespace MediaBrowser.Library.Playables
         {
             Video video = PlayableMediaItems.FirstOrDefault() as Video;
 
-            if (video == null)
-            {
-                return PlayableItemFactory.Instance.Create(mountedPath);
-            }
-            else
-            {
-                video.Path = mountedPath;
+            video.Path = mountedPath;
 
-                video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
-                video.DisplayMediaType = video.MediaType.ToString();
+            video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
+            video.DisplayMediaType = video.MediaType.ToString();
 
-                return PlayableItemFactory.Instance.Create(video);
-            }
-        }
-
-        private string GetIsoPath()
-        {
-            Video video = PlayableMediaItems.FirstOrDefault() as Video;
-
-            if (video != null)
-            {
-                // Playback is based on a strongly typed Media object
-                return video.IsoFiles.First();
-            }
-            else
-            {
-                // Playback is based on a string path to the ISO
-
-                return Helper.GetIsoFiles(PlayableFiles.First())[0];
-            }
-
+            return PlayableItemFactory.Instance.Create(video);
         }
 
         public override bool CanPlay(Media media)
@@ -76,9 +55,14 @@ namespace MediaBrowser.Library.Playables
             return video.MediaType == MediaType.ISO;
         }
 
-        public override bool CanPlay(string path)
+        public override bool CanPlay(IEnumerable<Media> mediaList)
         {
-            return MediaTypeResolver.DetermineType(path) == MediaType.ISO;
+            if (mediaList.Count() == 1)
+            {
+                return CanPlay(mediaList.First());
+            }
+
+            return false;
         }
         
         protected override void SendFilesToPlayer(PlaybackArguments args)

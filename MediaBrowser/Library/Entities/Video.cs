@@ -119,7 +119,7 @@ namespace MediaBrowser.Library.Entities {
                     return Helper.GetIsoFiles(Path);
                 }
 
-                return Helper.GetIsoFiles(Files.First());
+                return new string[] { Path };
             }
         }
 

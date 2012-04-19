@@ -134,6 +134,7 @@
     <Compile Include="Library\Persistance\SQLiteDisplayRepository.cs" />
     <Compile Include="Library\Persistance\FileBasedDictionary.cs" />
     <Compile Include="Library\Persistance\IPersistableChangeNotifiable.cs" />
+    <Compile Include="Library\Playables\PlayableInternal.cs" />
     <Compile Include="Library\Playables\PlayableMpcHc.cs" />
     <Compile Include="Library\Playables\PlayableTMT.cs" />
     <Compile Include="Library\Playables\PlayableTMTAddInForWMC.cs" />
@@ -254,11 +255,8 @@
     <Compile Include="Library\Persistance\ItemRepository.cs" />
     <Compile Include="Library\Interfaces\IItemRepository.cs" />
     <Compile Include="Library\Playables\PlayableItem.cs" />
-    <Compile Include="Library\Playables\PlayableDvd.cs" />
     <Compile Include="Library\Playables\PlayableExternal.cs" />
-    <Compile Include="Library\Playables\PlayableMultiMediaVideo.cs" />
     <Compile Include="Library\Playables\PlayableIso.cs" />
-    <Compile Include="Library\Playables\PlayableVideo.cs" />
     <Compile Include="Library\Factories\PlaybackStatusFactory.cs" />
     <Compile Include="Library\Providers\ImageFromMediaLocationProvider.cs" />
     <Compile Include="Library\Providers\ImageByNameProvider.cs" />
