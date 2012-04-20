@@ -37,9 +37,16 @@ namespace MBMigrate
             InitializeComponent();
             //_serviceConfig = ServiceConfigData.FromFile(ApplicationPaths.ServiceConfigFile);
             _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
+            try
+            {
+                _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+                _config.Save();
+            }
+            catch { }
+
             Async.Queue("Migration", () =>
             {
-                Migrate26();
+                //Migrate26();
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
         }

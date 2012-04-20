@@ -338,6 +338,10 @@ namespace MediaBrowser
         [Group("Display")]
         public bool ShowRootBackground = true;
 
+        [Dangerous]
+        [Group("Advanced")]
+        [Comment(@"The directory where MB was installed. Filled in at install time and used to call components.")]
+        public string MBInstallDir = "";
 
         [PresentationStyle("BrowseFolder")]
         public string PodcastHome = ApplicationPaths.DefaultPodcastPath;
