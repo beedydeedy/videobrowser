@@ -570,6 +570,11 @@ namespace MediaBrowser.Library
             get { return baseItem.PrimaryImagePath != null; }
         }
 
+        public bool HasSecondaryImage
+        {
+            get { return baseItem.SecondaryImagePath != null; }
+        }
+
         public bool HasPreferredImage
         {
             get { return (HasPrimaryImage); }
