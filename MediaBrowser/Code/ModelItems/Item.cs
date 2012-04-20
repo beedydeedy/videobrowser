@@ -762,8 +762,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                var movie = BaseItem as Movie;
-                return (movie != null && movie.ContainsTrailers);
+                return BaseItem.ContainsTrailers;
             }
         }
 
