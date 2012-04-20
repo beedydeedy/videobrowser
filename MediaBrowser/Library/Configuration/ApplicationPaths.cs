@@ -166,8 +166,9 @@ namespace MediaBrowser.Library.Configuration {
         {
             get
             {
-                string serviceEXE = GetComponentPath(INSTALL_PRODUCT_CODE, SERVICE_COMPONENT_ID);
-                return serviceEXE.Length > 0 ? serviceEXE : Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\MediaBrowserService.exe");
+                return !string.IsNullOrEmpty(Kernel.Instance.ConfigData.MBInstallDir) ? 
+                Path.Combine(Kernel.Instance.ConfigData.MBInstallDir,"MediaBrowserService.exe") : 
+                Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\MediaBrowserService.exe");
             }
         }
 
@@ -175,8 +176,9 @@ namespace MediaBrowser.Library.Configuration {
         {
             get
             {
-                string configEXE = GetComponentPath(INSTALL_PRODUCT_CODE, CONFIGURATOR_COMPONENT_ID);
-                return configEXE.Length > 0 ? configEXE : Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\configurator.exe");
+                return !string.IsNullOrEmpty(Kernel.Instance.ConfigData.MBInstallDir) ? 
+                Path.Combine(Kernel.Instance.ConfigData.MBInstallDir,"Configurator.exe") : 
+                Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\configurator.exe");
             }
         }
 
