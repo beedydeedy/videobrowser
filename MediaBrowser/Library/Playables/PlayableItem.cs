@@ -182,7 +182,7 @@ namespace MediaBrowser.Library
             {
                 return CanPlay(files.First());
             }
-            
+
             return false;
         }
 
@@ -358,6 +358,10 @@ namespace MediaBrowser.Library
         /// </summary>
         protected virtual void OnPlaybackFinished(object sender, PlaybackStateEventArgs e)
         {
+            // Clean up event handlers
+            PlaybackController.Progress -= OnProgress;
+            PlaybackController.PlaybackFinished -= OnPlaybackFinished;
+
             // If it has a position then update it one last time
             if (e.Position > 0)
             {
@@ -371,13 +375,9 @@ namespace MediaBrowser.Library
                 {
                     MarkWatched();
                 }
+
+                Application.CurrentInstance.RunPostPlayProcesses();
             }
-
-            Application.CurrentInstance.RunPostPlayProcesses();
-
-            // Clean up event handlers
-            PlaybackController.Progress -= OnProgress;
-            PlaybackController.PlaybackFinished -= OnPlaybackFinished;
 
             UpdateResumeStatusInUI();
         }
@@ -474,7 +474,7 @@ namespace MediaBrowser.Library
             // If playback is based on Media objects
             if (PlayableMediaItems.Count > 0)
             {
-                IEnumerable<Media> newList = PlayableMediaItems.OrderBy(i => rnd.Next());
+                IEnumerable<Media> newList = PlayableMediaItems.OrderBy(i => rnd.Next()).ToList();
 
                 PlayableMediaItems.Clear();
                 PlayableFiles.Clear();
@@ -484,7 +484,7 @@ namespace MediaBrowser.Library
             else
             {
                 // Otherwise if playback is based on a list of files
-                IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next());
+                IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next()).ToList();
 
                 PlayableFiles.Clear();
 
