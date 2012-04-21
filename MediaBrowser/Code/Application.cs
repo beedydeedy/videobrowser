@@ -4,13 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using MediaBrowser.Code;
-using MediaBrowser.Library.Events;
 using MediaBrowser.Library;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Factories;
 using MediaBrowser.Library.Input;
+using MediaBrowser.Library.Interfaces;
 using MediaBrowser.Library.Localization;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
@@ -1366,7 +1366,7 @@ namespace MediaBrowser
         /// </summary>
         public void PlayLocalTrailer(Item item)
         {
-            var movie = item.BaseItem as Movie;
+            var movie = item.BaseItem as ISupportsTrailers;
             if (movie.ContainsTrailers)
             {
                 PlayableItem playable = PlayableItemFactory.Instance.Create(movie.TrailerFiles);

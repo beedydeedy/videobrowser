@@ -10,7 +10,7 @@ using MediaBrowser.Library.EntityDiscovery;
 namespace MediaBrowser.Library.Providers {
     public class LocalTrailerProvider : ITrailerProvider {
        
-        public IEnumerable<string> GetTrailers(Movie movie) {
+        public IEnumerable<string> GetTrailers(ISupportsTrailers movie) {
             var folder = movie.MediaLocation as IFolderMediaLocation;
             if (folder != null && folder.ContainsChild(MovieResolver.TrailersPath)) {
 

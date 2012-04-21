@@ -1,23 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.MediaCenter.UI;
-using System.Diagnostics;
-using Microsoft.MediaCenter;
-using MediaBrowser.Code.ModelItems;
-using System.IO;
-using MediaBrowser.Library.Playables;
-using MediaBrowser.Library.Entities;
 using MediaBrowser.Code;
-using System.Threading;
-using MediaBrowser.Library.Factories;
-using MediaBrowser.Library.Threading;
+using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Interfaces;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
-using MediaBrowser.Library.Extensions;
-using System.Linq;
-
+using Microsoft.MediaCenter;
 
 namespace MediaBrowser.Library
 {
@@ -762,7 +754,14 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return BaseItem.ContainsTrailers;
+                ISupportsTrailers entity = baseItem as ISupportsTrailers;
+
+                if (entity != null)
+                {
+                    return entity.ContainsTrailers;
+                }
+
+                return false;
             }
         }
 

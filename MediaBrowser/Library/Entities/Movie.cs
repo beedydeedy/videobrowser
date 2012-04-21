@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using MediaBrowser.Library.Persistance;
 using MediaBrowser.Library.EntityDiscovery;
 using MediaBrowser.Library.Filesystem;
+using MediaBrowser.Library.Interfaces;
+using MediaBrowser.Library.Persistance;
 
 namespace MediaBrowser.Library.Entities {
-    public class Movie : Show {
+    public class Movie : Show, ISupportsTrailers {
 
         [Persist]
         public string TrailerPath {get; set;}
@@ -33,7 +33,7 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        public override bool ContainsTrailers {
+        public bool ContainsTrailers {
             get {
                 return TrailerFiles.Count() > 0;
             }

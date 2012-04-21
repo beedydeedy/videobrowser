@@ -4,6 +4,6 @@ using MediaBrowser.Library.Entities;
 namespace MediaBrowser.Library.Interfaces {
     public interface ITrailerProvider
     {
-        IEnumerable<string> GetTrailers(Movie movie);
+        IEnumerable<string> GetTrailers(ISupportsTrailers movie);
     } 
 }

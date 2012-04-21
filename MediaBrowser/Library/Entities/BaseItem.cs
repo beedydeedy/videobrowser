@@ -339,14 +339,6 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        public virtual bool ContainsTrailers
-        {
-            get
-            {
-                return false;
-            }
-        }
-
         bool? isTrailer = null;
         public bool IsTrailer
         {
