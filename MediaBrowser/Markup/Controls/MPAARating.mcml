@@ -1,7 +1,7 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
       xmlns:cor ="assembly://mscorlib/System"
       xmlns:proxy ="assembly://ehiProxy/ehiProxy"
-	  xmlns:a="assembly://MediaBrowser/MediaBrowser"
+	  xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
       xmlns:me = "Me"
 	  xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
       >
@@ -14,7 +14,7 @@
 		</Properties>
 		<Locals>
 			<cor:String Name="MPAARating" String="" />
-      <a:Application Name="Application" />
+      <lib:Ratings Name="Ratings" />
 		</Locals>
 		<Rules>
 			<Binding Source="[Value]" Target="[MPAARating]"></Binding>
@@ -27,7 +27,7 @@
         </Conditions>
         <Actions>
           <Set Target="[Image.Visible]" Value="true"/>
-          <Invoke Target="[Application.RatingImage]" rating="[MPAARating]" ResultTarget="[Image.Content]" />
+          <Invoke Target="[Ratings.RatingImage]" rating="[MPAARating]" ResultTarget="[Image.Content]" />
         </Actions>
       </Rule>
 			

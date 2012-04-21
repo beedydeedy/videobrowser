@@ -1529,11 +1529,6 @@ namespace MediaBrowser
             return Kernel.Instance.StringData.GetString(key.Trim() + "Desc");
         }
 
-        public static Microsoft.MediaCenter.UI.Image RatingImage(string rating)
-        {
-            return Helper.GetMediaInfoImage("Rated_" + rating);
-        }
-
         public static void DisplayDialog(string message, string caption)
         {
             DisplayDialog(message, caption, DialogButtons.Ok, 10);
