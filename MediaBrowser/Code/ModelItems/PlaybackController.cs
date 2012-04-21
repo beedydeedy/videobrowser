@@ -663,7 +663,7 @@ namespace MediaBrowser
         /// <summary>
         /// Gets a friendly (displayable) title of what's currently playing
         /// </summary>
-        public string NowPlayingTitle
+        public virtual string NowPlayingTitle
         {
             get
             {
