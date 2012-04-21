@@ -23,6 +23,9 @@ namespace MediaBrowser.Library.Providers
         public override bool NeedsRefresh()
         {
 
+            if (File.Exists(ALT_META_FILE_NAME)) //never read if we have manual metadata
+                return false;
+
             string mfile = MetaLocation();
             if (!File.Exists(mfile))
                 return false;
@@ -44,7 +47,7 @@ namespace MediaBrowser.Library.Providers
         public override void Fetch()
         {
             string metaFile = MetaLocation();
-            if (File.Exists(metaFile))
+            if (!File.Exists(ALT_META_FILE_NAME) && File.Exists(metaFile))
             {
                 string json = File.ReadAllText(metaFile);
                 ProcessMainInfo(json);
