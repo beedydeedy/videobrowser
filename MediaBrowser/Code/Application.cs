@@ -662,18 +662,15 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
-                    Microsoft.MediaCenter.MediaExperience exp = MediaCenterEnvironment.MediaExperience;
-
-                    // set npv visibility according to current state
-                    if (exp != null)
+                    bool showNowPlayingInitially = false;
+                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
                     {
-                        Microsoft.MediaCenter.MediaTransport transport = exp.Transport;
-
-                        if (transport != null)
+                        if (controller.IsPlaying)
                         {
-                            ShowNowPlaying = transport.PlayState == Microsoft.MediaCenter.PlayState.Playing;
+                            showNowPlayingInitially = true;
                         }
                     }
+                    ShowNowPlaying = showNowPlayingInitially;
 
                     // setup image to use in external splash screen
                     string splashFilename = Path.Combine(Path.Combine(ApplicationPaths.AppIBNPath,"General"),"splash.png");
@@ -1372,9 +1369,7 @@ namespace MediaBrowser
             var movie = item.BaseItem as Movie;
             if (movie.ContainsTrailers)
             {
-                var trailerFiles = movie.TrailerFiles.ToArray();
-
-                PlayableItem playable = PlayableItemFactory.Instance.Create(trailerFiles);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(movie.TrailerFiles);
 
                 Play(playable, false);
             }

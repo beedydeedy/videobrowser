@@ -9,6 +9,7 @@ using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Threading;
 using System.IO.Pipes;
 using System.IO;
+using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library
 {
@@ -124,10 +125,15 @@ namespace MediaBrowser.Library
                                 }
 
                                 // set npv visibility according to current state
-                                if (Application.MediaCenterEnvironment.MediaExperience != null && Application.MediaCenterEnvironment.MediaExperience.Transport != null)
+                                bool showNowPlayingInitially = false;
+                                foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
                                 {
-                                    Application.CurrentInstance.ShowNowPlaying = Application.MediaCenterEnvironment.MediaExperience.Transport.PlayState == Microsoft.MediaCenter.PlayState.Playing;
+                                    if (controller.IsPlaying)
+                                    {
+                                        showNowPlayingInitially = true;
+                                    }
                                 }
+                                Application.CurrentInstance.ShowNowPlaying = showNowPlayingInitially;
 
                                 //tell MC to navigate to us
                                 Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.ReturnToApplication();
