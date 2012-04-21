@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 using System.Text;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library
 {
@@ -99,6 +100,12 @@ namespace MediaBrowser.Library
             //return the whole list of ratings strings
             return ratingsStrings.Values;
         }
+
+        public Microsoft.MediaCenter.UI.Image RatingImage(string rating)
+        {
+            return Helper.GetMediaInfoImage("Rated_" + rating);
+        }
+
 
     }
 }
