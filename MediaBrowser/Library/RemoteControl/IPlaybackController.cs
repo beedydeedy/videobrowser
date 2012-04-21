@@ -5,6 +5,7 @@ namespace MediaBrowser.Library.RemoteControl {
 
 
     public interface IPlaybackController {
+        string NowPlayingTitle { get; }
         void GoToFullScreen();
         bool IsPaused { get; }
         bool IsPlaying { get; }

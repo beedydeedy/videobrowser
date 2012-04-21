@@ -660,6 +660,52 @@ namespace MediaBrowser
             return 0;
         }
 
+        /// <summary>
+        /// Gets a friendly (displayable) title of what's currently playing
+        /// </summary>
+        public string NowPlayingTitle
+        {
+            get
+            {
+                MediaExperience exp = MediaExperience;
+
+                if (exp == null)
+                {
+                    return "Unknown";
+                }
+
+                MediaMetadata metadata = exp.MediaMetadata;
+
+                if (metadata == null)
+                {
+                    return "Unknown";
+                }
+
+                string name = GetTitleOfCurrentlyPlayingMedia(metadata).Trim('/');
+
+                if (name.ToLower().StartsWith("dvd://"))
+                {
+                    name = name.Substring(6);
+                }
+
+                int index = name.LastIndexOf('/');
+
+                if (index != -1)
+                {
+                    name = name.Substring(index + 1);
+                }
+
+                index = name.LastIndexOf('.');
+
+                if (index != -1)
+                {
+                    name = name.Substring(0, index);
+                }
+
+                return name;
+            }
+        }
+
         protected void PlayStateChanged()
         {
             FirePropertyChanged("PlayState");

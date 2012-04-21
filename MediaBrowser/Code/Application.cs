@@ -663,7 +663,7 @@ namespace MediaBrowser
                     }
 
                     bool showNowPlayingInitially = false;
-                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
+                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers.Where(p => p is PlaybackController))
                     {
                         if (controller.IsPlaying)
                         {
@@ -973,71 +973,24 @@ namespace MediaBrowser
         {
             get
             {
-                string showName = string.Empty;
-
                 try
                 {
-                    MediaCenterEnvironment env = MediaCenterEnvironment;
-                    Microsoft.MediaCenter.MediaExperience exp = env.MediaExperience;
-
-                    if (exp == null)
+                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
                     {
-                        return "Unknown";
-                    }
-
-                    MediaMetadata metadata = exp.MediaMetadata;
-
-                    if (metadata == null)
-                    {
-                        return "Unknown";
-                    }
-
-                    string name = null;
-
-                    // the API works in win7 and is borked on Vista.
-                    if (metadata.ContainsKey("Name"))
-                    {
-                        name = metadata["Name"] as string;
-                        if (name != null && name.Contains(".wpl"))
+                        if (controller.IsPlaying)
                         {
-                            int start = name.LastIndexOf('/') + 1;
-                            if (start < 0) start = 0;
-                            int finish = name.LastIndexOf(".wpl");
-                            name = name.Substring(start, finish - start);
+                            return controller.NowPlayingTitle;
                         }
-                        else
-                        {
-                            if (name.StartsWith("dvd"))
-                            {
-                                int start = name.LastIndexOf('/') + 1;
-                                if (start < 0) start = 0;
-                                name = name.Substring(start);
-                            }
-                            else
-                            {
-                                name = null;
-                            }
-                        }
-                    }
-
-                    showName = name ?? metadata["Title"] as string;
-
-                    // playlist fix {filename without extension)({playlist name})
-                    int lastParan = showName.LastIndexOf('(');
-                    if (lastParan > 0)
-                    {
-                        showName = showName.Substring(lastParan + 1, showName.Length - (lastParan + 2)).Trim();
                     }
 
                 }
                 catch (Exception e)
                 {
-                    showName = "Unknown";
-                    Logger.ReportException("Something strange happend while getting media name, please report to community.mediabrowser.tv", e);
                     // never crash here
+                    Logger.ReportException("Something strange happend while getting media name, please report to community.mediabrowser.tv", e);                    
 
                 }
-                return showName;
+                return "Unknown";
             }
         }
 
