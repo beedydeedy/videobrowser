@@ -14,15 +14,13 @@ using Microsoft.MediaCenter.UI;
 namespace MediaBrowser
 {
     /// <summary>
-    /// Random notes (so they don't get lost)
-    /// - MediaTransport must be queried in some form every 5 minutes (even to just check position or playstate).
-    /// If it idles it will dispose. This is why we constantly detach and reattach the PropertyChanged event handler
-    /// - MediaExperience is constantly reset, so it should not be cached anywhere or even stored in a variable.
-    /// Always get it fresh from MediaCenterEnvironment
+    /// Plays content using the internal WMC video player.
     /// </summary>
     public class PlaybackController : BaseModelItem, IPlaybackController
     {
         static MediaBrowser.Library.Transcoder transcoder;
+
+        private List<PlaybackArguments> CurrentPlaybackItems = new List<PlaybackArguments>();
 
         #region Progress EventHandler
         volatile EventHandler<PlaybackStateEventArgs> _Progress;
@@ -104,11 +102,16 @@ namespace MediaBrowser
 
         public virtual void PlayMedia(PlaybackArguments playInfo)
         {
+            CurrentPlaybackItems.Clear();
+            CurrentPlaybackItems.Add(playInfo);
+
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, false));
         }
 
         public virtual void QueueMedia(PlaybackArguments playInfo)
         {
+            CurrentPlaybackItems.Add(playInfo);
+
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, true));
         }
 
@@ -301,19 +304,17 @@ namespace MediaBrowser
                 // but as long as it's part of the enum it probably makes sense to test for it
                 bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Stopped || bufferingProgress == -1 || playRate == 0;
 
-                MediaCollection mediaCollection = GetCurrentMediaCollectionFromMediaExperience(mce);
-
-                // If the MediaCollectionItem is null or empty then playback is occurring due to some other application or plugin
-                // Perhaps a single path was passed into PlayMedia
-                // OR playback has previously stopped and the collection is no longer available
-                MediaCollectionItem activeItem = mediaCollection.Count == 0 ? null : mediaCollection[mediaCollection.CurrentIndex];
-
                 // Get metadata from player
                 MediaMetadata metadata = mce.MediaMetadata;
 
-                Guid playableItemId = activeItem == null ? Guid.Empty : new Guid(activeItem.FriendlyData["itemId"].ToString());
-                int playlistIndex = activeItem == null ? 0 : int.Parse(activeItem.FriendlyData["fileIndex"].ToString());
-                long duration = activeItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
+                string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
+
+                int playlistIndex = 0;
+
+                PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMediaCollection(mce, metadataTitle, out playlistIndex) ?? GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
+
+                Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.PlayableItemId;
+                long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
 
                 // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
                 if (positionTicks > 0)
@@ -324,10 +325,7 @@ namespace MediaBrowser
                 if (property == "PlayState")
                 {
                     Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}",
-                      state, GetTitleOfCurrentlyPlayingMedia(metadata), positionTicks, playlistIndex);
-
-                    // Only use below when debugging (to minimize queries made on the transport).
-                    //Logger.ReportVerbose("PlayRate:{0}, BufferingProgress:{1}", transport.PlayRate, transport.BufferingProgress);
+                      state, metadataTitle, positionTicks, playlistIndex);
 
                     HandlePlaystateChange(transport, isStopped, playableItemId, playlistIndex, positionTicks, duration);
                 }
@@ -336,6 +334,53 @@ namespace MediaBrowser
             {
                 Logger.ReportException("Prop: ", ex);
             }
+        }
+
+        private PlaybackArguments GetCurrentPlaybackItemFromMediaCollection(MediaExperience mce, string metadataTitle, out int currentPlaylistIndex)
+        {
+            currentPlaylistIndex = 0;
+
+            MediaCollection mediaCollection = GetCurrentMediaCollectionFromMediaExperience(mce);
+
+            // If the MediaCollectionItem is null or empty then playback is occurring due to some other application or plugin
+            // Perhaps a single path was passed into PlayMedia
+            // OR playback has previously stopped and the collection is no longer available
+            MediaCollectionItem activeItem = mediaCollection.Count == 0 ? null : mediaCollection[mediaCollection.CurrentIndex];
+
+            if (activeItem == null)
+            {
+                return null;
+            }
+
+            Guid playableItemId = new Guid(activeItem.FriendlyData["itemId"].ToString());
+            currentPlaylistIndex = int.Parse(activeItem.FriendlyData["fileIndex"].ToString());
+
+            return CurrentPlaybackItems.Where(p => p.PlayableItemId == playableItemId).FirstOrDefault();
+        }
+
+        private PlaybackArguments GetCurrentPlaybackItemFromMetadataTitle(string title, out int currentPlaylistIndex)
+        {
+            currentPlaylistIndex = 0;
+
+            title = title.ToLower();
+
+            foreach (PlaybackArguments playbackItem in CurrentPlaybackItems)
+            {
+                for (int i = 0; i < playbackItem.Files.Count(); i++)
+                {
+                    string file = playbackItem.Files.ElementAt(i).ToLower();
+                    string normalized = file.Replace('\\', '/');
+                    string alternateTitle = Path.GetFileNameWithoutExtension(file);
+
+                    if (title.EndsWith(normalized) || title == alternateTitle)
+                    {
+                        currentPlaylistIndex = i;
+                        return playbackItem;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -361,6 +406,8 @@ namespace MediaBrowser
 
                 // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
                 HasStartedPlaying = false;
+
+                CurrentPlaybackItems.Clear();
             }
         }
 
@@ -655,5 +702,6 @@ namespace MediaBrowser
             base.Dispose(isDisposing);
 
         }
+
     }
 }
