@@ -189,7 +189,10 @@ namespace MediaBrowser.Library.Playables
         protected void OnExternalPlayerClosed()
         {
             // Just use base method
-            OnPlaybackFinished(null, GetPlaybackState());
+            if (PlayableMediaItems.Count > 0)
+            {
+                OnPlaybackFinished(null, GetPlaybackState());
+            }
         }
 
         /// <summary>
