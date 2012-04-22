@@ -123,7 +123,7 @@ namespace MediaBrowser.Library.Factories
             {
                 Video video = media as Video;
 
-                if (video != null && video.MediaType == MediaType.ISO)
+                if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(video))
                 {
                     MountAndUpdateMediaPath(video);
                 }
@@ -157,7 +157,7 @@ namespace MediaBrowser.Library.Factories
         /// <summary>
         /// Creates a PlayableItem based on a Folder object
         /// </summary>
-        public PlayableItem Create(Folder folder)
+        public PlayableItem Create(Folder folder) 
         {
             PlayableItem playable = Create(folder.RecursiveMedia);
 
@@ -182,6 +182,11 @@ namespace MediaBrowser.Library.Factories
             }
 
             return playable;
+        }
+
+        private bool CanPlayIsoDirectly(Video video)
+        {
+            return RegisteredTypes.Where(t => t.Key.CanPlay(video)).Count() > 0;
         }
 
         private void MountAndUpdateMediaPath(Video video)
