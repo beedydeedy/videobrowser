@@ -12,7 +12,7 @@ using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Providers
 {
-    [SupportedType(typeof(Movie))]
+    [SupportedType(typeof(IMovie))]
     public class MBMovieProviderFromJson : MovieDbProvider
     {
 
@@ -50,6 +50,7 @@ namespace MediaBrowser.Library.Providers
             if (!File.Exists(ALT_META_FILE_NAME) && File.Exists(metaFile))
             {
                 string json = File.ReadAllText(metaFile);
+                Logger.ReportVerbose("Processing MovieDB info from local json...");
                 ProcessMainInfo(json);
                 lastWriteTime = new FileInfo(metaFile).LastWriteTimeUtc + TimeSpan.FromMinutes(1); //fudge this slightly because the system sometimes reports this a few seconds behind
             }

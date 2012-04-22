@@ -7,7 +7,7 @@ using MediaBrowser.Library.EntityDiscovery;
 using MediaBrowser.Library.Filesystem;
 
 namespace MediaBrowser.Library.Entities {
-    public class Movie : Show {
+    public class Movie : Show, IMovie {
 
         [Persist]
         public string TrailerPath {get; set;}
