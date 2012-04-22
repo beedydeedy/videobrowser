@@ -1608,19 +1608,6 @@ namespace MediaBrowser
             {
                 string command = Config.Instance.DaemonToolsLocation;
 
-                // vcdmount simply calls Daemon.exe and exits immediately, which tricks this method into thinking the mount has completed.
-                // Since VirtualCloneDrive installs Daemon.exe in the same directory, use that if it exists.
-                if (command.ToLower().EndsWith("vcdmount.exe"))
-                {
-                    string daemonPath = Path.Combine(Path.GetDirectoryName(command), "Daemon.exe");
-
-                    if (File.Exists(daemonPath))
-                    {
-                        Logger.ReportVerbose("Using Daemon.exe instead of vcdmount.exe");
-                        command = daemonPath;
-                    }
-                }
-
                 // Create the process start information.
                 Process process = new Process();
                 //virtualclonedrive
