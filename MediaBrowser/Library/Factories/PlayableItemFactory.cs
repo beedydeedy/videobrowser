@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables;
+using System.Linq;
 
 namespace MediaBrowser.Library.Factories
 {
@@ -19,7 +20,6 @@ namespace MediaBrowser.Library.Factories
             // Add the externals
             RegisterExternals();
 
-            RegisterType<PlayableIso>();
             RegisterType<PlayableInternal>();
         }
 
@@ -90,20 +90,7 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Media media)
         {
-            PlayableItem playable = null;
-
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
-            {
-                if (type.Key.CanPlay(media))
-                {
-                    playable = InstantiatePlayableItem(type);
-                    break;
-                }
-            }
-
-            if (playable == null) playable = GetDefaultPlayableItem();
-            playable.AddMedia(media);
-            return playable;
+            return Create(new Media[] { media });
         }
 
         /// <summary>
@@ -132,6 +119,16 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
+            foreach (Media media in mediaList)
+            {
+                Video video = media as Video;
+
+                if (video != null && video.MediaType == MediaType.ISO)
+                {
+                    MountAndUpdateMediaPath(video);
+                }
+            }
+            
             PlayableItem playable = null;
 
             foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
@@ -154,21 +151,7 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(string path)
         {
-            PlayableItem playable = null;
-
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
-            {
-                if (type.Key.CanPlay(path))
-                {
-                    playable = InstantiatePlayableItem(type);
-                    break;
-                }
-            }
-
-            // Return default
-            if (playable == null) playable = GetDefaultPlayableItem();
-            playable.AddMedia(path);
-            return playable;
+            return Create(new string[] { path });
         }
 
         /// <summary>
@@ -199,6 +182,15 @@ namespace MediaBrowser.Library.Factories
             }
 
             return playable;
+        }
+
+        private void MountAndUpdateMediaPath(Video video)
+        {
+            string mountedPath = Application.CurrentInstance.MountISO(video.IsoFiles.First());
+            video.Path = mountedPath;
+
+            video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
+            video.DisplayMediaType = video.MediaType.ToString();
         }
     }
 }

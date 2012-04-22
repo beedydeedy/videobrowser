@@ -258,7 +258,6 @@
     <Compile Include="Library\Interfaces\IItemRepository.cs" />
     <Compile Include="Library\Playables\PlayableItem.cs" />
     <Compile Include="Library\Playables\PlayableExternal.cs" />
-    <Compile Include="Library\Playables\PlayableIso.cs" />
     <Compile Include="Library\Factories\PlaybackStatusFactory.cs" />
     <Compile Include="Library\Providers\ImageFromMediaLocationProvider.cs" />
     <Compile Include="Library\Providers\ImageByNameProvider.cs" />
