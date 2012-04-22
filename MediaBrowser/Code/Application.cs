@@ -663,7 +663,7 @@ namespace MediaBrowser
                     }
 
                     bool showNowPlayingInitially = false;
-                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers.Where(p => p is PlaybackController))
+                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
                     {
                         if (controller.IsPlaying)
                         {
