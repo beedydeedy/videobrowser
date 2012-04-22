@@ -1414,6 +1414,13 @@ namespace MediaBrowser
                     return;
                 }
 
+                // Record the current play count of each item
+                _ItemsSentToPlayer.AddRange(itemsToPlay.Select(i => new KeyValuePair<Media, int>(i, i.PlaybackStatus.PlayCount)));
+
+                currentPlaybackController = playable.PlaybackController;
+
+                playable.Play();
+
                 if (!playable.QueueItem)
                 {
                     //async this so it doesn't slow us down if the service isn't responding for some reason
@@ -1424,13 +1431,6 @@ namespace MediaBrowser
 
                     _ItemsSentToPlayer.Clear();
                 }
-
-                // Record the current play count of each item
-                _ItemsSentToPlayer.AddRange(itemsToPlay.Select(i => new KeyValuePair<Media, int>(i, i.PlaybackStatus.PlayCount)));
-
-                currentPlaybackController = playable.PlaybackController;
-
-                playable.Play();
             });
         }
 
