@@ -103,16 +103,16 @@ namespace MBMigrate
             // Remove quotes from Args
             externalPlayersNode.InnerXml = externalPlayersNode.InnerXml.Replace("\"{0}\"", "{0}");
 
-            // Loop through each one and try to detect the ExternalPlayerType based on the command
+            // Loop through each one and try to detect the ExternalPlayerName based on the command
             foreach (XmlNode node in externalPlayersNode.SelectNodes("ExternalPlayer"))
             {
                 string command = node.SelectSingleNode("Command").InnerText.ToLower();
 
-                XmlElement typeElement = doc.CreateElement("ExternalPlayerType");
+                XmlElement typeElement = doc.CreateElement("ExternalPlayerName");
 
                 if (command.Contains("mpc-hc"))
                 {
-                    typeElement.InnerText = "MpcHc";
+                    typeElement.InnerText = "MPC-HC";
                 }
                 else if (command.Contains("vlc"))
                 {
@@ -120,7 +120,7 @@ namespace MBMigrate
                 }
                 else if (command.Contains("utotalmediatheatre5"))
                 {
-                    typeElement.InnerText = "TMT";
+                    typeElement.InnerText = "TotalMedia Theatre";
                 }
                 else
                 {

@@ -1189,7 +1189,7 @@ sortorder: {2}
         {
             var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
 
-            var message = "About to remove \"" + mediaPlayer.ExternalPlayerType.ToString() + "\" from the external players.\nAre you sure?";
+            var message = "About to remove \"" + mediaPlayer.ExternalPlayerName + "\" from the external players.\nAre you sure?";
             if (MessageBox.Show(message, "Remove Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 config.ExternalPlayers.Remove(mediaPlayer);
@@ -1200,9 +1200,7 @@ sortorder: {2}
 
         private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
         {
-            var externalPlayer = new PlayableExternal().GetDefaultConfiguration();
-           
-            EditExternalPlayer(externalPlayer, true);
+            EditExternalPlayer(new PlayableExternalConfigurator().GetDefaultConfiguration(), true);
         }
 
         private void lstExternalPlayers_MouseDoubleClick(object sender, MouseButtonEventArgs e)

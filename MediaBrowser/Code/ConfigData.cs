@@ -466,21 +466,6 @@ namespace MediaBrowser
         [Dangerous]
         public List<string> PluginSources = new List<string>() { "http://www.mediabrowser.tv/plugins/multi/plugin_info.xml" };
 
-        public enum ExternalPlayerType
-        {
-            Generic = 0,
-
-            MpcHc = 1,
-
-            // Represents the external TMT application
-            TMT = 2,
-
-            // Represents the PlayerLoader WMC add-in
-            TMTAddInForWMC = 3,
-
-            VLC = 4
-        }
-
         public enum ExternalPlayerLaunchType
         {
             CommandLine = 0,
@@ -501,7 +486,7 @@ namespace MediaBrowser
             public bool SupportsPlaylists { get; set; }
 
             public ExternalPlayerLaunchType LaunchType { get; set; }
-            public ExternalPlayerType ExternalPlayerType { get; set; }
+            public string ExternalPlayerName { get; set; }
             public List<MediaType> MediaTypes { get; set; }
             public List<VideoFormat> VideoFormats { get; set; }
             public string Command { get; set; }

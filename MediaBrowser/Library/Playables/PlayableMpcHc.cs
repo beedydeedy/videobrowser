@@ -12,11 +12,6 @@ namespace MediaBrowser.Library.Playables
 {
     public class PlayableMpcHc : PlayableExternal
     {
-        protected override ConfigData.ExternalPlayerType ExternalPlayerType
-        {
-            get { return ConfigData.ExternalPlayerType.MpcHc; }
-        }
-
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
@@ -59,7 +54,7 @@ namespace MediaBrowser.Library.Playables
         private NameValueCollection GetMPCHCSettings()
         {
             // mpc-hc.ini will only exist if the user has enabled "Store settings to ini file"
-            string playstatePath = GetIniFilePath();
+            string playstatePath = GetIniFilePath(ExternalPlayerConfiguration);
 
             if (!string.IsNullOrEmpty(playstatePath))
             {
@@ -69,9 +64,9 @@ namespace MediaBrowser.Library.Playables
             return GetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings"));
         }
 
-        private string GetIniFilePath()
+        public static string GetIniFilePath(ConfigData.ExternalPlayer currentConfiguration)
         {
-            string directory = Path.GetDirectoryName(ExternalPlayerConfiguration.Command);
+            string directory = Path.GetDirectoryName(currentConfiguration.Command);
 
             string path = Path.Combine(directory, "mpc-hc.ini");
 
@@ -130,6 +125,33 @@ namespace MediaBrowser.Library.Playables
             return new PlaybackStateEventArgs() { PlayableItemId = PlayableItemId };
         }
 
+        /// <summary>
+        /// Gets all names and values of a registry key
+        /// </summary>
+        private static NameValueCollection GetRegistryKeyValues(RegistryKey key)
+        {
+            NameValueCollection values = new NameValueCollection();
+
+            foreach (string keyName in key.GetValueNames())
+            {
+                values[keyName] = key.GetValue(keyName).ToString();
+            }
+
+            return values;
+        }
+
+    }
+
+    public class PlayableMpcHcConfigurator : PlayableExternalConfigurator
+    {
+        /// <summary>
+        /// Returns a unique name for the external player
+        /// </summary>
+        public override string ExternalPlayerName
+        {
+            get { return "MPC-HC"; }
+        }
+
         public override ConfigData.ExternalPlayer GetDefaultConfiguration()
         {
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
@@ -139,23 +161,69 @@ namespace MediaBrowser.Library.Playables
             return config;
         }
 
-        public void ConfigurePlayer()
+        public override bool SupportsConfiguringUserSettings
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        public override string PlayerTips
+        {
+            get
+            {
+                return "Enable the following settings: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward\". Also map \"MEDIA_STOP\" to the \"exit\" command.";
+            }
+        }
+
+        public override IEnumerable<string> GetKnownPlayerPaths()
+        {
+            List<string> paths = new List<string>();
+
+            paths.AddRange(GetProgramFilesPaths("Media Player Classic - Home Cinema\\mpc-hc.exe"));
+            paths.AddRange(GetProgramFilesPaths("Media Player Classic - Home Cinema\\mpc-hc64.exe"));
+
+            return paths;
+        }
+
+        public override string ConfigureUserSettingsConfirmationMessage
+        {
+            get
+            {
+                string msg = "The following settings will be configured for you:";
+
+                msg += "\n\n-Enable: Keep history of recently opened files";
+                msg += "\n-Disable: Remember file position";
+                msg += "\n-Disable: Remember DVD position";
+                msg += "\n-Enable: Use global media keys";
+                msg += "\n-Enable: Don't use 'search in folder' on commands 'Skip back/forward' when only one item in playlist";
+                msg += "\n-Set medium jump size to 30 seconds (for rewind/ff buttons)";
+                msg += "\n-Configure basic media center remote buttons";
+
+                msg += "\n\nAre you sure you would like to continue?";
+
+                return msg;
+            }
+        }
+
+        public override void ConfigureUserSettings(ConfigData.ExternalPlayer currentConfiguration)
         {
             // General settings
-            SetBaseSettings();
+            SetBaseSettings(currentConfiguration);
 
             // Remote settings
-            SetCommandSettings();
+            SetCommandSettings(currentConfiguration);
         }
 
         /// <summary>
         /// Configures basic settings to allow mpc-hc to work nicely with MB
         /// </summary>
-        private void SetBaseSettings()
+        private void SetBaseSettings(ConfigData.ExternalPlayer currentConfiguration)
         {
             Dictionary<string, object> values = new Dictionary<string, object>();
 
-            values["KeepHistory"] = 1; 
+            values["KeepHistory"] = 1;
             values["RememberPlaylistItems"] = 1;
             values["Remember DVD Pos"] = 0;
             values["Remember File Pos"] = 0;
@@ -164,7 +232,7 @@ namespace MediaBrowser.Library.Playables
             values["UseGlobalMedia"] = 1;
             values["JumpDistM"] = 30000;
 
-            string iniPath = GetIniFilePath();
+            string iniPath = PlayableMpcHc.GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
@@ -179,7 +247,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Configures MPC-HC to work with a media center remote
         /// </summary>
-        private void SetCommandSettings()
+        private void SetCommandSettings(ConfigData.ExternalPlayer currentConfiguration)
         {
             Dictionary<string, object> values = new Dictionary<string, object>();
 
@@ -204,7 +272,7 @@ namespace MediaBrowser.Library.Playables
             values["CommandMod17"] = "32780 3 59 \"\" 5 0 0 0";
             values["CommandMod18"] = "32781 3 55 \"\" 5 0 0 0";
 
-            string iniPath = GetIniFilePath();
+            string iniPath = PlayableMpcHc.GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
@@ -214,21 +282,6 @@ namespace MediaBrowser.Library.Playables
             {
                 SetIniFileValues(iniPath, "Commands2", values);
             }
-        }
-
-        /// <summary>
-        /// Gets all names and values of a registry key
-        /// </summary>
-        private static NameValueCollection GetRegistryKeyValues(RegistryKey key)
-        {
-            NameValueCollection values = new NameValueCollection();
-
-            foreach (string keyName in key.GetValueNames())
-            {
-                values[keyName] = key.GetValue(keyName).ToString();
-            }
-
-            return values;
         }
 
         /// <summary>
@@ -254,6 +307,38 @@ namespace MediaBrowser.Library.Playables
             }
 
             instance.Save(path);
+        }
+
+        public override bool ShowIsoDirectLaunchWarning
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public override bool AllowArgumentsEditing
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public override bool AllowMinimizeMCEEditing
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public override bool AllowShowSplashScreenEditing
+        {
+            get
+            {
+                return false;
+            }
         }
     }
 }

@@ -7,6 +7,8 @@ using System.Windows.Documents;
 using MediaBrowser;
 using MediaBrowser.Library;
 using MediaBrowser.Library.Playables;
+using MediaBrowser.Library.Factories;
+using System.Linq;
 
 namespace Configurator
 {
@@ -47,24 +49,13 @@ namespace Configurator
                 return;
             }
 
-            string msg = "The following settings will be configured for you:";
+            PlayableExternalConfigurator uiConfigurator = PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(ExternalPlayerName);
 
-            msg += "\n\n-Enable: Keep history of recently opened files";
-            msg += "\n-Disable: Remember file position";
-            msg += "\n-Disable: Remember DVD position";
-            msg += "\n-Enable: Use global media keys";
-            msg += "\n-Enable: Don't use 'search in folder' on commands 'Skip back/forward' when only one item in playlist";
-            msg += "\n-Set medium jump size to 30 seconds (for rewind/ff buttons)";
-            msg += "\n-Configure basic media center remote buttons";
-
-            msg += "\n\nAre you sure you would like to continue?";
-
-            if (MessageBox.Show(msg, "Configure Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show(uiConfigurator.ConfigureUserSettingsConfirmationMessage, "Configure Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {               
-                var playable = new PlayableMpcHc();
-                playable.ExternalPlayerConfiguration = playable.GetDefaultConfiguration();
-                playable.ExternalPlayerConfiguration.Command = txtCommand.Text;
-                playable.ConfigurePlayer();
+                ConfigData.ExternalPlayer currentConfiguration = uiConfigurator.GetDefaultConfiguration();
+                currentConfiguration.Command = txtCommand.Text;
+                uiConfigurator.ConfigureUserSettings(currentConfiguration);
             }
         }
 
@@ -94,11 +85,11 @@ namespace Configurator
             listbox.ItemsSource = source;
         }
 
-        private ConfigData.ExternalPlayerType ExternalPlayerType
+        private string ExternalPlayerName
         {
             get
             {
-                return (ConfigData.ExternalPlayerType)lstPlayerType.SelectedItem;
+                return lstPlayerType.SelectedItem.ToString();
             }
         }
 
@@ -127,15 +118,10 @@ namespace Configurator
 
         void lstPlayerType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ConfigData.ExternalPlayer externalPlayer = null;
+            PlayableExternalConfigurator uiConfigurator = PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(ExternalPlayerName);
+            ConfigData.ExternalPlayer externalPlayer = uiConfigurator.GetDefaultConfiguration();
 
-            if (ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc) externalPlayer = new PlayableMpcHc().GetDefaultConfiguration();
-            else if (ExternalPlayerType == ConfigData.ExternalPlayerType.TMT) externalPlayer = new PlayableTMT().GetDefaultConfiguration();
-            else if (ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC) externalPlayer = new PlayableTMTAddInForWMC().GetDefaultConfiguration();
-            else if (ExternalPlayerType == ConfigData.ExternalPlayerType.VLC) externalPlayer = new PlayableVLC().GetDefaultConfiguration();
-            else externalPlayer = new PlayableExternal().GetDefaultConfiguration();
-
-            FillControlsFromObject(externalPlayer, false, false);
+            FillControlsFromObject(externalPlayer, uiConfigurator, false, false);
         }
 
         void lstLaunchType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -162,7 +148,7 @@ namespace Configurator
 
         private void PopulateControls()
         {
-            lstPlayerType.ItemsSource = Enum.GetValues(typeof(ConfigData.ExternalPlayerType));
+            lstPlayerType.ItemsSource = PlayableItemFactory.Instance.GetAllPlayableExternalConfigurators().Select(t => t.ExternalPlayerName);
             lstLaunchType.ItemsSource = Enum.GetValues(typeof(ConfigData.ExternalPlayerLaunchType));
 
             SetListDataSource(lstMediaTypes, EnumWrapperList<MediaType>.Create());
@@ -171,12 +157,12 @@ namespace Configurator
 
         public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer)
         {
-            FillControlsFromObject(externalPlayer, true, true);
+            FillControlsFromObject(externalPlayer, PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(externalPlayer.ExternalPlayerName), true, true);
         }
 
-        public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer, bool refreshMediaTypes, bool refreshVideoFormats)
+        public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer, PlayableExternalConfigurator uiConfigurator, bool refreshMediaTypes, bool refreshVideoFormats)
         {
-            lstPlayerType.SelectedItem = externalPlayer.ExternalPlayerType;
+            lstPlayerType.SelectedItem = externalPlayer.ExternalPlayerName;
             lstLaunchType.SelectedItem = externalPlayer.LaunchType;
 
             txtArguments.Text = externalPlayer.Args;
@@ -201,15 +187,15 @@ namespace Configurator
                 SetListDataSource(lstVideoFormats, videoFormats);
             }
 
-            SetControlVisibility(externalPlayer);
-            SetTips(externalPlayer);
+            SetControlVisibility(uiConfigurator);
+            SetTips(uiConfigurator);
 
-            AutoFillPaths(externalPlayer);
+            AutoFillPaths(uiConfigurator);
         }
 
         public void UpdateObjectFromControls(ConfigData.ExternalPlayer externalPlayer)
         {
-            externalPlayer.ExternalPlayerType = (ConfigData.ExternalPlayerType)lstPlayerType.SelectedItem;
+            externalPlayer.ExternalPlayerName = lstPlayerType.SelectedItem.ToString();
             externalPlayer.LaunchType = (ConfigData.ExternalPlayerLaunchType)lstLaunchType.SelectedItem;
 
             externalPlayer.Args = txtArguments.Text;
@@ -224,18 +210,15 @@ namespace Configurator
             externalPlayer.VideoFormats = (lstVideoFormats.ItemsSource as EnumWrapperList<VideoFormat>).GetCheckedValues();
         }
 
-        private void SetControlVisibility(ConfigData.ExternalPlayer externalPlayer)
+        private void SetControlVisibility(PlayableExternalConfigurator configurator)
         {
-            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.Generic)
+            // Expose all fields only for the base class
+            // We can make this more flexible down the road if needed
+            if (configurator.GetType() == typeof(PlayableExternalConfigurator))
             {
                 lblLaunchType.Visibility = System.Windows.Visibility.Visible;
                 lstLaunchType.Visibility = System.Windows.Visibility.Visible;
 
-                lblArguments.Visibility = System.Windows.Visibility.Visible;
-                txtArguments.Visibility = System.Windows.Visibility.Visible;
-
-                chkMinimizeMce.Visibility = System.Windows.Visibility.Visible;
-                chkShowSplashScreen.Visibility = System.Windows.Visibility.Visible;
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Visible;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Visible;
             }
@@ -244,49 +227,22 @@ namespace Configurator
                 lblLaunchType.Visibility = System.Windows.Visibility.Hidden;
                 lstLaunchType.Visibility = System.Windows.Visibility.Hidden;
 
-                lblArguments.Visibility = System.Windows.Visibility.Hidden;
-                txtArguments.Visibility = System.Windows.Visibility.Hidden;
-
-                chkMinimizeMce.Visibility = System.Windows.Visibility.Hidden;
-                chkShowSplashScreen.Visibility = System.Windows.Visibility.Hidden;
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Hidden;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Hidden;
             }
 
-            lbConfigureMyPlayer.Visibility = externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            chkShowSplashScreen.Visibility = configurator.AllowShowSplashScreenEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            chkMinimizeMce.Visibility = configurator.AllowMinimizeMCEEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            lblArguments.Visibility = configurator.AllowArgumentsEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            txtArguments.Visibility = configurator.AllowArgumentsEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            lbConfigureMyPlayer.Visibility = configurator.SupportsConfiguringUserSettings ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
         }
 
-        private void SetTips(ConfigData.ExternalPlayer externalPlayer)
+        private void SetTips(PlayableExternalConfigurator configurator)
         {
-            txtCommand.ToolTip = btnCommand.ToolTip = "The path to the player's executable file.";
-
-            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
-            {
-                lblTipsHeader.Content = "MPC-HC Tips:";
-                txtTips.Text = "Enable the following settings: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward\". Also map \"MEDIA_STOP\" to the \"exit\" command.";
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
-            {
-                lblTipsHeader.Content = "TMT Tips:";
-                txtTips.Text = "You will need to enable \"always on top\" and \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
-                txtCommand.ToolTip = btnCommand.ToolTip = "The path to uTotalMediaTheatre5.exe within the TMT installation directory.";
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-            {
-                lblTipsHeader.Content = "TMT for WMC Tips:";
-                txtTips.Text = "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
-                txtCommand.ToolTip = btnCommand.ToolTip = "The path to PlayerLoader.htm within the TMT installation directory.";
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
-            {
-                lblTipsHeader.Content = "VLC Tips:";
-                txtTips.Text = "Version 2.0+ required. No special configuration is required.";
-            }
-            else
-            {
-                lblTipsHeader.Content = "Tips:";
-                txtTips.Text = "If your player has settings for \"always on top\", \"auto-fullscreen\", and \"exit after stopping\", it is recommended to enable them.";
-            }
+            txtCommand.ToolTip = configurator.CommandFieldTooltip;
+            lblTipsHeader.Content = configurator.ExternalPlayerName + " Player Tips:";
+            txtTips.Text = configurator.PlayerTips;
         }
 
         private bool ValidateUserInput()
@@ -310,16 +266,13 @@ namespace Configurator
                 return false;
             }
 
-            if ((lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues().Contains(MediaType.ISO))
-            {
-                if (ExternalPlayerType == ConfigData.ExternalPlayerType.Generic || ExternalPlayerType == ConfigData.ExternalPlayerType.TMT || ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-                {
-                    string msg = "Selecting ISO as a media type will allow ISO's to be passed directly to the player without having to mount them. Be sure your player supports this. As of this release, MPC-HC and VLC support this, but TMT does not. Are you sure you wish to continue?";
+            PlayableExternalConfigurator uiConfigurator = PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(ExternalPlayerName);
 
-                    if (MessageBox.Show(msg, "Confirm ISO Media Type", MessageBoxButton.YesNo) == MessageBoxResult.No)
-                    {
-                        return false;
-                    }
+            if ((lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues().Contains(MediaType.ISO) && uiConfigurator.ShowIsoDirectLaunchWarning)
+            {
+                if (MessageBox.Show(uiConfigurator.IsoDirectLaunchWarning, "Confirm ISO Media Type", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                {
+                    return false;
                 }
             }
 
@@ -341,59 +294,16 @@ namespace Configurator
             return true;
         }
 
-        private void AutoFillPaths(ConfigData.ExternalPlayer externalPlayer)
+        private void AutoFillPaths(PlayableExternalConfigurator configurator)
         {
-            if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
-            {
-                AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc.exe");
-
-                if (string.IsNullOrEmpty(txtCommand.Text))
-                {
-                    AutoFillProgramFilesPath(txtCommand, "Media Player Classic - Home Cinema\\mpc-hc64.exe");
-                }
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
-            {
-                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\uTotalMediaTheatre5.exe");
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-            {
-                AutoFillProgramFilesPath(txtCommand, "ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
-            }
-            else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
-            {
-                AutoFillProgramFilesPath(txtCommand, "VideoLAN\\VLC\\vlc.exe");
-            }
-        }
-
-        private void AutoFillProgramFilesPath(TextBox textBox, string pathSuffix)
-        {
-            string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), pathSuffix);
-            string path2 = Path.Combine(GetProgramFilesx86Path(), pathSuffix);
-
-            AutoFillPath(txtCommand, new string[] { path1, path2 });
-        }
-
-        private void AutoFillPath(TextBox textBox, IEnumerable<string> paths)
-        {
-            foreach (string path in paths)
+            foreach (string path in configurator.GetKnownPlayerPaths())
             {
                 if (File.Exists(path))
                 {
-                    textBox.Text = path;
+                    txtCommand.Text = path;
                     break;
                 }
             }
-        }
-
-        private static string GetProgramFilesx86Path()
-        {
-            if (8 == IntPtr.Size || (!String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432"))))
-            {
-                return Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            }
-
-            return Environment.GetEnvironmentVariable("ProgramFiles");
         }
 
         private class EnumWrapper<TEnumType>

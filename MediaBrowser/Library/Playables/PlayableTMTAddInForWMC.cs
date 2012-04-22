@@ -8,11 +8,6 @@ namespace MediaBrowser.Library.Playables
     /// </summary>
     public class PlayableTMTAddInForWMC : PlayableTMT
     {
-        protected override ConfigData.ExternalPlayerType ExternalPlayerType
-        {
-            get { return ConfigData.ExternalPlayerType.TMTAddInForWMC; }
-        }
-
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
@@ -41,6 +36,18 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
+    }
+
+    public class PlayablePlayableTMTAddInForWMCConfigurator : PlayableTMTConfigurator
+    {
+        /// <summary>
+        /// Returns a unique name for the external player
+        /// </summary>
+        public override string ExternalPlayerName
+        {
+            get { return "TotalMedia Theatre WMC Add-On"; }
+        }
+
         /// <summary>
         /// Gets the default configuration that will be pre-populated into the UI of the configurator.
         /// </summary>
@@ -51,6 +58,27 @@ namespace MediaBrowser.Library.Playables
             config.LaunchType = ConfigData.ExternalPlayerLaunchType.WMCNavigate;
 
             return config;
+        }
+
+        public override string PlayerTips
+        {
+            get
+            {
+                return "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
+            }
+        }
+
+        public override string CommandFieldTooltip
+        {
+            get
+            {
+                return "The path to PlayerLoader.htm within the TMT installation directory.";
+            }
+        }
+
+        public override IEnumerable<string> GetKnownPlayerPaths()
+        {
+            return GetProgramFilesPaths("ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
         }
     }
 }

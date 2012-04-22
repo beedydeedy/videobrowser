@@ -340,9 +340,9 @@
                         <ListView x:Name="lstExternalPlayers" Height="325" FontSize="12" SelectionChanged="lstExternalPlayers_SelectionChanged" MouseDoubleClick="lstExternalPlayers_MouseDoubleClick">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="Type" DisplayMemberBinding="{Binding ExternalPlayerType}" Width="150" />
+                                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding ExternalPlayerName}" Width="200" />
                                     <GridViewColumn Header="Command" DisplayMemberBinding="{Binding CommandFileName}" Width="200" />
-                                    <GridViewColumn Header="Media Types" DisplayMemberBinding="{Binding MediaTypesFriendlyString}" Width="354" />
+                                    <GridViewColumn Header="Media Types" DisplayMemberBinding="{Binding MediaTypesFriendlyString}" Width="304" />
                                 </GridView>
                             </ListView.View>
                         </ListView>
