@@ -338,15 +338,16 @@ namespace MediaBrowser.Library
                 return;
             }
 
-            if (PlayableMediaItems.Count > 1)
-            {
-                UpdateProgressForMultipleMediaItems(e);
-            }
-            else
+            if (PlayableMediaItems.Count == 1)
             {
                 Media media = PlayableMediaItems.First();
 
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);               
+            }
+
+            else if (PlayableMediaItems.Count > 1)
+            {
+                UpdateProgressForMultipleMediaItems(e);
             }
 
             HasUpdatedPlayState = true;
@@ -380,6 +381,7 @@ namespace MediaBrowser.Library
             }
 
             UpdateResumeStatusInUI();
+            Logger.ReportVerbose("All post-playback actions have completed.");
         }
 
         /// <summary>
