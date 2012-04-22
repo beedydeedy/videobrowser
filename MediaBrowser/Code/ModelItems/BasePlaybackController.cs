@@ -19,6 +19,9 @@ namespace MediaBrowser.Code.ModelItems
     /// </summary>
     public abstract class BasePlaybackController : BaseModelItem, IPlaybackController
     {
+        /// <summary>
+        /// Subclasses can use this to examine the items that are currently in the player.
+        /// </summary>
         protected List<PlaybackArguments> CurrentPlaybackItems = new List<PlaybackArguments>();
 
         #region Progress EventHandler

@@ -15,7 +15,7 @@ namespace MediaBrowser
 {
     /// <summary>
     /// Plays content using the internal WMC video player.
-    /// Don't inherit from this unless you're playing video using the internal player
+    /// Don't inherit from this unless you're playing using the internal WMC player
     /// </summary>
     public class PlaybackController : BasePlaybackController
     {
@@ -302,7 +302,7 @@ namespace MediaBrowser
         private PlaybackArguments GetCurrentPlaybackItemFromMetadataTitle(string title, out int currentPlaylistIndex)
         {
             currentPlaylistIndex = 0;
-
+           
             title = title.ToLower();
 
             foreach (PlaybackArguments playbackItem in CurrentPlaybackItems)
