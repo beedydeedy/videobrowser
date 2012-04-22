@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables;
-using System.Linq;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Factories
 {
@@ -14,13 +15,12 @@ namespace MediaBrowser.Library.Factories
         public static PlayableItemFactory Instance = new PlayableItemFactory();
 
         private List<KeyValuePair<PlayableItem, Type>> RegisteredTypes = new List<KeyValuePair<PlayableItem, Type>>();
+        private List<KeyValuePair<PlayableItem, Type>> RegisteredExternalPlayerTypes = new List<KeyValuePair<PlayableItem, Type>>();
 
         private PlayableItemFactory()
         {
             // Add the externals
-            RegisterExternals();
-
-            RegisterType<PlayableInternal>();
+            RegisterExternalPlayerTypes();
         }
 
         /// <summary>
@@ -29,60 +29,25 @@ namespace MediaBrowser.Library.Factories
         public void RegisterType<T>()
             where T : PlayableItem, new()
         {
-            RegisterType<T>(false);
+            RegisteredTypes.Add(new KeyValuePair<PlayableItem, Type>(new T(), typeof(T)));
         }
 
         /// <summary>
-        /// Registers a new type of PlayableItem to be utilized by the Create methods
+        /// Registers a new type of PlayableExternal to be utilized by the Create methods AND show up in the extenral player section of the configurator
         /// </summary>
-        public void RegisterType<T>(bool prioritize)
+        public void RegisterExternalPlayerType<T>()
             where T : PlayableItem, new()
         {
-            RegisterType(new T(), prioritize);
+            RegisteredExternalPlayerTypes.Add(new KeyValuePair<PlayableItem, Type>(new T(), typeof(T)));
         }
 
-        /// <summary>
-        /// Registers a new type of PlayableItem to be utilized by the Create methods
-        /// </summary>
-        private void RegisterType<T>(T playable, bool prioritize)
-            where T : PlayableItem, new()
+        private void RegisterExternalPlayerTypes()
         {
-            if (prioritize)
-            {
-                RegisteredTypes.Insert(0, new KeyValuePair<PlayableItem, Type>(playable, typeof(T)));
-            }
-            else
-            {
-                RegisteredTypes.Add(new KeyValuePair<PlayableItem, Type>(playable, typeof(T)));
-            }
-        }
-
-        private void RegisterExternals()
-        {
-            // Important - need to register them in the order they are added in configuration
-            foreach (ConfigData.ExternalPlayer externalPlayer in Config.Instance.ExternalPlayers)
-            {
-                if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
-                {
-                    RegisterType(new PlayableMpcHc() { ExternalPlayerConfiguration = externalPlayer }, false);
-                }
-                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
-                {
-                    RegisterType(new PlayableTMT() { ExternalPlayerConfiguration = externalPlayer }, false);
-                }
-                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
-                {
-                    RegisterType(new PlayableTMTAddInForWMC() { ExternalPlayerConfiguration = externalPlayer }, false);
-                }
-                else if (externalPlayer.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
-                {
-                    RegisterType(new PlayableVLC() { ExternalPlayerConfiguration = externalPlayer }, false);
-                }
-                else
-                {
-                    RegisterType(new PlayableExternal() { ExternalPlayerConfiguration = externalPlayer }, false);
-                }
-            }
+            RegisterExternalPlayerType<PlayableMpcHc>();
+            RegisterExternalPlayerType<PlayableVLC>();
+            RegisterExternalPlayerType<PlayableTMT>();
+            RegisterExternalPlayerType<PlayableTMTAddInForWMC>();
+            RegisterExternalPlayerType<PlayableExternal>();
         }
 
         /// <summary>
@@ -100,7 +65,7 @@ namespace MediaBrowser.Library.Factories
         {
             PlayableItem playable = null;
 
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in GetAllKnownTypes())
             {
                 if (type.Key.CanPlay(paths))
                 {
@@ -131,7 +96,7 @@ namespace MediaBrowser.Library.Factories
             
             PlayableItem playable = null;
 
-            foreach (KeyValuePair<PlayableItem, Type> type in RegisteredTypes)
+            foreach (KeyValuePair<PlayableItem, Type> type in GetAllKnownTypes())
             {
                 if (type.Key.CanPlay(mediaList))
                 {
@@ -166,6 +131,51 @@ namespace MediaBrowser.Library.Factories
             return playable;
         }
 
+        private List<KeyValuePair<PlayableItem, Type>> GetAllKnownTypes()
+        {
+            List<KeyValuePair<PlayableItem, Type>> types = new List<KeyValuePair<PlayableItem, Type>>();
+
+            types.AddRange(RegisteredTypes);
+
+            types.AddRange(GetConfiguredExternalPlayerTypes());
+
+            types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableInternal(), typeof(PlayableInternal)));
+
+            return types;
+        }
+
+        private List<KeyValuePair<PlayableItem, Type>> GetConfiguredExternalPlayerTypes()
+        {
+            List<KeyValuePair<PlayableItem, Type>> types = new List<KeyValuePair<PlayableItem, Type>>();
+
+            // Important - need to register them in the order they are added in configuration
+            foreach (ConfigData.ExternalPlayer externalPlayerConfiguration in Config.Instance.ExternalPlayers)
+            {
+                if (externalPlayerConfiguration.ExternalPlayerType == ConfigData.ExternalPlayerType.MpcHc)
+                {
+                    types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableMpcHc() { ExternalPlayerConfiguration = externalPlayerConfiguration }, typeof(PlayableMpcHc)));
+                }
+                else if (externalPlayerConfiguration.ExternalPlayerType == ConfigData.ExternalPlayerType.TMT)
+                {
+                    types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableTMT() { ExternalPlayerConfiguration = externalPlayerConfiguration }, typeof(PlayableTMT)));
+                }
+                else if (externalPlayerConfiguration.ExternalPlayerType == ConfigData.ExternalPlayerType.TMTAddInForWMC)
+                {
+                    types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableTMTAddInForWMC() { ExternalPlayerConfiguration = externalPlayerConfiguration }, typeof(PlayableTMTAddInForWMC)));
+                }
+                else if (externalPlayerConfiguration.ExternalPlayerType == ConfigData.ExternalPlayerType.VLC)
+                {
+                    types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableVLC() { ExternalPlayerConfiguration = externalPlayerConfiguration }, typeof(PlayableVLC)));
+                }
+                else
+                {
+                    types.Add(new KeyValuePair<PlayableItem, Type>(new PlayableExternal() { ExternalPlayerConfiguration = externalPlayerConfiguration }, typeof(PlayableExternal)));
+                }
+            }
+
+            return types;
+        }
+
         private PlayableItem GetDefaultPlayableItem()
         {
             return new PlayableInternal();
@@ -186,7 +196,7 @@ namespace MediaBrowser.Library.Factories
 
         private bool CanPlayIsoDirectly(Video video)
         {
-            return RegisteredTypes.Where(t => t.Key.CanPlay(video)).Count() > 0;
+            return GetAllKnownTypes().Where(t => t.Key.CanPlay(video)).Count() > 0;
         }
 
         private void MountAndUpdateMediaPath(Video video)
