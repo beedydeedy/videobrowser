@@ -15,107 +15,42 @@ namespace MediaBrowser
 {
     /// <summary>
     /// Plays content using the internal WMC video player.
+    /// Don't inherit from this unless you're playing video using the internal player
     /// </summary>
-    public class PlaybackController : BaseModelItem, IPlaybackController
+    public class PlaybackController : BasePlaybackController
     {
         static MediaBrowser.Library.Transcoder transcoder;
 
-        private List<PlaybackArguments> CurrentPlaybackItems = new List<PlaybackArguments>();
-
-        #region Progress EventHandler
-        volatile EventHandler<PlaybackStateEventArgs> _Progress;
-        public event EventHandler<PlaybackStateEventArgs> Progress
-        {
-            add
-            {
-                _Progress += value;
-            }
-            remove
-            {
-                _Progress -= value;
-            }
-        }
-        public void OnProgress(PlaybackStateEventArgs args)
-        {
-            if (_Progress != null)
-            {
-                _Progress(this, args);
-            }
-        }
-        #endregion
-
-        #region PlaybackFinished EventHandler
-        volatile EventHandler<PlaybackStateEventArgs> _PlaybackFinished;
-        public event EventHandler<PlaybackStateEventArgs> PlaybackFinished
-        {
-            add
-            {
-                _PlaybackFinished += value;
-            }
-            remove
-            {
-                _PlaybackFinished -= value;
-            }
-        }
-
-
-        private void OnPlaybackFinished(PlaybackStateEventArgs args)
-        {
-            if (_PlaybackFinished != null)
-            {
-                _PlaybackFinished(this, args);
-            }
-        }
-        #endregion
-
-        public virtual bool RequiresExternalPage
-        {
-            get
-            {
-                return false;
-            }
-        }
-
+        #region CanPlay
         // Default controller can play everything
-        public virtual bool CanPlay(string filename)
+        public override bool CanPlay(string filename)
         {
-
             return true;
         }
 
         // Default controller can play everything
-        public virtual bool CanPlay(IEnumerable<string> files)
+        public override bool CanPlay(IEnumerable<string> files)
         {
             return true;
         }
-
-        // commands are not routed in this way ... 
-        public virtual void ProcessCommand(RemoteCommand command)
-        {
-            // dont do anything (only plugins need to handle this)
-        }
+        #endregion
 
         public PlaybackController()
         {
 
         }
 
-        public virtual void PlayMedia(PlaybackArguments playInfo)
+        protected override void PlayMediaInternal(PlaybackArguments playInfo)
         {
-            CurrentPlaybackItems.Clear();
-            CurrentPlaybackItems.Add(playInfo);
-
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, false));
         }
 
-        public virtual void QueueMedia(PlaybackArguments playInfo)
+        protected override void QueueMediaInternal(PlaybackArguments playInfo)
         {
-            CurrentPlaybackItems.Add(playInfo);
-
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, true));
         }
 
-        public virtual void Seek(long position)
+        public override void Seek(long position)
         {
             var transport = MediaTransport;
             if (transport != null)
@@ -336,6 +271,9 @@ namespace MediaBrowser
             }
         }
 
+        /// <summary>
+        /// Determines the item currently playing using the now playing title
+        /// </summary>
         private PlaybackArguments GetCurrentPlaybackItemFromMediaCollection(MediaExperience mce, string metadataTitle, out int currentPlaylistIndex)
         {
             currentPlaylistIndex = 0;
@@ -358,6 +296,9 @@ namespace MediaBrowser
             return CurrentPlaybackItems.Where(p => p.PlayableItemId == playableItemId).FirstOrDefault();
         }
 
+        /// <summary>
+        /// Determines the item currently playing using the now playing title
+        /// </summary>
         private PlaybackArguments GetCurrentPlaybackItemFromMetadataTitle(string title, out int currentPlaylistIndex)
         {
             currentPlaylistIndex = 0;
@@ -406,12 +347,10 @@ namespace MediaBrowser
 
                 // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
                 HasStartedPlaying = false;
-
-                CurrentPlaybackItems.Clear();
             }
         }
 
-        public virtual void GoToFullScreen()
+        public override void GoToFullScreen()
         {
             var mce = MediaExperience;
 
@@ -491,7 +430,7 @@ namespace MediaBrowser
 
         #region Playback status
 
-        public virtual bool IsPlayingVideo
+        public override bool IsPlayingVideo
         {
             get
             {
@@ -529,7 +468,7 @@ namespace MediaBrowser
             }
         }
 
-        public virtual bool IsPlaying
+        public override bool IsPlaying
         {
             get
             {
@@ -537,12 +476,12 @@ namespace MediaBrowser
             }
         }
 
-        public virtual bool IsStopped
+        public override bool IsStopped
         {
             get { return !IsPlaying && !IsPaused; }
         }
 
-        public virtual bool IsPaused
+        public override bool IsPaused
         {
             get { return PlayState == PlayState.Paused; }
         }
@@ -663,7 +602,7 @@ namespace MediaBrowser
         /// <summary>
         /// Gets a friendly (displayable) title of what's currently playing
         /// </summary>
-        public virtual string NowPlayingTitle
+        public override string NowPlayingTitle
         {
             get
             {
@@ -683,26 +622,7 @@ namespace MediaBrowser
 
                 string name = GetTitleOfCurrentlyPlayingMedia(metadata).Trim('/');
 
-                if (name.ToLower().StartsWith("dvd://"))
-                {
-                    name = name.Substring(6);
-                }
-
-                int index = name.LastIndexOf('/');
-
-                if (index != -1)
-                {
-                    name = name.Substring(index + 1);
-                }
-
-                index = name.LastIndexOf('.');
-
-                if (index != -1)
-                {
-                    name = name.Substring(0, index);
-                }
-
-                return name;
+                return FormatPathForDisplay(name);
             }
         }
 
@@ -715,7 +635,7 @@ namespace MediaBrowser
             FirePropertyChanged("IsPaused");
         }
 
-        public virtual void Pause()
+        public override void Pause()
         {
             var transport = MediaTransport;
             if (transport != null)
@@ -724,7 +644,7 @@ namespace MediaBrowser
             }
         }
 
-        public virtual void Stop()
+        protected override void StopInternal()
         {
             var transport = MediaTransport;
             if (transport != null)
