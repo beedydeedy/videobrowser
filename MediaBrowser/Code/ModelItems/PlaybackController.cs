@@ -656,8 +656,6 @@ namespace MediaBrowser
         protected override void Dispose(bool isDisposing)
         {
 
-            Logger.ReportVerbose("Playback controller is being disposed");
-
             MediaTransport transport = MediaTransport;
 
             if (transport != null)
