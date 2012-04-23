@@ -231,5 +231,13 @@ namespace MediaBrowser.Code.ModelItems
                 return false;
             }
         }
+
+        /// <summary>
+        /// Gets the item currently playing
+        /// </summary>
+        protected virtual PlaybackArguments GetCurrentPlaybackItem()
+        {
+            return CurrentPlaybackItems.FirstOrDefault();
+        }
     }
 }
