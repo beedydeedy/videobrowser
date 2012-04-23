@@ -289,12 +289,9 @@ namespace MediaBrowser.Library
             PlaybackStartTime = DateTime.Now;
         }
 
-        protected virtual Type PlaybackControllerType
+        protected abstract Type PlaybackControllerType
         {
-            get
-            {
-                return typeof(IPlaybackController);
-            }
+            get;
         }
 
         protected virtual IPlaybackController GetPlaybackController()

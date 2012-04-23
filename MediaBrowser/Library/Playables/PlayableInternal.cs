@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -118,9 +116,9 @@ namespace MediaBrowser.Library.Playables
             return true;
         }
 
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(PlaybackController));
+            get { return typeof(PlaybackController); }
         }
     }
 }
