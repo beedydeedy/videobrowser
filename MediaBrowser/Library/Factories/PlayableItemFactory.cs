@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables;
-using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Playables.ExternalPlayer;
+using MediaBrowser.Library.Playables.MpcHc;
+using MediaBrowser.Library.Playables.TMT;
+using MediaBrowser.Library.Playables.VLC;
 
 namespace MediaBrowser.Library.Factories
 {

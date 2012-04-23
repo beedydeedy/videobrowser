@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using MediaBrowser;
 using MediaBrowser.Library;
-using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.Factories;
-using System.Linq;
+using MediaBrowser.Library.Playables.ExternalPlayer;
 
 namespace Configurator
 {
