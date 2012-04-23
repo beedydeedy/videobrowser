@@ -26,7 +26,7 @@ namespace MediaBrowser.Library.Factories
             RegisterExternalPlayerType<PlayableMpcHc, PlayableMpcHcConfigurator>();
             RegisterExternalPlayerType<PlayableVLC, PlayableVLCConfigurator>();
             RegisterExternalPlayerType<PlayableTMT, PlayableTMTConfigurator>();
-            RegisterExternalPlayerType<PlayableTMTAddInForWMC, PlayablePlayableTMTAddInForWMCConfigurator>();
+            RegisterExternalPlayerType<PlayableTMTAddInForWMC, PlayableTMTAddInForWMCConfigurator>();
             RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
         }
 

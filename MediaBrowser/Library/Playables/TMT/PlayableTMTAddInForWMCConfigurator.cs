@@ -2,7 +2,7 @@
 
 namespace MediaBrowser.Library.Playables.TMT
 {
-    public class PlayablePlayableTMTAddInForWMCConfigurator : PlayableTMTConfigurator
+    public class PlayableTMTAddInForWMCConfigurator : PlayableTMTConfigurator
     {
         /// <summary>
         /// Returns a unique name for the external player

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
 using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.TMT
@@ -8,33 +8,9 @@ namespace MediaBrowser.Library.Playables.TMT
     /// </summary>
     public class PlayableTMTAddInForWMC : PlayableTMT
     {
-        /// <summary>
-        /// Gets arguments to be passed to the command line.
-        /// </summary>
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playbackInfo)
+        protected override IPlaybackController GetPlaybackController()
         {
-            List<string> args = new List<string>();
-
-            args.Add("uri={0}");
-
-            return args;
+            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(TMTAddInPlaybackController));
         }
-        
-        /// <summary>
-        /// Removes double quotes and flips slashes
-        /// </summary>
-        protected override string GetFilePathCommandArgument(IEnumerable<string> filesToPlay)
-        {
-            return base.GetFilePathCommandArgument(filesToPlay).Replace("\"", string.Empty).Replace('\\', '/');
-        }
-
-        protected override string PlayStatePathAppName
-        {
-            get
-            {
-                return "ArcSoft TotalMedia Theatre 5(Media Center)";
-            }
-        }
-
     }
 }

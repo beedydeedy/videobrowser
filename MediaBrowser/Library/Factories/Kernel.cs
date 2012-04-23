@@ -26,6 +26,10 @@ using MediaBrowser.Util;
 using MediaBrowser.Library.Threading;
 using Microsoft.MediaCenter.UI;
 using MediaBrowser.Library.Providers;
+using MediaBrowser.Library.Playables.ExternalPlayer;
+using MediaBrowser.Library.Playables.MpcHc;
+using MediaBrowser.Library.Playables.TMT;
+using MediaBrowser.Library.Playables.VLC;
 
 namespace MediaBrowser.Library {
 
@@ -449,7 +453,14 @@ namespace MediaBrowser.Library {
 
             // kernel.StringData.Save(); //save this in case we made mods (no other routine saves this data)
             if (LoadContext == MBLoadContext.Core)
+            {
                 kernel.PlaybackControllers.Add(new PlaybackController());
+                kernel.PlaybackControllers.Add(new ConfigurableExternalPlaybackController());
+                kernel.PlaybackControllers.Add(new MpcHcPlaybackController());
+                kernel.PlaybackControllers.Add(new VLCPlaybackController());
+                kernel.PlaybackControllers.Add(new TMTPlaybackController());
+                kernel.PlaybackControllers.Add(new TMTAddInPlaybackController());
+            }
        
 
             // set up assembly resolution hooks, so earlier versions of the plugins resolve properly 

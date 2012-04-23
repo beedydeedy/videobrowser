@@ -97,7 +97,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["UseGlobalMedia"] = 1;
             values["JumpDistM"] = 30000;
 
-            string iniPath = PlayableMpcHc.GetIniFilePath(currentConfiguration);
+            string iniPath = MpcHcPlaybackController.GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
@@ -137,7 +137,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["CommandMod17"] = "32780 3 59 \"\" 5 0 0 0";
             values["CommandMod18"] = "32781 3 55 \"\" 5 0 0 0";
 
-            string iniPath = PlayableMpcHc.GetIniFilePath(currentConfiguration);
+            string iniPath = MpcHcPlaybackController.GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {

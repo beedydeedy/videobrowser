@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.RemoteControl
 {
@@ -20,6 +17,5 @@ namespace MediaBrowser.Library.RemoteControl
         public Guid PlayableItemId { get; set; }
 
         public bool GoFullScreen { get; set; }
-
     }
 }
