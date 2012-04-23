@@ -96,8 +96,8 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         public void Stop()
         {
+            StopInternal(); 
             CurrentPlaybackItems.Clear();
-            StopInternal();
         }
 
         public abstract void Pause();
@@ -105,8 +105,6 @@ namespace MediaBrowser.Code.ModelItems
         protected abstract void StopInternal();
         public abstract void Seek(long position);
         public abstract void GoToFullScreen();
-        public abstract bool CanPlay(string filename);
-        public abstract bool CanPlay(IEnumerable<string> files);
 
         /// <summary>
         /// Queues media
@@ -173,7 +171,7 @@ namespace MediaBrowser.Code.ModelItems
             {
                 if (IsPlaying)
                 {
-                    return FormatPathForDisplay(CurrentPlaybackItems.First().Files.First());
+                    return FormatPathForDisplay(GetCurrentPlaybackItem().Files.First());
                 }
 
                 return "None";

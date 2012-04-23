@@ -21,20 +21,6 @@ namespace MediaBrowser
     {
         static MediaBrowser.Library.Transcoder transcoder;
 
-        #region CanPlay
-        // Default controller can play everything
-        public override bool CanPlay(string filename)
-        {
-            return true;
-        }
-
-        // Default controller can play everything
-        public override bool CanPlay(IEnumerable<string> files)
-        {
-            return true;
-        }
-        #endregion
-
         public PlaybackController()
         {
 

@@ -16,9 +16,7 @@ namespace MediaBrowser.Library.RemoteControl {
         void Seek(long position);
         void Pause();
         void Stop();
-        bool CanPlay(string filename);
         void ProcessCommand(RemoteCommand command);
-        bool CanPlay(IEnumerable<string> files);
         bool RequiresExternalPage{ get; }
         event EventHandler<PlaybackStateEventArgs> PlaybackFinished;
         event EventHandler<PlaybackStateEventArgs> Progress;
