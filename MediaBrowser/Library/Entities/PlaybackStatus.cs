@@ -20,6 +20,8 @@ namespace MediaBrowser.Library.Entities {
                     PlayCount = 1;
                 } else if (!value && WasPlayed) {
                     PlayCount = 0;
+                    PositionTicks = 0;
+                    PlaylistPosition = 0;
                 } 
 
             }

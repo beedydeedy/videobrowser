@@ -613,6 +613,8 @@ namespace MediaBrowser.Library
                     else
                     {
                         PlayState.PlayCount = 0;
+                        PlayState.PositionTicks = 0;
+                        PlayState.PlaylistPosition = 0;
                         //remove ourselves from the watched list as well
                         if (this.PhysicalParent != null)
                         {
