@@ -405,10 +405,10 @@ namespace MediaBrowser.Library.Entities {
         public bool Watched {
             set {
                 foreach (var item in this.EnumerateChildren()) {
-                    var video = item as Video;
-                    if (video != null) {
-                        video.PlaybackStatus.WasPlayed = value;
-                        Kernel.Instance.SavePlayState(video, video.PlaybackStatus);
+                    var media = item as Media;
+                    if (media != null) {
+                        media.PlaybackStatus.WasPlayed = value;
+                        Kernel.Instance.SavePlayState(media, media.PlaybackStatus);
                     }
                     var folder = item as Folder;
                     if (folder != null) {
