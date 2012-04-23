@@ -411,7 +411,7 @@ namespace MediaBrowser
         {
             if (Config.EnableScreenSaver) 
             {
-                if (!this.PlaybackController.IsPlayingVideo)
+                if (!IsPlayingVideo)
                 {
                     if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
                     {
@@ -613,12 +613,9 @@ namespace MediaBrowser
                     //play something innocuous to be sure the file we are trying to delete is not in the now playing window
                     string DingFile = System.Environment.ExpandEnvironmentVariables("%WinDir%") + "\\Media\\Windows Recycle.wav";
 
-                    PlaybackArguments playInfo = new PlaybackArguments();
-                    playInfo.Files = new string[] { DingFile };
-
                     // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
                     // us to delete the file we are trying to delete
-                    PlaybackController.PlayMedia(playInfo);
+                    Play(new string[] { DingFile }, false, false);
 
                     if (Directory.Exists(path))
                     {
@@ -1392,9 +1389,7 @@ namespace MediaBrowser
             var movie = item.BaseItem as ISupportsTrailers;
             if (movie.ContainsTrailers)
             {
-                PlayableItem playable = PlayableItemFactory.Instance.Create(movie.TrailerFiles);
-
-                Play(playable, false);
+                Play(movie.TrailerFiles, true, false);
             }
         }
 
@@ -1428,6 +1423,15 @@ namespace MediaBrowser
         public void Resume(Item item)
         {
             Play(item, true, false, false, false);
+        }
+
+        public void Play(IEnumerable<string> files, bool allowExternalPlayers, bool shuffle)
+        {
+            PlayableItem playable = PlayableItemFactory.Instance.Create(files, allowExternalPlayers);
+
+            playable.Shuffle = shuffle;
+
+            Play(playable, false);
         }
 
         public void Play(Folder folder, bool resume, bool queue, bool intros, bool shuffle)
@@ -1515,6 +1519,9 @@ namespace MediaBrowser
             return true;
         }
 
+        /// <summary>
+        /// PlaybackControllers should use this to notify the core that playback has ceased.
+        /// </summary>
         public void RunPostPlayProcesses(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
         {
             // Loop through the items that were sent to the player

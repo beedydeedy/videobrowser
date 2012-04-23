@@ -62,7 +62,23 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<string> paths)
         {
-            PlayableItem playable = GetAllKnownPlayables().FirstOrDefault(p => p.CanPlay(paths)) ?? new PlayableInternal();
+            return Create(paths, true);
+        }
+
+        /// <summary>
+        /// Creates a PlayableItem based on a list of files
+        /// </summary>
+        public PlayableItem Create(IEnumerable<string> paths, bool allowExternalPlayers)
+        {
+            IEnumerable<PlayableItem> playables = GetAllKnownPlayables();
+
+            // Filter out external players if specified to do so
+            if (!allowExternalPlayers)
+            {
+                playables = playables.Where(p => !(p is PlayableExternal));
+            }
+
+            PlayableItem playable = playables.FirstOrDefault(p => p.CanPlay(paths)) ?? new PlayableInternal();
 
             playable.AddMedia(paths);
 
