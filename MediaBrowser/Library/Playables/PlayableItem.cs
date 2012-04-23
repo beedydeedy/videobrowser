@@ -146,18 +146,28 @@ namespace MediaBrowser.Library
         #region AddMedia
         public void AddMedia(string file)
         {
-            PlayableFiles.Add(file);
+            if (MediaTypeResolver.DetermineType(file) == MediaType.DVD)
+            {
+                PlayableFiles.Add("dvd://" + file);
+            }
+            else
+            {
+                PlayableFiles.Add(file);
+            }
         }
 
         public void AddMedia(IEnumerable<string> files)
         {
-            PlayableFiles.AddRange(files);
+            foreach (string file in files)
+            {
+                AddMedia(file);
+            }
         }
 
         public void AddMedia(Media media)
         {
-            AddMedia(GetPlayableFiles(media));
             PlayableMediaItems.Add(media);
+            PlayableFiles.AddRange(GetPlayableFiles(media));
         }
         public void AddMedia(IEnumerable<Media> mediaItems)
         {
@@ -167,8 +177,8 @@ namespace MediaBrowser.Library
                 mediaItems = mediaItems.Where(m => IsPlaylistCapable(m));
             }
 
-            PlayableMediaItems = mediaItems.ToList();
-            AddMedia(mediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i));
+            PlayableMediaItems.AddRange(mediaItems);
+            PlayableFiles.AddRange(mediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i));
         }
         #endregion
 
@@ -270,17 +280,17 @@ namespace MediaBrowser.Library
             PlaybackStartTime = DateTime.Now;
         }
 
+        protected virtual Type PlaybackControllerType
+        {
+            get
+            {
+                return typeof(IPlaybackController);
+            }
+        }
+
         protected virtual IPlaybackController GetPlaybackController()
         {
-            foreach (var controller in Kernel.Instance.PlaybackControllers)
-            {
-                if (controller.CanPlay(PlayableFiles))
-                {
-                    return controller;
-                }
-            }
-
-            return null;
+            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == PlaybackControllerType);
         }
 
         private void SendFilesToPlayer(PlaybackArguments args)

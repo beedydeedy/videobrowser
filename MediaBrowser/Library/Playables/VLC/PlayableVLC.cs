@@ -1,15 +1,16 @@
-﻿using System.Linq;
+﻿using System;
 using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.VLC
 {
     public class PlayableVLC : PlayableExternal
     {
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(VLCPlaybackController));
-        }   
+            get
+            {
+                return typeof(VLCPlaybackController);
+            }
+        }
     }
-
 }

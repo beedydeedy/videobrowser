@@ -1,14 +1,16 @@
-﻿using System.Linq;
+﻿using System;
 using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class PlayableMpcHc : PlayableExternal
     {
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(MpcHcPlaybackController));
-        }        
+            get
+            {
+                return typeof(MpcHcPlaybackController);
+            }
+        }       
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using MediaBrowser.Library.RemoteControl;
+﻿using System;
 
 namespace MediaBrowser.Library.Playables.TMT
 {
@@ -8,9 +7,12 @@ namespace MediaBrowser.Library.Playables.TMT
     /// </summary>
     public class PlayableTMTAddInForWMC : PlayableTMT
     {
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(TMTAddInPlaybackController));
+            get
+            {
+                return typeof(TMTAddInPlaybackController);
+            }
         }
     }
 }

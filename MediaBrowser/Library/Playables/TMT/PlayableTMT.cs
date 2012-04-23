@@ -1,6 +1,5 @@
-﻿using System.Linq;
+﻿using System;
 using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.TMT
 {
@@ -9,9 +8,12 @@ namespace MediaBrowser.Library.Playables.TMT
     /// </summary>
     public class PlayableTMT : PlayableExternal
     {
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(TMTPlaybackController));
+            get
+            {
+                return typeof(TMTPlaybackController);
+            }
         }
     }
 }

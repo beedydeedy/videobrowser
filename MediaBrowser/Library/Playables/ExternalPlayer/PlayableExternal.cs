@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
@@ -41,9 +40,12 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             set;
         }
 
-        protected override IPlaybackController GetPlaybackController()
+        protected override Type PlaybackControllerType
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(ConfigurableExternalPlaybackController));
+            get
+            {
+                return typeof(ConfigurableExternalPlaybackController);
+            }
         }
 
         protected override void Prepare()
