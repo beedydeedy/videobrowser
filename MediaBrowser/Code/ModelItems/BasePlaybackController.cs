@@ -239,5 +239,12 @@ namespace MediaBrowser.Code.ModelItems
         {
             return CurrentPlaybackItems.FirstOrDefault();
         }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            Logger.ReportVerbose(GetType().Name + " is disposing");            
+            
+            base.Dispose(isDisposing);
+        }
     }
 }

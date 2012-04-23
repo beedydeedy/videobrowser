@@ -20,6 +20,7 @@ namespace MediaBrowser.Library
             var us = new ExternalSplashForm();
             Async.Queue("Ext Splash Show", () =>
             {
+                Logger.ReportVerbose("Displaying Splash Screen");
                 us.Show(bgImage);
             });
         }
