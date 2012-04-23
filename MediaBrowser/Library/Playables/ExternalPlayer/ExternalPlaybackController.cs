@@ -252,16 +252,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             
         }
 
-        public override bool CanPlay(IEnumerable<string> files)
-        {
-            return false;
-        }
-
-        public override bool CanPlay(string filename)
-        {
-            return false;
-        }
-
         public override void GoToFullScreen()
         {
             
