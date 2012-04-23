@@ -330,8 +330,7 @@ namespace MediaBrowser
         private void HandlePlaystateChange(MediaTransport transport, bool isStopped, Guid playableItemId, int playlistIndex, long positionTicks, long duration)
         {
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayStateChanged());
-            Logger.ReportVerbose("Setting now playing status...");
-
+            
             Application.CurrentInstance.ShowNowPlaying = !isStopped;
 
             if (isStopped)

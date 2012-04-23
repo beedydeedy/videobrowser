@@ -117,5 +117,10 @@ namespace MediaBrowser.Library.Playables
 
             return true;
         }
+
+        protected override IPlaybackController GetPlaybackController()
+        {
+            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == typeof(PlaybackController));
+        }
     }
 }

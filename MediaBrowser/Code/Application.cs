@@ -92,6 +92,58 @@ namespace MediaBrowser
         }
         #endregion
 
+        #region PlaybackBeginning EventHandler
+        volatile EventHandler<PlaybackEventArgs> _PlaybackBeginning;
+        /// <summary>
+        /// Fires whenever an Item is navigated into
+        /// </summary>
+        public event EventHandler<PlaybackEventArgs> PlaybackBeginning
+        {
+            add
+            {
+                _PlaybackBeginning += value;
+            }
+            remove
+            {
+                _PlaybackBeginning -= value;
+            }
+        }
+
+        internal void OnPlaybackBeginning(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
+        {
+            if (_PlaybackBeginning != null)
+            {
+                _PlaybackBeginning(this, new PlaybackEventArgs() { PlaybackController = playbackController, MediaItems = mediaItems });
+            }
+        }
+        #endregion
+
+        #region PlaybackFinished EventHandler
+        volatile EventHandler<PlaybackEventArgs> _PlaybackFinished;
+        /// <summary>
+        /// Fires whenever an Item is navigated into
+        /// </summary>
+        public event EventHandler<PlaybackEventArgs> PlaybackFinished
+        {
+            add
+            {
+                _PlaybackFinished += value;
+            }
+            remove
+            {
+                _PlaybackFinished -= value;
+            }
+        }
+
+        internal void OnPlaybackFinished(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
+        {
+            if (_PlaybackFinished != null)
+            {
+                _PlaybackFinished(this, new PlaybackEventArgs() { PlaybackController = playbackController, MediaItems = mediaItems });
+            }
+        }
+        #endregion
+
         public bool PluginUpdatesAvailable
         {
             get
@@ -488,6 +540,14 @@ namespace MediaBrowser
                 if (currentPlaybackController != null)
                     return currentPlaybackController;
                 return Kernel.Instance.PlaybackControllers[0];
+            }
+        }
+
+        public bool IsPlayingVideo
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlayingVideo);
             }
         }
 
@@ -965,7 +1025,17 @@ namespace MediaBrowser
         public bool ShowNowPlaying
         {
             get { return this.showNowPlaying && (MediaCenterEnvironment.MediaExperience != null); }
-            set { if (showNowPlaying != value) { showNowPlaying = value; FirePropertyChanged("ShowNowPlaying"); } }
+            set
+            {
+                if (showNowPlaying != value)
+                {
+                    Logger.ReportVerbose("Setting now playing status to " + value.ToString());
+                    
+                    showNowPlaying = value; 
+                    
+                    FirePropertyChanged("ShowNowPlaying");
+                }
+            }
         }
 
 
@@ -1397,25 +1467,17 @@ namespace MediaBrowser
             }
         }
 
-        private volatile List<KeyValuePair<Media, int>> _ItemsSentToPlayer = new List<KeyValuePair<Media, int>>();
-
         internal void PlaySecure(PlayableItem playable, bool intros)
         {
             //put this on a thread so that we can run it sychronously, but not tie up the UI
             MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
             {
-                IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
-                BaseItem originalBaseItem = playable.PrimaryBaseItem;
-
                 // Run all pre-play processes
-                if (originalBaseItem != null && !RunPrePlayProcesses(ItemFactory.Instance.Create(originalBaseItem), intros))
+                if (!RunPrePlayProcesses(playable, intros))
                 {
                     // Abort playback if one of them returns false
                     return;
                 }
-
-                // Record the current play count of each item
-                _ItemsSentToPlayer.AddRange(itemsToPlay.Select(i => new KeyValuePair<Media, int>(i, i.PlaybackStatus.PlayCount)));
 
                 currentPlaybackController = playable.PlaybackController;
 
@@ -1428,52 +1490,52 @@ namespace MediaBrowser
                     {
                         MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
                     });
-
-                    _ItemsSentToPlayer.Clear();
                 }
             });
         }
 
-        private bool RunPrePlayProcesses(Item item, bool intros)
+        private bool RunPrePlayProcesses(PlayableItem playable, bool intros)
         {
-            Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+            IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
+            BaseItem originalBaseItem = playable.PrimaryBaseItem;
 
-            foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
+            if (originalBaseItem != null)
             {
-                if (!process(item, intros)) return false;
+                Item item = ItemFactory.Instance.Create(originalBaseItem);
+
+                Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+                foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
+                {
+                    if (!process(item, intros)) return false;
+                }
             }
+
+            OnPlaybackBeginning(playable.PlaybackController, itemsToPlay);
 
             return true;
         }
 
-        public void RunPostPlayProcesses()
+        public void RunPostPlayProcesses(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
         {
             // Loop through the items that were sent to the player
-            foreach (KeyValuePair<Media, int> itemSentToPlayer in _ItemsSentToPlayer)
+            foreach (Media media in mediaItems)
             {
-                Media media = itemSentToPlayer.Key;
-                int oldPlayCount = itemSentToPlayer.Value;
+                Item item = ItemFactory.Instance.Create(media);
 
-                // If playcount was incremented then that means it was actually played
-                if (media.PlaybackStatus.PlayCount > oldPlayCount)
-                {
-                    Item item = ItemFactory.Instance.Create(media);
+                Logger.ReportVerbose("Adding newly watched for: " + media.Name);
+                item.AddNewlyWatched();
 
-                    Logger.ReportVerbose("Adding newly watched for: " + media.Name);
-                    item.AddNewlyWatched();
-
-                    this.lastPlayed = item;
-                }
+                this.lastPlayed = item;
             }
 
-            _ItemsSentToPlayer.Clear();
+            Logger.ReportVerbose("Running post-play processes for: " + string.Join(",", mediaItems.Select(m => m.Name).ToArray()));
             
-            Logger.ReportInfo("Running post-play processes");
-
             foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
             {
                 process();
             }
+            
+            OnPlaybackFinished(playbackController, mediaItems);
         }
 
         public void UnlockPC()

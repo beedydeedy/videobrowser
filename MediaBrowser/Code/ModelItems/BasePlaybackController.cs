@@ -63,12 +63,12 @@ namespace MediaBrowser.Code.ModelItems
 
         protected void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
-            CurrentPlaybackItems.Clear(); 
-            
             if (_PlaybackFinished != null)
             {
                 _PlaybackFinished(this, args);
             }
+
+           CurrentPlaybackItems.Clear(); 
         }
         #endregion
 

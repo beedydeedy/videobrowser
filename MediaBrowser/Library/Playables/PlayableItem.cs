@@ -246,14 +246,14 @@ namespace MediaBrowser.Library
 
         internal void Play()
         {
-            this.Prepare();
-
             if (PlayableFiles.Count() == 0 && PlayableMediaItems.Count() == 0)
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
+
+            this.Prepare();
 
             Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
@@ -283,7 +283,7 @@ namespace MediaBrowser.Library
             return null;
         }
 
-        protected virtual void SendFilesToPlayer(PlaybackArguments args)
+        private void SendFilesToPlayer(PlaybackArguments args)
         {
             if (QueueItem)
             {
@@ -298,8 +298,9 @@ namespace MediaBrowser.Library
             if (PlayableMediaItems.Count() > 0)
             {
                 PlaybackController.Progress += OnProgress;
-                PlaybackController.PlaybackFinished += OnPlaybackFinished;
             }
+
+            PlaybackController.PlaybackFinished += OnPlaybackFinished;
         }
 
         /// <summary>
@@ -342,7 +343,7 @@ namespace MediaBrowser.Library
             {
                 Media media = PlayableMediaItems.First();
 
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);               
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, e.PlaylistPosition, e.Position, e.DurationFromPlayer, PlaybackStartTime);
             }
 
             else if (PlayableMediaItems.Count > 1)
@@ -376,9 +377,9 @@ namespace MediaBrowser.Library
                 {
                     MarkWatched();
                 }
-
-                Application.CurrentInstance.RunPostPlayProcesses();
             }
+
+            Application.CurrentInstance.RunPostPlayProcesses(PlaybackController, PlayableMediaItems.Where(p => p.PlaybackStatus.LastPlayed.Equals(PlaybackStartTime)));
 
             UpdateResumeStatusInUI();
             Logger.ReportVerbose("All post-playback actions have completed.");
