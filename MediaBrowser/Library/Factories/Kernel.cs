@@ -455,11 +455,6 @@ namespace MediaBrowser.Library {
             if (LoadContext == MBLoadContext.Core)
             {
                 kernel.PlaybackControllers.Add(new PlaybackController());
-                kernel.PlaybackControllers.Add(new ConfigurableExternalPlaybackController());
-                kernel.PlaybackControllers.Add(new MpcHcPlaybackController());
-                kernel.PlaybackControllers.Add(new VLCPlaybackController());
-                kernel.PlaybackControllers.Add(new TMTPlaybackController());
-                kernel.PlaybackControllers.Add(new TMTAddInPlaybackController());
             }
        
 

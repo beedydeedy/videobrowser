@@ -73,6 +73,15 @@ namespace MediaBrowser.Library
                 if (_PlaybackController == null)
                 {
                     _PlaybackController = GetPlaybackController();
+
+                    // If it's still null, create it
+                    if (_PlaybackController == null)
+                    {
+                        _PlaybackController = Activator.CreateInstance(PlaybackControllerType) as IPlaybackController;
+
+                        Logger.ReportVerbose("Creating a new instance of " + PlaybackControllerType.Name);
+                        Kernel.Instance.PlaybackControllers.Add(_PlaybackController);
+                    }
                 }
 
                 return _PlaybackController;
@@ -290,7 +299,7 @@ namespace MediaBrowser.Library
 
         protected virtual IPlaybackController GetPlaybackController()
         {
-            return Kernel.Instance.PlaybackControllers.First(p => p.GetType() == PlaybackControllerType);
+            return Kernel.Instance.PlaybackControllers.FirstOrDefault(p => p.GetType() == PlaybackControllerType);
         }
 
         private void SendFilesToPlayer(PlaybackArguments args)
