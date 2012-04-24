@@ -3,6 +3,7 @@
 	  xmlns:lib="assembly://MediaBrowser/MediaBrowser.Library"
 	  xmlns:s="file://Styles_DoNotEdit.mcml"
 	  xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
+      xmlns:addin="assembly://Microsoft.MediaCenter/Microsoft.MediaCenter.Hosting"
 	  >
 
 	
@@ -10,7 +11,7 @@
 
 		<Properties>
 			<Size Name="LabelSize" Size="0,0"/>
-			<Size Name="EditSize" Size="200,0"/>
+			<Size Name="EditSize" Size="100,34"/>
 			<cor:String Name="Label" String="$Required" />
 			<!-- EditableText is a required parameter. -->
 			<EditableText Name="EditableText" EditableText="$Required"/>
@@ -27,7 +28,9 @@
 
 		<Locals>
 			<TypingHandler Name="TypingHandler" EditableText="[EditableText]" TypingPolicy="TripleTap" HandlerStage="Bubbled"/>
-		</Locals>
+      <addin:AddInHost Name="AddInHost" />
+      <ClickHandler Name="Clicker"/>
+    </Locals>
 
 		<Rules>
 			<Default Target="[Input.KeyInteractive]" Value="true" />
@@ -36,7 +39,18 @@
 			<!-- The editable text value is bound to the label text value. -->
 			<Binding Source="[TypingHandler.DisplayValue]" Target="[DisplayText.Content]"/>
 
-			<!-- Change color if in overtype mode. -->
+      <!--Bring up keyboard if clicked-->
+      <Changed Source="[Clicker.Invoked]" >
+        <Actions>
+          <Invoke
+                  Target="[AddInHost.MediaCenterEnvironment.ShowOnscreenKeyboard]"
+                  editableText="[TypingHandler.EditableText]"
+                  passwordMasked="[TypingHandler.PasswordMasked]"
+                  maxLength="[TypingHandler.MaxLength]"/>
+        </Actions>
+      </Changed>
+
+      <!-- Change color if in overtype mode. -->
 			<Condition Source="[EditableText.Overtype]" SourceValue="true">
 				<Actions>
 					<Set Target="[Overtype.Visible]" Value="true"/>
@@ -74,7 +88,7 @@
 				<Children>
 					<Text Name="Lbl" Color="color://s:FontColorMedium" Font="[Font]" Margins="5,0,0,0" ></Text>
 					<!-- Solid background color. -->
-					<Graphic Name="Image" Content="image://i:BlankImage" MouseInteractive="true" Padding="4,4,4,4" Layout="Anchor" MinimumSize="100,34">
+					<Graphic Name="Image" Content="image://i:BlankImage" MouseInteractive="true" Padding="4,4,4,4" Layout="Anchor" MinimumSize="[EditSize]">
 						<Children>
 							<!-- Display the current value. -->
 							<Text Name="DisplayText" Color="[LabelColor]" Font="[Font]" HorizontalAlignment="Near" Margins="0,0,10,-2" MinimumSize="0,34" />

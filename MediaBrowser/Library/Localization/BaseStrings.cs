@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0046";
+        const string VERSION = "1.0047";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -322,6 +322,9 @@ namespace MediaBrowser.Library.Localization
         public string KBsStr = "Kbps";  //Kilobytes per second
         public string FrameRateStr = "fps";  //Frames per second
         public string AtStr = "at";  //x at y, e.g. 1920x1080 at 25 fps
+        public string Rated = "Rated";
+        public string OrLower = "Or Lower";
+        public string TitleContains = "Title Contains ";
 
         //Profiler
         public string WelcomeProf = "Welcome to Media Browser";

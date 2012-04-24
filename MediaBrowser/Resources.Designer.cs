@@ -2260,6 +2260,13 @@ namespace MediaBrowser {
             }
         }
         
+        internal static byte[] SearchPane {
+            get {
+                object obj = ResourceManager.GetObject("SearchPane", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
         internal static byte[] SimpleButton {
             get {
                 object obj = ResourceManager.GetObject("SimpleButton", resourceCulture);

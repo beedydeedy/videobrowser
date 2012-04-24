@@ -18,6 +18,8 @@
       <Color Name="Color" Color="color://s:FontColorLight"/>
       <cor:String Name="Label" String="" />
       <EditableText Name="FocusItem" />
+      <Size Name="LabelMinSize" Size="200,0"/>
+      <Size Name="ValueMinSize" Size="150,35"/>
     </Properties>
 
     <Locals>
@@ -67,7 +69,7 @@
         </Layout>
         <Children>
 
-          <Text Name="Text" Content="[Label]" Font="[Font]" Color="[Color]" MinimumSize="200,0" />
+          <Text Name="Text" Content="[Label]" Font="[Font]" Color="[Color]" MinimumSize="[LabelMinSize]" />
 
           <!-- Previous button -->
           <vm:ImageBtn Name="btnPrevious" Focused="image://i:DecrementFocus"
@@ -80,7 +82,7 @@
                        Command="[Next]"/>
 
           <!-- Current value -->
-          <ColorFill Name="Background" Content="Transparent" MinimumSize="150,35" MaximumSize="175,35" Padding="5,0,0,5">
+          <ColorFill Name="Background" Content="Transparent" MinimumSize="[ValueMinSize]" MaximumSize="175,35" Padding="5,0,0,5">
             <Children>
               <Text Name="Value" Font="[ValueFont]" Color="color://s:FontColorLight" />
             </Children>

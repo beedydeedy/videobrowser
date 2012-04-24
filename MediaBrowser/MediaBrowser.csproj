@@ -114,6 +114,7 @@
     <Compile Include="Library\Entities\IContainer.cs" />
     <Compile Include="Library\Entities\IGroupInIndex.cs" />
     <Compile Include="Library\Entities\IMovie.cs" />
+    <Compile Include="Library\Entities\SearchResultFolder.cs" />
     <Compile Include="Library\EntityDiscovery\BoxSetResolver.cs" />
     <Compile Include="Library\Extensions\DictionaryExtensions.cs" />
     <Compile Include="Library\Factories\Kernel.cs" />
@@ -934,6 +935,7 @@
     <Content Include="Markup\FontsSmall.mcml" />
     <Content Include="Markup\FontsDefault.mcml" />
     <Content Include="Markup\StylesBlack.mcml" />
+    <Content Include="Markup\Themes\Default\SearchPane.mcml" />
     <Content Include="Markup\Themes\Default\Splash.mcml" />
     <Content Include="Markup\Themes\Default\ParentalPINEntry.mcml" />
     <Content Include="Markup\Themes\Default\Selectors\PageDefault.mcml">

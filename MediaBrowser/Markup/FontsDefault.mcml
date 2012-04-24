@@ -89,6 +89,9 @@
   <Font Name="DV_FirstAiredFont" Font="Segoe Media Center Semibold,16"/>
   <Font Name="DV_ProductionYearFont" Font="Segoe Media Center Semibold,16"/>
 
+	<!-- Search -->
+	<Font Name="SE_DefaultFont" Font="Segoe Media Center Semibold,18"/>
+
 	<!-- View Menu -->
 	<Font Name="VM_ConfigItemFont" Font="Segoe Media Center Semibold,16"/>
 
