@@ -276,7 +276,7 @@ namespace MediaBrowser.Library
 
             Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
-            //SendFilesToPlayer(GetPlaybackArguments());
+            SendFilesToPlayer(GetPlaybackArguments());
         }
 
         protected virtual void Prepare()
