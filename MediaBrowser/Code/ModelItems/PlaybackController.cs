@@ -114,13 +114,6 @@ namespace MediaBrowser
                 MediaCollectionItem item = new MediaCollectionItem();
                 item.Media = fileToPlay;
 
-                // Embed the playlist index, since we could have multiple playlists queued up
-                // which prevents us from being able to use MediaCollection.CurrentIndex
-                item.FriendlyData["fileIndex"] = i.ToString();
-
-                // Embed the PlayableItemId so we can identify which one to track progress for
-                item.FriendlyData["itemId"] = playInfo.PlayableItemId.ToString();
-
                 mediaCollection.Add(item);
             }
 
@@ -216,7 +209,7 @@ namespace MediaBrowser
             }
 
             lastCall = DateTime.Now;
-
+            
             // Determine if playback has stopped. When using MediaCollections, after stopping, 
             // PropertyChanged will still fire once with a PlayState of Playing and a PlayRate of 0, or BufferingProgress of -1
             // Also, per MSDN documentation, Finished is no longer used with Windows 7, 
@@ -229,9 +222,9 @@ namespace MediaBrowser
             string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
 
             int playlistIndex = 0;
-
-            PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMediaCollection(mce, metadataTitle, out playlistIndex) ?? GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
-
+            
+            PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
+            
             Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.PlayableItemId;
             long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
 
@@ -253,31 +246,6 @@ namespace MediaBrowser
         /// <summary>
         /// Determines the item currently playing using the now playing title
         /// </summary>
-        private PlaybackArguments GetCurrentPlaybackItemFromMediaCollection(MediaExperience mce, string metadataTitle, out int currentPlaylistIndex)
-        {
-            currentPlaylistIndex = 0;
-
-            MediaCollection mediaCollection = GetCurrentMediaCollectionFromMediaExperience(mce);
-
-            // If the MediaCollectionItem is null or empty then playback is occurring due to some other application or plugin
-            // Perhaps a single path was passed into PlayMedia
-            // OR playback has previously stopped and the collection is no longer available
-            MediaCollectionItem activeItem = mediaCollection.Count == 0 ? null : mediaCollection[mediaCollection.CurrentIndex];
-
-            if (activeItem == null)
-            {
-                return null;
-            }
-
-            Guid playableItemId = new Guid(activeItem.FriendlyData["itemId"].ToString());
-            currentPlaylistIndex = int.Parse(activeItem.FriendlyData["fileIndex"].ToString());
-
-            return CurrentPlaybackItems.Where(p => p.PlayableItemId == playableItemId).FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Determines the item currently playing using the now playing title
-        /// </summary>
         private PlaybackArguments GetCurrentPlaybackItemFromMetadataTitle(string title, out int currentPlaylistIndex)
         {
             currentPlaylistIndex = 0;
@@ -290,9 +258,8 @@ namespace MediaBrowser
                 {
                     string file = playbackItem.Files.ElementAt(i).ToLower();
                     string normalized = file.Replace('\\', '/');
-                    string alternateTitle = Path.GetFileNameWithoutExtension(file);
 
-                    if (title.EndsWith(normalized) || title == alternateTitle)
+                    if (title.EndsWith(normalized) || title == Path.GetFileNameWithoutExtension(file))
                     {
                         currentPlaylistIndex = i;
                         return playbackItem;
