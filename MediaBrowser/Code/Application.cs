@@ -615,7 +615,11 @@ namespace MediaBrowser
 
                     // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
                     // us to delete the file we are trying to delete
-                    Play(new string[] { DingFile }, false, false);
+                    PlayableItem playable = PlayableItemFactory.Instance.Create(new string[] { DingFile }, false);
+
+                    playable.GoFullScreen = false;
+
+                    Play(playable);
 
                     if (Directory.Exists(path))
                     {
@@ -1335,8 +1339,11 @@ namespace MediaBrowser
         {
             Folder folder = item.PhysicalParent.BaseItem as Folder;
 
-            IEnumerable<BaseItem> items = folder.RecursiveMedia.SkipWhile(v => v.Id != item.Id).Select(v => v as BaseItem);
-            Play(items, false, false, false, false);
+            IEnumerable<Media> items = folder.RecursiveMedia.SkipWhile(v => v.Id != item.Id);
+
+            PlayableItem playable = PlayableItemFactory.Instance.Create(items);
+            playable.PlayIntros = true;
+            Play(playable);
 
         }
 
@@ -1359,9 +1366,9 @@ namespace MediaBrowser
 
             if (firstUnwatched != null)
             {
-                Item unwatchedItem = (item as FolderModel).Children.Where(v => v.BaseItem == firstUnwatched).FirstOrDefault();
-
-                Play(unwatchedItem, false, false, true, false);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(firstUnwatched);
+                playable.PlayIntros = true;
+                Play(playable);
             }
         }
 
@@ -1370,7 +1377,7 @@ namespace MediaBrowser
         /// </summary>
         public void AddToQueue(Item item)
         {
-            Play(item, true);
+            Play(item, false, true, false, false);
         }
 
         /// <summary>
@@ -1378,7 +1385,7 @@ namespace MediaBrowser
         /// </summary>
         public void Play(Item item)
         {
-            Play(item, false);
+            Play(item, false, false, true, false);
         }
 
         /// <summary>
@@ -1389,32 +1396,27 @@ namespace MediaBrowser
             var movie = item.BaseItem as ISupportsTrailers;
             if (movie.ContainsTrailers)
             {
-                Play(movie.TrailerFiles, true, false);
+                PlayableItem playable = PlayableItemFactory.Instance.Create(movie.TrailerFiles);
+                Play(playable);
             }
-        }
-
-        /// <summary>
-        /// Plays an Item
-        /// </summary>
-        /// <param name="queue">Whether the item should be queued</param>
-        public void Play(Item item, bool queue)
-        {
-            Play(item, false, queue, true, false);
         }
 
         public void Play(Item item, bool resume, bool queue, bool intros, bool shuffle)
         {
-            if (item.IsFolder)
-            {
-                Folder folder = item.BaseItem as Folder;
+            PlayableItem playable = PlayableItemFactory.Instance.Create(item);
 
-                Play(folder, resume, queue, intros, shuffle);
+            // This could happen if both item.IsFolder and item.IsPlayable are false
+            if (playable == null)
+            {
+                return;
             }
 
-            else if (item.IsPlayable)
-            {
-                Play(new BaseItem[] { item.BaseItem }, resume, queue, intros, shuffle);
-            }
+            playable.Resume = resume;
+            playable.QueueItem = queue;
+            playable.PlayIntros = intros;
+            playable.Shuffle = shuffle;
+
+            Play(playable);
         }
 
         /// <summary>
@@ -1425,59 +1427,28 @@ namespace MediaBrowser
             Play(item, true, false, false, false);
         }
 
-        public void Play(IEnumerable<string> files, bool allowExternalPlayers, bool shuffle)
-        {
-            PlayableItem playable = PlayableItemFactory.Instance.Create(files, allowExternalPlayers);
-
-            playable.Shuffle = shuffle;
-
-            Play(playable, false);
-        }
-
-        public void Play(Folder folder, bool resume, bool queue, bool intros, bool shuffle)
-        {
-            PlayableItem playable = PlayableItemFactory.Instance.Create(folder);
-        
-            playable.QueueItem = queue;
-            playable.Shuffle = shuffle;
-            playable.Resume = resume;
-
-            Play(playable, intros);
-        }
-
-        public void Play(IEnumerable<BaseItem> items, bool resume, bool queue, bool intros, bool shuffle)
-        {
-            PlayableItem playable = PlayableItemFactory.Instance.Create(items.Select(i => i as Media));
-           
-            playable.QueueItem = queue;
-            playable.Shuffle = shuffle;
-            playable.Resume = resume;
-          
-            Play(playable, intros);
-        }
-
-        public void Play(PlayableItem playable, bool intros)
+        public void Play(PlayableItem playable)
         {
             if (Config.Instance.ParentalControlEnabled && !playable.ParentalAllowed)
             {
                 //PIN screen mucks with turning this off
                 Application.CurrentInstance.DisplayPopupPlay = false; 
                 
-                Kernel.Instance.ParentalControls.PlayProtected(playable, intros);
+                Kernel.Instance.ParentalControls.PlayProtected(playable);
             }
             else
             {
-                PlaySecure(playable, intros);
+                PlaySecure(playable);
             }
         }
 
-        internal void PlaySecure(PlayableItem playable, bool intros)
+        internal void PlaySecure(PlayableItem playable)
         {
             //put this on a thread so that we can run it sychronously, but not tie up the UI
             MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
             {
                 // Run all pre-play processes
-                if (!RunPrePlayProcesses(playable, intros))
+                if (!RunPrePlayProcesses(playable))
                 {
                     // Abort playback if one of them returns false
                     return;
@@ -1498,7 +1469,7 @@ namespace MediaBrowser
             });
         }
 
-        private bool RunPrePlayProcesses(PlayableItem playable, bool intros)
+        private bool RunPrePlayProcesses(PlayableItem playable)
         {
             IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
             BaseItem originalBaseItem = playable.PrimaryBaseItem;
@@ -1510,7 +1481,7 @@ namespace MediaBrowser
                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
                 foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
                 {
-                    if (!process(item, intros)) return false;
+                    if (!process(item, playable.PlayIntros)) return false;
                 }
             }
 
@@ -1520,7 +1491,8 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// PlaybackControllers should use this to notify the core that playback has ceased.
+        /// Used this to notify the core that playback has ceased.
+        /// Ideally, only PlayableItem should need to call this.
         /// </summary>
         public void RunPostPlayProcesses(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
         {

@@ -35,6 +35,8 @@ namespace MediaBrowser.Library
         /// </summary>
         protected List<string> PlayableFiles = new List<string>();
 
+        public bool PlayIntros { get; set; }
+
         public bool QueueItem { get; set; }
 
         /// <summary>
@@ -56,6 +58,9 @@ namespace MediaBrowser.Library
         /// If we're not able to track playstate at all, we'll at least mark watched once playback stops
         /// </summary>
         protected bool HasUpdatedPlayState { get; set; }
+
+        private bool _GoFullScreen = true;
+        public bool GoFullScreen { get { return _GoFullScreen; } set { _GoFullScreen = value; } }
 
         /// <summary>
         /// Gets all Media objects that will be played by this item
@@ -155,22 +160,12 @@ namespace MediaBrowser.Library
         #region AddMedia
         public void AddMedia(string file)
         {
-            if (MediaTypeResolver.DetermineType(file) == MediaType.DVD)
-            {
-                PlayableFiles.Add("dvd://" + file);
-            }
-            else
-            {
-                PlayableFiles.Add(file);
-            }
+            PlayableFiles.Add(file);
         }
 
         public void AddMedia(IEnumerable<string> files)
         {
-            foreach (string file in files)
-            {
-                AddMedia(file);
-            }
+            PlayableFiles.AddRange(files);
         }
 
         public void AddMedia(Media media)
@@ -180,7 +175,12 @@ namespace MediaBrowser.Library
         }
         public void AddMedia(IEnumerable<Media> mediaItems)
         {
-            if (mediaItems.Count() > 1)
+            AddMedia(mediaItems, true);
+        }
+
+        private void AddMedia(IEnumerable<Media> mediaItems, bool filterPlaylistCapable)
+        {
+            if (filterPlaylistCapable && mediaItems.Count() > 1)
             {
                 // First filter out items that can't be queued in a playlist
                 mediaItems = mediaItems.Where(m => IsPlaylistCapable(m));
@@ -265,18 +265,18 @@ namespace MediaBrowser.Library
 
         internal void Play()
         {
-            if (PlayableFiles.Count() == 0 && PlayableMediaItems.Count() == 0)
+            if (PlayableFiles.Count()==0)
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
-
+            
             this.Prepare();
 
             Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
 
-            SendFilesToPlayer(GetPlaybackArguments());
+            //SendFilesToPlayer(GetPlaybackArguments());
         }
 
         protected virtual void Prepare()
@@ -336,7 +336,7 @@ namespace MediaBrowser.Library
                 info.PlaylistPosition = media.PlaybackStatus.PlaylistPosition;
             }
 
-            info.GoFullScreen = true;
+            info.GoFullScreen = GoFullScreen;
             info.Resume = Resume;
             info.PlayableItemId = PlayableItemId;
 
@@ -498,7 +498,7 @@ namespace MediaBrowser.Library
                 PlayableMediaItems.Clear();
                 PlayableFiles.Clear();
 
-                AddMedia(newList);
+                AddMedia(newList, false);
             }
             else
             {

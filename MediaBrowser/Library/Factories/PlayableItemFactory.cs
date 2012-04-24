@@ -90,6 +90,13 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(Media media)
         {
+            Video video = media as Video;
+
+            if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(GetAllKnownPlayables(), video))
+            {
+                MountAndUpdateMediaPath(video);
+            }
+            
             return Create(new Media[] { media });
         }
 
@@ -98,23 +105,30 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
-            List<PlayableItem> allKnownPlayables = GetAllKnownPlayables();
-
-            foreach (Media media in mediaList)
-            {
-                Video video = media as Video;
-
-                if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(allKnownPlayables, video))
-                {
-                    MountAndUpdateMediaPath(video);
-                }
-            }
-
-            PlayableItem playable = allKnownPlayables.FirstOrDefault(p => p.CanPlay(mediaList)) ?? new PlayableInternal();
-
+            PlayableItem playable = GetAllKnownPlayables().FirstOrDefault(p => p.CanPlay(mediaList)) ?? new PlayableInternal();
+            
             playable.AddMedia(mediaList);
 
             return playable;
+        }
+
+        /// <summary>
+        /// Creates a PlayableItem based on an Item
+        /// </summary>
+        public PlayableItem Create(Item item)
+        {
+            if (item.IsFolder)
+            {
+                return Create(item.BaseItem as Folder);
+            }
+            else if (item.IsPlayable)
+            {
+                return Create(item.BaseItem as Media);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>

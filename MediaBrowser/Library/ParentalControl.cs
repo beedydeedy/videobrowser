@@ -36,7 +36,6 @@ namespace MediaBrowser.Library
         //item and properties to operate upon after pin entered
         private Item anItem;
         private PlayableItem playable;
-        protected bool intros;
 
         public void Initialize()
         {
@@ -213,11 +212,10 @@ namespace MediaBrowser.Library
             }
         }
 
-        public void PlayProtected(PlayableItem playable, bool intros)
+        public void PlayProtected(PlayableItem playable)
         {
             //save parameters where we can get at them after pin entry
             this.playable = playable;
-            this.intros = intros;
 
             //now present pin screen - it will call our callback after finished
             pinCallback = PlayPinEntered;
@@ -239,7 +237,7 @@ namespace MediaBrowser.Library
             if (pinCorrect)
             {
                 Logger.ReportInfo("Playing protected content " + name);
-                Application.CurrentInstance.PlaySecure(playable, intros);
+                Application.CurrentInstance.PlaySecure(playable);
             }
             else
             {

@@ -354,9 +354,13 @@ namespace MediaBrowser.Library
             {
                 Application.CurrentInstance.Resume(this);
             }
+            else if (queue)
+            {
+                Application.CurrentInstance.AddToQueue(this);
+            }
             else
             {
-                Application.CurrentInstance.Play(this, queue);
+                Application.CurrentInstance.Play(this);
             }
         }
 
