@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0047";
+        const string VERSION = "1.0048";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -323,8 +323,16 @@ namespace MediaBrowser.Library.Localization
         public string FrameRateStr = "fps";  //Frames per second
         public string AtStr = "at";  //x at y, e.g. 1920x1080 at 25 fps
         public string Rated = "Rated";
-        public string OrLower = "Or Lower";
+        public string Or = "Or ";
+        public string Lower = "Lower";
+        public string Higher = "Higher";
+        public string Search = "Search";
+        public string Cancel = "Cancel";
         public string TitleContains = "Title Contains ";
+
+        //Search
+        public string IncludeNested = "Include Nested";
+        public string UnwatchedOnly = "Unwatched Only";
 
         //Profiler
         public string WelcomeProf = "Welcome to Media Browser";
