@@ -33,7 +33,7 @@ namespace MediaBrowser.Library
         /// <summary>
         /// This holds the list of files that will be sent to the player.
         /// </summary>
-        protected List<string> PlayableFiles = new List<string>();
+        private List<string> PlayableFiles = new List<string>();
 
         public bool PlayIntros { get; set; }
 
@@ -104,7 +104,7 @@ namespace MediaBrowser.Library
 
                 if (item == null)
                 {
-                    return PlayableFiles.Count > 0 ? PlayableFiles.First() : string.Empty;
+                    return PlayableFiles.Any() ? PlayableFiles.First() : string.Empty;
                 }
 
                 return item.Name;
@@ -171,7 +171,6 @@ namespace MediaBrowser.Library
         public void AddMedia(Media media)
         {
             PlayableMediaItems.Add(media);
-            PlayableFiles.AddRange(GetPlayableFiles(media));
         }
         public void AddMedia(IEnumerable<Media> mediaItems)
         {
@@ -187,7 +186,6 @@ namespace MediaBrowser.Library
             }
 
             PlayableMediaItems.AddRange(mediaItems);
-            PlayableFiles.AddRange(mediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i));
         }
         #endregion
 
@@ -265,16 +263,34 @@ namespace MediaBrowser.Library
 
         internal void Play()
         {
-            if (PlayableFiles.Count()==0)
+            bool hasMediaItems = PlayableMediaItems.Any();
+
+            if (!hasMediaItems && !PlayableFiles.Any())
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
-            
+
             this.Prepare();
 
-            Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
+            if (Folder != null)
+            {
+                Logger.ReportInfo("About to play Folder: " + Folder.Name);
+            }
+            else if (hasMediaItems)
+            {
+                Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableMediaItems.Select(p => p.Name).ToArray()));
+            }
+            else
+            {
+                Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", PlayableFiles.ToArray()));
+            }
+
+            if (hasMediaItems)
+            {
+                PlayableFiles = PlayableMediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i).ToList();
+            }
 
             SendFilesToPlayer(GetPlaybackArguments());
         }
@@ -411,7 +427,7 @@ namespace MediaBrowser.Library
             int foundIndex = -1;
 
             // First find which media item we left off at
-            for (int i = 0; i < PlayableMediaItems.Count(); i++)
+            for (int i = 0; i < PlayableMediaItems.Count; i++)
             {
                 if (GetPlayableFiles(PlayableMediaItems.ElementAt(i)).Contains(currentFile))
                 {
@@ -491,23 +507,14 @@ namespace MediaBrowser.Library
             Random rnd = new Random();
 
             // If playback is based on Media objects
-            if (PlayableMediaItems.Count > 0)
+            if (PlayableMediaItems.Any())
             {
-                IEnumerable<Media> newList = PlayableMediaItems.OrderBy(i => rnd.Next()).ToList();
-
-                PlayableMediaItems.Clear();
-                PlayableFiles.Clear();
-
-                AddMedia(newList, false);
+                PlayableMediaItems = PlayableMediaItems.OrderBy(i => rnd.Next()).ToList();
             }
             else
             {
                 // Otherwise if playback is based on a list of files
-                IEnumerable<string> newList = PlayableFiles.OrderBy(i => rnd.Next()).ToList();
-
-                PlayableFiles.Clear();
-
-                AddMedia(newList);
+                PlayableFiles = PlayableFiles.OrderBy(i => rnd.Next()).ToList();
             }
         }
     }
