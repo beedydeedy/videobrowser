@@ -169,91 +169,84 @@ namespace MediaBrowser
         /// </summary>
         void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
+            MediaTransport transport = sender as MediaTransport;
+
+            MediaExperience mce = MediaExperience;
+
+            PlayState state;
+            float bufferingProgress = 0;
+            float playRate = 2;
+            long positionTicks = 0;
+
+            // If another application is playing the content, such as the WMC autoplay handler, we will
+            // not have permission to access Transport properties
+            // But we can look at MediaExperience.MediaType to determine if something is playing
             try
             {
-                MediaTransport transport = sender as MediaTransport;
+                state = transport.PlayState;
+                bufferingProgress = transport.BufferingProgress;
+                playRate = transport.PlayRate;
+                positionTicks = transport.Position.Ticks;
+            }
+            catch (InvalidOperationException)
+            {
+                state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
+            }
 
-                MediaExperience mce = MediaExperience;
-
-                PlayState state;
-                float bufferingProgress = 0;
-                float playRate = 2;
-                long positionTicks = 0;
-
-                // If another application is playing the content, such as the WMC autoplay handler, we will
-                // not have permission to access Transport properties
-                // But we can look at MediaExperience.MediaType to determine if something is playing
-                try
+            // Don't get tripped up at the initial state of Stopped with position 0, which occurs with MediaCollections
+            if (!HasStartedPlaying)
+            {
+                if (state == Microsoft.MediaCenter.PlayState.Playing)
                 {
-                    state = transport.PlayState;
-                    bufferingProgress = transport.BufferingProgress;
-                    playRate = transport.PlayRate;
-                    positionTicks = transport.Position.Ticks;
+                    HasStartedPlaying = true;
                 }
-                catch (InvalidOperationException)
-                {
-                    state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
-                }
-
-                // Don't get tripped up at the initial state of Stopped with position 0, which occurs with MediaCollections
-                if (!HasStartedPlaying)
-                {
-                    if (state == Microsoft.MediaCenter.PlayState.Playing)
-                    {
-                        HasStartedPlaying = true;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-
-                // protect against really agressive calls
-                var diff = (DateTime.Now - lastCall).TotalMilliseconds;
-
-                // Only cancel out Position reports
-                if (diff < 1000 && diff >= 0 && property == "Position")
+                else
                 {
                     return;
                 }
-
-                lastCall = DateTime.Now;
-
-                // Determine if playback has stopped. When using MediaCollections, after stopping, 
-                // PropertyChanged will still fire once with a PlayState of Playing and a PlayRate of 0, or BufferingProgress of -1
-                // Also, per MSDN documentation, Finished is no longer used with Windows 7, 
-                // but as long as it's part of the enum it probably makes sense to test for it
-                bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Stopped || bufferingProgress == -1 || playRate == 0;
-
-                // Get metadata from player
-                MediaMetadata metadata = mce.MediaMetadata;
-
-                string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
-
-                int playlistIndex = 0;
-
-                PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMediaCollection(mce, metadataTitle, out playlistIndex) ?? GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
-
-                Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.PlayableItemId;
-                long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
-
-                // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
-                if (positionTicks > 0)
-                {
-                    OnProgress(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
-                }
-
-                if (property == "PlayState")
-                {
-                    Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}",
-                      state, metadataTitle, positionTicks, playlistIndex);
-
-                    HandlePlaystateChange(transport, isStopped, playableItemId, playlistIndex, positionTicks, duration);
-                }
             }
-            catch (Exception ex)
+
+            // protect against really agressive calls
+            var diff = (DateTime.Now - lastCall).TotalMilliseconds;
+
+            // Only cancel out Position reports
+            if (diff < 1000 && diff >= 0 && property == "Position")
             {
-                Logger.ReportException("Prop: ", ex);
+                return;
+            }
+
+            lastCall = DateTime.Now;
+
+            // Determine if playback has stopped. When using MediaCollections, after stopping, 
+            // PropertyChanged will still fire once with a PlayState of Playing and a PlayRate of 0, or BufferingProgress of -1
+            // Also, per MSDN documentation, Finished is no longer used with Windows 7, 
+            // but as long as it's part of the enum it probably makes sense to test for it
+            bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Stopped || bufferingProgress == -1 || playRate == 0;
+
+            // Get metadata from player
+            MediaMetadata metadata = mce.MediaMetadata;
+
+            string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
+
+            int playlistIndex = 0;
+
+            PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMediaCollection(mce, metadataTitle, out playlistIndex) ?? GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
+
+            Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.PlayableItemId;
+            long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
+
+            // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
+            if (positionTicks > 0)
+            {
+                OnProgress(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
+            }
+
+            if (property == "PlayState")
+            {
+                Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}",
+                  state, metadataTitle, positionTicks, playlistIndex);
+
+                HandlePlaystateChange(transport, isStopped, playableItemId, playlistIndex, positionTicks, duration);
             }
         }
 
