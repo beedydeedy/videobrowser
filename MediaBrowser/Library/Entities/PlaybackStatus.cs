@@ -28,7 +28,7 @@ namespace MediaBrowser.Library.Entities {
         }
 
         public bool CanResume {
-            get { return this.PositionTicks > 0; }
+            get { return this.PositionTicks > 0 || PlaylistPosition > 0; }
         }
 
         [Persist]
