@@ -403,7 +403,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return PlayState == null ? false : PlayState.CanResume;
+                return BaseItem.CanResume;
             }
         }
 

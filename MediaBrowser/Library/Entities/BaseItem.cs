@@ -273,6 +273,14 @@ namespace MediaBrowser.Library.Entities {
             set { }
         }
 
+        public virtual bool CanResume
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         public bool ParentalAllowed { get { return Kernel.Instance.ParentalControls.Allowed(this); } }
         public virtual string ParentalRating
         {
