@@ -111,9 +111,6 @@
     <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
     <Compile Include="Code\ModelItems\ExtenderPlaybackController.cs" />
     <Compile Include="Library\Events\GenericEventArgs.cs" />
-    <Compile Include="Library\Events\PlaybackEventArgs.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
     <Compile Include="Library\Configuration\ApplicationPaths.cs" />
     <Compile Include="Library\Entities\GenericItem.cs" />

@@ -106,6 +106,17 @@ namespace MediaBrowser.Library.Playables
         }
 
         /// <summary>
+        /// Gets the Media Items that have actually been played up to this point
+        /// </summary>
+        public IEnumerable<Media> PlayedMediaItems
+        {
+            get
+            {
+                return MediaItems.Where(p => p.PlaybackStatus.LastPlayed.Equals(PlaybackStartTime));
+            }
+        }
+
+        /// <summary>
         /// Helper to determine if this Playable has MediaItems or if it is based on file paths
         /// </summary>
         public bool HasMediaItems { get { return MediaItems.Any(); } }

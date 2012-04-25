@@ -121,11 +121,11 @@ namespace MediaBrowser
         #endregion
 
         #region PlaybackFinished EventHandler
-        volatile EventHandler<PlaybackEventArgs> _PlaybackFinished;
+        volatile EventHandler<GenericEventArgs<PlayableItem>> _PlaybackFinished;
         /// <summary>
         /// Fires whenever an Item is navigated into
         /// </summary>
-        public event EventHandler<PlaybackEventArgs> PlaybackFinished
+        public event EventHandler<GenericEventArgs<PlayableItem>> PlaybackFinished
         {
             add
             {
@@ -137,11 +137,11 @@ namespace MediaBrowser
             }
         }
 
-        internal void OnPlaybackFinished(PlayableItem playableItem, IEnumerable<Media> mediaItems)
+        internal void OnPlaybackFinished(PlayableItem playableItem)
         {
             if (_PlaybackFinished != null)
             {
-                _PlaybackFinished(this, new PlaybackEventArgs() { Item = playableItem, MediaItems = mediaItems });
+                _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
             }
         }
         #endregion
@@ -1495,10 +1495,10 @@ namespace MediaBrowser
         /// Used this to notify the core that playback has ceased.
         /// Ideally, only PlayableItem should need to call this.
         /// </summary>
-        public void RunPostPlayProcesses(PlayableItem playableItem, IEnumerable<Media> mediaItems, bool runKernelPostPlayProcesses)
+        public void RunPostPlayProcesses(PlayableItem playableItem, bool runKernelPostPlayProcesses)
         {
             // Loop through the items that were sent to the player
-            foreach (Media media in mediaItems)
+            foreach (Media media in playableItem.PlayedMediaItems)
             {
                 Item item = ItemFactory.Instance.Create(media);
 
@@ -1520,7 +1520,7 @@ namespace MediaBrowser
 
             Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.Name);
 
-            OnPlaybackFinished(playableItem, mediaItems);
+            OnPlaybackFinished(playableItem);
         }
 
         public void UnlockPC()

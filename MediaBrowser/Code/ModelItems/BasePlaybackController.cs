@@ -419,7 +419,7 @@ namespace MediaBrowser.Code.ModelItems
 
             foreach (PlayableItem playable in CurrentPlayableItems)
             {
-                Application.CurrentInstance.RunPostPlayProcesses(playable, playable.MediaItems.Where(p => p.PlaybackStatus.LastPlayed.Equals(playable.PlaybackStartTime)), runKernelPostPlay);
+                Application.CurrentInstance.RunPostPlayProcesses(playable, runKernelPostPlay);
 
                 // Only do this once
                 runKernelPostPlay = false;
