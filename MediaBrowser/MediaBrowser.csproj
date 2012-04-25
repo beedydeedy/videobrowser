@@ -109,8 +109,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
+    <Compile Include="Code\ModelItems\ExtenderPlaybackController.cs" />
     <Compile Include="Library\Events\GenericEventArgs.cs" />
-    <Compile Include="Library\Events\PlaybackEventArgs.cs" />
+    <Compile Include="Library\Events\PlaybackEventArgs.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
     <Compile Include="Library\Configuration\ApplicationPaths.cs" />
     <Compile Include="Library\Entities\GenericItem.cs" />
@@ -222,7 +225,6 @@
     <Compile Include="Library\Metadata\MetadataRefreshOptions.cs" />
     <Compile Include="Library\Plugins\IPlugin.cs" />
     <Compile Include="Library\Plugins\Plugin.cs" />
-    <Compile Include="Library\RemoteControl\PlaybackArguments.cs" />
     <Compile Include="Library\RemoteControl\PlaybackStateEventArgs.cs" />
     <Compile Include="Library\RemoteControl\RemoteCommand.cs" />
     <Compile Include="Library\Sorting\BaseItemEqualityComparer.cs" />

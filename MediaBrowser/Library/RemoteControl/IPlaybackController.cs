@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using MediaBrowser.Library.Playables;
 
 namespace MediaBrowser.Library.RemoteControl {
 
@@ -11,8 +11,8 @@ namespace MediaBrowser.Library.RemoteControl {
         bool IsPlaying { get; }
         bool IsPlayingVideo { get; }
         bool IsStopped { get; }
-        void PlayMedia(PlaybackArguments playInfo);
-        void QueueMedia(PlaybackArguments playInfo);
+        void PlayMedia(PlayableItem item);
+        void QueueMedia(PlayableItem item);
         void Seek(long position);
         void Pause();
         void Stop();

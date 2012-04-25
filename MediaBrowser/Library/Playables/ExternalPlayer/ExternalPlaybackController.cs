@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
 using Microsoft.MediaCenter.Hosting;
-using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
@@ -58,35 +61,35 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         //alesbal: end
         #endregion
 
-        protected override void PlayMediaInternal(PlaybackArguments args)
+        protected override void PlayMediaInternal(PlayableItem playable)
         {
             // Two different launch methods depending on how the player is configured
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
-                PlayUsingWMCNavigation(args);
+                PlayUsingWMCNavigation(playable);
 
-                OnExternalPlayerLaunched(args);
+                OnExternalPlayerLaunched(playable);
             }
             else
             {
-                PlayUsingCommandLine(args);
+                PlayUsingCommandLine(playable);
             }           
         }
 
         // Launch the external player using the command line
-        private void PlayUsingCommandLine(PlaybackArguments args)
+        private void PlayUsingCommandLine(PlayableItem playable)
         {
-            string commandPath = GetCommandPath(args);
-            string commandArgs = GetCommandArguments(args);
+            string commandPath = GetCommandPath(playable);
+            string commandArgs = GetCommandArguments(playable);
 
             Logging.Logger.ReportInfo("Starting command line " + commandPath + " " + commandArgs);
 
             Process player = Process.Start(commandPath, commandArgs);
 
-            Async.Queue("Ext Player Mgmt", () => ManageExtPlayer(player, args));
+            Async.Queue("Ext Player Mgmt", () => ManageExtPlayer(player, playable));
         }
 
-        private void ManageExtPlayer(Process player, PlaybackArguments playbackInfo)
+        private void ManageExtPlayer(Process player, PlayableItem playable)
         {
             //minimize MCE if indicated
             IntPtr mceWnd = FindWindow(null, "Windows Media Center");
@@ -110,7 +113,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
 
             //give the player focus
-            Async.Queue("Ext Player Focus", () => GiveFocusToExtPlayer(player, playbackInfo));
+            Async.Queue("Ext Player Focus", () => GiveFocusToExtPlayer(player, playable));
 
             //and wait for it to exit
             player.WaitForExit();
@@ -124,24 +127,24 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             OnExternalPlayerClosed();
         }
 
-        private void GiveFocusToExtPlayer(Process player, PlaybackArguments playbackInfo)
+        private void GiveFocusToExtPlayer(Process player, PlayableItem playable)
         {
             //set external player to foreground
             Logger.ReportVerbose("Giving focus to external player window");
             player.Refresh();
             player.WaitForInputIdle(5000); //give the external player 5 secs to show up and then minimize MCE
-            OnExternalPlayerLaunched(playbackInfo);
+            OnExternalPlayerLaunched(playable);
             SetForegroundWindow(player.MainWindowHandle);
         }
         
         /// <summary>
         /// Play by launching another WMC app
         /// </summary>
-        protected void PlayUsingWMCNavigation(PlaybackArguments args)
+        protected void PlayUsingWMCNavigation(PlayableItem playable)
         {
-            string commandArgs = GetCommandArguments(args);
+            string commandArgs = GetCommandArguments(playable);
 
-            string url = GetCommandPath(args);
+            string url = GetCommandPath(playable);
 
             if (!string.IsNullOrEmpty(commandArgs))
             {
@@ -156,7 +159,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// <summary>
         /// Subclasses can use this to execute code after the player has launched
         /// </summary>
-        protected virtual void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
+        protected virtual void OnExternalPlayerLaunched(PlayableItem playable)
         {
         }
 
@@ -166,28 +169,55 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             OnPlaybackFinished(GetPlaybackState());
         }
 
-        private string GetCommandArguments(PlaybackArguments playInfo)
+        private string GetCommandArguments(PlayableItem playable)
         {
-            List<string> argsList = GetCommandArgumentsList(playInfo);
+            List<string> argsList = GetCommandArgumentsList(playable);
 
             string args = string.Join(" ", argsList.ToArray());
 
-            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(playInfo)));
+            args = string.Format(args, GetFilePathCommandArgument(GetFilesToSendToPlayer(playable)));
 
             return args;
         }
 
-        protected virtual IEnumerable<string> GetFilesToSendToPlayer(PlaybackArguments playInfo)
+        private IEnumerable<string> GetFilesToSendToPlayer(PlayableItem playable)
         {
-            IEnumerable<string> files = playInfo.Files;
+            IEnumerable<string> files = playable.Files;
 
-            if (playInfo.Resume)
+            if (playable.Resume)
             {
-                files = files.Skip(playInfo.PlaylistPosition);
+                files = files.Skip(playable.ResumePlaylistPosition);
+            }
+
+            if (files.Count() > 1)
+            {
+                if (!SupportsMultiFileCommandArguments && SupportsPlaylists)
+                {
+                    return new string[] { CreatePlaylistFile(files) };
+                }
             }
 
             return files;
 
+        }
+
+        private string CreatePlaylistFile(IEnumerable<string> files)
+        {
+            string randomName = "pls_" + DateTime.Now.Ticks;
+            string playListFile = Path.Combine(ApplicationPaths.AutoPlaylistPath, randomName + ".pls");
+
+            StringBuilder contents = new StringBuilder("[playlist]\n");
+            int x = 1;
+            foreach (string file in files)
+            {
+                contents.Append("File" + x + "=" + file + "\n");
+                contents.Append("Title" + x + "=Part " + x + "\n\n");
+                x++;
+            }
+            contents.Append("Version=2\n");
+
+            File.WriteAllText(playListFile, contents.ToString());
+            return playListFile;
         }
         
         /// <summary>
@@ -195,11 +225,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// </summary>
         protected virtual string GetFilePathCommandArgument(IEnumerable<string> filesToPlay)
         {
-            /*if (!string.IsNullOrEmpty(PlaylistFile))
-            {
-                return "\"" + PlaylistFile + "\"";
-            }*/
-
             filesToPlay = filesToPlay = filesToPlay.Select(i => "\"" + i + "\"");
 
             return string.Join(" ", filesToPlay.ToArray());
@@ -211,16 +236,23 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// </summary>
         protected virtual PlaybackStateEventArgs GetPlaybackState()
         {
-            Guid playableItemId = Guid.Empty;
+            return new PlaybackStateEventArgs() { Item = GetCurrentPlayableItem() };
+        }
 
-            PlaybackArguments playItem = GetCurrentPlaybackItem();
-
-            if (playItem != null)
+        protected virtual bool SupportsMultiFileCommandArguments
+        {
+            get
             {
-                playableItemId = playItem.PlayableItemId;
+                return false;
             }
+        }
 
-            return new PlaybackStateEventArgs() { PlayableItemId = playableItemId };
+        protected virtual bool SupportsPlaylists
+        {
+            get
+            {
+                return true;
+            }
         }
 
         protected virtual bool ShowSplashScreen
@@ -267,7 +299,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             
         }
 
-        protected abstract string GetCommandPath(PlaybackArguments args);
-        protected abstract List<string> GetCommandArgumentsList(PlaybackArguments playInfo);
+        protected abstract string GetCommandPath(PlayableItem playable);
+        protected abstract List<string> GetCommandArgumentsList(PlayableItem playable);
     }
 }

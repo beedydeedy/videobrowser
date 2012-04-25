@@ -125,15 +125,7 @@ namespace MediaBrowser.Library
                                 }
 
                                 // set npv visibility according to current state
-                                bool showNowPlayingInitially = false;
-                                foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
-                                {
-                                    if (controller.IsPlaying)
-                                    {
-                                        showNowPlayingInitially = true;
-                                    }
-                                }
-                                Application.CurrentInstance.ShowNowPlaying = showNowPlayingInitially;
+                                Application.CurrentInstance.ShowNowPlaying = Application.CurrentInstance.IsPlayingVideo;
 
                                 //tell MC to navigate to us
                                 Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.ReturnToApplication();

@@ -1,19 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.MediaCenter.UI;
-using System.Xml;
-using System.IO;
-using MediaBrowser.Library;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.Code;
-using System.Diagnostics;
-using System.Collections;
+using MediaBrowser.Library.Playables;
 using Microsoft.MediaCenter;
-using MediaBrowser.Util;
-using System.Linq;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser.Library
 {

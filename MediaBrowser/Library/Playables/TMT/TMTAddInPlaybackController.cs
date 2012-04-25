@@ -8,7 +8,7 @@ namespace MediaBrowser.Library.Playables.TMT
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playbackInfo)
+        protected override List<string> GetCommandArgumentsList(PlayableItem playbackInfo)
         {
             List<string> args = new List<string>();
 

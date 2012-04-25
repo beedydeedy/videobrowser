@@ -1,22 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
+using MediaBrowser.Library.Playables;
 
 namespace MediaBrowser.Library.RemoteControl
 {
-    public class PlaybackStateEventArgs : EventArgs
+    public class PlaybackStateEventArgs : GenericEventArgs<PlayableItem>
     {
-        public int PlaylistPosition { get; set; }
+        /// <summary>
+        /// Gets or sets the Id of the current Media object being played
+        /// </summary>
+        public Guid CurrentMediaId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the overall playlist position of the current playing file.
+        /// That is, with respect to all files from all Media items
+        /// </summary>
+        public int FilePlaylistPosition { get; set; }
+
+        /// <summary>
+        /// Gets or sets the playlist position within the current Media item being played
+        /// This is used when the Media item has multiple playables files (e.g. multi-file video).
+        /// </summary>
+        public int MediaPlaylistPosition { get; set; }
+
+        /// <summary>
+        /// Gets or sets the position of the player, in Ticks
+        /// </summary>
         public long Position { get; set; }
 
         // The duration of the item in progress, as read from the player
         public long DurationFromPlayer { get; set; }
 
-        public Guid PlayableItemId { get; set; }
-
         private bool? _StoppedByUser;
-
         /// <summary>
         /// Gets or sets whether playback was explicitly stopped by the user
         /// </summary>
@@ -46,6 +63,28 @@ namespace MediaBrowser.Library.RemoteControl
             set
             {
                 _StoppedByUser = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current file being played
+        /// </summary>
+        public string CurrentFile
+        {
+            get
+            {
+                return Item.Files.ElementAt(FilePlaylistPosition);
+            }
+        }
+
+        /// <summary>
+        /// Gets the current Media object being played
+        /// </summary>
+        public Media CurrentMedia
+        {
+            get
+            {
+                return Item.MediaItems.FirstOrDefault(m => m.Id == CurrentMediaId);
             }
         }
     }

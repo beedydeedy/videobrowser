@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.Playables
@@ -10,38 +10,6 @@ namespace MediaBrowser.Library.Playables
     /// </summary>
     public class PlayableInternal : PlayableItem
     {
-        /// <summary>
-        /// Takes a Media object and returns the list of files that will be sent to the PlaybackController
-        /// </summary>
-        /// <param name="media"></param>
-        /// <returns></returns>
-        protected override IEnumerable<string> GetPlayableFiles(Media media)
-        {
-            IEnumerable<string> files = base.GetPlayableFiles(media);
-
-            Video video = media as Video;
-
-            // Prefix dvd's with dvd://
-            if (video != null && video.MediaType == MediaType.DVD)
-            {
-                files = files.Select(i => GetDVDPath(i));
-            }
-
-            return files;
-        }
-
-        private string GetDVDPath(string path)
-        {
-            if (path.StartsWith("\\\\"))
-            {
-                path = path.Substring(2);
-            }
-
-            path = path.Replace("\\", "/").TrimEnd('/');
-
-            return "DVD://" + path + "/";
-        }
-
         /// <summary>
         /// Determines whether this PlayableItem can play a list of Media objects
         /// </summary>
@@ -116,9 +84,20 @@ namespace MediaBrowser.Library.Playables
             return true;
         }
 
+        /// <summary>
+        /// Gets the type of PlaybackController that this Playable uses
+        /// </summary>
         protected override Type PlaybackControllerType
         {
-            get { return typeof(PlaybackController); }
+            get 
+            {
+                if (Application.RunningOnExtender)
+                {
+                    return typeof(ExtenderPlaybackController);
+                }
+                
+                return typeof(PlaybackController); 
+            }
         }
     }
 }

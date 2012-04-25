@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -12,15 +13,15 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
-        protected override IEnumerable<string> GetFilesToSendToPlayer(PlaybackArguments playInfo)
+        protected override IEnumerable<string> GetPlayableFiles(Media media)
         {
-            return base.GetFilesToSendToPlayer(playInfo).Select(i => i.TrimEnd('\\'));
+            return base.GetPlayableFiles(media).Select(i => i.TrimEnd('\\'));
         }
 
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
+        protected override List<string> GetCommandArgumentsList(PlayableItem playInfo)
         {
             List<string> args = new List<string>();
 
@@ -30,7 +31,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             args.Add("/fullscreen");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.PositionTicks).TotalMilliseconds : 0;
+            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.ResumePositionTicks).TotalMilliseconds : 0;
 
             args.Add("/start " + startTimeInMs);
 
@@ -42,7 +43,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            PlaybackArguments playItem = GetCurrentPlaybackItem();
+            PlayableItem playItem = GetCurrentPlayableItem();
 
             if (playItem != null)
             {
@@ -50,7 +51,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
                 PlaybackStateEventArgs state = GetPlaybackState(values, playItem.Files);
 
-                state.PlayableItemId = playItem.PlayableItemId;
+                state.Item = playItem;
 
                 return state;
             }
@@ -101,7 +102,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             for (int i = 0; i < files.Count(); i++)
             {
-                args.PlaylistPosition = i;
+                args.FilePlaylistPosition = i;
 
                 args.Position = GetPlaybackPosition(values, files.ElementAt(i));
 

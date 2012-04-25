@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
@@ -14,6 +15,7 @@ using MediaBrowser.Library.Interfaces;
 using MediaBrowser.Library.Localization;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
+using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.Library.UI;
@@ -92,28 +94,28 @@ namespace MediaBrowser
         }
         #endregion
 
-        #region PlaybackBeginning EventHandler
-        volatile EventHandler<PlaybackEventArgs> _PlaybackBeginning;
+        #region PrePlayback EventHandler
+        volatile EventHandler<GenericEventArgs<PlayableItem>> _PrePlayback;
         /// <summary>
         /// Fires whenever an Item is navigated into
         /// </summary>
-        public event EventHandler<PlaybackEventArgs> PlaybackBeginning
+        public event EventHandler<GenericEventArgs<PlayableItem>> PrePlayback
         {
             add
             {
-                _PlaybackBeginning += value;
+                _PrePlayback += value;
             }
             remove
             {
-                _PlaybackBeginning -= value;
+                _PrePlayback -= value;
             }
         }
 
-        internal void OnPlaybackBeginning(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
+        internal void OnPrePlayback(PlayableItem playableItem)
         {
-            if (_PlaybackBeginning != null)
+            if (_PrePlayback != null)
             {
-                _PlaybackBeginning(this, new PlaybackEventArgs() { PlaybackController = playbackController, MediaItems = mediaItems });
+                _PrePlayback(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
             }
         }
         #endregion
@@ -135,11 +137,11 @@ namespace MediaBrowser
             }
         }
 
-        internal void OnPlaybackFinished(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
+        internal void OnPlaybackFinished(PlayableItem playableItem, IEnumerable<Media> mediaItems)
         {
             if (_PlaybackFinished != null)
             {
-                _PlaybackFinished(this, new PlaybackEventArgs() { PlaybackController = playbackController, MediaItems = mediaItems });
+                _PlaybackFinished(this, new PlaybackEventArgs() { Item = playableItem, MediaItems = mediaItems });
             }
         }
         #endregion
@@ -543,6 +545,14 @@ namespace MediaBrowser
             }
         }
 
+        public bool IsPlaying
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlaying);
+            }
+        }
+        
         public bool IsPlayingVideo
         {
             get
@@ -723,15 +733,7 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
-                    bool showNowPlayingInitially = false;
-                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
-                    {
-                        if (controller.IsPlaying)
-                        {
-                            showNowPlayingInitially = true;
-                        }
-                    }
-                    ShowNowPlaying = showNowPlayingInitially;
+                    ShowNowPlaying = IsPlayingVideo;
 
                     // setup image to use in external splash screen
                     string splashFilename = Path.Combine(Path.Combine(ApplicationPaths.AppIBNPath,"General"),"splash.png");
@@ -1046,7 +1048,7 @@ namespace MediaBrowser
             {
                 try
                 {
-                    foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
+                    foreach (var controller in Kernel.Instance.PlaybackControllers)
                     {
                         if (controller.IsPlaying)
                         {
@@ -1342,7 +1344,6 @@ namespace MediaBrowser
             IEnumerable<Media> items = folder.RecursiveMedia.SkipWhile(v => v.Id != item.Id);
 
             PlayableItem playable = PlayableItemFactory.Instance.Create(items);
-            playable.PlayIntros = true;
             Play(playable);
 
         }
@@ -1352,7 +1353,7 @@ namespace MediaBrowser
         /// </summary>
         public void Shuffle(Item item)
         {
-            Play(item, false, false, true, true);
+            Play(item, false, false, PlayMethod.UIMenu, true);
         }
 
         /// <summary>
@@ -1367,7 +1368,6 @@ namespace MediaBrowser
             if (firstUnwatched != null)
             {
                 PlayableItem playable = PlayableItemFactory.Instance.Create(firstUnwatched);
-                playable.PlayIntros = true;
                 Play(playable);
             }
         }
@@ -1377,7 +1377,7 @@ namespace MediaBrowser
         /// </summary>
         public void AddToQueue(Item item)
         {
-            Play(item, false, true, false, false);
+            Play(item, false, true, PlayMethod.UIMenu, false);
         }
 
         /// <summary>
@@ -1385,7 +1385,7 @@ namespace MediaBrowser
         /// </summary>
         public void Play(Item item)
         {
-            Play(item, false, false, true, false);
+            Play(item, false, false, PlayMethod.UIMenu, false);
         }
 
         /// <summary>
@@ -1401,7 +1401,7 @@ namespace MediaBrowser
             }
         }
 
-        public void Play(Item item, bool resume, bool queue, bool intros, bool shuffle)
+        public void Play(Item item, bool resume, bool queue, PlayMethod playMethod, bool shuffle)
         {
             PlayableItem playable = PlayableItemFactory.Instance.Create(item);
 
@@ -1413,7 +1413,7 @@ namespace MediaBrowser
 
             playable.Resume = resume;
             playable.QueueItem = queue;
-            playable.PlayIntros = intros;
+            playable.PlayMethod = playMethod;
             playable.Shuffle = shuffle;
 
             Play(playable);
@@ -1424,7 +1424,7 @@ namespace MediaBrowser
         /// </summary>
         public void Resume(Item item)
         {
-            Play(item, true, false, false, false);
+            Play(item, true, false, PlayMethod.UIMenu, false);
         }
 
         public void Play(PlayableItem playable)
@@ -1447,13 +1447,6 @@ namespace MediaBrowser
             //put this on a thread so that we can run it sychronously, but not tie up the UI
             MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
             {
-                // Run all pre-play processes
-                if (!RunPrePlayProcesses(playable))
-                {
-                    // Abort playback if one of them returns false
-                    return;
-                }
-
                 currentPlaybackController = playable.PlaybackController;
 
                 playable.Play();
@@ -1469,23 +1462,31 @@ namespace MediaBrowser
             });
         }
 
-        private bool RunPrePlayProcesses(PlayableItem playable)
+        /// <summary>
+        /// Runs all preplay processes
+        /// </summary>
+        /// <param name="playbackController">The playback controller that will be used</param>
+        /// <param name="originalBaseItem">The original item that was played in the UI</param>
+        /// <param name="mediaItems">All Media items that will be played, in order</param>
+        /// <param name="intros">Whether or not to play intros</param>
+        /// <returns>True or false indicating if playback should proceed</returns>
+        internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
         {
-            IEnumerable<Media> itemsToPlay = playable.GetPlayableMediaItems();
-            BaseItem originalBaseItem = playable.PrimaryBaseItem;
-
             if (originalBaseItem != null)
             {
                 Item item = ItemFactory.Instance.Create(originalBaseItem);
 
-                Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+                 bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+
+                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+                 
                 foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
-                {
-                    if (!process(item, playable.PlayIntros)) return false;
-                }
+                 {
+                     if (!process(item, playIntros)) return false;
+                 }
             }
 
-            OnPlaybackBeginning(playable.PlaybackController, itemsToPlay);
+            OnPrePlayback(playableItem);
 
             return true;
         }
@@ -1494,7 +1495,7 @@ namespace MediaBrowser
         /// Used this to notify the core that playback has ceased.
         /// Ideally, only PlayableItem should need to call this.
         /// </summary>
-        public void RunPostPlayProcesses(IPlaybackController playbackController, IEnumerable<Media> mediaItems)
+        public void RunPostPlayProcesses(PlayableItem playableItem, IEnumerable<Media> mediaItems, bool runKernelPostPlayProcesses)
         {
             // Loop through the items that were sent to the player
             foreach (Media media in mediaItems)
@@ -1507,14 +1508,19 @@ namespace MediaBrowser
                 this.lastPlayed = item;
             }
 
-            Logger.ReportVerbose("Running post-play processes for: " + string.Join(",", mediaItems.Select(m => m.Name).ToArray()));
-            
-            foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+            if (runKernelPostPlayProcesses)
             {
-                process();
+                Logger.ReportVerbose("Running Kernel post-play processes");
+                
+                foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+                {
+                    process();
+                }
             }
-            
-            OnPlaybackFinished(playbackController, mediaItems);
+
+            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.Name);
+
+            OnPlaybackFinished(playableItem, mediaItems);
         }
 
         public void UnlockPC()
@@ -1703,7 +1709,7 @@ namespace MediaBrowser
         /// </summary>
         public void StopAllPlayback()
         {
-            foreach (IPlaybackController controller in Kernel.Instance.PlaybackControllers)
+            foreach (var controller in Kernel.Instance.PlaybackControllers)
             {
                 if (controller.IsPlaying)
                 {

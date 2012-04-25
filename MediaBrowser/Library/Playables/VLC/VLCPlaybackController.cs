@@ -6,6 +6,7 @@ using System.Threading;
 using System.Xml;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
+using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.Playables.VLC
 {
@@ -22,14 +23,14 @@ namespace MediaBrowser.Library.Playables.VLC
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
+        protected override List<string> GetCommandArgumentsList(PlayableItem playInfo)
         {
             List<string> args = new List<string>();
 
             args.Add("{0}");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.PositionTicks).TotalSeconds : 0;
+            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.ResumePositionTicks).TotalSeconds : 0;
 
             args.Add("--start-time=" + startTimeInSeconds);
 
@@ -75,7 +76,7 @@ namespace MediaBrowser.Library.Playables.VLC
         /// <summary>
         /// Starts monitoring playstate using the VLC Http interface
         /// </summary>
-        protected override void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
+        protected override void OnExternalPlayerLaunched(PlayableItem playbackInfo)
         {
             base.OnExternalPlayerLaunched(playbackInfo);
 
@@ -164,31 +165,63 @@ namespace MediaBrowser.Library.Playables.VLC
         {
             PlaybackStateEventArgs state = new PlaybackStateEventArgs();
 
-            PlaybackArguments playItem = GetCurrentPlaybackItem();
+            PlayableItem playable = GetCurrentPlayableItem();
 
             state.Position = _CurrentPlayingPosition;
             state.DurationFromPlayer = _CurrentFileDuration;
 
-            if (playItem != null)
+            if (playable != null)
             {
-                state.PlayableItemId = playItem.PlayableItemId;
+                state.Item = playable;
 
-                IEnumerable<string> files = playItem.Files;
-
-                // Get the playlist position by matching the filename that VLC reported with the original
-                for (int i = 0; i < files.Count(); i++)
+                if (playable.HasMediaItems)
                 {
-                    string file = files.ElementAt(i);
+                    SetMediaEventPropertiesBasedOnCurrentFile(playable, state);
+                }
 
-                    if (file.EndsWith(_CurrentPlayingFile))
-                    {
-                        state.PlaylistPosition = i;
-                        break;
-                    }
+                else
+                {
+                    state.FilePlaylistPosition = GetPlaylistIndex(playable.Files, _CurrentPlayingFile);
                 }
             }
 
             return state;
+        }
+
+        private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
+        {
+            foreach (Media media in playable.MediaItems)
+            {
+                IEnumerable<string> files = GetPlayableFiles(media);
+
+                int index = GetPlaylistIndex(files, _CurrentPlayingFile);
+
+                if (index != -1)
+                {
+                    state.CurrentMediaId = media.Id;
+                    state.MediaPlaylistPosition = index;
+                    state.FilePlaylistPosition = playable.Files.IndexOf(files.ElementAt(index));
+                    break;
+                }
+            }
+        }
+
+        private int GetPlaylistIndex(IEnumerable<string> files, string currentPlayingFile)
+        {
+            int count = files.Count();
+
+            // Get the playlist position by matching the filename that VLC reported with the original
+            for (int i = 0; i < count; i++)
+            {
+                string file = files.ElementAt(i);
+
+                if (file.EndsWith(_CurrentPlayingFile))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>

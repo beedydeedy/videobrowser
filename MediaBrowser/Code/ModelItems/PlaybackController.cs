@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter;
 using Microsoft.MediaCenter.Hosting;
 using Microsoft.MediaCenter.UI;
@@ -19,23 +19,27 @@ namespace MediaBrowser
     /// </summary>
     public class PlaybackController : BasePlaybackController
     {
-        static MediaBrowser.Library.Transcoder transcoder;
+        private MediaCollection CurrentMediaCollection;
 
-        public PlaybackController()
+        /// <summary>
+        /// Plays Media
+        /// </summary>
+        protected override void PlayMediaInternal(PlayableItem playable)
         {
-
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playable, false));
         }
 
-        protected override void PlayMediaInternal(PlaybackArguments playInfo)
+        /// <summary>
+        /// Queues Media
+        /// </summary>
+        protected override void QueueMediaInternal(PlayableItem playable)
         {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, false));
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playable, true));
         }
 
-        protected override void QueueMediaInternal(PlaybackArguments playInfo)
-        {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playInfo, true));
-        }
-
+        /// <summary>
+        /// Moves the player to a given position
+        /// </summary>
         public override void Seek(long position)
         {
             var transport = MediaTransport;
@@ -45,37 +49,15 @@ namespace MediaBrowser
             }
         }
 
-        /// <summary>
-        /// If the last content passed into MediaCenterEnvironment.PlayMedia, it can be retrieved using MediaExperience.GetMediaCollection
-        /// This can be done whether the content is still playing or not, and whether it was played by MB or another application.
-        /// However, if another application played the collection, it will be read-only
-        /// </summary>
-        private MediaCollection GetCurrentMediaCollectionFromMediaExperience(MediaExperience mce)
-        {
-            MediaCollection coll = new MediaCollection();
-
-            try
-            {
-                mce.GetMediaCollection(coll);
-            }
-            catch (Exception e)
-            {
-                Logger.ReportException("MediaExperience.GetMediaCollection: ", e);
-            }
-
-            return coll;
-        }
-
         // After calling MediaCenterEnvironment.PlayMedia, playback will begin with a state of Stopped and position 0
         // We'll record it when we see it so we don't get tripped up into thinking playback has actually stopped
         private bool HasStartedPlaying = false;
 
-        private void PlayPaths(PlaybackArguments playInfo, bool queue)
+        /// <summary>
+        /// Plays or queues Media
+        /// </summary>
+        protected virtual void PlayPaths(PlayableItem playable, bool queue)
         {
-            bool transcode = Config.Instance.EnableTranscode360 && Application.RunningOnExtender;
-
-            MediaCollection mediaCollection;
-
             // Determines if we will call MediaCenterEnvironment.PlayMedia, or if
             // we'll just add to the currently playing MediaCollection.
             bool callPlayMedia = true;
@@ -85,12 +67,10 @@ namespace MediaBrowser
 
             if (queue)
             {
-                mediaCollection = GetCurrentMediaCollectionFromMediaExperience(mediaCenterEnvironment.MediaExperience);
-
                 // If an empty MediaCollection comes back, create a new one
-                if (mediaCollection.Count == 0)
+                if (CurrentMediaCollection == null || CurrentMediaCollection.Count == 0)
                 {
-                    mediaCollection = new MediaCollection();
+                    CurrentMediaCollection = new MediaCollection();
                 }
                 else
                 {
@@ -102,40 +82,38 @@ namespace MediaBrowser
             else
             {
                 // If we're not queueing then we'll always start with a fresh collection
-                mediaCollection = new MediaCollection();
+                CurrentMediaCollection = new MediaCollection();
             }
 
             // Create a MediaCollectionItem for each file to play
-            for (int i = 0; i < playInfo.Files.Count(); i++)
+            if (playable.HasMediaItems)
             {
-                string path = playInfo.Files.ElementAt(i);
-                string fileToPlay = transcode ? GetTranscodedPath(path) : path;
-
-                MediaCollectionItem item = new MediaCollectionItem();
-                item.Media = fileToPlay;
-
-                mediaCollection.Add(item);
+                PopulateMediaCollectionUsingMediaItems(CurrentMediaCollection, playable);
+            }
+            else
+            {
+                PopulateMediaCollectionUsingFiles(CurrentMediaCollection, playable.Files, playable.Id);
             }
 
             if (callPlayMedia)
             {
                 // Set starting position if we're resuming
-                if (playInfo.Resume)
+                if (playable.Resume)
                 {
-                    mediaCollection.CurrentIndex = playInfo.PlaylistPosition;
-                    mediaCollection[playInfo.PlaylistPosition].Start = new TimeSpan(playInfo.PositionTicks);
+                    CurrentMediaCollection.CurrentIndex = playable.ResumePlaylistPosition;
+                    CurrentMediaCollection[playable.ResumePlaylistPosition].Start = new TimeSpan(playable.ResumePositionTicks);
                 }
 
                 HasStartedPlaying = false;
 
                 try
                 {
-                    if (!mediaCenterEnvironment.PlayMedia(MediaType.MediaCollection, mediaCollection, queue))
+                    if (!mediaCenterEnvironment.PlayMedia(Microsoft.MediaCenter.MediaType.MediaCollection, CurrentMediaCollection, false))
                     {
                         Logger.ReportInfo("PlayMedia returned false");
                     }
 
-                    if (playInfo.GoFullScreen && !mediaCenterEnvironment.MediaExperience.IsFullScreen)
+                    if (playable.GoFullScreen && !mediaCenterEnvironment.MediaExperience.IsFullScreen)
                     {
                         mediaCenterEnvironment.MediaExperience.GoToFullScreen();
                     }
@@ -153,6 +131,87 @@ namespace MediaBrowser
                 }
             }
 
+        }
+
+        /// <summary>
+        /// If playback is based on Media items, this will take the list of Media and determine the actual playable files and set them into the Files property
+        /// This of course requires a traversal through the whole playback list, so subclasses can skip this if they're able to do during the process of initiating playback
+        /// </summary>
+        protected override void PopulatePlayableFiles(PlayableItem playable)
+        {
+            // We're skipping this as an optimization
+            // It will be done on the fly during PopulateMediaCollectionUsingMediaItems
+        }
+
+        /// <summary>
+        /// Then playback is based on Media items, this will populate the MediaCollection using the items
+        /// </summary>
+        private void PopulateMediaCollectionUsingMediaItems(MediaCollection coll, PlayableItem playable)
+        {
+            int currentFileIndex = 0;
+
+            foreach (Media media in playable.MediaItems)
+            {
+                IEnumerable<string> files = GetPlayableFiles(media);
+
+                int numFiles = files.Count();
+
+                // Create a MediaCollectionItem for each file to play
+                for (int i = 0; i < numFiles; i++)
+                {
+                    string path = files.ElementAt(i);
+                    string fileToPlay = /*transcode ? GetTranscodedPath(path) :*/ path;
+
+                    MediaCollectionItem item = new MediaCollectionItem();
+                    item.Media = fileToPlay;
+
+                    // Embed the playlist index, since we could have multiple playlists queued up
+                    // which prevents us from being able to use MediaCollection.CurrentIndex
+                    item.FriendlyData["FilePlaylistPosition"] = currentFileIndex.ToString();
+
+                    // Embed the PlayableItemId so we can identify which one to track progress for
+                    item.FriendlyData["PlayableItemId"] = playable.Id.ToString();
+
+                    // Embed the MediaId so we can identify which one to track progress for
+                    item.FriendlyData["MediaId"] = media.Id.ToString();
+
+                    // Embed the MediaId so we can identify which one to track progress for
+                    item.FriendlyData["MediaPlaylistPosition"] = i.ToString();
+
+                    CurrentMediaCollection.Add(item);
+
+                    currentFileIndex++;
+                }
+
+                playable.Files.AddRange(files);
+            }
+        }
+
+        /// <summary>
+        /// When playback is based purely on file paths, this will populate the MediaCollection using the paths
+        /// </summary>
+        private void PopulateMediaCollectionUsingFiles(MediaCollection coll, IEnumerable<string> files, Guid playableItemId)
+        {
+            int numFiles = files.Count();
+
+            // Create a MediaCollectionItem for each file to play
+            for (int i = 0; i < numFiles; i++)
+            {
+                string path = files.ElementAt(i);
+                string fileToPlay = /*transcode ? GetTranscodedPath(path) :*/ path;
+
+                MediaCollectionItem item = new MediaCollectionItem();
+                item.Media = fileToPlay;
+
+                // Embed the playlist index, since we could have multiple playlists queued up
+                // which prevents us from being able to use MediaCollection.CurrentIndex
+                item.FriendlyData["FilePlaylistPosition"] = i.ToString();
+
+                // Embed the PlayableItemId so we can identify which one to track progress for
+                item.FriendlyData["PlayableItemId"] = playableItemId.ToString();
+
+                CurrentMediaCollection.Add(item);
+            }
         }
 
         DateTime lastCall = DateTime.Now;
@@ -209,7 +268,7 @@ namespace MediaBrowser
             }
 
             lastCall = DateTime.Now;
-            
+
             // Determine if playback has stopped. When using MediaCollections, after stopping, 
             // PropertyChanged will still fire once with a PlayState of Playing and a PlayRate of 0, or BufferingProgress of -1
             // Also, per MSDN documentation, Finished is no longer used with Windows 7, 
@@ -221,62 +280,77 @@ namespace MediaBrowser
 
             string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
 
-            int playlistIndex = 0;
-            
-            PlaybackArguments currentPlaybackItem = GetCurrentPlaybackItemFromMetadataTitle(metadataTitle, out playlistIndex);
-            
-            Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.PlayableItemId;
+            int filePlaylistPosition;
+            Guid currentMediaId;
+            int mediaPlaylistPosition;
+
+            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaId, out mediaPlaylistPosition);
+
+            Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.Id;
             long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
 
+            PlaybackStateEventArgs eventArgs = new PlaybackStateEventArgs() { 
+                Position = positionTicks,
+                FilePlaylistPosition = filePlaylistPosition, 
+                DurationFromPlayer = duration,
+                Item = currentPlaybackItem,
+                CurrentMediaId = currentMediaId,
+                MediaPlaylistPosition = mediaPlaylistPosition
+            };
+
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
-            if (positionTicks > 0)
+            if (!(isStopped && positionTicks == 0))
             {
-                OnProgress(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
+                OnProgress(eventArgs);
             }
 
             if (property == "PlayState")
             {
                 Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}",
-                  state, metadataTitle, positionTicks, playlistIndex);
+                  state, metadataTitle, positionTicks, filePlaylistPosition);
 
-                HandlePlaystateChange(transport, isStopped, playableItemId, playlistIndex, positionTicks, duration);
+                HandlePlaystateChange(transport, isStopped, eventArgs);
             }
         }
 
         /// <summary>
-        /// Determines the item currently playing using the now playing title
+        /// Retrieves the current playback item using MediaCollection properties
         /// </summary>
-        private PlaybackArguments GetCurrentPlaybackItemFromMetadataTitle(string title, out int currentPlaylistIndex)
+        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId, out int mediaPlaylistPosition)
         {
-            currentPlaylistIndex = 0;
-           
-            title = title.ToLower();
+            filePlaylistPosition = 0;
+            currrentMediaId = Guid.Empty;
+            mediaPlaylistPosition = 0;
 
-            foreach (PlaybackArguments playbackItem in CurrentPlaybackItems)
+            MediaCollectionItem activeItem = CurrentMediaCollection.Count == 0 ? null : CurrentMediaCollection[CurrentMediaCollection.CurrentIndex];
+
+            if (activeItem == null)
             {
-                for (int i = 0; i < playbackItem.Files.Count(); i++)
-                {
-                    string file = playbackItem.Files.ElementAt(i).ToLower();
-                    string normalized = file.Replace('\\', '/');
-
-                    if (title.EndsWith(normalized) || title == Path.GetFileNameWithoutExtension(file))
-                    {
-                        currentPlaylistIndex = i;
-                        return playbackItem;
-                    }
-                }
+                return null;
             }
 
-            return null;
+            Guid playableItemId = new Guid(activeItem.FriendlyData["PlayableItemId"].ToString());
+            filePlaylistPosition = int.Parse(activeItem.FriendlyData["FilePlaylistPosition"].ToString());
+
+            object objMediaId = activeItem.FriendlyData["MediaId"];
+
+            if (objMediaId != null)
+            {
+                currrentMediaId = new Guid(objMediaId.ToString());
+
+                mediaPlaylistPosition = int.Parse(activeItem.FriendlyData["MediaPlaylistPosition"].ToString());
+            }
+
+            return GetPlayableItem(playableItemId);
         }
 
         /// <summary>
         /// Handles a change of Playstate by firing various events and post play processes
         /// </summary>
-        private void HandlePlaystateChange(MediaTransport transport, bool isStopped, Guid playableItemId, int playlistIndex, long positionTicks, long duration)
+        private void HandlePlaystateChange(MediaTransport transport, bool isStopped, PlaybackStateEventArgs e)
         {
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayStateChanged());
-            
+
             Application.CurrentInstance.ShowNowPlaying = !isStopped;
 
             if (isStopped)
@@ -285,7 +359,7 @@ namespace MediaBrowser
                 transport.PropertyChanged -= MediaTransport_PropertyChanged;
 
                 // Fire the OnFinished event for each item
-                OnPlaybackFinished(new PlaybackStateEventArgs() { Position = positionTicks, PlaylistPosition = playlistIndex, DurationFromPlayer = duration, PlayableItemId = playableItemId });
+                OnPlaybackFinished(e);
 
                 //we're done - call post-processor
                 Application.CurrentInstance.ReturnToApplication();
@@ -295,10 +369,13 @@ namespace MediaBrowser
             }
         }
 
+        /// <summary>
+        /// Puts the player into fullscreen mode
+        /// </summary>
         public override void GoToFullScreen()
         {
             var mce = MediaExperience;
-
+            
             // great window 7 has bugs, lets see if we can work around them 
             // http://mediacentersandbox.com/forums/thread/9287.aspx
             if (mce == null)
@@ -340,41 +417,7 @@ namespace MediaBrowser
             }
         }
 
-        private string GetTranscodedPath(string path)
-        {
-            // Can't transcode this
-            if (Directory.Exists(path))
-            {
-                return path;
-            }
-
-            if (Helper.IsExtenderNativeVideo(path))
-            {
-                return path;
-            }
-            else
-            {
-                if (transcoder == null)
-                {
-                    transcoder = new MediaBrowser.Library.Transcoder();
-                }
-
-                string bufferpath = transcoder.BeginTranscode(path);
-
-                // if bufferpath comes back null, that means the transcoder i) failed to start or ii) they
-                // don't even have it installed
-                if (string.IsNullOrEmpty(bufferpath))
-                {
-                    Application.DisplayDialog("Could not start transcoding process", "Transcode Error");
-                    throw new Exception("Could not start transcoding process");
-                }
-
-                return bufferpath;
-            }
-        }
-
         #region Playback status
-
         public override bool IsPlayingVideo
         {
             get
@@ -580,6 +623,9 @@ namespace MediaBrowser
             FirePropertyChanged("IsPaused");
         }
 
+        /// <summary>
+        /// Pauses playback
+        /// </summary>
         public override void Pause()
         {
             var transport = MediaTransport;
@@ -589,6 +635,9 @@ namespace MediaBrowser
             }
         }
 
+        /// <summary>
+        /// Stops playback
+        /// </summary>
         protected override void StopInternal()
         {
             var transport = MediaTransport;
@@ -596,6 +645,41 @@ namespace MediaBrowser
             {
                 transport.PlayRate = 0;
             }
+        }
+
+        /// <summary>
+        /// Takes a Media object and returns the list of files that will be sent to the PlaybackController
+        /// </summary>
+        /// <param name="media"></param>
+        /// <returns></returns>
+        protected override IEnumerable<string> GetPlayableFiles(Media media)
+        {
+            IEnumerable<string> files = base.GetPlayableFiles(media);
+
+            Video video = media as Video;
+
+            // Prefix dvd's with dvd://
+            if (video != null && video.MediaType == Library.MediaType.DVD)
+            {
+                files = files.Select(i => GetDVDPath(i));
+            }
+
+            return files;
+        }
+
+        /// <summary>
+        /// Takes a path to a DVD folder and returns the path to send to the player
+        /// </summary>
+        private string GetDVDPath(string path)
+        {
+            if (path.StartsWith("\\\\"))
+            {
+                path = path.Substring(2);
+            }
+
+            path = path.Replace("\\", "/").TrimEnd('/');
+
+            return "DVD://" + path + "/";
         }
 
         protected override void Dispose(bool isDisposing)

@@ -30,6 +30,7 @@ using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.Playables.MpcHc;
 using MediaBrowser.Library.Playables.TMT;
 using MediaBrowser.Library.Playables.VLC;
+using MediaBrowser.Code.ModelItems;
 
 namespace MediaBrowser.Library {
 
@@ -454,10 +455,16 @@ namespace MediaBrowser.Library {
             // kernel.StringData.Save(); //save this in case we made mods (no other routine saves this data)
             if (LoadContext == MBLoadContext.Core)
             {
-                kernel.PlaybackControllers.Add(new PlaybackController());
+                if (Application.RunningOnExtender)
+                {
+                    kernel.PlaybackControllers.Add(new ExtenderPlaybackController());
+                }
+                else
+                {
+                    kernel.PlaybackControllers.Add(new PlaybackController());
+                }
             }
        
-
             // set up assembly resolution hooks, so earlier versions of the plugins resolve properly 
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(OnAssemblyResolve);
 

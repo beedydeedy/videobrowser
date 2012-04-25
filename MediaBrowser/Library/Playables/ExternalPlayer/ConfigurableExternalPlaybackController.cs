@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MediaBrowser.Library.RemoteControl;
+﻿using System.Collections.Generic;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
+    /// <summary>
+    /// Represents a PlaybackController that is driven off of External player configuration
+    /// </summary>
     public class ConfigurableExternalPlaybackController : ExternalPlaybackController
     {
         /// <summary>
@@ -17,6 +16,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             set;
         }
 
+        /// <summary>
+        /// Gets the launch method to use
+        /// </summary>
         protected override ConfigData.ExternalPlayerLaunchType LaunchType
         {
             get
@@ -25,6 +27,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
         }
 
+        /// <summary>
+        /// Determines if the MB splash screen should be displayed before playback
+        /// </summary>
         protected override bool ShowSplashScreen
         {
             get
@@ -33,6 +38,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
         }
 
+        /// <summary>
+        /// Determines if Media Center should be minimized before playback
+        /// </summary>
         protected override bool MinimizeMCE
         {
             get
@@ -41,12 +49,40 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
         }
 
-        protected override string GetCommandPath(PlaybackArguments args)
+        /// <summary>
+        /// Determines if the player can play a list of files directly from the command line without having to generate a PLS file
+        /// </summary>
+        protected override bool SupportsMultiFileCommandArguments
+        {
+            get
+            {
+                return ExternalPlayerConfiguration.SupportsMultiFileCommandArguments;
+            }
+        }
+
+        /// <summary>
+        /// Determines if PLS playlist files are supported
+        /// </summary>
+        protected override bool SupportsPlaylists
+        {
+            get
+            {
+                return ExternalPlayerConfiguration.SupportsPlaylists;
+            }
+        }
+
+        /// <summary>
+        /// Gets the path to the player's executable file
+        /// </summary>
+        protected override string GetCommandPath(PlayableItem playable)
         {
             return ExternalPlayerConfiguration.Command;
         }
 
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playInfo)
+        /// <summary>
+        /// Gets list of arguments to send to the player
+        /// </summary>
+        protected override List<string> GetCommandArgumentsList(PlayableItem playable)
         {
             List<string> args = new List<string>();
 

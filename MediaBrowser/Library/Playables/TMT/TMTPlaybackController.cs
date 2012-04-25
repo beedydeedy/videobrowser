@@ -30,7 +30,7 @@ namespace MediaBrowser.Library.Playables.TMT
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
-        protected override List<string> GetCommandArgumentsList(PlaybackArguments playbackInfo)
+        protected override List<string> GetCommandArgumentsList(PlayableItem playbackInfo)
         {
             List<string> args = new List<string>();
 
@@ -39,7 +39,7 @@ namespace MediaBrowser.Library.Playables.TMT
             return args;
         }
 
-        protected override void OnExternalPlayerLaunched(PlaybackArguments playbackInfo)
+        protected override void OnExternalPlayerLaunched(PlayableItem playbackInfo)
         {
             base.OnExternalPlayerLaunched(playbackInfo);
 
@@ -87,11 +87,11 @@ namespace MediaBrowser.Library.Playables.TMT
                 // Playback just started
                 if (!_HasStartedPlaying)
                 {
-                    PlaybackArguments playItem = GetCurrentPlaybackItem();
+                    PlayableItem playItem = GetCurrentPlayableItem();
 
                     if (playItem.Resume)
                     {
-                        ExecuteResumeCommand(playItem.PlaylistPosition, playItem.PositionTicks);
+                        ExecuteResumeCommand(playItem.ResumePlaylistPosition, playItem.ResumePositionTicks);
                     }
                 }
 
@@ -196,19 +196,12 @@ namespace MediaBrowser.Library.Playables.TMT
         {
             Guid playableItemId = Guid.Empty;
 
-            PlaybackArguments playItem = GetCurrentPlaybackItem();
-
-            if (playItem != null)
-            {
-                playableItemId = playItem.PlayableItemId;
-            }
-
             return new PlaybackStateEventArgs()
             {
                 Position = TimeSpan.Parse(state["CurTime"]).Ticks,
-                PlaylistPosition = int.Parse(state["CurTitle"]),
+                FilePlaylistPosition = int.Parse(state["CurTitle"]),
                 DurationFromPlayer = TimeSpan.Parse(state["TotalTime"]).Ticks,
-                PlayableItemId = playableItemId
+                Item = GetCurrentPlayableItem()
             };
         }
 
