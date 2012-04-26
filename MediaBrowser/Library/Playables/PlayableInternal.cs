@@ -11,6 +11,13 @@ namespace MediaBrowser.Library.Playables
     public class PlayableInternal : PlayableItem
     {
         /// <summary>
+        /// Prevent direct instantiation. Force creation through the factory.
+        /// </summary>
+        internal PlayableInternal()
+        {
+        }
+
+        /// <summary>
         /// Determines whether this PlayableItem can play a list of Media objects
         /// </summary>
         public override bool CanPlay(IEnumerable<Media> mediaList)
