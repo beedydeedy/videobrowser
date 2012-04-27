@@ -6,6 +6,7 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Code.ModelItems
 {
@@ -13,7 +14,7 @@ namespace MediaBrowser.Code.ModelItems
     /// Represents an abstract base class for a PlaybackController
     /// This has no knowledge of any specific player.
     /// </summary>
-    public abstract class BasePlaybackController : BaseModelItem, IPlaybackController
+    public abstract class BasePlaybackController : BaseModelItem
     {
         /// <summary>
         /// Subclasses can use this to examine the items that are currently in the player.
@@ -69,15 +70,15 @@ namespace MediaBrowser.Code.ModelItems
             // Set the current PlayableItem based on the incoming args
             CurrentPlayableItemId = args.Item == null ? Guid.Empty : args.Item.Id;
 
-            AddEventArgsProperties(args);
+            NormalizeEventProperties(args);
 
             PlayableItem playable = args.Item;
 
             // Update playstates
             if (playable != null)
             {
-                SaveProgressIntoPlaystates(playable, args);
-                playable.HasUpdatedPlayState = true;
+                // Fire it's progress event handler
+                playable.OnProgress(this, args);
             }
 
             // Fire event handler
@@ -92,22 +93,25 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
-            AddEventArgsProperties(args);
+            // If there's still a valid position, fire progress one last time
+            if (args.Position > 0)
+            {
+                OnProgress(args);
+            }
+            
+            NormalizeEventProperties(args);
 
             PlayableItem playable = args.Item;
 
-            // Update playstates as long as the position hasn't been reset to 0 yet
-            if (playable != null && args.Position > 0)
+            if (playable != null)
             {
-                SaveProgressIntoPlaystates(playable, args);
-                playable.HasUpdatedPlayState = true;
+                playable.PlaybackStoppedByUser = args.StoppedByUser;
             }
-
-            // If progress never fired at all we'll just have to assume everything was watched
-            MarkWatchedIfNeeded();
 
             // Show or hide the resume button depending on playstate
             UpdateResumeStatusInUI();
+
+            SetPlaybackStage(PlayableItemPlayState.Stopped);
 
             RunPostPlayProcesses();
 
@@ -117,6 +121,8 @@ namespace MediaBrowser.Code.ModelItems
                 _PlaybackFinished(this, args);
             }
 
+            SetPlaybackStage(PlayableItemPlayState.PostPlayActionsComplete);
+            
             // Clear state
             CurrentPlayableItemId = Guid.Empty;
             CurrentPlayableItems.Clear();
@@ -127,7 +133,7 @@ namespace MediaBrowser.Code.ModelItems
         /// Most subclasses can identify the currently playing file, so this uses that to determine the corresponding Media object that's playing
         /// If a subclass can figure this out on their own, it's best that they do so to avoid traversing the entire playlist
         /// </summary>
-        private void AddEventArgsProperties(PlaybackStateEventArgs args)
+        private void NormalizeEventProperties(PlaybackStateEventArgs args)
         {
             PlayableItem playable = args.Item;
 
@@ -151,24 +157,20 @@ namespace MediaBrowser.Code.ModelItems
         }
 
         /// <summary>
-        /// Plays media
+        /// Sets the playback stage for each active PlayableItem
         /// </summary>
-        public void PlayMedia(PlayableItem playable)
+        private void SetPlaybackStage(PlayableItemPlayState stage)
         {
-            if (playable.HasMediaItems)
+            foreach (PlayableItem playable in CurrentPlayableItems)
             {
-                PopulatePlayableFiles(playable);
+                playable.PlayState = stage;
             }
-
-            CurrentPlayableItems.Add(playable);
-            CurrentPlayableItemId = playable.Id;
-            PlayMediaInternal(playable);
         }
 
         /// <summary>
-        /// Queues media
+        /// Plays media
         /// </summary>
-        public void QueueMedia(PlayableItem playable)
+        public void Play(PlayableItem playable)
         {
             if (playable.HasMediaItems)
             {
@@ -176,7 +178,13 @@ namespace MediaBrowser.Code.ModelItems
             }
 
             CurrentPlayableItems.Add(playable);
-            QueueMediaInternal(playable);
+
+            if (!playable.QueueItem)
+            {
+                CurrentPlayableItemId = playable.Id;
+            }
+
+            PlayMediaInternal(playable);
         }
 
         /// <summary>
@@ -192,16 +200,6 @@ namespace MediaBrowser.Code.ModelItems
         protected abstract void StopInternal();
         public abstract void Seek(long position);
         public abstract void GoToFullScreen();
-
-        /// <summary>
-        /// Queues media
-        /// </summary>
-        protected virtual void QueueMediaInternal(PlayableItem playable)
-        {
-            // We will implement this and just have it throw an exception, since not all players can queue
-            // If a player can queue, it will need to override this
-            throw new NotSupportedException();
-        }
 
         /// <summary>
         /// Determines whether or not the controller is currently playing
@@ -221,7 +219,19 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                return IsPlaying;
+                if (!IsPlaying)
+                {
+                    return false;
+                }
+
+                PlayableItem playable = GetCurrentPlayableItem();
+
+                if (playable.HasMediaItems)
+                {
+                    return playable.MediaItems.Any(m => m is Video);
+                }
+
+                return playable.Files.Any(f => Helper.IsVideo(f));
             }
         }
 
@@ -350,62 +360,17 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
         {
+            string currentFile = state.Item.Files.ElementAt(state.FilePlaylistPosition);
+
             foreach (Media media in playable.MediaItems)
             {
                 List<string> playableFiles = GetPlayableFiles(media).ToList();
-                int index = playableFiles.IndexOf(state.CurrentFile);
+                int index = playableFiles.IndexOf(currentFile);
 
                 if (index != -1)
                 {
                     state.CurrentMediaId = media.Id;
-                    state.MediaPlaylistPosition = index;
                     break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Goes through each Media object within PlayableMediaItems and updates Playstate for each individually
-        /// </summary>
-        private void SaveProgressIntoPlaystates(PlayableItem playable, PlaybackStateEventArgs state)
-        {
-            foreach (Media media in playable.MediaItems)
-            {
-                bool isCurrentMedia = media.Id == state.CurrentMediaId;
-
-                long currentPositionTicks = 0;
-                int currentPlaylistPosition = 0;
-
-                if (isCurrentMedia)
-                {
-                    // If this is where playback is, update position and playlist
-                    currentPlaylistPosition = state.MediaPlaylistPosition;
-                    currentPositionTicks = state.Position;
-                }
-
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, null, playable.PlaybackStartTime);
-
-                if (isCurrentMedia)
-                {
-                    break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Marks all Media objects as watched, if progress has not been saved at all yet
-        /// </summary>
-        private void MarkWatchedIfNeeded()
-        {
-            foreach (PlayableItem playable in CurrentPlayableItems)
-            {
-                if (!playable.HasUpdatedPlayState)
-                {
-                    foreach (Media media in playable.MediaItems)
-                    {
-                        Logger.ReportVerbose("Marking watched: " + media.Name);
-                        Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, playable.PlaybackStartTime);
-                    }
                 }
             }
         }
@@ -415,7 +380,7 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void RunPostPlayProcesses()
         {
-            bool runKernelPostPlay = CurrentPlayableItems.Any(p => p.RaisePlaybackEvents);
+            bool runKernelPostPlay = CurrentPlayableItems.Any(p => p.RaiseGlobalPlaybackEvents);
 
             foreach (PlayableItem playable in CurrentPlayableItems)
             {
@@ -452,7 +417,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Gets the raw playable files for a given Media object
         /// </summary>
-        protected virtual IEnumerable<string> GetPlayableFiles(Media media)
+        internal virtual IEnumerable<string> GetPlayableFiles(Media media)
         {
             Video video = media as Video;
 

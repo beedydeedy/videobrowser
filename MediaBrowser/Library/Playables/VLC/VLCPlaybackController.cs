@@ -199,7 +199,6 @@ namespace MediaBrowser.Library.Playables.VLC
                 if (index != -1)
                 {
                     state.CurrentMediaId = media.Id;
-                    state.MediaPlaylistPosition = index;
                     state.FilePlaylistPosition = playable.Files.IndexOf(files.ElementAt(index));
                     break;
                 }

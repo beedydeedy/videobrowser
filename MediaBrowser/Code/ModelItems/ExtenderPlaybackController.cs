@@ -17,7 +17,7 @@ namespace MediaBrowser.Code.ModelItems
     {
         static MediaBrowser.Library.Transcoder transcoder;
 
-        protected override IEnumerable<string> GetPlayableFiles(Media media)
+        internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
             if (!Config.Instance.EnableTranscode360)
             {
@@ -68,11 +68,10 @@ namespace MediaBrowser.Code.ModelItems
             }
         }
 
-        protected override PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId, out int mediaPlaylistPosition)
+        protected override PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId)
         {
             filePlaylistPosition = 0;
             currrentMediaId = Guid.Empty;
-            mediaPlaylistPosition = 0;
 
             metadataTitle = metadataTitle.ToLower();
 

@@ -439,7 +439,7 @@ namespace MediaBrowser.Library {
 
             var kernel = new Kernel()
             {
-             PlaybackControllers = new List<IPlaybackController>(),
+             PlaybackControllers = new List<BasePlaybackController>(),
              MetadataProviderFactories = MetadataProviderHelper.DefaultProviders(),
              ConfigData = config,
              ServiceConfigData = ServiceConfigData.FromFile(ApplicationPaths.ServiceConfigFile),
@@ -614,7 +614,7 @@ namespace MediaBrowser.Library {
         public List<ITrailerProvider> TrailerProviders{ get; set; }
         public AggregateFolder RootFolder { get; set; }
         public List<IPlugin> Plugins { get; set; }
-        public List<IPlaybackController> PlaybackControllers { get; set; }
+        public List<BasePlaybackController> PlaybackControllers { get; set; }
         public List<MetadataProviderFactory> MetadataProviderFactories { get; set; }
         public List<ImageResolver> ImageResolvers { get; set; }
         public ChainedEntityResolver EntityResolver { get; set; }

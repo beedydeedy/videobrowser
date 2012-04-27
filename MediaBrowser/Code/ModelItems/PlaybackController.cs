@@ -26,15 +26,7 @@ namespace MediaBrowser
         /// </summary>
         protected override void PlayMediaInternal(PlayableItem playable)
         {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playable, false));
-        }
-
-        /// <summary>
-        /// Queues Media
-        /// </summary>
-        protected override void QueueMediaInternal(PlayableItem playable)
-        {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playable, true));
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPaths(playable));
         }
 
         /// <summary>
@@ -56,7 +48,7 @@ namespace MediaBrowser
         /// <summary>
         /// Plays or queues Media
         /// </summary>
-        protected virtual void PlayPaths(PlayableItem playable, bool queue)
+        protected virtual void PlayPaths(PlayableItem playable)
         {
             // Determines if we will call MediaCenterEnvironment.PlayMedia, or if
             // we'll just add to the currently playing MediaCollection.
@@ -65,7 +57,7 @@ namespace MediaBrowser
             // Get this now since we'll be using it frequently
             MediaCenterEnvironment mediaCenterEnvironment = AddInHost.Current.MediaCenterEnvironment;
 
-            if (queue)
+            if (playable.QueueItem)
             {
                 // If an empty MediaCollection comes back, create a new one
                 if (CurrentMediaCollection == null || CurrentMediaCollection.Count == 0)
@@ -175,9 +167,6 @@ namespace MediaBrowser
                     // Embed the MediaId so we can identify which one to track progress for
                     item.FriendlyData["MediaId"] = media.Id.ToString();
 
-                    // Embed the MediaId so we can identify which one to track progress for
-                    item.FriendlyData["MediaPlaylistPosition"] = i.ToString();
-
                     CurrentMediaCollection.Add(item);
 
                     currentFileIndex++;
@@ -282,9 +271,8 @@ namespace MediaBrowser
 
             int filePlaylistPosition;
             Guid currentMediaId;
-            int mediaPlaylistPosition;
 
-            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaId, out mediaPlaylistPosition);
+            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaId);
 
             Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.Id;
             long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
@@ -294,12 +282,11 @@ namespace MediaBrowser
                 FilePlaylistPosition = filePlaylistPosition, 
                 DurationFromPlayer = duration,
                 Item = currentPlaybackItem,
-                CurrentMediaId = currentMediaId,
-                MediaPlaylistPosition = mediaPlaylistPosition
+                CurrentMediaId = currentMediaId
             };
 
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
-            if (!(isStopped && positionTicks == 0))
+            if (positionTicks > 0)
             {
                 OnProgress(eventArgs);
             }
@@ -316,11 +303,10 @@ namespace MediaBrowser
         /// <summary>
         /// Retrieves the current playback item using MediaCollection properties
         /// </summary>
-        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId, out int mediaPlaylistPosition)
+        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId)
         {
             filePlaylistPosition = 0;
             currrentMediaId = Guid.Empty;
-            mediaPlaylistPosition = 0;
 
             MediaCollectionItem activeItem = CurrentMediaCollection.Count == 0 ? null : CurrentMediaCollection[CurrentMediaCollection.CurrentIndex];
 
@@ -337,8 +323,6 @@ namespace MediaBrowser
             if (objMediaId != null)
             {
                 currrentMediaId = new Guid(objMediaId.ToString());
-
-                mediaPlaylistPosition = int.Parse(activeItem.FriendlyData["MediaPlaylistPosition"].ToString());
             }
 
             return GetPlayableItem(playableItemId);
@@ -422,6 +406,12 @@ namespace MediaBrowser
         {
             get
             {
+                // If the base class knows a PlayableItem is playing, use it
+                if (base.IsPlaying)
+                {
+                    return base.IsPlayingVideo;
+                }
+                
                 MediaExperience mce = MediaExperience;
 
                 // Try to access MediaExperience.Transport and get PlayState from there
@@ -460,13 +450,29 @@ namespace MediaBrowser
         {
             get
             {
+                // If the base class knows a PlayableItem is playing
+                if (base.IsPlaying)
+                {
+                    return true;
+                }
+
+                // Otherwise see another app within wmc is currently playing (such as live tv)
                 return PlayState == PlayState.Playing;
             }
         }
 
         public override bool IsStopped
         {
-            get { return !IsPlaying && !IsPaused; }
+            get 
+            {
+                // If the base class knows a PlayableItem is playing
+                if (base.IsPlaying)
+                {
+                    return false;
+                }
+
+                return !IsPlaying && !IsPaused; 
+            }
         }
 
         public override bool IsPaused
@@ -594,6 +600,12 @@ namespace MediaBrowser
         {
             get
             {
+                // If base class knows of a PlayableItem playing, return base value
+                if (base.IsPlaying)
+                {
+                    return base.NowPlayingTitle;
+                }
+
                 MediaExperience exp = MediaExperience;
 
                 if (exp == null)
@@ -652,7 +664,7 @@ namespace MediaBrowser
         /// </summary>
         /// <param name="media"></param>
         /// <returns></returns>
-        protected override IEnumerable<string> GetPlayableFiles(Media media)
+        internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
             IEnumerable<string> files = base.GetPlayableFiles(media);
 

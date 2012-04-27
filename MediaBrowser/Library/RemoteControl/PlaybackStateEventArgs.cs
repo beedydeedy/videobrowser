@@ -20,12 +20,6 @@ namespace MediaBrowser.Library.RemoteControl
         public int FilePlaylistPosition { get; set; }
 
         /// <summary>
-        /// Gets or sets the playlist position within the current Media item being played
-        /// This is used when the Media item has multiple playables files (e.g. multi-file video).
-        /// </summary>
-        public int MediaPlaylistPosition { get; set; }
-
-        /// <summary>
         /// Gets or sets the position of the player, in Ticks
         /// </summary>
         public long Position { get; set; }
@@ -66,26 +60,5 @@ namespace MediaBrowser.Library.RemoteControl
             }
         }
 
-        /// <summary>
-        /// Gets the current file being played
-        /// </summary>
-        public string CurrentFile
-        {
-            get
-            {
-                return Item.Files.ElementAt(FilePlaylistPosition);
-            }
-        }
-
-        /// <summary>
-        /// Gets the current Media object being played
-        /// </summary>
-        public Media CurrentMedia
-        {
-            get
-            {
-                return Item.MediaItems.FirstOrDefault(m => m.Id == CurrentMediaId);
-            }
-        }
     }
 }

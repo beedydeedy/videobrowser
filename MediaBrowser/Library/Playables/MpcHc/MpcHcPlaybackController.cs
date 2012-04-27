@@ -13,7 +13,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
-        protected override IEnumerable<string> GetPlayableFiles(Media media)
+        internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
             return base.GetPlayableFiles(media).Select(i => i.TrimEnd('\\'));
         }

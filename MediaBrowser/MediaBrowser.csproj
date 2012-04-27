@@ -157,7 +157,6 @@
     <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
     <Compile Include="Library\Providers\MBMovieProviderFromJson.cs" />
     <Compile Include="Library\Providers\VideoFormatProvider.cs" />
-    <Compile Include="Library\RemoteControl\IPlaybackController.cs" />
     <Compile Include="Library\Entities\Actor.cs" />
     <Compile Include="Library\Entities\Attributes\NotSourcedFromProvider.cs" />
     <Compile Include="Library\Entities\IFolder.cs" />

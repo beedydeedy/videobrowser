@@ -16,7 +16,6 @@ using MediaBrowser.Library.Localization;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
 using MediaBrowser.Library.Playables;
-using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.Library.UI;
 using MediaBrowser.LibraryManagement;
@@ -60,7 +59,7 @@ namespace MediaBrowser
         private MyHistoryOrientedPageSession session;
         private static object syncObj = new object();
         private bool navigatingForward;
-        private IPlaybackController currentPlaybackController = null;
+        private BasePlaybackController currentPlaybackController = null;
         private static Timer ScreenSaverTimer;
         //tracks whether to show recently added or watched items
         public string RecentItemOption { get { return Config.Instance.RecentItemOption; } set { Config.Instance.RecentItemOption = value; Kernel.Instance.ConfigData.RecentItemOption = value; } }
@@ -97,7 +96,7 @@ namespace MediaBrowser
         #region PrePlayback EventHandler
         volatile EventHandler<GenericEventArgs<PlayableItem>> _PrePlayback;
         /// <summary>
-        /// Fires whenever an Item is navigated into
+        /// Fires whenever a PlayableItem is about to be played
         /// </summary>
         public event EventHandler<GenericEventArgs<PlayableItem>> PrePlayback
         {
@@ -123,7 +122,7 @@ namespace MediaBrowser
         #region PlaybackFinished EventHandler
         volatile EventHandler<GenericEventArgs<PlayableItem>> _PlaybackFinished;
         /// <summary>
-        /// Fires whenever an Item is navigated into
+        /// Fires whenever a PlayableItem finishes playback
         /// </summary>
         public event EventHandler<GenericEventArgs<PlayableItem>> PlaybackFinished
         {
@@ -535,7 +534,7 @@ namespace MediaBrowser
             }
         }
 
-        public IPlaybackController PlaybackController
+        public BasePlaybackController PlaybackController
         {
             get
             {
@@ -628,6 +627,7 @@ namespace MediaBrowser
                     PlayableItem playable = PlayableItemFactory.Instance.Create(new string[] { DingFile }, false);
 
                     playable.GoFullScreen = false;
+                    playable.RaiseGlobalPlaybackEvents = false;
 
                     Play(playable);
 
@@ -1465,25 +1465,21 @@ namespace MediaBrowser
         /// <summary>
         /// Runs all preplay processes
         /// </summary>
-        /// <param name="playbackController">The playback controller that will be used</param>
         /// <param name="originalBaseItem">The original item that was played in the UI</param>
-        /// <param name="mediaItems">All Media items that will be played, in order</param>
-        /// <param name="intros">Whether or not to play intros</param>
-        /// <returns>True or false indicating if playback should proceed</returns>
         internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
         {
             if (originalBaseItem != null)
             {
                 Item item = ItemFactory.Instance.Create(originalBaseItem);
 
-                 bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+                bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
 
-                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
-                 
+                Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+
                 foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
-                 {
-                     if (!process(item, playIntros)) return false;
-                 }
+                {
+                    if (!process(item, playIntros)) return false;
+                }
             }
 
             OnPrePlayback(playableItem);
@@ -1680,7 +1676,40 @@ namespace MediaBrowser
             catch (Exception)
             {
                 // Display the error in this case, they might wonder why it didn't work.
-                Application.DisplayDialog("ISO Mounter is not correctly configured.", "Could not load ISO");
+                Application.DisplayDialog("ISO Mounter is not correctly configured.", "Could not mount ISO");
+                throw (new Exception("ISO Mounter is not configured correctly"));
+            }
+        }
+
+        public void UnmountIso()
+        {
+            try
+            {
+                string command = Config.Instance.DaemonToolsLocation;
+
+                // Create the process start information.
+                Process process = new Process();
+                //virtualclonedrive
+                if (command.ToLower().EndsWith("vcdmount.exe"))
+                    process.StartInfo.Arguments = "/u";
+                //alcohol120 or alcohol52
+                else if (command.ToLower().EndsWith("axcmd.exe"))
+                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
+                //deamontools
+                else
+                    process.StartInfo.Arguments = "-unmount 0";
+                process.StartInfo.FileName = command;
+                process.StartInfo.ErrorDialog = false;
+                process.StartInfo.CreateNoWindow = true;
+
+                // We wait for exit to ensure the iso is completely loaded.
+                process.Start();
+                process.WaitForExit();
+            }
+            catch (Exception)
+            {
+                // Display the error in this case, they might wonder why it didn't work.
+                Application.DisplayDialog("ISO Mounter is not correctly configured.", "Could not unmount ISO");
                 throw (new Exception("ISO Mounter is not configured correctly"));
             }
         }
