@@ -26,14 +26,6 @@ namespace MediaBrowser.Code.ModelItems
 
             return base.GetPlayableFiles(media).Select(f => GetTranscodedPath(f));
         }
-
-        protected override void PopulatePlayableFiles(PlayableItem playable)
-        {
-            IEnumerable<string> files = playable.MediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i);
-
-            playable.Files.Clear();
-            playable.Files.AddRange(files);
-        }
         
         private string GetTranscodedPath(string path)
         {

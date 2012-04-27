@@ -92,22 +92,22 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         public Guid Id { get { return _Id; } }
 
-        private List<Media> _MediaItems = new List<Media>();
+        private IEnumerable<Media> _MediaItems = new List<Media>();
         /// <summary>
         /// If playback is based on Media items, this will hold the list of them
         /// </summary>
-        public List<Media> MediaItems { get { return _MediaItems; } }
+        public IEnumerable<Media> MediaItems { get { return _MediaItems; } internal set { _MediaItems = value; } }
 
         /// <summary>
         /// If Playback is Folder Based this will hold a reference to the Folder object
         /// </summary>
         public Folder Folder { get; internal set; }
 
-        private List<string> _Files = new List<string>();
+        private IEnumerable<string> _Files = new List<string>();
         /// <summary>
         /// If the playback is based purely on file paths, this will hold the list of them
         /// </summary>
-        public List<string> Files { get { return _Files; } }
+        public IEnumerable<string> Files { get { return _Files; } internal set { _Files = value; } }
 
         /// <summary>
         /// Describes how the item was played by the user
@@ -238,7 +238,7 @@ namespace MediaBrowser.Library.Playables
         {
             get
             {
-                return MediaItems[CurrentMediaIndex];
+                return MediaItems.ElementAt(CurrentMediaIndex);
             }
         }
 
@@ -255,11 +255,6 @@ namespace MediaBrowser.Library.Playables
         {
             get
             {
-                if (Files.Count == 1)
-                {
-                    return Files.First();
-                }
-
                 return Files.ElementAt(CurrentFilePlaylistPosition);
             }
         }
@@ -340,18 +335,24 @@ namespace MediaBrowser.Library.Playables
             AddMedia(new string[] { file });
         }
 
-        public void AddMedia(IEnumerable<string> files)
+        public void AddMedia(IEnumerable<string> filesToAdd)
         {
-            Files.AddRange(files);
+            List<string> newList = Files.ToList();
+            newList.AddRange(filesToAdd);
+
+            Files = newList;
         }
 
         public void AddMedia(Media media)
         {
             AddMedia(new Media[] { media });
         }
-        public void AddMedia(IEnumerable<Media> mediaItems)
+        public void AddMedia(IEnumerable<Media> itemsToAdd)
         {
-            MediaItems.AddRange(mediaItems);
+            List<Media> newList = MediaItems.ToList();
+            newList.AddRange(itemsToAdd);
+
+            MediaItems = newList;
         }
         #endregion
 
@@ -444,7 +445,7 @@ namespace MediaBrowser.Library.Playables
             if (MediaItems.Count() > 1)
             {
                 // First filter out items that can't be queued in a playlist
-                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m)).ToList();
+                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m));
             }
 
             if (Shuffle)
@@ -496,12 +497,12 @@ namespace MediaBrowser.Library.Playables
             // If playback is based on Media objects
             if (HasMediaItems)
             {
-                _MediaItems = MediaItems.OrderBy(i => rnd.Next()).ToList();
+                _MediaItems = MediaItems.OrderBy(i => rnd.Next());
             }
             else
             {
                 // Otherwise if playback is based on a list of files
-                _Files = Files.OrderBy(i => rnd.Next()).ToList();
+                Files = Files.OrderBy(i => rnd.Next());
             }
         }
 
@@ -512,9 +513,9 @@ namespace MediaBrowser.Library.Playables
         {
             string currentFile = CurrentFile;
 
-            for (int i = 0; i < MediaItems.Count; i++)
+            for (int i = 0; i < MediaItems.Count(); i++)
             {
-                Media media = MediaItems[i];
+                Media media = MediaItems.ElementAt(i);
 
                 bool isCurrentMedia = i == CurrentMediaIndex;
 

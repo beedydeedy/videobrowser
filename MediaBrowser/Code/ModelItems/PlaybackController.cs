@@ -128,25 +128,15 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// If playback is based on Media items, this will take the list of Media and determine the actual playable files and set them into the Files property
-        /// This of course requires a traversal through the whole playback list, so subclasses can skip this if they're able to do during the process of initiating playback
-        /// </summary>
-        protected override void PopulatePlayableFiles(PlayableItem playable)
-        {
-            // We're skipping this as an optimization
-            // It will be done on the fly during PopulateMediaCollectionUsingMediaItems
-        }
-
-        /// <summary>
         /// Then playback is based on Media items, this will populate the MediaCollection using the items
         /// </summary>
         private void PopulateMediaCollectionUsingMediaItems(MediaCollection coll, PlayableItem playable)
         {
             int currentFileIndex = 0;
 
-            for (int mediaIndex = 0; mediaIndex < playable.MediaItems.Count; mediaIndex++)
+            for (int mediaIndex = 0; mediaIndex < playable.MediaItems.Count(); mediaIndex++)
             {
-                Media media = playable.MediaItems[mediaIndex];
+                Media media = playable.MediaItems.ElementAt(mediaIndex);
 
                 IEnumerable<string> files = GetPlayableFiles(media);
 
@@ -174,8 +164,6 @@ namespace MediaBrowser
 
                     currentFileIndex++;
                 }
-
-                playable.Files.AddRange(files);
             }
         }
 

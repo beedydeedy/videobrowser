@@ -83,7 +83,7 @@ namespace MediaBrowser.Library.Factories
 
             PlayableItem playable = playables.FirstOrDefault(p => p.CanPlay(paths)) ?? new PlayableInternal();
 
-            playable.AddMedia(paths);
+            playable.Files = paths;
 
             return playable;
         }
@@ -116,8 +116,8 @@ namespace MediaBrowser.Library.Factories
         public PlayableItem Create(IEnumerable<Media> mediaList)
         {
             PlayableItem playable = GetAllKnownPlayables().FirstOrDefault(p => p.CanPlay(mediaList)) ?? new PlayableInternal();
-            
-            playable.AddMedia(mediaList);
+
+            playable.MediaItems = mediaList;
 
             return playable;
         }

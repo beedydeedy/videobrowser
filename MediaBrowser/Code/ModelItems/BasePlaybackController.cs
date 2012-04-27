@@ -287,10 +287,7 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected virtual void PopulatePlayableFiles(PlayableItem playable)
         {
-            IEnumerable<string> files = playable.MediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i);
-
-            playable.Files.Clear();
-            playable.Files.AddRange(files);
+            playable.Files = playable.MediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i);
         }
 
         /// <summary>
@@ -368,9 +365,9 @@ namespace MediaBrowser.Code.ModelItems
         {
             string currentFile = state.Item.Files.ElementAt(state.FilePlaylistPosition);
 
-            for (int i = 0; i < playable.MediaItems.Count; i++)
+            for (int i = 0; i < playable.MediaItems.Count(); i++)
             {
-                Media media = playable.MediaItems[i];
+                Media media = playable.MediaItems.ElementAt(i);
 
                 List<string> playableFiles = GetPlayableFiles(media).ToList();
                 int index = playableFiles.IndexOf(currentFile);

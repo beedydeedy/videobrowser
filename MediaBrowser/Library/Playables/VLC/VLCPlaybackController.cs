@@ -190,9 +190,9 @@ namespace MediaBrowser.Library.Playables.VLC
 
         private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            for (int i = 0; i < playable.MediaItems.Count; i++)
+            for (int i = 0; i < playable.MediaItems.Count(); i++)
             {
-                Media media = playable.MediaItems[i];
+                Media media = playable.MediaItems.ElementAt(i);
 
                 IEnumerable<string> files = GetPlayableFiles(media);
 
@@ -201,7 +201,7 @@ namespace MediaBrowser.Library.Playables.VLC
                 if (index != -1)
                 {
                     state.CurrentMediaIndex = i;
-                    state.FilePlaylistPosition = playable.Files.IndexOf(files.ElementAt(index));
+                    state.FilePlaylistPosition = playable.Files.ToList().IndexOf(files.ElementAt(index));                   
                     break;
                 }
             }
