@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MediaBrowser.Library.Entities;
+using System.Linq;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
@@ -17,6 +18,12 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         public override bool CanPlay(IEnumerable<Media> mediaList)
         {
+            // For now, external players can only handle video
+            if (mediaList.Any(m => !(m is Video)))
+            {
+                return false;
+            }
+
             return ConfigData.CanPlay(ExternalPlayerConfiguration, mediaList);
         }
 

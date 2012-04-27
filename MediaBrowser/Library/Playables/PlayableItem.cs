@@ -10,8 +10,7 @@ using MediaBrowser.Library.RemoteControl;
 namespace MediaBrowser.Library.Playables
 {
     /// <summary>
-    /// Encapsulates play back for a single Media object, which could have multiple playable file.
-    /// Alternatively it can play based on a path or paths (playlist), albeit without any Playstate support.
+    /// Encapsulates play back for Media.
     /// </summary>
     public abstract class PlayableItem
     {
@@ -35,10 +34,9 @@ namespace MediaBrowser.Library.Playables
         internal void OnProgress(BasePlaybackController controller, PlaybackStateEventArgs args)
         {
             CurrentFilePlaylistPosition = args.FilePlaylistPosition;
-            CurrentMediaId = args.CurrentMediaId;
-            CurrentPositionTicks = args.Position;
+            CurrentMediaIndex = args.CurrentMediaIndex;
 
-            SaveProgressIntoPlaystates(controller);
+            SaveProgressIntoPlaystates(controller, args);
 
             PlayState = PlayableItemPlayState.Playing;
 
@@ -90,7 +88,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// A new random Guid is generated for every PlayableItem. 
         /// Since there could be multiple PlayableItems queued up, having some sort of Id 
-        /// is the only to know which one is playing at a given time.
+        /// is the most accurate way to know which one is playing at a given time.
         /// </summary>
         public Guid Id { get { return _Id; } }
 
@@ -103,7 +101,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// If Playback is Folder Based this will hold a reference to the Folder object
         /// </summary>
-        public Folder Folder { get; set; }
+        public Folder Folder { get; internal set; }
 
         private List<string> _Files = new List<string>();
         /// <summary>
@@ -144,7 +142,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// If we're not able to track playstate at all, we'll at least mark watched once playback stops
         /// </summary>
-        internal bool HasUpdatedPlayState { get; set; }
+        private bool HasUpdatedPlayState { get; set; }
 
         private bool _RaiseGlobalPlaybackEvents = true;
         /// <summary>
@@ -194,7 +192,7 @@ namespace MediaBrowser.Library.Playables
             {
                 return _PlayState;
             }
-            set
+            internal set
             {
                 var changed = _PlayState != value;
 
@@ -229,9 +227,9 @@ namespace MediaBrowser.Library.Playables
         public bool HasMediaItems { get { return MediaItems.Any(); } }
 
         /// <summary>
-        /// Gets or sets the Id of the current Media being played
+        /// Gets the index of the current media item being played.
         /// </summary>
-        public Guid CurrentMediaId { get; internal set; }
+        public int CurrentMediaIndex { get; private set; }
 
         /// <summary>
         /// Gets the current Media being played
@@ -240,12 +238,7 @@ namespace MediaBrowser.Library.Playables
         {
             get
             {
-                if (MediaItems.Count == 1)
-                {
-                    return MediaItems.First();
-                }
-
-                return MediaItems.FirstOrDefault(m => m.Id == CurrentMediaId);
+                return MediaItems[CurrentMediaIndex];
             }
         }
 
@@ -253,7 +246,7 @@ namespace MediaBrowser.Library.Playables
         /// Gets or sets the overall playlist position of the current playing file.
         /// That is, with respect to all files from all Media items
         /// </summary>
-        public int CurrentFilePlaylistPosition { get; internal set; }
+        public int CurrentFilePlaylistPosition { get; private set; }
 
         /// <summary>
         /// Gets the current file being played
@@ -272,47 +265,26 @@ namespace MediaBrowser.Library.Playables
         }
 
         /// <summary>
-        /// Gets or sets the position of the player, in Ticks
-        /// </summary>
-        public long CurrentPositionTicks { get; internal set; }
-
-        /// <summary>
-        /// Helper to get the position to resume at
-        /// </summary>
-        public long ResumePositionTicks
-        {
-            get
-            {
-                return HasMediaItems ? MediaItems.First().PlaybackStatus.PositionTicks : 0;
-            }
-        }
-
-        /// <summary>
-        /// Helper to get the playlist position to resume at
-        /// </summary>
-        public int ResumePlaylistPosition
-        {
-            get
-            {
-                return HasMediaItems ? MediaItems.First().PlaybackStatus.PlaylistPosition : 0;
-            }
-        }
-
-        /// <summary>
         /// Gets the name of this item that can be used for display or logging purposes
         /// </summary>
-        public string Name
+        public string DisplayName
         {
             get
             {
-                BaseItem item = PrimaryBaseItem;
-
-                if (item == null)
+                // If playback is folder-based, use the name of the folder
+                if (Folder != null)
                 {
-                    return Files.Any() ? Files.First() : string.Empty;
+                    return Folder.Name;
                 }
 
-                return item.Name;
+                // Otherwise if we're playing Media items, use the name of the current one
+                if (HasMediaItems)
+                {
+                    return CurrentMedia.Name;
+                }
+
+                // Playback is file-based so use the current file
+                return Files.Any() ? CurrentFile : string.Empty;
             }
         }
 
@@ -379,8 +351,7 @@ namespace MediaBrowser.Library.Playables
         }
         public void AddMedia(IEnumerable<Media> mediaItems)
         {
-            List<Media> playableItems = MediaItems as List<Media>;
-            playableItems.AddRange(mediaItems);
+            MediaItems.AddRange(mediaItems);
         }
         #endregion
 
@@ -443,14 +414,14 @@ namespace MediaBrowser.Library.Playables
 
         internal void Play()
         {
+            Prepare();
+
             if (!HasMediaItems && !Files.Any())
             {
                 Microsoft.MediaCenter.MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                 ev.Dialog(Application.CurrentInstance.StringData("NoContentDial"), Application.CurrentInstance.StringData("Playstr"), Microsoft.MediaCenter.DialogButtons.Ok, 500, true);
                 return;
             }
-
-            Prepare();
 
             // Run all pre-play processes
             if (!RunPrePlayProcesses())
@@ -459,12 +430,9 @@ namespace MediaBrowser.Library.Playables
                 return;
             }
 
-            AddPrePlaybackLogEntry();
+            Logger.ReportInfo(GetType().Name + " about to play " + DisplayName);
 
             PlaybackController.Play(this);
-
-            // Set the current playback stage
-            PlayState = QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
         }
 
         /// <summary>
@@ -476,7 +444,7 @@ namespace MediaBrowser.Library.Playables
             if (MediaItems.Count() > 1)
             {
                 // First filter out items that can't be queued in a playlist
-                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m)) as List<Media>;
+                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m)).ToList();
             }
 
             if (Shuffle)
@@ -485,22 +453,6 @@ namespace MediaBrowser.Library.Playables
             }
 
             PlaybackStartTime = DateTime.Now;
-        }
-
-        private void AddPrePlaybackLogEntry()
-        {
-            if (Folder != null)
-            {
-                Logger.ReportInfo("About to play Folder: " + Folder.Name);
-            }
-            else if (HasMediaItems)
-            {
-                Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", MediaItems.Select(p => p.Name).ToArray()));
-            }
-            else
-            {
-                Logger.ReportInfo(GetType().Name + " About to play : " + string.Join(",", Files.ToArray()));
-            }
         }
 
         /// <summary>
@@ -531,7 +483,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected virtual BasePlaybackController GetPlaybackController()
         {
-            return Kernel.Instance.PlaybackControllers.FirstOrDefault(p => p.GetType() == PlaybackControllerType) as BasePlaybackController;
+            return Kernel.Instance.PlaybackControllers.FirstOrDefault(p => p.GetType() == PlaybackControllerType);
         }
 
         /// <summary>
@@ -544,25 +496,27 @@ namespace MediaBrowser.Library.Playables
             // If playback is based on Media objects
             if (HasMediaItems)
             {
-                _MediaItems = MediaItems.OrderBy(i => rnd.Next()) as List<Media>;
+                _MediaItems = MediaItems.OrderBy(i => rnd.Next()).ToList();
             }
             else
             {
                 // Otherwise if playback is based on a list of files
-                _Files = Files.OrderBy(i => rnd.Next()) as List<string>;
+                _Files = Files.OrderBy(i => rnd.Next()).ToList();
             }
         }
 
         /// <summary>
         /// Goes through each Media object within PlayableMediaItems and updates Playstate for each individually
         /// </summary>
-        private void SaveProgressIntoPlaystates(BasePlaybackController controller)
+        private void SaveProgressIntoPlaystates(BasePlaybackController controller, PlaybackStateEventArgs args)
         {
             string currentFile = CurrentFile;
 
-            foreach (Media media in MediaItems)
+            for (int i = 0; i < MediaItems.Count; i++)
             {
-                bool isCurrentMedia = media.Id == CurrentMediaId;
+                Media media = MediaItems[i];
+
+                bool isCurrentMedia = i == CurrentMediaIndex;
 
                 long currentPositionTicks = 0;
                 int currentPlaylistPosition = 0;
@@ -571,10 +525,10 @@ namespace MediaBrowser.Library.Playables
                 {
                     // If this is where playback is, update position and playlist
                     currentPlaylistPosition = controller.GetPlayableFiles(media).ToList().IndexOf(currentFile);
-                    currentPositionTicks = CurrentPositionTicks;
+                    currentPositionTicks = args.Position;
                 }
 
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, null, PlaybackStartTime);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, args.DurationFromPlayer, PlaybackStartTime);
 
                 if (isCurrentMedia)
                 {
@@ -600,6 +554,13 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
+        /// <summary>
+        /// Stops playback on the current PlaybackController
+        /// </summary>
+        public void StopPlayback()
+        {
+            PlaybackController.Stop();
+        }
     }
 
     /// <summary>
@@ -608,7 +569,7 @@ namespace MediaBrowser.Library.Playables
     public enum PlayableItemPlayState
     {
         /// <summary>
-        /// The PlayableItem has been created yet, but has not been passed into Application.Play
+        /// The PlayableItem has been created, but has not been passed into Application.Play
         /// </summary>
         Created = 0,
 
@@ -619,8 +580,6 @@ namespace MediaBrowser.Library.Playables
 
         /// <summary>
         /// Tthe PlayableItem has been sent to the player, but is not currently playing.
-        /// For some players we will not be able to determine what is playing at any given time
-        /// In those situations, the item will remain Queued until it finishes
         /// </summary>
         Queued = 2,
 

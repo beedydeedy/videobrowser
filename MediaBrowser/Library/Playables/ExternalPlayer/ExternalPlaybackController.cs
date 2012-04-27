@@ -186,7 +186,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             if (playable.Resume)
             {
-                files = files.Skip(playable.ResumePlaylistPosition);
+                files = files.Skip(playable.MediaItems.First().PlaybackStatus.PlaylistPosition);
             }
 
             if (files.Count() > 1)

@@ -223,7 +223,7 @@ namespace MediaBrowser.Library
             Application.CurrentInstance.Back(); //clear the PIN page before playing
             MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
 
-            string name = playable.Name;
+            string name = playable.DisplayName;
 
             if (pinCorrect)
             {

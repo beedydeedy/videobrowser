@@ -68,10 +68,10 @@ namespace MediaBrowser.Code.ModelItems
             }
         }
 
-        protected override PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId)
+        protected override PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
         {
             filePlaylistPosition = 0;
-            currrentMediaId = Guid.Empty;
+            currentMediaIndex = 0;
 
             metadataTitle = metadataTitle.ToLower();
 

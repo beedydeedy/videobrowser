@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -91,7 +92,8 @@ namespace MediaBrowser.Library.Playables.TMT
 
                     if (playItem.Resume)
                     {
-                        ExecuteResumeCommand(playItem.ResumePlaylistPosition, playItem.ResumePositionTicks);
+                        var playstate = playItem.MediaItems.First().PlaybackStatus;
+                        ExecuteResumeCommand(playstate.PlaylistPosition, playstate.PositionTicks);
                     }
                 }
 

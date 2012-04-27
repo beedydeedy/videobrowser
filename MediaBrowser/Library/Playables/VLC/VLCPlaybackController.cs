@@ -4,9 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Xml;
+using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.Playables.VLC
 {
@@ -30,7 +30,7 @@ namespace MediaBrowser.Library.Playables.VLC
             args.Add("{0}");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.ResumePositionTicks).TotalSeconds : 0;
+            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.MediaItems.First().PlaybackStatus.PositionTicks).TotalSeconds : 0;
 
             args.Add("--start-time=" + startTimeInSeconds);
 
@@ -190,15 +190,17 @@ namespace MediaBrowser.Library.Playables.VLC
 
         private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            foreach (Media media in playable.MediaItems)
+            for (int i = 0; i < playable.MediaItems.Count; i++)
             {
+                Media media = playable.MediaItems[i];
+
                 IEnumerable<string> files = GetPlayableFiles(media);
 
                 int index = GetPlaylistIndex(files, _CurrentPlayingFile);
 
                 if (index != -1)
                 {
-                    state.CurrentMediaId = media.Id;
+                    state.CurrentMediaIndex = i;
                     state.FilePlaylistPosition = playable.Files.IndexOf(files.ElementAt(index));
                     break;
                 }

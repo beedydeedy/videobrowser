@@ -1514,7 +1514,7 @@ namespace MediaBrowser
                 }
             }
 
-            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.Name);
+            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
 
             OnPlaybackFinished(playableItem);
         }
@@ -1758,29 +1758,54 @@ namespace MediaBrowser
             bool incrementPlayCount = !playstate.LastPlayed.Equals(datePlayed);
 
             // The player didn't report the duration, see if we have it in metadata
-            if (!duration.HasValue || duration == 0 && media != null)
+            if ((!duration.HasValue || duration == 0) && media.Files.Count() == 1)
             {
+                // We need duration to pertain only to one file
+                // So if there are multiple files don't bother with this
+                // since we have no way of breaking it down
+
                 duration = TimeSpan.FromMinutes(media.RunTime).Ticks;
             }
 
-            // If we know the duration then enforce MinResumePct/MaxResumePct
-            if (duration.HasValue && duration > 0 && positionTicks > 0)
+            // If we know the duration then enforce MinResumePct, MaxResumePct and MinResumeDuration
+            if (duration.HasValue && duration > 0)
             {
-                decimal pctIn = Decimal.Divide(positionTicks, duration.Value) * 100;
-
-                // Don't track in very beginning
-                if (pctIn < Config.Instance.MinResumePct)
+                // Enforce MinResumePct/MaxResumePct
+                if (positionTicks > 0)
                 {
-                    positionTicks = 0;
+                    decimal pctIn = Decimal.Divide(positionTicks, duration.Value) * 100;
 
-                    if (playlistPosition == 0)
+                    // Don't track in very beginning
+                    if (pctIn < Config.Instance.MinResumePct)
                     {
-                        incrementPlayCount = false;
+                        positionTicks = 0;
+
+                        if (playlistPosition == 0)
+                        {
+                            // Assume we're at the very beginning so don't even mark it watched.
+                            incrementPlayCount = false;
+                        }
+                    }
+
+                    // If we're at the end, assume completed
+                    if (pctIn > Config.Instance.MaxResumePct || positionTicks >= duration)
+                    {
+                        positionTicks = 0;
+
+                        // Either advance to the next playlist position, or reset it back to 0
+                        if (playlistPosition < (media.Files.Count() - 1))
+                        {
+                            playlistPosition++;
+                        }
+                        else
+                        {
+                            playlistPosition = 0;
+                        }
                     }
                 }
 
-                // If we're at the end, assume completed
-                if (pctIn > Config.Instance.MaxResumePct || positionTicks >= duration)
+                // Enforce MinResumeDuration
+                if ((duration / TimeSpan.TicksPerMinute) < Config.Instance.MinResumeDuration)
                 {
                     positionTicks = 0;
                 }
@@ -1802,11 +1827,8 @@ namespace MediaBrowser
                 playstate.PlayCount++;
             }
 
-            if (duration == 0 || (duration / TimeSpan.TicksPerMinute) >= Config.Instance.MinResumeDuration)
-            {
-                Logger.ReportVerbose("Playstate saved at position: " + new TimeSpan(positionTicks).ToString() + " with playlist position: " + playlistPosition);
-                Kernel.Instance.SavePlayState(media, playstate);
-            }
+            Logger.ReportVerbose("Playstate saved for {0} at position: " + new TimeSpan(positionTicks).ToString() + " with playlist position: " + playlistPosition, media.Name);
+            Kernel.Instance.SavePlayState(media, playstate);
         }
     }
 }

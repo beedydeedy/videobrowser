@@ -92,8 +92,10 @@ namespace MediaBrowser
                 // Set starting position if we're resuming
                 if (playable.Resume)
                 {
-                    CurrentMediaCollection.CurrentIndex = playable.ResumePlaylistPosition;
-                    CurrentMediaCollection[playable.ResumePlaylistPosition].Start = new TimeSpan(playable.ResumePositionTicks);
+                    var playstate = playable.MediaItems.First().PlaybackStatus;
+
+                    CurrentMediaCollection.CurrentIndex = playstate.PlaylistPosition;
+                    CurrentMediaCollection[playstate.PlaylistPosition].Start = new TimeSpan(playstate.PositionTicks);
                 }
 
                 HasStartedPlaying = false;
@@ -142,8 +144,10 @@ namespace MediaBrowser
         {
             int currentFileIndex = 0;
 
-            foreach (Media media in playable.MediaItems)
+            for (int mediaIndex = 0; mediaIndex < playable.MediaItems.Count; mediaIndex++)
             {
+                Media media = playable.MediaItems[mediaIndex];
+
                 IEnumerable<string> files = GetPlayableFiles(media);
 
                 int numFiles = files.Count();
@@ -152,10 +156,9 @@ namespace MediaBrowser
                 for (int i = 0; i < numFiles; i++)
                 {
                     string path = files.ElementAt(i);
-                    string fileToPlay = /*transcode ? GetTranscodedPath(path) :*/ path;
 
                     MediaCollectionItem item = new MediaCollectionItem();
-                    item.Media = fileToPlay;
+                    item.Media = path;
 
                     // Embed the playlist index, since we could have multiple playlists queued up
                     // which prevents us from being able to use MediaCollection.CurrentIndex
@@ -165,7 +168,7 @@ namespace MediaBrowser
                     item.FriendlyData["PlayableItemId"] = playable.Id.ToString();
 
                     // Embed the MediaId so we can identify which one to track progress for
-                    item.FriendlyData["MediaId"] = media.Id.ToString();
+                    item.FriendlyData["MediaIndex"] = mediaIndex.ToString();
 
                     CurrentMediaCollection.Add(item);
 
@@ -187,10 +190,9 @@ namespace MediaBrowser
             for (int i = 0; i < numFiles; i++)
             {
                 string path = files.ElementAt(i);
-                string fileToPlay = /*transcode ? GetTranscodedPath(path) :*/ path;
 
                 MediaCollectionItem item = new MediaCollectionItem();
-                item.Media = fileToPlay;
+                item.Media = path;
 
                 // Embed the playlist index, since we could have multiple playlists queued up
                 // which prevents us from being able to use MediaCollection.CurrentIndex
@@ -270,9 +272,9 @@ namespace MediaBrowser
             string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
 
             int filePlaylistPosition;
-            Guid currentMediaId;
+            int currentMediaIndex;
 
-            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaId);
+            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaIndex);
 
             Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.Id;
             long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
@@ -282,7 +284,7 @@ namespace MediaBrowser
                 FilePlaylistPosition = filePlaylistPosition, 
                 DurationFromPlayer = duration,
                 Item = currentPlaybackItem,
-                CurrentMediaId = currentMediaId
+                CurrentMediaIndex = currentMediaIndex
             };
 
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
@@ -303,10 +305,10 @@ namespace MediaBrowser
         /// <summary>
         /// Retrieves the current playback item using MediaCollection properties
         /// </summary>
-        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out Guid currrentMediaId)
+        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
         {
             filePlaylistPosition = 0;
-            currrentMediaId = Guid.Empty;
+            currentMediaIndex = 0;
 
             MediaCollectionItem activeItem = CurrentMediaCollection.Count == 0 ? null : CurrentMediaCollection[CurrentMediaCollection.CurrentIndex];
 
@@ -318,11 +320,11 @@ namespace MediaBrowser
             Guid playableItemId = new Guid(activeItem.FriendlyData["PlayableItemId"].ToString());
             filePlaylistPosition = int.Parse(activeItem.FriendlyData["FilePlaylistPosition"].ToString());
 
-            object objMediaId = activeItem.FriendlyData["MediaId"];
+            object objMediaIndex = activeItem.FriendlyData["MediaIndex"];
 
-            if (objMediaId != null)
+            if (objMediaIndex != null)
             {
-                currrentMediaId = new Guid(objMediaId.ToString());
+                currentMediaIndex = int.Parse(objMediaIndex.ToString());
             }
 
             return GetPlayableItem(playableItemId);

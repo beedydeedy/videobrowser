@@ -140,13 +140,13 @@ namespace MediaBrowser.Code.ModelItems
             if (playable != null)
             {
                 // Fill this in if the subclass wasn't able to supply it
-                if (playable.HasMediaItems && (args.CurrentMediaId == null || args.CurrentMediaId == Guid.Empty))
+                if (playable.HasMediaItems && args.CurrentMediaIndex == 0)
                 {
                     // If there's only one Media item, set CurrentMediaId in the args object
                     // This is just a convenience for subclasses that only support one Media at a time
-                    if (playable.MediaItems.Count() == 1)
+                    if (playable.MediaItems.Count() < 2)
                     {
-                        args.CurrentMediaId = playable.MediaItems.First().Id;
+                        args.CurrentMediaIndex = 0;
                     }
                     else
                     {
@@ -172,19 +172,25 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         public void Play(PlayableItem playable)
         {
+            // Break down the Media items into raw files
             if (playable.HasMediaItems)
             {
                 PopulatePlayableFiles(playable);
             }
 
+            // Add it to the list of active PlayableItems
             CurrentPlayableItems.Add(playable);
 
+            // If we're playing then this becomes the active item
             if (!playable.QueueItem)
             {
                 CurrentPlayableItemId = playable.Id;
             }
 
             PlayMediaInternal(playable);
+
+            // Set the current playback stage
+            playable.PlayState = playable.QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
         }
 
         /// <summary>
@@ -268,7 +274,7 @@ namespace MediaBrowser.Code.ModelItems
             {
                 if (IsPlaying)
                 {
-                    return GetCurrentPlayableItem().Name;
+                    return GetCurrentPlayableItem().DisplayName;
                 }
 
                 return "None";
@@ -362,14 +368,16 @@ namespace MediaBrowser.Code.ModelItems
         {
             string currentFile = state.Item.Files.ElementAt(state.FilePlaylistPosition);
 
-            foreach (Media media in playable.MediaItems)
+            for (int i = 0; i < playable.MediaItems.Count; i++)
             {
+                Media media = playable.MediaItems[i];
+
                 List<string> playableFiles = GetPlayableFiles(media).ToList();
                 int index = playableFiles.IndexOf(currentFile);
 
                 if (index != -1)
                 {
-                    state.CurrentMediaId = media.Id;
+                    state.CurrentMediaIndex = i;
                     break;
                 }
             }

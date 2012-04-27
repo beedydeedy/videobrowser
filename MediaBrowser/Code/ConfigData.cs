@@ -580,12 +580,7 @@ namespace MediaBrowser
         /// </summary>
         public static bool CanPlay(ConfigData.ExternalPlayer player, IEnumerable<string> files)
         {
-            List<MediaType> types = new List<MediaType>();
-
-            foreach (string file in files)
-            {
-                types.Add(MediaTypeResolver.DetermineType(file));
-            }
+            IEnumerable<MediaType> types = files.Select(f => MediaTypeResolver.DetermineType(f));
 
             // See if there's a configured player matching the ExternalPlayerType and MediaType. 
             // We're not able to evaluate VideoFormat in this scenario
@@ -630,11 +625,6 @@ namespace MediaBrowser
         /// </summary>
         public static bool CanPlay(ConfigData.ExternalPlayer externalPlayer, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, int numFilesToPlay)
         {
-            if (Application.RunningOnExtender)
-            {
-                return false;
-            }
-
             // Check options to see if this is not a match
 
             // If it's not even capable of playing multiple files in sequence, it's no good

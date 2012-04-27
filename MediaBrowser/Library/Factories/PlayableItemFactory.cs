@@ -22,12 +22,15 @@ namespace MediaBrowser.Library.Factories
 
         private PlayableItemFactory()
         {
-            // Add the externals
-            RegisterExternalPlayerType<PlayableMpcHc, PlayableMpcHcConfigurator>();
-            RegisterExternalPlayerType<PlayableVLC, PlayableVLCConfigurator>();
-            RegisterExternalPlayerType<PlayableTMT, PlayableTMTConfigurator>();
-            RegisterExternalPlayerType<PlayableTMTAddInForWMC, PlayableTMTAddInForWMCConfigurator>();
-            RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
+            if (!Application.RunningOnExtender)
+            {
+                // Add the externals
+                RegisterExternalPlayerType<PlayableMpcHc, PlayableMpcHcConfigurator>();
+                RegisterExternalPlayerType<PlayableVLC, PlayableVLCConfigurator>();
+                RegisterExternalPlayerType<PlayableTMT, PlayableTMTConfigurator>();
+                RegisterExternalPlayerType<PlayableTMTAddInForWMC, PlayableTMTAddInForWMCConfigurator>();
+                RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
+            }
         }
 
         /// <summary>
@@ -92,12 +95,19 @@ namespace MediaBrowser.Library.Factories
         {
             Video video = media as Video;
 
+            bool unmountISOAfterPlayback = false;
+            
             if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(GetAllKnownPlayables(), video))
             {
                 MountAndUpdateMediaPath(video);
+                unmountISOAfterPlayback = true;
             }
-            
-            return Create(new Media[] { media });
+
+            PlayableItem playable = Create(new Media[] { media });
+
+            playable.UnmountISOAfterPlayback = unmountISOAfterPlayback;
+
+            return playable;
         }
 
         /// <summary>

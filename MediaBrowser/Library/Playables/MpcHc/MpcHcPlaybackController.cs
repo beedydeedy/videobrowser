@@ -31,7 +31,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             args.Add("/fullscreen");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.ResumePositionTicks).TotalMilliseconds : 0;
+            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.MediaItems.First().PlaybackStatus.PositionTicks).TotalMilliseconds : 0;
 
             args.Add("/start " + startTimeInMs);
 

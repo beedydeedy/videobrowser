@@ -9,9 +9,9 @@ namespace MediaBrowser.Library.RemoteControl
     public class PlaybackStateEventArgs : GenericEventArgs<PlayableItem>
     {
         /// <summary>
-        /// Gets or sets the Id of the current Media object being played
+        /// Gets or sets the index of the current Media object being played
         /// </summary>
-        public Guid CurrentMediaId { get; set; }
+        public int CurrentMediaIndex { get; set; }
 
         /// <summary>
         /// Gets or sets the overall playlist position of the current playing file.
