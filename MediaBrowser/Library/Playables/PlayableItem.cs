@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Events;
@@ -561,6 +562,17 @@ namespace MediaBrowser.Library.Playables
         public void StopPlayback()
         {
             PlaybackController.Stop();
+        }
+
+        /// <summary>
+        /// Waits for the PlayableItem to reach a given state and then returns
+        /// </summary>
+        public void WaitForPlayState(PlayableItemPlayState state)
+        {
+            while (PlayState != state)
+            {
+                Thread.Sleep(1000);
+            }
         }
     }
 

@@ -144,7 +144,7 @@ namespace MediaBrowser.Code.ModelItems
                 {
                     // If there's only one Media item, set CurrentMediaId in the args object
                     // This is just a convenience for subclasses that only support one Media at a time
-                    if (playable.MediaItems.Count() < 2)
+                    if (playable.MediaItems.Count() == 1)
                     {
                         args.CurrentMediaIndex = 0;
                     }
@@ -234,10 +234,17 @@ namespace MediaBrowser.Code.ModelItems
 
                 if (playable.HasMediaItems)
                 {
+                    // If we can pinpoint the current Media object, test that
+                    if (playable.CurrentMedia != null)
+                    {
+                        return playable.CurrentMedia is Media;
+                    }
+
+                    // Otherwise test them all
                     return playable.MediaItems.Any(m => m is Video);
                 }
 
-                return playable.Files.Any(f => Helper.IsVideo(f));
+                return Helper.IsVideo(playable.CurrentFile);
             }
         }
 
@@ -372,7 +379,9 @@ namespace MediaBrowser.Code.ModelItems
         {
             string currentFile = state.Item.Files.ElementAt(state.FilePlaylistPosition);
 
-            for (int i = 0; i < playable.MediaItems.Count(); i++)
+            int numMediaItems = playable.MediaItems.Count();
+
+            for (int i = 0; i < numMediaItems; i++)
             {
                 Media media = playable.MediaItems.ElementAt(i);
 

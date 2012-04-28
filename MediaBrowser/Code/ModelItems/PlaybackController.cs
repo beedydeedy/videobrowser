@@ -54,9 +54,6 @@ namespace MediaBrowser
             // we'll just add to the currently playing MediaCollection.
             bool callPlayMedia = true;
 
-            // Get this now since we'll be using it frequently
-            MediaCenterEnvironment mediaCenterEnvironment = AddInHost.Current.MediaCenterEnvironment;
-
             if (playable.QueueItem)
             {
                 // If an empty MediaCollection comes back, create a new one
@@ -77,8 +74,10 @@ namespace MediaBrowser
                 CurrentMediaCollection = new MediaCollection();
             }
 
+            int numMediaItems = playable.MediaItems.Count();
+
             // Create a MediaCollectionItem for each file to play
-            if (playable.HasMediaItems)
+            if (numMediaItems > 0)
             {
                 PopulateMediaCollectionUsingMediaItems(CurrentMediaCollection, playable);
             }
@@ -99,6 +98,9 @@ namespace MediaBrowser
                 }
 
                 HasStartedPlaying = false;
+
+                // Get this now since we'll be using it frequently
+                MediaCenterEnvironment mediaCenterEnvironment = AddInHost.Current.MediaCenterEnvironment;
 
                 try
                 {
@@ -139,10 +141,12 @@ namespace MediaBrowser
         {
             int currentFileIndex = 0;
 
-            for (int mediaIndex = 0; mediaIndex < playable.MediaItems.Count(); mediaIndex++)
+            int numMediaItems = playable.MediaItems.Count();
+
+            for (int mediaIndex = 0; mediaIndex < numMediaItems; mediaIndex++)
             {
                 Media media = playable.MediaItems.ElementAt(mediaIndex);
-
+                Logger.ReportVerbose("Queueing " + media.Name);
                 IEnumerable<string> files = GetPlayableFiles(media);
 
                 int numFiles = files.Count();
@@ -162,8 +166,11 @@ namespace MediaBrowser
                     // Embed the PlayableItemId so we can identify which one to track progress for
                     item.FriendlyData["PlayableItemId"] = playable.Id.ToString();
 
-                    // Embed the MediaId so we can identify which one to track progress for
+                    // Embed the Media index so we can identify which one to track progress for
                     item.FriendlyData["MediaIndex"] = mediaIndex.ToString();
+
+                    // Set a friendly title
+                    item.FriendlyData["Title"] = media.Name;
 
                     CurrentMediaCollection.Add(item);
 
@@ -203,7 +210,7 @@ namespace MediaBrowser
         /// <summary>
         /// Handles the MediaTransport.PropertyChanged event, which most of the time will be due to Position
         /// </summary>
-        void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
+        protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
             MediaTransport transport = sender as MediaTransport;
 
@@ -262,14 +269,11 @@ namespace MediaBrowser
             // Get metadata from player
             MediaMetadata metadata = mce.MediaMetadata;
 
-            string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
-
             int filePlaylistPosition;
             int currentMediaIndex;
 
-            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaIndex);
+            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadata, out filePlaylistPosition, out currentMediaIndex);
 
-            Guid playableItemId = currentPlaybackItem == null ? Guid.Empty : currentPlaybackItem.Id;
             long duration = currentPlaybackItem == null ? 0 : GetDurationOfCurrentlyPlayingMedia(metadata);
 
             PlaybackStateEventArgs eventArgs = new PlaybackStateEventArgs() { 
@@ -288,8 +292,11 @@ namespace MediaBrowser
 
             if (property == "PlayState")
             {
+                // Get the title from the PlayableItem, if it's available. Otherwise use MediaMetadata
+                string title = currentPlaybackItem == null ? GetTitleOfCurrentlyPlayingMedia(metadata) : (currentPlaybackItem.HasMediaItems ? currentPlaybackItem.MediaItems.ElementAt(currentMediaIndex).Name : currentPlaybackItem.Files.ElementAt(filePlaylistPosition));
+
                 Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}",
-                  state, metadataTitle, positionTicks, filePlaylistPosition);
+                  state, title, positionTicks, filePlaylistPosition);
 
                 HandlePlaystateChange(transport, isStopped, eventArgs);
             }
@@ -298,7 +305,7 @@ namespace MediaBrowser
         /// <summary>
         /// Retrieves the current playback item using MediaCollection properties
         /// </summary>
-        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
+        protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(MediaMetadata metadata, out int filePlaylistPosition, out int currentMediaIndex)
         {
             filePlaylistPosition = 0;
             currentMediaIndex = 0;
@@ -422,7 +429,7 @@ namespace MediaBrowser
                     return true;
                 }
 
-                // Otherwise see another app within wmc is currently playing (such as live tv)
+                // Otherwise see if another app within wmc is currently playing (such as live tv)
                 return PlayState == PlayState.Playing;
             }
         }
@@ -497,9 +504,13 @@ namespace MediaBrowser
         }
 
 
+        // Cache this so we don't have to keep retrieving it
         private FieldInfo _CheckedMediaExperienceFIeldInfo;
 
-        private MediaExperience GetMediaExperienceUsingReflection()
+        /// <summary>
+        /// This is a workaround for when AddInHost.Current.MediaCenterEnvironment.MediaExperience returns null
+        /// </summary>
+        protected MediaExperience GetMediaExperienceUsingReflection()
         {
             var mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
 
@@ -573,7 +584,7 @@ namespace MediaBrowser
         /// <summary>
         /// Gets the title of the currently playing content
         /// </summary>
-        private string GetTitleOfCurrentlyPlayingMedia(MediaMetadata metadata)
+        protected string GetTitleOfCurrentlyPlayingMedia(MediaMetadata metadata)
         {
             if (metadata == null) return string.Empty;
 
@@ -584,6 +595,11 @@ namespace MediaBrowser
             if (string.IsNullOrEmpty(title))
             {
                 title = metadata["Title"] as string;
+            }
+
+            if (string.IsNullOrEmpty(title))
+            {
+                title = metadata["TrackTitle"] as string;
             }
 
             return string.IsNullOrEmpty(title) ? string.Empty : title;
@@ -623,6 +639,7 @@ namespace MediaBrowser
                     return base.NowPlayingTitle;
                 }
 
+                // Another application could be responsible for the content playing, so try to come up with a title
                 MediaExperience exp = MediaExperience;
 
                 if (exp == null)
@@ -677,10 +694,8 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Takes a Media object and returns the list of files that will be sent to the PlaybackController
+        /// Takes a Media object and returns the list of files that will be sent to the player
         /// </summary>
-        /// <param name="media"></param>
-        /// <returns></returns>
         internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
             IEnumerable<string> files = base.GetPlayableFiles(media);
