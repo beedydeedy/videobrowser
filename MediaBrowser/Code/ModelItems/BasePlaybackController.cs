@@ -287,7 +287,14 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected virtual void PopulatePlayableFiles(PlayableItem playable)
         {
-            playable.Files = playable.MediaItems.Select(m => GetPlayableFiles(m)).SelectMany(i => i);
+            List<string> files = new List<string>(playable.MediaItems.Count());
+
+            foreach (Media media in playable.MediaItems)
+            {
+                files.AddRange(GetPlayableFiles(media));
+            }
+
+            playable.Files = files;
         }
 
         /// <summary>

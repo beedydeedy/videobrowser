@@ -107,13 +107,18 @@ namespace MediaBrowser
                         Logger.ReportInfo("PlayMedia returned false");
                     }
 
-                    if (playable.GoFullScreen && !mediaCenterEnvironment.MediaExperience.IsFullScreen)
+                    var mediaExperience = mediaCenterEnvironment.MediaExperience ?? GetMediaExperienceUsingReflection();
+
+                    if (playable.GoFullScreen && !mediaExperience.IsFullScreen)
                     {
-                        mediaCenterEnvironment.MediaExperience.GoToFullScreen();
+                        mediaExperience.GoToFullScreen();
                     }
 
+                    // Get this again as I've seen issues where it gets reset after the above call
+                    mediaExperience = mediaCenterEnvironment.MediaExperience ?? GetMediaExperienceUsingReflection();
+
                     // Attach event handler
-                    MediaTransport transport = mediaCenterEnvironment.MediaExperience.Transport;
+                    MediaTransport transport = mediaExperience.Transport;
 
                     transport.PropertyChanged -= MediaTransport_PropertyChanged;
                     transport.PropertyChanged += MediaTransport_PropertyChanged;
@@ -348,37 +353,8 @@ namespace MediaBrowser
         /// </summary>
         public override void GoToFullScreen()
         {
-            var mce = MediaExperience;
+            var mce = MediaExperience ?? GetMediaExperienceUsingReflection();
             
-            // great window 7 has bugs, lets see if we can work around them 
-            // http://mediacentersandbox.com/forums/thread/9287.aspx
-            if (mce == null)
-            {
-                Logger.ReportVerbose("MediaExperience is null, trying to work around it");
-                System.Threading.Thread.Sleep(200);
-                mce = MediaExperience;
-                if (mce == null)
-                {
-                    try
-                    {
-                        var fi = AddInHost.Current.MediaCenterEnvironment.GetType()
-                            .GetField("_checkedMediaExperience", BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (fi != null)
-                        {
-                            fi.SetValue(AddInHost.Current.MediaCenterEnvironment, false);
-                            mce = MediaExperience;
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        // give up ... I do not know what to do 
-                        Logger.ReportException("AddInHost.Current.MediaCenterEnvironment.MediaExperience is null", e);
-                    }
-
-                }
-            }
-
             if (mce != null)
             {
                 Logger.ReportVerbose("Going fullscreen...");
@@ -518,6 +494,57 @@ namespace MediaBrowser
             {
                 return AddInHost.Current.MediaCenterEnvironment.MediaExperience;
             }
+        }
+
+
+        private FieldInfo _CheckedMediaExperienceFIeldInfo;
+
+        private MediaExperience GetMediaExperienceUsingReflection()
+        {
+            var mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+
+            // great window 7 has bugs, lets see if we can work around them 
+            // http://mediacentersandbox.com/forums/thread/9287.aspx
+            if (mce == null)
+            {
+                System.Threading.Thread.Sleep(200);
+                mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+                if (mce == null)
+                {
+                    try
+                    {
+                        if (_CheckedMediaExperienceFIeldInfo == null)
+                        {
+                            _CheckedMediaExperienceFIeldInfo = AddInHost.Current.MediaCenterEnvironment.GetType().GetField("_checkedMediaExperience", BindingFlags.NonPublic | BindingFlags.Instance);
+                        }
+
+                        if (_CheckedMediaExperienceFIeldInfo != null)
+                        {
+                            _CheckedMediaExperienceFIeldInfo.SetValue(AddInHost.Current.MediaCenterEnvironment, false);
+                            mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        // give up ... I do not know what to do 
+                        Logger.ReportException("AddInHost.Current.MediaCenterEnvironment.MediaExperience is null", e);
+                    }
+
+                }
+
+                if (mce == null)
+                {
+                    Logger.ReportVerbose("GetMediaExperienceUsingReflection was unsuccessful");
+                }
+                else
+                {
+                    Logger.ReportVerbose("GetMediaExperienceUsingReflection was successful");
+                }
+
+            }
+
+            return mce;
         }
 
         protected MediaTransport MediaTransport

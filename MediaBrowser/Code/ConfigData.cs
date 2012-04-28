@@ -585,7 +585,7 @@ namespace MediaBrowser
             // See if there's a configured player matching the ExternalPlayerType and MediaType. 
             // We're not able to evaluate VideoFormat in this scenario
             // If none is found it will return null
-            return CanPlay(player, types, new List<VideoFormat>(), files.Count());
+            return CanPlay(player, types, new List<VideoFormat>(), files.Count() > 1);
         }
 
         /// <summary>
@@ -612,9 +612,7 @@ namespace MediaBrowser
                 }
             }
 
-            IEnumerable<string> files = mediaList.Select(v2 => v2.Files).SelectMany(i => i);
-
-            return CanPlay(player, types, formats, files.Count());
+            return CanPlay(player, types, formats, mediaList.Count() > 1);
         }
 
         /// <summary>
@@ -623,12 +621,12 @@ namespace MediaBrowser
         /// - All of the VideoFormats supplied. This filter is ignored if an empty list is provided.
         /// - And is able to play the number of files requested
         /// </summary>
-        public static bool CanPlay(ConfigData.ExternalPlayer externalPlayer, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, int numFilesToPlay)
+        public static bool CanPlay(ConfigData.ExternalPlayer externalPlayer, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, bool isMultiFile)
         {
             // Check options to see if this is not a match
 
             // If it's not even capable of playing multiple files in sequence, it's no good
-            if (numFilesToPlay > 1 && !externalPlayer.SupportsMultiFileCommandArguments && !externalPlayer.SupportsPlaylists)
+            if (isMultiFile && !externalPlayer.SupportsMultiFileCommandArguments && !externalPlayer.SupportsPlaylists)
             {
                 return false;
             }
