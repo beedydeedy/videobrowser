@@ -497,12 +497,12 @@ namespace MediaBrowser.Library.Playables
             // If playback is based on Media objects
             if (HasMediaItems)
             {
-                _MediaItems = MediaItems.OrderBy(i => rnd.Next());
+                MediaItems = MediaItems.OrderBy(i => rnd.Next()).ToList();
             }
             else
             {
                 // Otherwise if playback is based on a list of files
-                Files = Files.OrderBy(i => rnd.Next());
+                Files = Files.OrderBy(i => rnd.Next()).ToList();
             }
         }
 
