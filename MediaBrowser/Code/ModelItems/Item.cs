@@ -836,7 +836,8 @@ namespace MediaBrowser.Library
             {
                 get
                 {
-                    return item.GetType().GetProperty(key.ToString()).GetValue(item, null);
+                    var prop = item.GetType().GetProperty(key.ToString());
+                    return prop != null ? prop.GetValue(item, null) : null;
                 }
                 set
                 {

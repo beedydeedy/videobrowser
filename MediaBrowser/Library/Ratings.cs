@@ -9,8 +9,8 @@ namespace MediaBrowser.Library
 {
     public class Ratings
     {
-        private Dictionary<string, int> ratings = new Dictionary<string, int>();
-        private Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
+        private static Dictionary<string, int> ratings = new Dictionary<string, int>();
+        private static Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
 
         public Ratings(bool blockUnrated)
         {
@@ -82,14 +82,14 @@ namespace MediaBrowser.Library
                 ratings.Add("", 0);
             }
         }
-        public int Level(string ratingStr)
+        public static int Level(string ratingStr)
         {
             if (ratingStr != null && ratings.ContainsKey(ratingStr))
                 return ratings[ratingStr];
             else 
                 return ratings[""]; //return "unknown" level
         }
-        public string ToString(int level)
+        public static string ToString(int level)
         {
             if (ratingsStrings.ContainsKey(level))
                 return ratingsStrings[level];

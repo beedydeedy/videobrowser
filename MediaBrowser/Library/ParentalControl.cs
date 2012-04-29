@@ -98,7 +98,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return ratings.ToString(MaxAllowed) ?? "G"; //return something valid if not there
+                return Ratings.ToString(MaxAllowed) ?? "G"; //return something valid if not there
             }
         }
 
@@ -123,7 +123,7 @@ namespace MediaBrowser.Library
             if (this.Enabled && item != null)
             {
                 //Logger.ReportInfo("Checking parental status on " + item.Name + " "+item.ParentalRating+" "+this.MaxAllowed.ToString());
-                return (ratings.Level(item.ParentalRating) <= this.MaxAllowed);
+                return (Ratings.Level(item.ParentalRating) <= this.MaxAllowed);
             }
             else return true;
         }
@@ -133,7 +133,7 @@ namespace MediaBrowser.Library
             if (this.Enabled && item != null)
             {
                 //Logger.ReportInfo("Checking parental status on " + item.Name + " " + item.ParentalRating + " " + this.MaxAllowed.ToString());
-                return (ratings.Level(item.ParentalRating) <= this.MaxAllowed);
+                return (Ratings.Level(item.ParentalRating) <= this.MaxAllowed);
             }
             else return true;
         }
