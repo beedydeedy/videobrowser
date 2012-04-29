@@ -28,7 +28,9 @@ namespace MediaBrowser.Library.Persistance
 
             string[] queries = {
                                "create table if not exists display_prefs (guid primary key, view_type, show_labels, vertical_scroll, sort_order, index_by, use_banner, thumb_constraint_width, thumb_constraint_height, use_coverflow, use_backdrop )",
-                               "create index if not exists idx_display on display_prefs (guid)"
+                               "create index if not exists idx_display on display_prefs (guid)",
+                               "create table if not exists custom_display_prefs (guid, parm_key, parm_value)",
+                               "create index if not exists idx_custom on custom_display_prefs (guid, parm_key)"
                                };
 
 
@@ -57,6 +59,7 @@ namespace MediaBrowser.Library.Persistance
             {
                 if (reader.Read())
                 {
+                    dp.StopListeningForChanges(); //turn this off or we'll trigger the save routine before everything is filled in
                     try
                     {
                         dp.ViewType.Chosen = ViewTypeNames.GetName((ViewType)Enum.Parse(typeof(ViewType), reader.GetString(0)));
@@ -81,6 +84,27 @@ namespace MediaBrowser.Library.Persistance
                     dp.ThumbConstraint.Value = new Microsoft.MediaCenter.UI.Size(reader.GetInt32(6), reader.GetInt32(7));
                     dp.UseCoverflow.Value = reader.GetBoolean(8);
                     dp.UseBackdrop.Value = reader.GetBoolean(9);
+
+                    dp.ListenForChanges(); //turn back on
+                }
+            }
+
+            cmd = connection.CreateCommand();
+            cmd.CommandText = "select parm_key, parm_value from custom_display_prefs where guid = @guid";
+            cmd.AddParam("@guid", dp.Id);
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    try
+                    {
+                        dp.CustomParms[reader.GetString(0)] = reader.GetString(1);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.ReportException("Error reading custom display prefs.", e);
+                    }
                 }
             }
 
@@ -104,6 +128,26 @@ namespace MediaBrowser.Library.Persistance
             cmd.AddParam("@11", dp.UseBackdrop.Value);
 
             QueueCommand(cmd);
+
+            //custom prefs
+            var delCmd = connection.CreateCommand();
+            delCmd.CommandText = "delete from custom_display_prefs where guid = @guid";
+            delCmd.AddParam("@guid", dp.Id);
+            delCmd.ExecuteNonQuery();
+            var insCmd = connection.CreateCommand();
+            insCmd.CommandText = "insert or ignore into custom_display_prefs(guid, parm_key, parm_value) values(@guid, @key, @value)"; 
+            insCmd.AddParam("@guid", dp.Id);
+            SQLiteParameter val = new SQLiteParameter("@value");
+            insCmd.Parameters.Add(val);
+            SQLiteParameter key = new SQLiteParameter("@key");
+            insCmd.Parameters.Add(key);
+            foreach (var pair in dp.CustomParms)
+            {
+                key.Value = pair.Key;
+                val.Value = pair.Value;
+                QueueCommand(insCmd);
+            }
+
         }
 
         public int MigrateDisplayPrefs()

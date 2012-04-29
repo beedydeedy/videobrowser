@@ -28,6 +28,7 @@ namespace MediaBrowser.Library
         SizeRef thumbConstraint = new SizeRef(Config.Instance.DefaultPosterSize);
         private Dictionary<string, IComparer<BaseItem>> sortDict;
         private Dictionary<string, string> indexDict;
+        private Dictionary<string, string> customParms;
 
         public Guid Id { get; set; }
 
@@ -63,6 +64,12 @@ namespace MediaBrowser.Library
             useBackdrop = new BooleanChoice();
             useBackdrop.Value = Config.Instance.ShowBackdrop;
 
+            customParms = new Dictionary<string, string>();
+            ListenForChanges();
+        }
+
+        public void ListenForChanges()
+        {
             sortOrders.ChosenChanged += new EventHandler(sortOrders_ChosenChanged);
             indexBy.ChosenChanged += new EventHandler(indexBy_ChosenChanged);
             viewType.ChosenChanged += new EventHandler(viewType_ChosenChanged);
@@ -74,6 +81,19 @@ namespace MediaBrowser.Library
             thumbConstraint.PropertyChanged += new PropertyChangedEventHandler(thumbConstraint_PropertyChanged);
         }
 
+
+        public void StopListeningForChanges()
+        {
+            sortOrders.ChosenChanged -= new EventHandler(sortOrders_ChosenChanged);
+            indexBy.ChosenChanged -= new EventHandler(indexBy_ChosenChanged);
+            viewType.ChosenChanged -= new EventHandler(viewType_ChosenChanged);
+            showLabels.ChosenChanged -= new EventHandler(showLabels_ChosenChanged);
+            verticalScroll.ChosenChanged -= new EventHandler(verticalScroll_ChosenChanged);
+            useBanner.ChosenChanged -= new EventHandler(useBanner_ChosenChanged);
+            useCoverflow.ChosenChanged -= new EventHandler(useCoverflow_ChosenChanged);
+            useBackdrop.ChosenChanged -= new EventHandler(useBackdrop_ChosenChanged);
+            thumbConstraint.PropertyChanged -= new PropertyChangedEventHandler(thumbConstraint_PropertyChanged);
+        }
 
         void useCoverflow_ChosenChanged(object sender, EventArgs e)
         {
@@ -291,12 +311,20 @@ namespace MediaBrowser.Library
             get { return this.useBackdrop; }
         }
 
+        public Dictionary<string, string> CustomParms
+        {
+            get
+            {
+                return customParms;
+            }
+        }
+
         internal void LoadDefaults()
         {
 
         }
 
-        private void Save()
+        public void Save()
         {
             if ((!saveEnabled) || (this.Id == Guid.Empty))
                 return;
