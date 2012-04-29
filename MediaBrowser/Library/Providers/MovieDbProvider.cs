@@ -313,9 +313,9 @@ namespace MediaBrowser.Library.Providers
             if (jsonDict != null)
             {
 
-                movie.Name = jsonDict["title"].ToString();
-                movie.Overview = jsonDict["overview"].ToString().Replace("\n\n", "\n");
-                movie.TagLine = jsonDict["tagline"].ToString();
+                movie.Name = (string)jsonDict["title"];
+                movie.Overview = ((string)jsonDict["overview"]).Replace("\n\n", "\n");
+                movie.TagLine = (string)jsonDict["tagline"].ToString();
                 movie.ImdbID = jsonDict["imdb_id"].ToString();
                 float rating;
                 if (float.TryParse(jsonDict["vote_average"].ToString(), System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
@@ -330,19 +330,19 @@ namespace MediaBrowser.Library.Providers
                     string ourCountry = Kernel.Instance.ConfigData.MetadataCountryCode;
                     foreach (Dictionary<string, object> release in releases)
                     {
-                        string country = release["iso_3166_1"].ToString();
+                        string country = (string)release["iso_3166_1"];
                         //grab the us info so we can default to it if need be
                         if (country == "US")
                         {
                             usRelease = release["release_date"].ToString();
-                            usCert = release["certification"].ToString();
+                            usCert = (string)release["certification"];
                         }
                         if (ourCountry != "US")
                         {
                             if (country == ourCountry)
                             {
                                 ourRelease = release["release_date"].ToString();
-                                ourCert = release["certification"].ToString();
+                                ourCert = (string)release["certification"];
                             }
                         }
                     }
@@ -381,7 +381,7 @@ namespace MediaBrowser.Library.Providers
                     if (movie.Studios == null) movie.Studios = new List<string>();
                     foreach (Dictionary<string, object> studio in studios)
                     {
-                        string name = studio["name"].ToString();
+                        string name = (string)studio["name"];
                         if (name != null) movie.Studios.Add(name);
                     }
                 }
@@ -393,7 +393,7 @@ namespace MediaBrowser.Library.Providers
                     if (movie.Genres == null) movie.Genres = new List<string>();
                     foreach (Dictionary<string, object> genre in genres)
                     {
-                        string name = genre["name"].ToString();
+                        string name = (string)genre["name"];
                         if (name != null) movie.Genres.Add(name);
                     }
                 }
@@ -409,8 +409,8 @@ namespace MediaBrowser.Library.Providers
                     if (movie.Actors == null) movie.Actors = new List<Actor>();
                     foreach (Dictionary<string, object> person in cast)
                     {
-                        string name = person["name"].ToString();
-                        string role = person["character"].ToString();
+                        string name = (string)person["name"];
+                        string role = (string)person["character"];
                         if (name != null)
                         {
                             sortedActors.Add(Convert.ToInt32(person["order"].ToString()), new Actor() { Name = name, Role = role });
@@ -420,7 +420,7 @@ namespace MediaBrowser.Library.Providers
                                 {
                                     string dir = Path.Combine(ApplicationPaths.AppIBNPath, "People/"+name);
                                     if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                                    DownloadAndSaveImage(tmdbImageUrl+person["profile_path"].ToString(), dir, "folder");
+                                    DownloadAndSaveImage(tmdbImageUrl+(string)person["profile_path"], dir, "folder");
                                 } 
                                 catch (Exception e) 
                                 {
@@ -442,8 +442,8 @@ namespace MediaBrowser.Library.Providers
                     if (movie.Writers == null) movie.Writers = new List<string>();
                     foreach (Dictionary<string, object> person in crew)
                     {
-                        string name = person["name"].ToString();
-                        string job = person["job"].ToString();
+                        string name = (string)person["name"];
+                        string job = (string)person["job"];
                         if (name != null)
                         {
                             switch(job) 
@@ -466,43 +466,51 @@ namespace MediaBrowser.Library.Providers
         protected virtual void ProcessImages(string json)
         {
             Dictionary<string,object> jsonDict = Helper.ToJsonDict(json);
-            //poster
-            System.Collections.ArrayList posters = (System.Collections.ArrayList)jsonDict["posters"];
-            if (posters != null && posters.Count > 0)
+
+            if (jsonDict != null)
             {
-                string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedPosterSize;
-                //posters should be in order of rating.  get first one for our language
-                foreach (Dictionary<string, object> poster in posters)
+                //poster
+                System.Collections.ArrayList posters = (System.Collections.ArrayList)jsonDict["posters"];
+                if (posters != null && posters.Count > 0)
                 {
-                    if (poster["iso_639_1"].ToString() == Kernel.Instance.ConfigData.PreferredMetaDataLanguage)
+                    string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedPosterSize;
+                    //posters should be in order of rating.  get first one for our language
+                    foreach (Dictionary<string, object> poster in posters)
                     {
-                        Logger.ReportVerbose("MovieDbProvider - using poster for language " + Kernel.Instance.ConfigData.PreferredMetaDataLanguage);
-                        Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + poster["file_path"].ToString(), "folder");
-                        break;
+                        if ((string)poster["iso_639_1"] == Kernel.Instance.ConfigData.PreferredMetaDataLanguage)
+                        {
+                            Logger.ReportVerbose("MovieDbProvider - using poster for language " + Kernel.Instance.ConfigData.PreferredMetaDataLanguage);
+                            Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + poster["file_path"].ToString(), "folder");
+                            break;
+                        }
+                    }
+
+                    if (Item.PrimaryImagePath == null)
+                    {
+                        //couldn't find one for our specific country - just take the first one
+                        Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated ");
+                        Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + ((Dictionary<string, object>)posters[0])["file_path"].ToString(), "folder");
                     }
                 }
 
-                if (Item.PrimaryImagePath == null)
+                //backdrops
+                System.Collections.ArrayList backdrops = (System.Collections.ArrayList)jsonDict["backdrops"];
+                if (backdrops != null && backdrops.Count > 0)
                 {
-                    //couldn't find one for our specific country - just take the first one
-                    Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated ");
-                    Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + ((Dictionary<string,object>)posters[0])["file_path"].ToString(), "folder");
+                    if (Item.BackdropImagePaths == null) Item.BackdropImagePaths = new List<string>();
+                    string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedBackdropSize;
+                    //posters should be in order of rating.  get first n ones
+                    int numToFetch = Math.Min(Kernel.Instance.ConfigData.MaxBackdrops, backdrops.Count);
+                    for (int i = 0; i < numToFetch; i++)
+                    {
+                        string bdNum = i == 0 ? "" : i.ToString();
+                        Item.BackdropImagePaths.Add(ProcessImage(tmdbImageUrl + ((Dictionary<string, object>)backdrops[i])["file_path"].ToString(), "backdrop" + bdNum));
+                    }
                 }
             }
-
-            //backdrops
-            System.Collections.ArrayList backdrops = (System.Collections.ArrayList)jsonDict["backdrops"];
-            if (backdrops != null && backdrops.Count > 0)
+            else
             {
-                if (Item.BackdropImagePaths == null) Item.BackdropImagePaths = new List<string>();
-                string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedBackdropSize;
-                //posters should be in order of rating.  get first n ones
-                int numToFetch = Math.Min(Kernel.Instance.ConfigData.MaxBackdrops, backdrops.Count);
-                for (int i = 0; i < numToFetch; i++)
-                {
-                    string bdNum = i == 0 ? "" : i.ToString();
-                    Item.BackdropImagePaths.Add(ProcessImage(tmdbImageUrl + ((Dictionary<string,object>)backdrops[i])["file_path"].ToString(), "backdrop"+bdNum));
-                }
+                Logger.ReportInfo("MovieDbProvider - No images defined for " + Item.Name);
             }
         }
 
