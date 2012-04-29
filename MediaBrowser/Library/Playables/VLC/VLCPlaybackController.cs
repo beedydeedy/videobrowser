@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Xml;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 
@@ -12,13 +13,22 @@ namespace MediaBrowser.Library.Playables.VLC
 {
     public class VLCPlaybackController : ConfigurableExternalPlaybackController
     {
+        private const int HttpRequestInterval = 1000;
+
         // All of these hold state about what's being played. They're all reset when playback starts
-        private string _CurrentPlayingFile = string.Empty;
+        private int _CurrrentPlayingFileIndex = -1;
         private long _CurrentFileDuration = 0;
         private long _CurrentPlayingPosition = 0;
         private bool _MonitorPlayback;
-        private WebClient _WebClient;
-        private Thread _WebRequestThread;
+
+        // This will get the current file position
+        private WebClient _StatusRequestClient;
+        private Thread _StatusRequestThread;
+
+        // This will get the current file index
+        private WebClient _PlaylistRequestClient;
+
+        private bool _IsDisposing = false;
 
         /// <summary>
         /// Gets arguments to be passed to the command line.
@@ -81,44 +91,67 @@ namespace MediaBrowser.Library.Playables.VLC
             base.OnExternalPlayerLaunched(playbackInfo);
 
             // Reset these fields since they hold state
-            _MonitorPlayback = true;
-            _CurrentPlayingFile = string.Empty;
+            _CurrrentPlayingFileIndex = -1;
             _CurrentPlayingPosition = 0;
             _CurrentFileDuration = 0;
-            _WebClient = new WebClient();
-            _WebClient.DownloadStringCompleted += client_DownloadStringCompleted;
 
-            // Start up the thread that will perform the monitoring
-            _WebRequestThread = new Thread(MonitorVlcHttpServer);
-            _WebRequestThread.IsBackground = true;
-            _WebRequestThread.Start();
+            if (_StatusRequestClient == null)
+            {
+                _StatusRequestClient = new WebClient();
+                _PlaylistRequestClient = new WebClient();
+
+                // Start up the thread that will perform the monitoring
+                _StatusRequestThread = new Thread(MonitorVlcStatusUrl);
+                _StatusRequestThread.IsBackground = true;
+                _StatusRequestThread.Start();
+            }
+
+            _PlaylistRequestClient.DownloadStringCompleted -= playlistRequestCompleted;
+            _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
+
+            _PlaylistRequestClient.DownloadStringCompleted += playlistRequestCompleted;
+            _StatusRequestClient.DownloadStringCompleted += statusRequestCompleted;
+
+            _MonitorPlayback = true;
         }
 
         /// <summary>
         /// Sends out requests to VLC's Http interface
         /// </summary>
-        private void MonitorVlcHttpServer()
+        private void MonitorVlcStatusUrl()
         {
-            Uri uri = new Uri(VlcStatusXmlUrl);
+            Uri statusUri = new Uri(VlcStatusXmlUrl);
+            Uri playlistUri = new Uri(VlcPlaylistXmlUrl);
 
-            while (_MonitorPlayback)
+            while (!_IsDisposing)
             {
-                try
+                if (_MonitorPlayback)
                 {
-                    _WebClient.DownloadStringAsync(uri);
-                }
-                catch (Exception ex)
-                {
-                    Logging.Logger.ReportException("Error connecting to VLC http server", ex);
+                    try
+                    {
+                        _StatusRequestClient.DownloadStringAsync(statusUri);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error connecting to VLC status url", ex);
+                    }
+
+                    try
+                    {
+                        _PlaylistRequestClient.DownloadStringAsync(playlistUri);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error connecting to VLC playlist url", ex);
+                    }
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(HttpRequestInterval);
             }
         }
 
-        void client_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        void statusRequestCompleted(object sender, DownloadStringCompletedEventArgs e)
         {
-
             // If playback just finished, or if there was some type of error, skip it
             if (!_MonitorPlayback || e.Cancelled || e.Error != null || string.IsNullOrEmpty(e.Result))
             {
@@ -137,11 +170,44 @@ namespace MediaBrowser.Library.Playables.VLC
             {
                 _CurrentPlayingPosition = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("time").InnerText)).Ticks;
                 _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
+            }
+        }
 
-                _CurrentPlayingFile = fileNameNode.InnerText;
+        void playlistRequestCompleted(object sender, DownloadStringCompletedEventArgs e)
+        {
+            // If playback just finished, or if there was some type of error, skip it
+            if (!_MonitorPlayback || e.Cancelled || e.Error != null || string.IsNullOrEmpty(e.Result))
+            {
+                return;
+            }
+
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(e.Result);
+            XmlElement docElement = doc.DocumentElement;
+
+            XmlNode leafNode = docElement.SelectSingleNode("node/leaf[@current='current']");
+
+            if (leafNode != null)
+            {
+                _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(leafNode.Attributes["duration"].Value)).Ticks;
+
+                _CurrrentPlayingFileIndex = IndexOfNode(leafNode.ParentNode.ChildNodes, leafNode);
 
                 OnProgress(GetPlaybackState());
             }
+        }
+
+        private int IndexOfNode(XmlNodeList nodes, XmlNode node)
+        {
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (nodes[i] == node)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         protected override void OnExternalPlayerClosed()
@@ -149,14 +215,9 @@ namespace MediaBrowser.Library.Playables.VLC
             // Stop sending requests to VLC's http interface
             _MonitorPlayback = false;
 
-            if (_WebClient.IsBusy)
-            {
-                _WebClient.CancelAsync();
-            }
-
-            // Cleanup WebClient resources
-            _WebClient.DownloadStringCompleted -= client_DownloadStringCompleted;
-            _WebClient.Dispose();
+            // Cleanup events
+            _PlaylistRequestClient.DownloadStringCompleted -= playlistRequestCompleted;
+            _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
 
             base.OnExternalPlayerClosed();
         }
@@ -174,55 +235,41 @@ namespace MediaBrowser.Library.Playables.VLC
             {
                 state.Item = playable;
 
+                state.CurrentFileIndex = _CurrrentPlayingFileIndex;
+
                 if (playable.HasMediaItems)
                 {
-                    SetMediaEventPropertiesBasedOnCurrentFile(playable, state);
-                }
-
-                else
-                {
-                    state.FilePlaylistPosition = GetPlaylistIndex(playable.Files, _CurrentPlayingFile);
+                    SetMediaEventPropertiesBasedOnCurrentFileIndex(playable, state);
                 }
             }
 
             return state;
         }
 
-        private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
+        private void SetMediaEventPropertiesBasedOnCurrentFileIndex(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            for (int i = 0; i < playable.MediaItems.Count(); i++)
+            int mediaIndex = -1;
+
+            if (_CurrrentPlayingFileIndex != -1)
             {
-                Media media = playable.MediaItems.ElementAt(i);
+                int totalFileCount = 0;
+                int numMediaItems = playable.MediaItems.Count();
 
-                IEnumerable<string> files = GetPlayableFiles(media);
-
-                int index = GetPlaylistIndex(files, _CurrentPlayingFile);
-
-                if (index != -1)
+                for (int i = 0; i < numMediaItems; i++)
                 {
-                    state.CurrentMediaIndex = i;
-                    state.FilePlaylistPosition = playable.Files.ToList().IndexOf(files.ElementAt(index));                   
-                    break;
-                }
-            }
-        }
+                    int numFiles = playable.MediaItems.ElementAt(i).Files.Count();
 
-        private int GetPlaylistIndex(IEnumerable<string> files, string currentPlayingFile)
-        {
-            int count = files.Count();
+                    if (totalFileCount + numFiles > _CurrrentPlayingFileIndex)
+                    {
+                        mediaIndex = i;
+                        break;
+                    }
 
-            // Get the playlist position by matching the filename that VLC reported with the original
-            for (int i = 0; i < count; i++)
-            {
-                string file = files.ElementAt(i);
-
-                if (file.EndsWith(_CurrentPlayingFile))
-                {
-                    return i;
+                    totalFileCount += numFiles;
                 }
             }
 
-            return -1;
+            state.CurrentMediaIndex = mediaIndex;
         }
 
         /// <summary>
@@ -256,6 +303,57 @@ namespace MediaBrowser.Library.Playables.VLC
             {
                 return "http://" + VlcHttpServer + ":" + VlcHttpPort + "/requests/status.xml";
             }
+        }
+
+        /// <summary>
+        /// Gets the url of VLC's xml status file
+        /// </summary>
+        private string VlcPlaylistXmlUrl
+        {
+            get
+            {
+                return "http://" + VlcHttpServer + ":" + VlcHttpPort + "/requests/playlist.xml";
+            }
+        }
+
+        /// <summary>
+        /// Takes a Media object and returns the list of files that will be sent to the player
+        /// </summary>
+        internal override IEnumerable<string> GetPlayableFiles(Media media)
+        {
+            IEnumerable<string> files = base.GetPlayableFiles(media);
+
+            Video video = media as Video;
+
+            // Prefix dvd's with dvd://
+            if (video != null && video.MediaType == Library.MediaType.DVD)
+            {
+                files = files.Select(i => GetDVDPath(i));
+            }
+
+            return files;
+        }
+
+        /// <summary>
+        /// Takes a path to a DVD folder and returns the path to send to the player
+        /// </summary>
+        private string GetDVDPath(string path)
+        {
+            if (path.StartsWith("\\\\"))
+            {
+                path = path.Substring(2);
+            }
+
+            path = path.Replace("\\", "/").TrimEnd('/');
+
+            return "dvd:///" + path;
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            _IsDisposing = isDisposing;
+
+            base.Dispose(isDisposing);
         }
     }
 }

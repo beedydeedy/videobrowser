@@ -1649,6 +1649,7 @@ namespace MediaBrowser
         {
             try
             {
+                Logger.ReportVerbose("Mounting ISO: " + path);
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.
@@ -1671,7 +1672,14 @@ namespace MediaBrowser
                 process.WaitForExit();
 
                 // Play the DVD video that was mounted.
-                return Config.Instance.DaemonToolsDrive + ":\\";
+                string mountedPath = Config.Instance.DaemonToolsDrive + ":\\";
+
+                while (!Directory.Exists(mountedPath))
+                {
+                    System.Threading.Thread.Sleep(1000);
+                }
+
+                return mountedPath;
             }
             catch (Exception)
             {
@@ -1685,6 +1693,7 @@ namespace MediaBrowser
         {
             try
             {
+                Logger.ReportVerbose("Unmounting ISO");
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.

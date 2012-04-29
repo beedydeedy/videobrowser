@@ -34,7 +34,7 @@ namespace MediaBrowser.Library.Playables
 
         internal void OnProgress(BasePlaybackController controller, PlaybackStateEventArgs args)
         {
-            CurrentFilePlaylistPosition = args.FilePlaylistPosition;
+            CurrentFileIndex = args.CurrentFileIndex;
             CurrentMediaIndex = args.CurrentMediaIndex;
 
             SaveProgressIntoPlaystates(controller, args);
@@ -239,7 +239,7 @@ namespace MediaBrowser.Library.Playables
         {
             get
             {
-                return MediaItems.ElementAt(CurrentMediaIndex);
+                return MediaItems.ElementAtOrDefault(CurrentMediaIndex);
             }
         }
 
@@ -247,7 +247,7 @@ namespace MediaBrowser.Library.Playables
         /// Gets or sets the overall playlist position of the current playing file.
         /// That is, with respect to all files from all Media items
         /// </summary>
-        public int CurrentFilePlaylistPosition { get; private set; }
+        public int CurrentFileIndex { get; private set; }
 
         /// <summary>
         /// Gets the current file being played
@@ -256,7 +256,7 @@ namespace MediaBrowser.Library.Playables
         {
             get
             {
-                return Files.ElementAt(CurrentFilePlaylistPosition);
+                return Files.ElementAtOrDefault(CurrentFileIndex);
             }
         }
 

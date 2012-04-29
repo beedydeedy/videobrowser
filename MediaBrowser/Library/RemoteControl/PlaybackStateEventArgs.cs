@@ -17,7 +17,7 @@ namespace MediaBrowser.Library.RemoteControl
         /// Gets or sets the overall playlist position of the current playing file.
         /// That is, with respect to all files from all Media items
         /// </summary>
-        public int FilePlaylistPosition { get; set; }
+        public int CurrentFileIndex { get; set; }
 
         /// <summary>
         /// Gets or sets the position of the player, in Ticks

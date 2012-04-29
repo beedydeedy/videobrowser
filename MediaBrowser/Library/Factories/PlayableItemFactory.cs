@@ -7,6 +7,7 @@ using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.Playables.MpcHc;
 using MediaBrowser.Library.Playables.TMT;
 using MediaBrowser.Library.Playables.VLC;
+using MediaBrowser.Library.Persistance;
 
 namespace MediaBrowser.Library.Factories
 {
@@ -99,7 +100,7 @@ namespace MediaBrowser.Library.Factories
             
             if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(GetAllKnownPlayables(), video))
             {
-                MountAndUpdateMediaPath(video);
+                media = MountAndGetNewMedia(video);
                 unmountISOAfterPlayback = true;
             }
 
@@ -214,13 +215,19 @@ namespace MediaBrowser.Library.Factories
         /// <summary>
         /// Mounts an iso based Video and updates it's path
         /// </summary>
-        private void MountAndUpdateMediaPath(Video video)
+        private Media MountAndGetNewMedia(Video video)
         {
             string mountedPath = Application.CurrentInstance.MountISO(video.IsoFiles.First());
-            video.Path = mountedPath;
 
-            video.MediaType = MediaTypeResolver.DetermineType(mountedPath);
-            video.DisplayMediaType = video.MediaType.ToString();
+            // Clone it so we can modify some of it's properties
+            Video clone = Serializer.Clone<Video>(video);
+
+            clone.Path = mountedPath;
+
+            clone.MediaType = MediaTypeResolver.DetermineType(mountedPath);
+            clone.DisplayMediaType = clone.MediaType.ToString();
+
+            return clone;
         }
     }
 }

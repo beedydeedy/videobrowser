@@ -43,15 +43,15 @@ namespace MediaBrowser.Library.Playables.MpcHc
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            PlayableItem playItem = GetCurrentPlayableItem();
+            PlayableItem playable = GetCurrentPlayableItem();
 
-            if (playItem != null)
+            if (playable != null)
             {
                 NameValueCollection values = GetMPCHCSettings();
 
-                PlaybackStateEventArgs state = GetPlaybackState(values, playItem.Files);
+                PlaybackStateEventArgs state = GetPlaybackState(values, playable);
 
-                state.Item = playItem;
+                state.Item = playable;
 
                 return state;
             }
@@ -96,15 +96,64 @@ namespace MediaBrowser.Library.Playables.MpcHc
         /// <summary>
         /// Looks through ini file values to find playstate for a given collection of files
         /// </summary>
-        private PlaybackStateEventArgs GetPlaybackState(NameValueCollection values, IEnumerable<string> files)
+        private PlaybackStateEventArgs GetPlaybackState(NameValueCollection values, PlayableItem playable)
+        {
+            return playable.HasMediaItems ? GetPlaybackStateBasedOnMediaItems(values, playable) : GetPlaybackStateBasedOnFiles(values, playable);
+        }
+
+        /// <summary>
+        /// Looks through ini file values to find playstate for a given collection of files
+        /// </summary>
+        private PlaybackStateEventArgs GetPlaybackStateBasedOnMediaItems(NameValueCollection values, PlayableItem playable)
         {
             PlaybackStateEventArgs args = new PlaybackStateEventArgs();
 
-            for (int i = 0; i < files.Count(); i++)
-            {
-                args.FilePlaylistPosition = i;
+            int numMediaItems = playable.MediaItems.Count();
+            int totalFileCount = 0;
 
-                args.Position = GetPlaybackPosition(values, files.ElementAt(i));
+            for (int i = 0; i < numMediaItems; i++)
+            {
+                args.CurrentMediaIndex = i;
+
+                Media media = playable.MediaItems.ElementAt(i);
+
+                IEnumerable<string> files = GetPlayableFiles(media);
+
+                int numFiles = files.Count();
+
+                for (int j = 0; j < numFiles; j++)
+                {
+                    args.CurrentFileIndex = totalFileCount + j;
+
+                    args.Position = GetPlaybackPosition(values, files.ElementAt(j));
+
+                    // If file position is > 0 that means playback was stopped during this file
+                    if (args.Position > 0)
+                    {
+                        return args;
+                    }
+                }
+
+                totalFileCount += numFiles;
+            }
+
+            return args;
+        }
+
+        /// <summary>
+        /// Looks through ini file values to find playstate for a given collection of files
+        /// </summary>
+        private PlaybackStateEventArgs GetPlaybackStateBasedOnFiles(NameValueCollection values, PlayableItem playable)
+        {
+            PlaybackStateEventArgs args = new PlaybackStateEventArgs();
+
+            int numFiles = playable.Files.Count();
+
+            for (int i = 0; i < numFiles; i++)
+            {
+                args.CurrentFileIndex = i;
+
+                args.Position = GetPlaybackPosition(values, playable.Files.ElementAt(i));
 
                 // If file position is > 0 that means playback was stopped during this file
                 if (args.Position > 0)

@@ -98,7 +98,7 @@ namespace MediaBrowser.Code.ModelItems
             {
                 OnProgress(args);
             }
-            
+
             NormalizeEventProperties(args);
 
             PlayableItem playable = args.Item;
@@ -122,10 +122,12 @@ namespace MediaBrowser.Code.ModelItems
             }
 
             SetPlaybackStage(PlayableItemPlayState.PostPlayActionsComplete);
-            
+
             // Clear state
             CurrentPlayableItemId = Guid.Empty;
             CurrentPlayableItems.Clear();
+
+            Logger.ReportVerbose("All post-playback actions have completed.");
         }
 
         /// <summary>
@@ -140,7 +142,7 @@ namespace MediaBrowser.Code.ModelItems
             if (playable != null)
             {
                 // Fill this in if the subclass wasn't able to supply it
-                if (playable.HasMediaItems && args.CurrentMediaIndex == 0)
+                if (playable.HasMediaItems && args.CurrentMediaIndex == -1)
                 {
                     // If there's only one Media item, set CurrentMediaId in the args object
                     // This is just a convenience for subclasses that only support one Media at a time
@@ -234,17 +236,28 @@ namespace MediaBrowser.Code.ModelItems
 
                 if (playable.HasMediaItems)
                 {
+                    var media = playable.CurrentMedia;
+
                     // If we can pinpoint the current Media object, test that
-                    if (playable.CurrentMedia != null)
+                    if (media != null)
                     {
-                        return playable.CurrentMedia is Media;
+                        return media is Media;
                     }
 
                     // Otherwise test them all
                     return playable.MediaItems.Any(m => m is Video);
                 }
 
-                return Helper.IsVideo(playable.CurrentFile);
+                string currentFile = playable.CurrentFile;
+
+                // See if the current file is a video
+                if (!string.IsNullOrEmpty(currentFile))
+                {
+                    return Helper.IsVideo(currentFile);                     
+                }
+
+                // If we can't determine the current file, test them all
+                return playable.Files.Any(f => Helper.IsVideo(f));
             }
         }
 
@@ -377,7 +390,7 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            string currentFile = state.Item.Files.ElementAt(state.FilePlaylistPosition);
+            string currentFile = state.Item.Files.ElementAt(state.CurrentFileIndex);
 
             int numMediaItems = playable.MediaItems.Count();
 
@@ -410,8 +423,6 @@ namespace MediaBrowser.Code.ModelItems
                 // Only do this once
                 runKernelPostPlay = false;
             }
-
-            Logger.ReportVerbose("All post-playback actions have completed.");
         }
 
         /// <summary>

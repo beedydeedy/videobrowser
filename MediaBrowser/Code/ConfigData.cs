@@ -612,7 +612,9 @@ namespace MediaBrowser
                 }
             }
 
-            return CanPlay(player, types, formats, mediaList.Count() > 1);
+            bool isMultiFile = mediaList.Count() == 1 ? (mediaList.First().Files.Count() > 1) : (mediaList.Count() > 1);
+
+            return CanPlay(player, types, formats, isMultiFile);
         }
 
         /// <summary>

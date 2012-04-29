@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
@@ -74,7 +75,14 @@ namespace MediaBrowser.Code.ModelItems
             // Need to create a playlist
             if (RequiresWPL(playable))
             {
-                string file = CreateWPLPlaylist(playable.Id.ToString(), playable.Files);
+                IEnumerable<string> files = playable.Files;
+
+                if (playable.Resume)
+                {
+                    files = files.Skip(playable.MediaItems.First().PlaybackStatus.PlaylistPosition);
+                }
+
+                string file = CreateWPLPlaylist(playable.Id.ToString(), files);
                 Microsoft.MediaCenter.MediaType type = Helper.IsVideo(playable.Files.First()) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
                 CallPlayMedia(type, file, false);
             }
@@ -181,27 +189,71 @@ namespace MediaBrowser.Code.ModelItems
         {
             string metadataTitle = GetTitleOfCurrentlyPlayingMedia(metadata);
 
-            filePlaylistPosition = 0;
-            currentMediaIndex = 0;
+            filePlaylistPosition = -1;
+            currentMediaIndex = -1;
 
             metadataTitle = metadataTitle.ToLower();
 
+            // Loop through each PlayableItem and try to find a match
             foreach (PlayableItem playable in CurrentPlayableItems)
             {
-                for (int i = 0; i < playable.Files.Count(); i++)
+                if (playable.HasMediaItems)
                 {
-                    string file = playable.Files.ElementAt(i).ToLower();
-                    string normalized = file.Replace('\\', '/');
+                    // The PlayableItem has Media items, so loop through each one and look for a match
 
-                    if (metadataTitle.EndsWith(normalized) || metadataTitle == Path.GetFileNameWithoutExtension(file))
+                    int totalFileCount = 0;
+                    int numMediaItems = playable.MediaItems.Count();
+
+                    for (int i = 0; i < numMediaItems; i++)
                     {
-                        filePlaylistPosition = i;
+                        Media media = playable.MediaItems.ElementAt(i);
+
+                        IEnumerable<string> files = GetPlayableFiles(media);
+
+                        int index = GetPlaylistIndex(files, metadataTitle);
+
+                        if (index != -1)
+                        {
+                            filePlaylistPosition = index + totalFileCount;
+                            currentMediaIndex = i;
+                            return playable;
+                        }
+
+                        totalFileCount += files.Count();
+                    }
+                }
+                else
+                {
+                    // There are no Media items so just find the index using the Files property
+                    int index = GetPlaylistIndex(playable.Files, metadataTitle);
+
+                    if (index != -1)
+                    {
+                        filePlaylistPosition = index;
                         return playable;
                     }
                 }
             }
 
             return null;
+        }
+
+        private int GetPlaylistIndex(IEnumerable<string> files, string metadataTitle)
+        {
+            int numFiles = files.Count();
+
+            for (int i = 0; i < numFiles; i++)
+            {
+                string file = files.ElementAt(i).ToLower();
+                string normalized = file.Replace('\\', '/');
+
+                if (metadataTitle.EndsWith(normalized) || metadataTitle == Path.GetFileNameWithoutExtension(file))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private string CreateWPLPlaylist(string name, IEnumerable<string> files)
@@ -242,6 +294,24 @@ namespace MediaBrowser.Code.ModelItems
             File.WriteAllText(playListFile, @"<?wpl version=""1.0""?>" + writer.ToString());
 
             return playListFile;
+        }
+
+        public override void Seek(long position)
+        {
+            var mce = AddInHost.Current.MediaCenterEnvironment;
+            Logger.ReportVerbose("Trying to seek position :" + new TimeSpan(position).ToString());
+            WaitForStream(mce);
+            mce.MediaExperience.Transport.Position = new TimeSpan(position);
+        }
+
+        private static void WaitForStream(MediaCenterEnvironment mce)
+        {
+            int i = 0;
+            while ((i++ < 15) && (mce.MediaExperience.Transport.PlayState != Microsoft.MediaCenter.PlayState.Playing))
+            {
+                // settng the position only works once it is playing and on fast multicore machines we can get here too quick!
+                Thread.Sleep(100);
+            }
         }
     }
 }

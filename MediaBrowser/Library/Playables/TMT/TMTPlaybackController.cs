@@ -201,7 +201,7 @@ namespace MediaBrowser.Library.Playables.TMT
             return new PlaybackStateEventArgs()
             {
                 Position = TimeSpan.Parse(state["CurTime"]).Ticks,
-                FilePlaylistPosition = int.Parse(state["CurTitle"]),
+                CurrentFileIndex = 0,
                 DurationFromPlayer = TimeSpan.Parse(state["TotalTime"]).Ticks,
                 Item = GetCurrentPlayableItem()
             };

@@ -146,7 +146,7 @@ namespace MediaBrowser
             for (int mediaIndex = 0; mediaIndex < numMediaItems; mediaIndex++)
             {
                 Media media = playable.MediaItems.ElementAt(mediaIndex);
-                Logger.ReportVerbose("Queueing " + media.Name);
+                
                 IEnumerable<string> files = GetPlayableFiles(media);
 
                 int numFiles = files.Count();
@@ -278,7 +278,7 @@ namespace MediaBrowser
 
             PlaybackStateEventArgs eventArgs = new PlaybackStateEventArgs() { 
                 Position = positionTicks,
-                FilePlaylistPosition = filePlaylistPosition, 
+                CurrentFileIndex = filePlaylistPosition, 
                 DurationFromPlayer = duration,
                 Item = currentPlaybackItem,
                 CurrentMediaIndex = currentMediaIndex
@@ -307,8 +307,8 @@ namespace MediaBrowser
         /// </summary>
         protected virtual PlayableItem GetCurrentPlaybackItemFromPlayerState(MediaMetadata metadata, out int filePlaylistPosition, out int currentMediaIndex)
         {
-            filePlaylistPosition = 0;
-            currentMediaIndex = 0;
+            filePlaylistPosition = -1;
+            currentMediaIndex = -1;
 
             MediaCollectionItem activeItem = CurrentMediaCollection.Count == 0 ? null : CurrentMediaCollection[CurrentMediaCollection.CurrentIndex];
 
@@ -592,7 +592,7 @@ namespace MediaBrowser
 
             string title = metadata["Name"] as string;
 
-            if (string.IsNullOrEmpty(title))
+            if (string.IsNullOrEmpty(title) || title.ToLower().EndsWith(".wpl"))
             {
                 title = metadata["Title"] as string;
             }
@@ -723,7 +723,7 @@ namespace MediaBrowser
 
             path = path.Replace("\\", "/").TrimEnd('/');
 
-            return "DVD://" + path + "/";
+            return "DVD://" + path + "/?1";
         }
 
         protected override void Dispose(bool isDisposing)
