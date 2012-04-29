@@ -58,21 +58,23 @@ namespace MediaBrowser.Library {
 
         public int Search(string searchValue)
         {
-            return Search(searchValue, false, false, -1);
+            return Search(searchValue, false, false, -1, 1);
         }
 
-        public int Search(string searchValue, bool includeSubs, bool unwatchedOnly, int rating)
+        public int Search(string searchValue, bool includeSubs, bool unwatchedOnly, int rating, int ratingFactor)
         {
             if (searchValue == null) searchValue = "";
             //if (!string.IsNullOrEmpty(searchValue))
             {
                 IEnumerable<BaseItem> results = includeSubs ?
-                    this.folder.RecursiveChildren.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating)).ToList() :
-                    this.folder.Children.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating)).ToList();
+                    this.folder.RecursiveChildren.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList() :
+                    this.folder.Children.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList();
 
                 if (results.Count() > 0)
                 {
-                    Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(results.ToList()) { Name = this.Name + " - Search Results (" + searchValue + (unwatchedOnly ? "/unwatched":"") + (rating > 0 ? "/"+Ratings.ToString(rating) : "") + ")" }));
+                    Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(results.ToList()) 
+                        { Name = this.Name + " - Search Results (" + searchValue + (unwatchedOnly ? "/unwatched":"") 
+                            + (rating > 0 ? "/"+Ratings.ToString(rating) + (ratingFactor > 0 ? "-" : "+") : "") + ")" }));
                     return results.Count();
                 }
                 else
@@ -83,13 +85,13 @@ namespace MediaBrowser.Library {
             return 0;
         }
 
-        private bool MatchesCriteria(BaseItem item, string value, bool unwatchedOnly, int rating)
+        private bool MatchesCriteria(BaseItem item, string value, bool unwatchedOnly, int rating, int ratingFactor)
         {
             return item.Name != null &&
                 item.Name.ToLower().Contains(value) &&
                 (!unwatchedOnly ||
                 (item is Media && (item as Media).PlaybackStatus.PlayCount == 0)) &&
-                (rating < 0 || Ratings.Level(item.OfficialRating) <= rating);
+                (rating < 0 || (ratingFactor * Ratings.Level(item.OfficialRating)) <= (ratingFactor * rating));
         }
 
         public override int UnwatchedCount {
