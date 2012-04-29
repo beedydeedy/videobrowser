@@ -18,7 +18,7 @@ using MediaBrowser.Library.Configuration;
 namespace MediaBrowser.Library.Providers
 {
     [RequiresInternet]
-    [SupportedType(typeof(Movie))]
+    [SupportedType(typeof(IMovie))]
     public class MovieDbProvider : BaseMetadataProvider
     {
         private static string search3 = @"http://api.themoviedb.org/3/search/movie?api_key={1}&query={0}&language={2}";
@@ -97,7 +97,7 @@ namespace MediaBrowser.Library.Providers
 
         private void FetchMovieData()
         {
-            string id = FindId(Item.Name, ((Movie)Item).ProductionYear);
+            string id = FindId(Item.Name, ((IMovie)Item).ProductionYear);
             if (id != null)
             {
                 FetchMovieData(id);
@@ -309,7 +309,7 @@ namespace MediaBrowser.Library.Providers
         protected virtual void ProcessMainInfo(string json)
         {
             var jsonDict = Helper.ToJsonDict(json);
-            Movie movie = Item as Movie;
+            IMovie movie = Item as IMovie;
             if (jsonDict != null)
             {
 

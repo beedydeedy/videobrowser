@@ -324,7 +324,8 @@ namespace MediaBrowser.Library {
                 new VodCastResolver(),
                 new EpisodeResolver(), 
                 new SeasonResolver(), 
-                new SeriesResolver(), 
+                new SeriesResolver(),
+                new BoxSetResolver(),
                 new MovieResolver(
                         config.EnableMoviePlaylists?config.PlaylistLimit:1, 
                         config.EnableNestedMovieFolders, 

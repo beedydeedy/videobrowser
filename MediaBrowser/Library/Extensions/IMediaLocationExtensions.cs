@@ -55,6 +55,17 @@ namespace MediaBrowser.Library.Extensions {
             return false;
         }
 
+        public static bool IsBoxSetFolder(this IMediaLocation location)
+        {
+            IFolderMediaLocation folder = location as IFolderMediaLocation;
+            if (folder != null)
+            {
+                int start = location.Path.TrimEnd('\\').LastIndexOf('\\');
+                return location.Path.Substring(start).ToLower().Contains("[boxset]");
+            }
+            return false;
+        }
+
         public static MediaType GetVideoMediaType(this IMediaLocation location)
         {
             return MediaTypeResolver.DetermineType(location.Path);

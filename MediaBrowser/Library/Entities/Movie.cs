@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using MediaBrowser.Library.Persistance;
 using MediaBrowser.Library.EntityDiscovery;
 using MediaBrowser.Library.Filesystem;
-using MediaBrowser.Library.Interfaces;
-using MediaBrowser.Library.Persistance;
 
 namespace MediaBrowser.Library.Entities {
-    public class Movie : Show, ISupportsTrailers {
+    public class Movie : Show, IMovie {
 
         [Persist]
         public string TrailerPath {get; set;}

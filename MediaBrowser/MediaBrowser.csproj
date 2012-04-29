@@ -113,9 +113,12 @@
     <Compile Include="Library\Events\GenericEventArgs.cs" />
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
     <Compile Include="Library\Configuration\ApplicationPaths.cs" />
+    <Compile Include="Library\Entities\BoxSet.cs" />
     <Compile Include="Library\Entities\GenericItem.cs" />
     <Compile Include="Library\Entities\IContainer.cs" />
     <Compile Include="Library\Entities\IGroupInIndex.cs" />
+    <Compile Include="Library\Entities\IMovie.cs" />
+    <Compile Include="Library\EntityDiscovery\BoxSetResolver.cs" />
     <Compile Include="Library\Extensions\DictionaryExtensions.cs" />
     <Compile Include="Library\Factories\Kernel.cs" />
     <Compile Include="Library\Filesystem\AttributedContents.cs" />
