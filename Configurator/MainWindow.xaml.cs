@@ -498,7 +498,7 @@ namespace Configurator
             cbxOptionHideProtected.IsChecked = config.HideParentalDisAllowed;
             cbxOptionAutoUnlock.IsChecked = config.UnlockOnPinEntry;
             gbPCGeneral.IsEnabled = gbPCPIN.IsEnabled = gbPCFolderSecurity.IsEnabled = config.ParentalControlEnabled;
-            ddlOptionMaxAllowedRating.SelectedItem = ratings.ToString(config.MaxParentalLevel);
+            ddlOptionMaxAllowedRating.SelectedItem = Ratings.ToString(config.MaxParentalLevel);
             slUnlockPeriod.Value = config.ParentalUnlockPeriod;
             txtPCPIN.Password = config.ParentalPIN;
 
