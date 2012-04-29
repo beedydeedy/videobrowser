@@ -24,6 +24,8 @@ namespace MediaBrowser.Library
 
         public void Initialize(bool blockUnrated)
         {
+            ratings.Clear();
+            ratingsStrings.Clear();
             // construct ratings dict
             if (blockUnrated)
             {
