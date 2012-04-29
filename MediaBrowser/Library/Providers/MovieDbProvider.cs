@@ -160,7 +160,7 @@ namespace MediaBrowser.Library.Providers
             return id;
         }
 
-        public string AttemptFindId(string name, int? year, string language)
+        public virtual string AttemptFindId(string name, int? year, string language)
         {
             //if id is specified in the file name return it directly
             string id = Helper.GetAttributeFromPath(Item.Path, "tmdbid");
