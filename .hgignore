@@ -26,3 +26,4 @@ glob:DiamondTheme/_ReSharper.Diamond/*
 syntax: glob
 MediaBrowser/ClassDiagram1.cd
 MediaBrowser/ClassDiagram3.cd
+Configurator/Configurator.jtconfig
