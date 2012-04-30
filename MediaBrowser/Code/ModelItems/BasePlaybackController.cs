@@ -93,19 +93,13 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
-            // If there's still a valid position, fire progress one last time
-            if (args.Position > 0)
-            {
-                OnProgress(args);
-            }
-
             NormalizeEventProperties(args);
 
             PlayableItem playable = args.Item;
 
             if (playable != null)
             {
-                playable.PlaybackStoppedByUser = args.StoppedByUser;
+                playable.OnPlaybackFinished(this, args);
             }
 
             // Show or hide the resume button depending on playstate
@@ -414,14 +408,9 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void RunPostPlayProcesses()
         {
-            bool runKernelPostPlay = CurrentPlayableItems.Any(p => p.RaiseGlobalPlaybackEvents);
-
-            foreach (PlayableItem playable in CurrentPlayableItems)
+            if (CurrentPlayableItems.Any(p => p.RaiseGlobalPlaybackEvents))
             {
-                Application.CurrentInstance.RunPostPlayProcesses(playable, runKernelPostPlay);
-
-                // Only do this once
-                runKernelPostPlay = false;
+                Application.CurrentInstance.RunPostPlayProcesses();
             }
         }
 
@@ -431,18 +420,10 @@ namespace MediaBrowser.Code.ModelItems
         private void UpdateResumeStatusInUI()
         {
             Item item = Application.CurrentInstance.CurrentItem;
-            Guid currentMediaId = item.BaseItem.Id;
-
-            foreach (PlayableItem playable in CurrentPlayableItems)
+            
+            if (item.BaseItem.IsPlayable)
             {
-                foreach (Media media in playable.MediaItems)
-                {
-                    if (media.Id == currentMediaId)
-                    {
-                        item.UpdateResume();
-                        return;
-                    }
-                }
+                item.UpdateResume();
             }
         }
 

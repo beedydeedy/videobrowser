@@ -69,13 +69,12 @@ namespace MediaBrowser.Library.Playables
         {
             if (PlayState == PlayableItemPlayState.Stopped)
             {
-                MarkWatchedIfNeeded();
-            }
+                Application.CurrentInstance.RunPostPlayProcesses(this);
 
-            // Postplay housekeeping
-            else if (PlayState == PlayableItemPlayState.PostPlayActionsComplete && UnmountISOAfterPlayback)
-            {
-                Application.CurrentInstance.UnmountIso();
+                if (UnmountISOAfterPlayback)
+                {
+                    Application.CurrentInstance.UnmountIso();
+                }
             }
 
             if (_PlayStateChanged != null)
@@ -84,6 +83,20 @@ namespace MediaBrowser.Library.Playables
             }
         }
         #endregion
+
+        internal void OnPlaybackFinished(BasePlaybackController controller, PlaybackStateEventArgs args)
+        {
+            // If there's still a valid position, fire progress one last time
+            if (args.Position > 0)
+            {
+                OnProgress(controller, args);
+            }
+
+            PlaybackStoppedByUser = args.StoppedByUser;
+            MarkWatchedIfNeeded();
+
+            PlayState = PlayableItemPlayState.Stopped;
+        }
 
         private Guid _Id = Guid.NewGuid();
         /// <summary>
@@ -220,7 +233,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Once playback is complete this value will indicate if the player was allowed to finish or if it was explicitly stopped by the user
         /// </summary>
-        public bool PlaybackStoppedByUser { get; internal set; }
+        public bool PlaybackStoppedByUser { get; private set; }
 
         /// <summary>
         /// Helper to determine if this Playable has MediaItems or if it is based on file paths

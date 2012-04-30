@@ -1491,7 +1491,7 @@ namespace MediaBrowser
         /// Used this to notify the core that playback has ceased.
         /// Ideally, only PlayableItem should need to call this.
         /// </summary>
-        public void RunPostPlayProcesses(PlayableItem playableItem, bool runKernelPostPlayProcesses)
+        public void RunPostPlayProcesses(PlayableItem playableItem)
         {
             // Loop through the items that were sent to the player
             foreach (Media media in playableItem.PlayedMediaItems)
@@ -1504,19 +1504,22 @@ namespace MediaBrowser
                 this.lastPlayed = item;
             }
 
-            if (runKernelPostPlayProcesses)
-            {
-                Logger.ReportVerbose("Running Kernel post-play processes");
-                
-                foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
-                {
-                    process();
-                }
-            }
-
             Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
 
             OnPlaybackFinished(playableItem);
+        }
+
+        /// <summary>
+        /// Runs the kernel's post play processes
+        /// </summary>
+        public void RunPostPlayProcesses()
+        {
+            Logger.ReportVerbose("Running Kernel post-play processes");
+
+            foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+            {
+                process();
+            }
         }
 
         public void UnlockPC()
