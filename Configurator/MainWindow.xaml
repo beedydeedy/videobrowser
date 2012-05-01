@@ -525,6 +525,8 @@
                                 <Label Content="Metadata Language" Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="13,-3,0,0" Name="label22" VerticalAlignment="Top" />
                                 <ComboBox Grid.Column="1" Height="23" HorizontalAlignment="Right" Margin="0,23,324,0" Name="ddlMetadataCountry" VerticalAlignment="Top" Width="100" ToolTip="This will determine the release date and certification ratings" SelectionChanged="ddlMetadataCountry_SelectionChanged" />
                                 <Label Content="Release Country Code" Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="249,-3,0,0" Name="label23" VerticalAlignment="Top" />
+                                <TextBox Height="25" HorizontalAlignment="Left" HorizontalContentAlignment="Right" Margin="479,23,0,0" Name="tbxMetadataUpdateAge" LostFocus="tbxMetadataUpdateAge_LostFocus" PreviewTextInput="tbxNumericOnly_PreviewTextInput" ToolTip="Metadata will be re-fetched after this number of days until the item is 6 months old. Enter 200 if you never want to re-fetch." VerticalAlignment="Top" Width="33" Grid.Column="1" />
+                                <Label Content="Days between refreshes " Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="457,-3,0,0" Name="label27" VerticalAlignment="Top" />
                             </Grid>
                         </GroupBox>
                     </Grid>
