@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Globalization;
 using Configurator.Code;
 using MediaBrowser;
 using MediaBrowser.Library;
@@ -498,6 +500,12 @@ namespace Configurator
             //library validation
             cbxAutoValidate.IsChecked = config.AutoValidate;
 
+            //metadata
+            cbxInetProviders.IsChecked = config.AllowInternetMetadataProviders;
+            cbxSaveMetaLocally.IsChecked = config.SaveLocalMeta;
+            cbxDownloadPeople.IsChecked = config.DownloadPeopleImages;
+            cbxSaveSeasonBD.IsChecked = config.SaveSeasonBackdrops;
+            tbxMaxBackdrops.Text = config.MaxBackdrops.ToString();
         }
 
         private void SaveConfig()
@@ -520,6 +528,19 @@ namespace Configurator
             }
         }
 
+        private IEnumerable<CultureInfo> AllCultures = CultureInfo.GetCultures(CultureTypes.AllCultures & ~CultureTypes.NeutralCultures).OrderBy(c => c.Name);
+        private List<RegionInfo> AllRegions;
+        private List<Language> AllLanguages;
+        class Language
+        {
+            public string Name;
+            public string LanguageCode;
+
+            public override string ToString()
+            {
+                return Name;
+            }
+        }
         private void LoadComboBoxes()
         {
             // Themes
@@ -538,9 +559,54 @@ namespace Configurator
             // Parental Ratings
             ddlOptionMaxAllowedRating.ItemsSource = ratings.ToString();
             ddlFolderRating.ItemsSource = ratings.ToString();
+            //meta
+            AllLanguages = GetLanguages(CultureInfo.GetCultures(CultureTypes.NeutralCultures));
+            ddlMetadataLanguage.ItemsSource = AllLanguages;
+            AllRegions = GetRegions(AllCultures);
+            ddlMetadataCountry.ItemsSource = AllRegions;
+            ddlMetadataLanguage.SelectedItem = AllLanguages.FirstOrDefault(c => c.LanguageCode == config.PreferredMetaDataLanguage);
+            ddlMetadataCountry.SelectedItem = AllRegions.FirstOrDefault(r => r.TwoLetterISORegionName == config.MetadataCountryCode);
+            ddlPosterSize.ItemsSource = new List<string>() { "w500", "w342", "w185", "original" };
+            ddlPosterSize.SelectedItem = config.FetchedPosterSize;
+            ddlBackdropSize.ItemsSource = new List<string>() { "w1280", "w780", "original" };
+            ddlBackdropSize.SelectedItem = config.FetchedBackdropSize;
+            ddlPersonImageSize.ItemsSource = new List<string>() { "w185", "w45", "h632", "original" };
+            ddlPersonImageSize.SelectedItem = config.FetchedProfileSize;
+
 
             ddlLoglevel.ItemsSource = Enum.GetValues(typeof(LogSeverity));
 
+        }
+
+        private List<RegionInfo> GetRegions(IEnumerable<CultureInfo> cultures)
+        {
+            List<RegionInfo> regions = new List<RegionInfo>();
+            foreach (var culture in cultures)
+            {
+                try
+                {
+                    RegionInfo region = new RegionInfo(culture.LCID);
+                    if (!regions.Contains(region))
+                    {
+                        regions.Add(region);
+                    }
+                }
+                catch { } //some don't have regions
+            }
+            return regions.OrderBy(i => i.Name).ToList();
+        }
+
+        private List<Language> GetLanguages(IEnumerable<CultureInfo> cultures)
+        {
+            List<Language> languages = new List<Language>();
+            foreach (var culture in cultures)
+            {
+                
+                {
+                    languages.Add(new Language() {Name = culture.DisplayName, LanguageCode = culture.TwoLetterISOLanguageName});
+                }
+            }
+            return languages;
         }
         #endregion
 
@@ -1417,6 +1483,31 @@ sortorder: {2}
             SaveConfig();
         }
 
+        private void cbxInetProviders_Checked(object sender, RoutedEventArgs e)
+        {
+            config.AllowInternetMetadataProviders = gbTmdb.IsEnabled = cbxInetProviders.IsChecked.Value;
+            config.Save();
+
+        }
+
+        private void cbxSaveMetaLocally_Checked(object sender, RoutedEventArgs e)
+        {
+            config.SaveLocalMeta = gbSaveMeta.IsEnabled = cbxSaveMetaLocally.IsChecked.Value;
+            config.Save();
+        }
+
+        private void cbxDownloadPeople_Checked(object sender, RoutedEventArgs e)
+        {
+            config.DownloadPeopleImages = cbxDownloadPeople.IsChecked.Value;
+            config.Save();
+        }
+
+        private void cbxSaveSeasonBD_Checked(object sender, RoutedEventArgs e)
+        {
+            config.SaveSeasonBackdrops = cbxSaveSeasonBD.IsChecked.Value;
+            config.Save();
+        }
+
 
 
         #endregion
@@ -1510,13 +1601,13 @@ sortorder: {2}
         {
             SetHeader(hdrBasic);
             cacheTab.Visibility = externalPlayersTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = helpTab.Visibility = Visibility.Collapsed;
-            mediacollectionTab.Visibility = podcastsTab.Visibility = displayTab.Visibility = plugins.Visibility = Visibility.Visible;
+            mediacollectionTab.Visibility = podcastsTab.Visibility = displayTab.Visibility = plugins.Visibility = metadataTab.Visibility = Visibility.Visible;
         }
 
         private void hdrAdvanced_MouseDown(object sender, MouseButtonEventArgs e)
         {
             SetHeader(hdrAdvanced);
-            externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = Visibility.Visible;
+            externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = metadataTab.Visibility = parentalControlTab.Visibility = Visibility.Visible;
             mediacollectionTab.Visibility = podcastsTab.Visibility = plugins.Visibility = Visibility.Visible;
             helpTab.Visibility = Visibility.Collapsed;
         }
@@ -2187,6 +2278,50 @@ sortorder: {2}
                 currentConfigMember.Value = tbxString.Text =  dlg.SelectedFolder;
             }
 
+        }
+
+        private void tbxMaxBackdrops_LostFocus(object sender, RoutedEventArgs e)
+        {
+            config.MaxBackdrops = Convert.ToInt32(tbxMaxBackdrops.Text);
+            config.Save();
+        }
+
+        private void ddlMetadataLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var language = ddlMetadataLanguage.SelectedItem as Language;
+            if (language != null)
+            {
+                config.PreferredMetaDataLanguage = language.LanguageCode;
+                config.Save();
+            }
+        }
+
+        private void ddlMetadataCountry_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var country = ddlMetadataCountry.SelectedItem as RegionInfo;
+            if (country != null)
+            {
+                config.MetadataCountryCode = country.TwoLetterISORegionName;
+                config.Save();
+            }
+        }
+
+        private void ddlPosterSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedPosterSize = ddlPosterSize.SelectedItem.ToString();
+            config.Save();
+        }
+
+        private void ddlBackdropSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedBackdropSize = ddlBackdropSize.SelectedItem.ToString();
+            config.Save();
+        }
+
+        private void ddlPersonImageSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedProfileSize = ddlPersonImageSize.SelectedItem.ToString();
+            config.Save();
         }
 
 
