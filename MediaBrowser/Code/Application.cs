@@ -885,6 +885,9 @@ namespace MediaBrowser
                 case "2.5.3.0":
                 case "2.6.0.0":
                     Config.EnableNestedMovieFolders = false;  //turn this off - it is what causes all the "small library" issues
+                    Kernel.Instance.ConfigData.FetchedPosterSize = "w500"; //reset to new api
+                    Kernel.Instance.ConfigData.FetchedBackdropSize = "w1280"; //reset to new api
+                    Kernel.Instance.ConfigData.Save();
                     if (oldVersion <= new System.Version(2, 3, 0, 0))
                     {
                         MigratePluginSource(); //still may need to do this (if we came from earlier version than 2.3
