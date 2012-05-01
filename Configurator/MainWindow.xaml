@@ -486,6 +486,49 @@
                         </Grid>
                     </Grid>
                 </TabItem>
+                <TabItem Header="metadata" Name="metadataTab" FontSize="14">
+                    <Grid>
+                        <TextBlock Height="27" HorizontalAlignment="Left" Margin="23,17,0,0" Name="textBlock2" Text="These options govern how the internal metadata fetchers behave" VerticalAlignment="Top" Width="491" />
+                        <CheckBox Content="Allow Internet Providers" Height="25" HorizontalAlignment="Left" Margin="43,51,0,0" Name="cbxInetProviders" VerticalAlignment="Top" Width="189" ToolTip="This must be enabled for the internal fetchers to operate" Checked="cbxInetProviders_Checked" Unchecked="cbxInetProviders_Checked" />
+                        <GroupBox Height="296" HorizontalAlignment="Left" Margin="23,73,0,0" Name="gbTmdb" VerticalAlignment="Top" Width="705">
+                            <GroupBox.BorderBrush>
+                                <SolidColorBrush />
+                            </GroupBox.BorderBrush>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="693*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Content="Save Locally" Height="25" Name="cbxSaveMetaLocally" ToolTip="Enabling this will speed up refreshes and reduce the load on your bandwidth.  HIGHLY recommended." Width="189" Margin="14,57,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Column="1" Checked="cbxSaveMetaLocally_Checked" Unchecked="cbxSaveMetaLocally_Checked" />
+                                <Label Content="Will save meta and images in the same folder as the video " Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="249,52,0,0" Name="label17" VerticalAlignment="Top" Width="423" />
+                                <GroupBox Grid.Column="1" Height="214" HorizontalAlignment="Left" Margin="6,72,0,0" Name="gbSaveMeta" VerticalAlignment="Top" Width="687">
+                                    <GroupBox.BorderBrush>
+                                        <SolidColorBrush />
+                                    </GroupBox.BorderBrush>
+                                    <Grid Grid.ColumnSpan="2" Margin="2,2,2,6" Width="673" Grid.Column="1" Height="184">
+                                        <CheckBox Content="Download People Images" Height="25" HorizontalAlignment="Left" Margin="24,2,0,0" Name="cbxDownloadPeople" ToolTip="This will download actor and director images from tmdb to your IBN folders" VerticalAlignment="Top" Width="189" Checked="cbxDownloadPeople_Checked" Unchecked="cbxDownloadPeople_Checked" />
+                                        <Label Content="Will download actor/director images to IBN" Height="28" HorizontalAlignment="Left" Margin="236,-3,0,0" Name="label18" VerticalAlignment="Top" Width="423" />
+                                        <CheckBox Content="Save TV Season Backdrops" Height="25" HorizontalAlignment="Left" Margin="24,25,0,0" Name="cbxSaveSeasonBD" ToolTip="This isn't really necessary since backdrops will be inherited from the Series" VerticalAlignment="Top" Width="189" Checked="cbxSaveSeasonBD_Checked" />
+                                        <Label Content="Will download and save separate backdrops for seasons if available" Height="28" HorizontalAlignment="Left" Margin="236,20,0,0" Name="label19" VerticalAlignment="Top" Width="423" />
+                                        <TextBox HorizontalAlignment="Left" HorizontalContentAlignment="Right" Margin="30,74,0,0" Name="tbxMaxBackdrops" PreviewTextInput="tbxNumericOnly_PreviewTextInput" LostFocus="tbxMaxBackdrops_LostFocus" ToolTip="Most themes support multiple rotating backdrops but limiting the number downloaded can help save space and increase performance." Width="33" Height="25" VerticalAlignment="Top" />
+                                        <Label Content="Backdrops to Download" Height="28" HorizontalAlignment="Left" Margin="20,43,0,0" Name="label20" VerticalAlignment="Top" />
+                                        <Label Content="The maximum number of backdrops to download" Height="28" HorizontalAlignment="Left" Margin="236,41,0,0" Name="label21" VerticalAlignment="Top" Width="423" />
+                                        <Label Content="Backdrop Size" Height="28" HorizontalAlignment="Left" Margin="235,108,0,0" Name="label24" VerticalAlignment="Top" Width="145" />
+                                        <ComboBox Height="23" HorizontalAlignment="Left" Margin="245,134,0,0" Name="ddlBackdropSize" VerticalAlignment="Top" Width="139" ToolTip="The size of backdrops to download from tmdb" SelectionChanged="ddlBackdropSize_SelectionChanged" />
+                                        <Label Content="Person Image Size" Height="28" HorizontalAlignment="Left" Margin="455,108,0,0" Name="label25" VerticalAlignment="Top" Width="145" ToolTip="The size of the person image to download from tmdb" />
+                                        <ComboBox Height="23" HorizontalAlignment="Left" Margin="465,134,0,0" Name="ddlPersonImageSize" ToolTip="The size of person images to download from tmdb" VerticalAlignment="Top" Width="139" SelectionChanged="ddlPersonImageSize_SelectionChanged" />
+                                        <Label Content="Poster Size" Height="28" HorizontalAlignment="Left" Margin="20,108,0,0" Name="label26" VerticalAlignment="Top" Width="145" />
+                                        <ComboBox Height="23" HorizontalAlignment="Left" Margin="30,134,0,0" Name="ddlPosterSize" ToolTip="The size of posters to download from tmdb" VerticalAlignment="Top" Width="139" SelectionChanged="ddlPosterSize_SelectionChanged" />
+                                    </Grid>
+                                </GroupBox>
+                                <ComboBox Grid.Column="1" Height="23" HorizontalAlignment="Left" Margin="38,23,0,0" Name="ddlMetadataLanguage" VerticalAlignment="Top" Width="100" SelectionChanged="ddlMetadataLanguage_SelectionChanged" ToolTip="The fetcher will attempt to retrieve metadata in this language but not all languages will have data" />
+                                <Label Content="Metadata Language" Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="13,-3,0,0" Name="label22" VerticalAlignment="Top" />
+                                <ComboBox Grid.Column="1" Height="23" HorizontalAlignment="Right" Margin="0,23,324,0" Name="ddlMetadataCountry" VerticalAlignment="Top" Width="100" ToolTip="This will determine the release date and certification ratings" SelectionChanged="ddlMetadataCountry_SelectionChanged" />
+                                <Label Content="Release Country Code" Grid.Column="1" Height="28" HorizontalAlignment="Left" Margin="249,-3,0,0" Name="label23" VerticalAlignment="Top" />
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </TabItem>
             </TabControl>
             <TextBlock Height="25" Margin="15,54,318,0" Name="alertText" VerticalAlignment="Top" Text="Some of your plugins have updates available" FontSize="16" Foreground="MidnightBlue" FontWeight="Bold" Opacity="0" IsEnabled="False" Visibility="Hidden" />
         </Grid>
