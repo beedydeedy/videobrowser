@@ -459,7 +459,7 @@ namespace MediaBrowser.Library.Playables
             if (MediaItems.Count() > 1)
             {
                 // First filter out items that can't be queued in a playlist
-                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m));
+                _MediaItems = MediaItems.Where(m => IsPlaylistCapable(m)).ToList();
             }
 
             if (Shuffle)
