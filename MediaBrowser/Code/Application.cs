@@ -1444,22 +1444,20 @@ namespace MediaBrowser
 
         internal void PlaySecure(PlayableItem playable)
         {
-            //put this on a thread so that we can run it sychronously, but not tie up the UI
-            MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
+            currentPlaybackController = playable.PlaybackController;
+
+            playable.Play();
+
+            if (!playable.QueueItem)
             {
-                currentPlaybackController = playable.PlaybackController;
-
-                playable.Play();
-
-                if (!playable.QueueItem)
+                //async this so it doesn't slow us down if the service isn't responding for some reason
+                MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
                 {
-                    //async this so it doesn't slow us down if the service isn't responding for some reason
-                    MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
-                    {
-                        MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
-                    });
-                }
-            });
+                    MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
+                });
+            }
+
+            Logger.ReportVerbose("Playing");
         }
 
         /// <summary>
