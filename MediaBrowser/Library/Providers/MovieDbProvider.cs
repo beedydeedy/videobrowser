@@ -314,9 +314,10 @@ namespace MediaBrowser.Library.Providers
             {
 
                 movie.Name = (string)jsonDict["title"];
-                movie.Overview = ((string)jsonDict["overview"]).Replace("\n\n", "\n");
-                movie.TagLine = (string)jsonDict["tagline"].ToString();
-                movie.ImdbID = jsonDict["imdb_id"].ToString();
+                movie.Overview = (string)jsonDict["overview"];
+                movie.Overview = movie.Overview != null ? movie.Overview.Replace("\n\n", "\n") : null;
+                movie.TagLine = (string)jsonDict["tagline"];
+                movie.ImdbID = (string)jsonDict["imdb_id"];
                 float rating;
                 if (float.TryParse(jsonDict["vote_average"].ToString(), System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
                     movie.ImdbRating = rating;
