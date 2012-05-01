@@ -506,6 +506,7 @@ namespace Configurator
             cbxDownloadPeople.IsChecked = config.DownloadPeopleImages;
             cbxSaveSeasonBD.IsChecked = config.SaveSeasonBackdrops;
             tbxMaxBackdrops.Text = config.MaxBackdrops.ToString();
+            tbxMetadataUpdateAge.Text = config.MetadataCheckForUpdateAge.ToString();
         }
 
         private void SaveConfig()
@@ -2283,6 +2284,12 @@ sortorder: {2}
         private void tbxMaxBackdrops_LostFocus(object sender, RoutedEventArgs e)
         {
             config.MaxBackdrops = Convert.ToInt32(tbxMaxBackdrops.Text);
+            config.Save();
+        }
+
+        private void tbxMetadataUpdateAge_LostFocus(object sender, RoutedEventArgs e)
+        {
+            config.MetadataCheckForUpdateAge = Convert.ToInt32(tbxMetadataUpdateAge.Text);
             config.Save();
         }
 
