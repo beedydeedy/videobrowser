@@ -202,7 +202,7 @@ namespace MediaBrowser.Library.Providers
                         if (matchedName == null)
                         {
                             //that title didn't match - look for alternatives
-                            url3 = string.Format(altTitleSearch, ApiKey, id);
+                            url3 = string.Format(altTitleSearch, id, ApiKey);
                             var response = Helper.ToJsonDict(Helper.FetchJson(url3));
                             if (response != null)
                             {
@@ -466,7 +466,24 @@ namespace MediaBrowser.Library.Providers
 
         protected virtual void ProcessImages(string json)
         {
-            Dictionary<string,object> jsonDict = Helper.ToJsonDict(json);
+            if (Kernel.Instance.ConfigData.SaveLocalMeta)
+            {
+                //clear out old images
+                try
+                {
+                    File.Delete(Path.Combine(Item.Path, "folder.jpg"));
+                    File.Delete(Path.Combine(Item.Path, "folder.png"));
+                    for (int i = 0; i < Kernel.Instance.ConfigData.MaxBackdrops; i++)
+                    {
+                        File.Delete((Path.Combine(Item.Path, "backdrop" + (i > 0 ? i.ToString() : "") + ".jpg")));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("MovieDbProvider - Error trying to clear out images.", e);
+                }
+            }
+            Dictionary<string, object> jsonDict = Helper.ToJsonDict(json);
 
             if (jsonDict != null)
             {
