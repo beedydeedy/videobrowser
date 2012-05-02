@@ -386,6 +386,10 @@ namespace MediaBrowser.Library.Entities {
             // we never want 2 threads validating children at the same time
             lock (validateChildrenLock) {
                 FolderChildrenChanged = ValidateChildrenImpl();
+                if (FolderChildrenChanged)
+                {
+                    this.runtime = this.mediaCount = null;
+                }
             }
         }
 
@@ -396,9 +400,22 @@ namespace MediaBrowser.Library.Entities {
             {
                 if (runtime == null)
                 {
-                    using (new MediaBrowser.Util.Profiler(this.Name+" runtime calc")) runtime = this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                    runtime = this.RecursiveMedia.Select(m => m.RunTime).Sum();
                 }
                 return runtime == null ? 0 : runtime.Value;
+            }
+        }
+
+        protected int? mediaCount;
+        public int MediaCount
+        {
+            get
+            {
+                if (mediaCount == null)
+                {
+                    mediaCount = this.RecursiveMedia.Count();
+                }
+                return mediaCount == null ? 0 : mediaCount.Value;
             }
         }
 
