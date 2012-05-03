@@ -159,7 +159,7 @@ namespace MediaBrowser.Library.Entities {
             {
                 if (lastWatchedItem == null)
                 {
-                    using (new MediaBrowser.Util.Profiler("folder lastwatched search for "+this.Name))
+                    //using (new MediaBrowser.Util.Profiler("folder lastwatched search for "+this.Name))
                         lastWatchedItem = this.RecursiveChildren.Where(i => i is Video && (i as Video).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Video).PlaybackStatus.LastPlayed).FirstOrDefault();
                 }
                 return lastWatchedItem;
