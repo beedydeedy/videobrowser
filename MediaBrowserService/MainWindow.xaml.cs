@@ -856,7 +856,6 @@ namespace MediaBrowserService
                         //test
                         //throw new InvalidOperationException("Test Error...");
                     }
-                    else Logger.ReportVerbose("Not refreshing " + item.Name + " again.");
                 })) return false;
             }
 

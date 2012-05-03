@@ -74,7 +74,7 @@ namespace MediaBrowser.Library.Entities {
                     playbackStatus = PlaybackStatusFactory.Instance.Create(Id); // initialise an empty version that items can bind to
                     if (DateCreated <= Config.Instance.AssumeWatchedBefore)
                         playbackStatus.PlayCount = 1;
-                    Kernel.Instance.SavePlayState(this, playbackStatus);
+                    //Kernel.Instance.SavePlayState(this, playbackStatus);  //removed this so we don't create files until we actually play something -ebr
                 }
                 return playbackStatus;
             }
