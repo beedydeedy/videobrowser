@@ -389,7 +389,7 @@ namespace MediaBrowser.Library.Providers
 
                 //genres
                 System.Collections.ArrayList genres = (System.Collections.ArrayList)jsonDict["genres"];
-                if (studios != null)
+                if (genres != null)
                 {
                     if (movie.Genres == null) movie.Genres = new List<string>();
                     foreach (Dictionary<string, object> genre in genres)
