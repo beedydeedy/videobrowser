@@ -1445,18 +1445,21 @@ namespace MediaBrowser
 
         internal void PlaySecure(PlayableItem playable)
         {
-            currentPlaybackController = playable.PlaybackController;
-
-            playable.Play();
-
-            if (!playable.QueueItem)
+            MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
             {
-                //async this so it doesn't slow us down if the service isn't responding for some reason
-                MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
+                currentPlaybackController = playable.PlaybackController;
+
+                playable.Play();
+
+                if (!playable.QueueItem)
                 {
-                    MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
-                });
-            }
+                    //async this so it doesn't slow us down if the service isn't responding for some reason
+                    MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
+                    {
+                        MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
+                    });
+                }
+            });
         }
 
         /// <summary>
