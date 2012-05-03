@@ -973,7 +973,6 @@
     <Content Include="Registration7.xml">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="RegistrationVista.xml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
