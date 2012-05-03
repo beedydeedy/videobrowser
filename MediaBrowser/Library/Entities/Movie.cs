@@ -32,7 +32,6 @@ namespace MediaBrowser.Library.Entities {
                 }
             }
         }
-
         public bool ContainsTrailers {
             get {
                 return TrailerFiles.Count() > 0;

@@ -610,10 +610,12 @@ namespace MediaBrowser.Library.Entities {
             {
                 foreach (var item in Children)
                 {
-                    if (item is Folder && (item.ParentalAllowed || !Config.Instance.HideParentalDisAllowed))
+                    Folder folder = item as Folder;
+
+                    if (folder != null && (item.ParentalAllowed || !Config.Instance.HideParentalDisAllowed))
                     {
-                        yield return item as Folder;
-                        foreach (var subitem in (item as Folder).RecursiveFolders)
+                        yield return folder;
+                        foreach (var subitem in folder.RecursiveFolders)
                         {
                             yield return subitem;
                         }
@@ -633,9 +635,11 @@ namespace MediaBrowser.Library.Entities {
             {
                 foreach (var item in RecursiveChildren)
                 {
-                    if (item is Media)
+                    Media media = item as Media;
+
+                    if (media != null)
                     {
-                        yield return item as Media;
+                        yield return media;
                     }
                 }
             }
@@ -719,9 +723,11 @@ namespace MediaBrowser.Library.Entities {
                         // Notify the kernel that a new item was added
                         Kernel.Instance.OnItemAddedToLibrary(item);
 
-                        if (item is Folder)
+                        var folder = item as Folder;
+
+                        if (folder != null)
                         {
-                            (item as Folder).ValidateChildren();
+                            folder.ValidateChildren();
                         }
                     }
                 }

@@ -102,18 +102,18 @@ namespace MediaBrowser.Code.ModelItems
                 playable.OnPlaybackFinished(this, args);
             }
 
-            // Show or hide the resume button depending on playstate
-            UpdateResumeStatusInUI();
-
             SetPlaybackStage(PlayableItemPlayState.Stopped);
 
-            RunPostPlayProcesses();
+            // Show or hide the resume button depending on playstate
+            UpdateResumeStatusInUI();
 
             // Fire event handler
             if (_PlaybackFinished != null)
             {
                 _PlaybackFinished(this, args);
             }
+
+            RunPostPlayProcesses();
 
             SetPlaybackStage(PlayableItemPlayState.PostPlayActionsComplete);
 
@@ -215,6 +215,17 @@ namespace MediaBrowser.Code.ModelItems
         }
 
         /// <summary>
+        /// Determines whether or not the controller is currently playing audio
+        /// </summary>
+        public virtual bool IsPlayingAudio
+        {
+            get
+            {
+                return IsPlaying && !IsPlayingVideo;
+            }
+        }
+
+        /// <summary>
         /// Determines whether or not the controller is currently playing video
         /// </summary>
         public virtual bool IsPlayingVideo
@@ -228,6 +239,12 @@ namespace MediaBrowser.Code.ModelItems
 
                 PlayableItem playable = GetCurrentPlayableItem();
 
+                // If something is playing but we can't determine what, then we'll just have to assume true
+                if (playable == null)
+                {
+                    return true;
+                }
+
                 if (playable.HasMediaItems)
                 {
                     var media = playable.CurrentMedia;
@@ -235,7 +252,7 @@ namespace MediaBrowser.Code.ModelItems
                     // If we can pinpoint the current Media object, test that
                     if (media != null)
                     {
-                        return media is Media;
+                        return media is Video;
                     }
 
                     // Otherwise test them all
@@ -262,7 +279,7 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                return CurrentPlayableItems.Count == 0;
+                return !IsPlaying;
             }
         }
 
@@ -288,7 +305,9 @@ namespace MediaBrowser.Code.ModelItems
             {
                 if (IsPlaying)
                 {
-                    return GetCurrentPlayableItem().DisplayName;
+                    var playable = GetCurrentPlayableItem();
+
+                    return playable == null ? "Unknown" : playable.DisplayName;
                 }
 
                 return "None";
@@ -366,7 +385,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Gets the item currently playing
         /// </summary>
-        protected virtual PlayableItem GetCurrentPlayableItem()
+        protected PlayableItem GetCurrentPlayableItem()
         {
             return GetPlayableItem(CurrentPlayableItemId);
         }
@@ -421,7 +440,7 @@ namespace MediaBrowser.Code.ModelItems
         {
             Item item = Application.CurrentInstance.CurrentItem;
             
-            if (item.BaseItem.IsPlayable)
+            if (item.IsPlayable)
             {
                 item.UpdateResume();
             }

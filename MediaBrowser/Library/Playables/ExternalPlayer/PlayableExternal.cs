@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using MediaBrowser.Library.Entities;
 using System.Linq;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
@@ -13,6 +14,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         #region CanPlay
         public override bool CanPlay(IEnumerable<string> files)
         {
+            if (files.Any(f => !Helper.IsVideo(f)))
+            {
+                return false;
+            }
+
             return ConfigData.CanPlay(ExternalPlayerConfiguration, files);
         }
 
