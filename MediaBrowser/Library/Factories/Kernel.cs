@@ -456,14 +456,7 @@ namespace MediaBrowser.Library {
             // kernel.StringData.Save(); //save this in case we made mods (no other routine saves this data)
             if (LoadContext == MBLoadContext.Core)
             {
-                if (Application.RunningOnExtender)
-                {
-                    kernel.PlaybackControllers.Add(new ExtenderPlaybackController());
-                }
-                else
-                {
-                    kernel.PlaybackControllers.Add(new PlaybackController());
-                }
+                kernel.PlaybackControllers.Add(new PlaybackController());
             }
        
             // set up assembly resolution hooks, so earlier versions of the plugins resolve properly 

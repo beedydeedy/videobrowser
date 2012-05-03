@@ -215,6 +215,17 @@ namespace MediaBrowser.Code.ModelItems
         }
 
         /// <summary>
+        /// Determines whether or not the controller is currently playing audio
+        /// </summary>
+        public virtual bool IsPlayingAudio
+        {
+            get
+            {
+                return IsPlaying && !IsPlayingVideo;
+            }
+        }
+
+        /// <summary>
         /// Determines whether or not the controller is currently playing video
         /// </summary>
         public virtual bool IsPlayingVideo
@@ -227,6 +238,12 @@ namespace MediaBrowser.Code.ModelItems
                 }
 
                 PlayableItem playable = GetCurrentPlayableItem();
+
+                // If something is playing but we can't determine what, then we'll just have to assume true
+                if (playable == null)
+                {
+                    return true;
+                }
 
                 if (playable.HasMediaItems)
                 {
@@ -262,7 +279,7 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                return CurrentPlayableItems.Count == 0;
+                return !IsPlaying;
             }
         }
 
@@ -288,7 +305,9 @@ namespace MediaBrowser.Code.ModelItems
             {
                 if (IsPlaying)
                 {
-                    return GetCurrentPlayableItem().DisplayName;
+                    var playable = GetCurrentPlayableItem();
+
+                    return playable == null ? "Unknown" : playable.DisplayName;
                 }
 
                 return "None";
@@ -366,7 +385,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Gets the item currently playing
         /// </summary>
-        protected virtual PlayableItem GetCurrentPlayableItem()
+        protected PlayableItem GetCurrentPlayableItem()
         {
             return GetPlayableItem(CurrentPlayableItemId);
         }

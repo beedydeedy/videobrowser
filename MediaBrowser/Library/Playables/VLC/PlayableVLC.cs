@@ -16,18 +16,8 @@ namespace MediaBrowser.Library.Playables.VLC
 
         protected override bool IsPlaylistCapable(Media media)
         {
-            Video video = media as Video;
-
-            if (video != null)
-            {
-                // VLC handles this like a champ
-                if (video.MediaType == MediaType.DVD || video.MediaType == MediaType.ISO)
-                {
-                    return true;
-                }
-            }
-
-            return base.IsPlaylistCapable(media);
+            // VLC seems to handle everything in a playlist
+            return true;
         }
     }
 }

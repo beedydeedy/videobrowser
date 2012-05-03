@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library.Playables
@@ -96,14 +95,9 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected override Type PlaybackControllerType
         {
-            get 
+            get
             {
-                if (Application.RunningOnExtender)
-                {
-                    return typeof(ExtenderPlaybackController);
-                }
-                
-                return typeof(PlaybackController); 
+                return typeof(PlaybackController);
             }
         }
     }

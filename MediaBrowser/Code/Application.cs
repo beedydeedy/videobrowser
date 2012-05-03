@@ -560,7 +560,6 @@ namespace MediaBrowser
             }
         }
 
-
         public AggregateFolder RootFolder
         {
             get
@@ -1030,7 +1029,7 @@ namespace MediaBrowser
         private bool showNowPlaying = false;
         public bool ShowNowPlaying
         {
-            get { return this.showNowPlaying && (MediaCenterEnvironment.MediaExperience != null); }
+            get { return this.showNowPlaying; }
             set
             {
                 if (showNowPlaying != value)
@@ -1043,7 +1042,6 @@ namespace MediaBrowser
                 }
             }
         }
-
 
         public string NowPlayingText
         {
@@ -1459,8 +1457,6 @@ namespace MediaBrowser
                     MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
                 });
             }
-
-            Logger.ReportVerbose("Playing");
         }
 
         /// <summary>
@@ -1728,25 +1724,6 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Use this to return to media browser after launching another wmc application
-        /// Example: Internal WMC dvd player
-        /// </summary>
-        public void ReturnToApplication()
-        {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
-            {
-                Microsoft.MediaCenter.Hosting.ApplicationContext context = Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext;
-
-                if (!context.IsForegroundApplication)
-                {
-                    Logger.ReportVerbose("Ensuring MB is front-most app");
-                    context.ReturnToApplication();
-                }
-
-            });
-        }
-
-        /// <summary>
         /// Tells all registered PlayBackControllers to stop playback
         /// </summary>
         public void StopAllPlayback()
@@ -1808,10 +1785,12 @@ namespace MediaBrowser
                         // Either advance to the next playlist position, or reset it back to 0
                         if (playlistPosition < (media.Files.Count() - 1))
                         {
+                            Logger.ReportVerbose("Increment playlist pos");
                             playlistPosition++;
                         }
                         else
                         {
+                            Logger.ReportVerbose("Reset playlist pos"); 
                             playlistPosition = 0;
                         }
                     }

@@ -37,7 +37,10 @@ namespace MediaBrowser.Library.Playables
             CurrentFileIndex = args.CurrentFileIndex;
             CurrentMediaIndex = args.CurrentMediaIndex;
 
-            SaveProgressIntoPlaystates(controller, args);
+            if (EnablePlayStateSaving)
+            {
+                SaveProgressIntoPlaystates(controller, args);
+            }
 
             PlayState = PlayableItemPlayState.Playing;
 
@@ -69,6 +72,8 @@ namespace MediaBrowser.Library.Playables
         {
             if (PlayState == PlayableItemPlayState.Stopped)
             {
+                MarkWatchedIfNeeded();
+
                 Application.CurrentInstance.RunPostPlayProcesses(this);
 
                 if (UnmountISOAfterPlayback)
@@ -93,7 +98,6 @@ namespace MediaBrowser.Library.Playables
             }
 
             PlaybackStoppedByUser = args.StoppedByUser;
-            MarkWatchedIfNeeded();
 
             PlayState = PlayableItemPlayState.Stopped;
         }
@@ -157,6 +161,12 @@ namespace MediaBrowser.Library.Playables
         /// If we're not able to track playstate at all, we'll at least mark watched once playback stops
         /// </summary>
         private bool HasUpdatedPlayState { get; set; }
+
+        private bool _EnablePlayStateSaving = true;
+        /// <summary>
+        /// Determines playstate should be saved for this item
+        /// </summary>
+        public bool EnablePlayStateSaving { get { return _EnablePlayStateSaving; } set { _EnablePlayStateSaving = value; } }
 
         private bool _RaiseGlobalPlaybackEvents = true;
         /// <summary>
@@ -559,7 +569,7 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         private void MarkWatchedIfNeeded()
         {
-            if (!HasUpdatedPlayState)
+            if (EnablePlayStateSaving && !HasUpdatedPlayState)
             {
                 foreach (Media media in MediaItems)
                 {
