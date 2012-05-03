@@ -13,7 +13,7 @@ namespace MediaBrowser.Library.Playables.TMT
         /// </summary>
         public override string ExternalPlayerName
         {
-            get { return "TotalMedia Theatre"; }
+            get { return "TotalMedia Theatre 5"; }
         }
 
         /// <summary>

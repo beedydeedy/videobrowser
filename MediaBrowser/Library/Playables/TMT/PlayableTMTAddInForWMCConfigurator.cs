@@ -9,7 +9,7 @@ namespace MediaBrowser.Library.Playables.TMT
         /// </summary>
         public override string ExternalPlayerName
         {
-            get { return "TotalMedia Theatre WMC Add-On"; }
+            get { return "TotalMedia Theatre 5 WMC Add-On"; }
         }
 
         /// <summary>

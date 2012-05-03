@@ -116,11 +116,11 @@ namespace MBMigrate
                 }
                 else if (command.Contains("vlc"))
                 {
-                    typeElement.InnerText = "VLC";
+                    typeElement.InnerText = "VLC 2";
                 }
                 else if (command.Contains("utotalmediatheatre5"))
                 {
-                    typeElement.InnerText = "TotalMedia Theatre";
+                    typeElement.InnerText = "TotalMedia Theatre 5";
                 }
                 else
                 {

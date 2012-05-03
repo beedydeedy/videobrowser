@@ -13,7 +13,7 @@ namespace MediaBrowser.Library.Playables.VLC
         /// </summary>
         public override string ExternalPlayerName
         {
-            get { return "VLC"; }
+            get { return "VLC 2"; }
         }
 
         /// <summary>
