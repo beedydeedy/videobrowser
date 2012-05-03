@@ -46,7 +46,7 @@ namespace MBMigrate
 
             Async.Queue("Migration", () =>
             {
-                //Migrate26();
+                Migrate26();
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
         }
