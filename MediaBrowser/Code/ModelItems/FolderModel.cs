@@ -94,6 +94,32 @@ namespace MediaBrowser.Library {
                 (rating < 0 || (ratingFactor * Ratings.Level(item.OfficialRating)) <= (ratingFactor * rating));
         }
 
+        protected int? mediaCount;
+        public virtual int MediaCount
+        {
+            get
+            {
+                if (mediaCount == null)
+                {
+                    //async this so we don't hang up the UI on large items
+                    Async.Queue(this.Name + " media count", () =>
+                    {
+                        mediaCount = Folder.MediaCount;
+                        FirePropertiesChanged("MediaCount", "MediaCountStr");
+                    });
+                }
+                return mediaCount == null ? 0 : mediaCount.Value;
+            }
+        }
+
+        public virtual string MediaCountStr
+        {
+            get
+            {
+                return MediaCount.ToString();
+            }
+        }
+
         public override int UnwatchedCount {
             get {
                 if (unwatchedCountCache == -1) {
@@ -215,6 +241,7 @@ namespace MediaBrowser.Library {
                                     if (changed)
                                     {
                                         Logger.ReportVerbose(this.Name + " has had changes.");
+                                        this.mediaCount = this.runtime = null;
                                         QuickListItems = null; //this will force it to re-load
                                     }
 
