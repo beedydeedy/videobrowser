@@ -138,14 +138,14 @@ namespace MediaBrowser
                 }
 
                 string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, ShouldTranscode);
-                Microsoft.MediaCenter.MediaType type = Helper.IsVideo(playable.Files.First()) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+                Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
                 PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
             }
             else
             {
                 // Play single file
                 string file = playable.Files.First();
-                Microsoft.MediaCenter.MediaType type = !Path.HasExtension(file) || Helper.IsVideo(file) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+                Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(file);
 
                 if (ShouldTranscode)
                 {
@@ -168,24 +168,26 @@ namespace MediaBrowser
 
         protected virtual void QueuePlayableItem(PlayableItem playable)
         {
-            if (CurrentMediaCollection == null)
+            QueuePlayableItemLegacy(playable); 
+            
+            /*if (CurrentMediaCollection == null)
             {
                 QueuePlayableItemLegacy(playable);
             }
             else
             {
                 QueuePlayableItemIntoMediaCollection(playable);
-            }
+            }*/
         }
 
         private void QueuePlayableItemLegacy(PlayableItem playable)
         {
             if (playable.HasMediaItems)
             {
+                Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
+
                 foreach (Media media in playable.MediaItems)
                 {
-                    Microsoft.MediaCenter.MediaType type = media is Video ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
-
                     foreach (string file in GetPlayableFiles(media))
                     {
                         PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true);
@@ -196,7 +198,7 @@ namespace MediaBrowser
             {
                 foreach (string file in playable.Files)
                 {
-                    Microsoft.MediaCenter.MediaType type = Helper.IsVideo(file) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+                    Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(file);
 
                     string fileToPlay = ShouldTranscode ? PlaybackControllerHelper.GetTranscodedPath(file) : file;
 

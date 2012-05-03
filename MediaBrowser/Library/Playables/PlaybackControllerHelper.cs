@@ -21,6 +21,18 @@ namespace MediaBrowser.Library.Playables
     {
         static MediaBrowser.Library.Transcoder transcoder;
 
+        public static Microsoft.MediaCenter.MediaType GetMediaType(string file)
+        {
+            Microsoft.MediaCenter.MediaType type = !Path.HasExtension(file) || Helper.IsVideo(file) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+            return type;
+        }
+
+        public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
+        {
+            string file = playable.Files.First();
+            return GetMediaType(file);
+        }
+
         public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
         {
             if (!mediaCenterEnvironment.PlayMedia(type, media, queue))
