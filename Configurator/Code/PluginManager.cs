@@ -50,7 +50,7 @@ namespace Configurator.Code {
                 {"mediainfo provider", new System.Version(1,3,0)},
                 {"gametime", new System.Version(6,0,0)},
                 {"high quality thumbnails", new System.Version(1,2,0)},
-                {"media browser trailers", new System.Version(1,3,0,6)},
+                {"media browser trailers", new System.Version(1,3,3)},
                 {"diamond theme", new System.Version(0,3,6,0)},
                 {"dvr-ms and wtv metadata", new System.Version(1,0,5,0)},
                 {"ascendancy theme", new System.Version(2,0,0,0)},
@@ -72,6 +72,8 @@ namespace Configurator.Code {
                 {"storageviewer", new System.Version(0,0,4,10)},
                 {"gamebrowser", new System.Version(1,0,0,6)},
                 {"subdued theme", new System.Version(2,8,8,1)},
+                {"music support", new System.Version(2,1)},
+                {"mbtv", new System.Version(1,1)},
             };
 
         public PluginManager()
