@@ -29,8 +29,17 @@ namespace MediaBrowser.Library.Playables
 
         public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
         {
-            string file = playable.Files.First();
-            return GetMediaType(file);
+            if (playable.HasMediaItems)
+            {
+                Video video = playable.MediaItems.First() as Video;
+
+                if (video != null && video.MediaType == MediaType.DVD)
+                {
+                    return Microsoft.MediaCenter.MediaType.Dvd;
+                }
+            }
+
+            return GetMediaType(playable.Files.First());
         }
 
         public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
@@ -468,7 +477,7 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        public static string CreateWPLPlaylist(string name, IEnumerable<string> files, bool transcode)
+        public static string CreateWPLPlaylist(string name, IEnumerable<string> files, bool transcode, int startIndex)
         {
 
             // we need to filter out all invalid chars 
@@ -490,8 +499,10 @@ namespace MediaBrowser.Library.Playables
             xml.WriteStartElement("body");
             xml.WriteStartElement("seq");
 
-            foreach (string file in files)
+            for (int i = startIndex; i < files.Count(); i++)
             {
+                string file = files.ElementAt(i);
+
                 string fileToPlay = transcode ? GetTranscodedPath(file) : file;
 
                 xml.WriteStartElement("media");

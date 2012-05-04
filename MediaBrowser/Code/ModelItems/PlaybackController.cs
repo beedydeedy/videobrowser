@@ -127,25 +127,28 @@ namespace MediaBrowser
 
         private void CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
+            Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
+            
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
                 IEnumerable<string> files = playable.Files;
 
+                int playlistPosition = 0;
+
                 if (playable.Resume)
                 {
-                    files = files.Skip(playable.MediaItems.First().PlaybackStatus.PlaylistPosition);
+                    playlistPosition = playable.MediaItems.First().PlaybackStatus.PlaylistPosition;
                 }
 
-                string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, ShouldTranscode);
-                Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
+                string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, ShouldTranscode, playlistPosition);
+
                 PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
             }
             else
             {
                 // Play single file
                 string file = playable.Files.First();
-                Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(file);
 
                 if (ShouldTranscode)
                 {
