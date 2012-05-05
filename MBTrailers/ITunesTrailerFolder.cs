@@ -38,6 +38,7 @@ namespace MBTrailers {
                 if (trailer != null && Plugin.proxy != null)
                 {
                     trailer.Path = Plugin.proxy.ProxyUrl(trailer);
+                    trailer.MediaType = MediaTypeResolver.DetermineType(trailer.Path);
                     Kernel.Instance.ItemRepository.SaveItem(trailer);
                 }
             }

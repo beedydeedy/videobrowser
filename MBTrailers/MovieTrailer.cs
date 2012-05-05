@@ -17,6 +17,13 @@ namespace MBTrailers
         public Guid RealMovieID;
         private Movie RealMovie;
 
+        public override bool CanResume
+        {
+            get
+            {
+                return false;
+            }
+        }
 
         public override bool RefreshMetadata(MediaBrowser.Library.Metadata.MetadataRefreshOptions options)
         {

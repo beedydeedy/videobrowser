@@ -12,6 +12,14 @@ namespace MBTrailers {
         [Persist]
         public string RealPath { get; set; }
 
+        public override bool CanResume
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         public override bool RefreshMetadata(MetadataRefreshOptions options) {
             bool changed = false;
             string path = Plugin.proxy == null ? this.Path : Plugin.proxy.ProxyUrl(this);
