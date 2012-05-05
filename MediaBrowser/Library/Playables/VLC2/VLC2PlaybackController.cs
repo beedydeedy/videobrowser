@@ -9,9 +9,9 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 
-namespace MediaBrowser.Library.Playables.VLC
+namespace MediaBrowser.Library.Playables.VLC2
 {
-    public class VLCPlaybackController : ConfigurableExternalPlaybackController
+    public class VLC2PlaybackController : ConfigurableExternalPlaybackController
     {
         private const int HttpRequestInterval = 1000;
 

@@ -481,8 +481,7 @@ namespace MediaBrowser
                     }
                     catch (Exception ex)
                     {
-                        Logger.ReportException("Error in RunningOnExtender.", ex);
-                        Logger.ReportError("Application has broken MediaCenterEnvironment.  Hopefully, this is a temporary situation...");
+                        Logger.ReportException("Error in RunningOnExtender. If you're on a PC this is not a problem.", ex);
                         //don't crash - just assume we are on a regular install and something went wrong momentarily - it'll have a problem later if it is real
                         return false;
                     }

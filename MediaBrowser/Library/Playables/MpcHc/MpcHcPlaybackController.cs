@@ -18,6 +18,11 @@ namespace MediaBrowser.Library.Playables.MpcHc
             return base.GetPlayableFiles(media).Select(i => i.TrimEnd('\\'));
         }
 
+        internal override IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
+        {
+            return base.GetPlayableFiles(files).Select(i => i.TrimEnd('\\'));
+        }
+
         /// <summary>
         /// Gets arguments to be passed to the command line.
         /// </summary>
@@ -147,13 +152,15 @@ namespace MediaBrowser.Library.Playables.MpcHc
         {
             PlaybackStateEventArgs args = new PlaybackStateEventArgs();
 
-            int numFiles = playable.Files.Count();
+            IEnumerable<string> files = playable.FilesFormattedForPlayer;
+
+            int numFiles = files.Count();
 
             for (int i = 0; i < numFiles; i++)
             {
                 args.CurrentFileIndex = i;
 
-                args.Position = GetPlaybackPosition(values, playable.Files.ElementAt(i));
+                args.Position = GetPlaybackPosition(values, files.ElementAt(i));
 
                 // If file position is > 0 that means playback was stopped during this file
                 if (args.Position > 0)

@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using MediaBrowser.Library.RemoteControl;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
-    public class TMTAddInPlaybackController : TMTPlaybackController
+    public class TMT5AddInPlaybackController : TMT5PlaybackController
     {
         /// <summary>
         /// Gets arguments to be passed to the command line.
@@ -25,12 +24,13 @@ namespace MediaBrowser.Library.Playables.TMT
             return base.GetFilePathCommandArgument(filesToPlay).Replace("\"", string.Empty).Replace('\\', '/');
         }
 
-        protected override string PlayStatePathAppName
+        protected override void OnExternalPlayerClosed()
         {
-            get
-            {
-                return "ArcSoft TotalMedia Theatre 5(Media Center)";
-            }
+            base.OnExternalPlayerClosed();
+
+            ExternalSplashForm.Display(Application.CurrentInstance.ExtSplashBmp);
+            PlaybackControllerHelper.ReturnToApplication(false);
+            ExternalSplashForm.Hide();
         }
     }
 }

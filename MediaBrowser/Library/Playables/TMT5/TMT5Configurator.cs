@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
     /// <summary>
     /// Controls editing TMT settings within the configurator
     /// </summary>
-    public class PlayableTMTConfigurator : PlayableExternalConfigurator
+    public class TMT5Configurator : PlayableExternalConfigurator
     {
         /// <summary>
         /// Returns a unique name for the external player
@@ -59,14 +59,6 @@ namespace MediaBrowser.Library.Playables.TMT
         }
 
         public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowShowSplashScreenEditing
         {
             get
             {

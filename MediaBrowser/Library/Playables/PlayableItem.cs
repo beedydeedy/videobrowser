@@ -128,6 +128,11 @@ namespace MediaBrowser.Library.Playables
         public IEnumerable<string> Files { get { return _Files; } internal set { _Files = value; } }
 
         /// <summary>
+        /// Internal  use only. The PlaybackController will use this property to store the list playable files, after formatting them for entry to the player.
+        /// </summary>
+        internal IEnumerable<string> FilesFormattedForPlayer { get; set; }
+
+        /// <summary>
         /// Describes how the item was played by the user
         /// </summary>
         public PlayMethod PlayMethod { get; internal set; }

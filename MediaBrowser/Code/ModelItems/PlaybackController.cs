@@ -20,8 +20,6 @@ namespace MediaBrowser
     /// </summary>
     public class PlaybackController : BasePlaybackController
     {
-        private MediaCollection CurrentMediaCollection;
-
         /// <summary>
         /// Plays Media
         /// </summary>
@@ -83,56 +81,16 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Calls PlayMedia using either a MediaCollection or a single file
+        /// Calls PlayMedia
         /// </summary>
-        protected virtual void CallPlayMediaForPlayableItem(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
-        {
-            if (PlaybackControllerHelper.UseLegacyApi(playable))
-            {
-                CallPlayMediaLegacy(mediaCenterEnvironment, playable);
-                CurrentMediaCollection = null;
-            }
-            else
-            {
-                CallPlayMediaUsingMediaCollection(mediaCenterEnvironment, playable);
-            }
-        }
-
-        private void CallPlayMediaUsingMediaCollection(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
-        {
-            MediaCollection coll = new MediaCollection();
-
-            // Create a MediaCollectionItem for each file to play
-            if (playable.HasMediaItems)
-            {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, coll, playable);
-            }
-            else
-            {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(coll, playable);
-            }
-
-            // Set starting position if we're resuming
-            if (playable.Resume)
-            {
-                var playstate = playable.MediaItems.First().PlaybackStatus;
-
-                coll.CurrentIndex = playstate.PlaylistPosition;
-                coll[playstate.PlaylistPosition].Start = new TimeSpan(playstate.PositionTicks);
-            }
-
-            CurrentMediaCollection = coll;
-            PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, CurrentMediaCollection, false);
-        }
-
-        private void CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        private void CallPlayMediaForPlayableItem(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
             Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
             
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
-                IEnumerable<string> files = playable.Files;
+                IEnumerable<string> files = playable.FilesFormattedForPlayer;
 
                 int playlistPosition = 0;
 
@@ -141,19 +99,14 @@ namespace MediaBrowser
                     playlistPosition = playable.MediaItems.First().PlaybackStatus.PlaylistPosition;
                 }
 
-                string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, ShouldTranscode, playlistPosition);
+                string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playlistPosition);
 
                 PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
             }
             else
             {
                 // Play single file
-                string file = playable.Files.First();
-
-                if (ShouldTranscode)
-                {
-                    file = PlaybackControllerHelper.GetTranscodedPath(file);
-                }
+                string file = playable.FilesFormattedForPlayer.First();
 
                 PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
             }
@@ -169,40 +122,13 @@ namespace MediaBrowser
             }
         }
 
-        protected virtual void QueuePlayableItem(PlayableItem playable)
-        {
-            if (CurrentMediaCollection == null)
-            {
-                QueuePlayableItemLegacy(playable);
-            }
-            else
-            {
-                QueuePlayableItemIntoMediaCollection(playable);
-            }
-        }
-
-        private void QueuePlayableItemLegacy(PlayableItem playable)
+        private void QueuePlayableItem(PlayableItem playable)
         {
             Microsoft.MediaCenter.MediaType type = MediaType.Audio;
 
-            foreach (string file in playable.Files)
+            foreach (string file in playable.FilesFormattedForPlayer)
             {
-               string fileToPlay = ShouldTranscode ? PlaybackControllerHelper.GetTranscodedPath(file) : file;
-
-                PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, fileToPlay, true);
-            }
-        }
-
-        private void QueuePlayableItemIntoMediaCollection(PlayableItem playable)
-        {
-            // Create a MediaCollectionItem for each file to play
-            if (playable.HasMediaItems)
-            {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, CurrentMediaCollection, playable);
-            }
-            else
-            {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(CurrentMediaCollection, playable);
+                PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true);
             }
         }
 
@@ -298,16 +224,11 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Retrieves the current playback item using MediaCollection properties
+        /// Retrieves the current playback item using properties from MediaExperience and Transport
         /// </summary>
         private PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
         {
-            if (CurrentMediaCollection == null)
-            {
-                return PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
-            }
-
-            return PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
+            return PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
         }
 
         /// <summary>
@@ -503,6 +424,33 @@ namespace MediaBrowser
             }
 
             return ShouldTranscode ? files.Select(f => PlaybackControllerHelper.GetTranscodedPath(f)) : files;
+        }
+
+        /// <summary>
+        /// When playback is based purely on files, this will take the files that were supplied to the PlayableItem,
+        /// and create the actual paths that will be sent to the player
+        /// </summary>
+        internal override IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
+        {
+            foreach (string file in files)
+            {
+                MediaBrowser.Library.MediaType mediaType = MediaBrowser.Library.MediaTypeResolver.DetermineType(file);
+
+                if (mediaType == Library.MediaType.DVD)
+                {
+                    yield return GetDVDPath(file);
+                }
+                else if (mediaType == Library.MediaType.BluRay)
+                {
+                    yield return GetBluRayPath(file);
+                }
+                else if (mediaType == Library.MediaType.HDDVD || mediaType == Library.MediaType.ISO)
+                {
+                    yield return file;
+                }
+
+                yield return ShouldTranscode ? PlaybackControllerHelper.GetTranscodedPath(file) : file;
+            }
         }
 
         /// <summary>

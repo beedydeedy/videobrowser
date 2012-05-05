@@ -144,20 +144,20 @@
     <Compile Include="Library\Playables\ExternalPlayer\ExternalPlaybackController.cs" />
     <Compile Include="Library\Playables\ExternalPlayer\PlayableExternal.cs" />
     <Compile Include="Library\Playables\ExternalPlayer\PlayableExternalConfigurator.cs" />
+    <Compile Include="Library\Playables\MpcHc\MpcHcConfigurator.cs" />
     <Compile Include="Library\Playables\MpcHc\MpcHcPlaybackController.cs" />
     <Compile Include="Library\Playables\MpcHc\PlayableMpcHc.cs" />
-    <Compile Include="Library\Playables\MpcHc\PlayableMpcHcConfigurator.cs" />
     <Compile Include="Library\Playables\PlayableInternal.cs" />
     <Compile Include="Library\Playables\PlaybackControllerHelper.cs" />
-    <Compile Include="Library\Playables\TMT\PlayableTMT.cs" />
-    <Compile Include="Library\Playables\TMT\PlayableTMTAddInForWMC.cs" />
-    <Compile Include="Library\Playables\TMT\PlayableTMTAddInForWMCConfigurator.cs" />
-    <Compile Include="Library\Playables\TMT\PlayableTMTConfigurator.cs" />
-    <Compile Include="Library\Playables\TMT\TMTAddInPlaybackController.cs" />
-    <Compile Include="Library\Playables\TMT\TMTPlaybackController.cs" />
-    <Compile Include="Library\Playables\VLC\PlayableVLC.cs" />
-    <Compile Include="Library\Playables\VLC\PlayableVLCConfigurator.cs" />
-    <Compile Include="Library\Playables\VLC\VLCPlaybackController.cs" />
+    <Compile Include="Library\Playables\TMT5\PlayableTMT5.cs" />
+    <Compile Include="Library\Playables\TMT5\PlayableTMT5AddInForWMC.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5AddInForWMCConfigurator.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5Configurator.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5AddInPlaybackController.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5PlaybackController.cs" />
+    <Compile Include="Library\Playables\VLC2\PlayableVLC2.cs" />
+    <Compile Include="Library\Playables\VLC2\VLC2Configurator.cs" />
+    <Compile Include="Library\Playables\VLC2\VLC2PlaybackController.cs" />
     <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
     <Compile Include="Library\Providers\MBMovieProviderFromJson.cs" />
     <Compile Include="Library\Providers\VideoFormatProvider.cs" />
@@ -981,6 +981,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>%25windir%25\eHome\McmlVerifier.exe -verbose -assemblyredirect:"$(FullyQualifiedOutputPath)" -directory:"$(ProjectDir)Markup"

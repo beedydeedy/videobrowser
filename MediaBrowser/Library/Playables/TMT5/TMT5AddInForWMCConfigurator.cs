@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
-    public class PlayableTMTAddInForWMCConfigurator : PlayableTMTConfigurator
+    public class TMT5AddInForWMCConfigurator : TMT5Configurator
     {
         /// <summary>
         /// Returns a unique name for the external player
@@ -43,6 +43,14 @@ namespace MediaBrowser.Library.Playables.TMT
         public override IEnumerable<string> GetKnownPlayerPaths()
         {
             return GetProgramFilesPaths("ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
+        }
+
+        public override bool AllowShowSplashScreenEditing
+        {
+            get
+            {
+                return false;
+            }
         }
     }
 }

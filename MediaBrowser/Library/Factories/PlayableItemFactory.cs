@@ -6,8 +6,8 @@ using MediaBrowser.Library.Persistance;
 using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.Playables.MpcHc;
-using MediaBrowser.Library.Playables.TMT;
-using MediaBrowser.Library.Playables.VLC;
+using MediaBrowser.Library.Playables.TMT5;
+using MediaBrowser.Library.Playables.VLC2;
 
 namespace MediaBrowser.Library.Factories
 {
@@ -26,10 +26,10 @@ namespace MediaBrowser.Library.Factories
             if (!Application.RunningOnExtender)
             {
                 // Add the externals
-                RegisterExternalPlayerType<PlayableMpcHc, PlayableMpcHcConfigurator>();
-                RegisterExternalPlayerType<PlayableVLC, PlayableVLCConfigurator>();
-                RegisterExternalPlayerType<PlayableTMT, PlayableTMTConfigurator>();
-                RegisterExternalPlayerType<PlayableTMTAddInForWMC, PlayableTMTAddInForWMCConfigurator>();
+                RegisterExternalPlayerType<PlayableMpcHc, MpcHcConfigurator>();
+                RegisterExternalPlayerType<PlayableVLC2, VLC2Configurator>();
+                RegisterExternalPlayerType<PlayableTMT5, TMT5Configurator>();
+                RegisterExternalPlayerType<PlayableTMT5AddInForWMC, TMT5AddInForWMCConfigurator>();
                 RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
             }
         }

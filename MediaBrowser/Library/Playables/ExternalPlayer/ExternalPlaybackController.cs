@@ -182,7 +182,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         private IEnumerable<string> GetFilesToSendToPlayer(PlayableItem playable)
         {
-            IEnumerable<string> files = playable.Files;
+            IEnumerable<string> files = playable.FilesFormattedForPlayer;
 
             if (playable.Resume)
             {
