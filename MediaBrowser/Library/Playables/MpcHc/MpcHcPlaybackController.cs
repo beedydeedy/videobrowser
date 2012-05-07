@@ -13,14 +13,34 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
+        /// <summary>
+        /// Takes a Media object and returns the list of files that will be sent to the player
+        /// </summary>
         internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
-            return base.GetPlayableFiles(media).Select(i => i.TrimEnd('\\'));
+            return base.GetPlayableFiles(media).Select(i => FormatPath(i));
         }
 
+        /// <summary>
+        /// Formats a path to send to the player
+        /// </summary>
+        private string FormatPath(string path)
+        {
+            if (path.EndsWith(":\\"))
+            {
+                path = path.TrimEnd('\\');
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// When playback is based purely on files, this will take the files that were supplied to the PlayableItem,
+        /// and create the actual paths that will be sent to the player
+        /// </summary>
         internal override IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
         {
-            return base.GetPlayableFiles(files).Select(i => i.TrimEnd('\\'));
+            return base.GetPlayableFiles(files).Select(i => FormatPath(i));
         }
 
         /// <summary>
@@ -36,7 +56,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             args.Add("/fullscreen");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInMs = playInfo.Resume ? new TimeSpan(playInfo.MediaItems.First().PlaybackStatus.PositionTicks).TotalMilliseconds : 0;
+            double startTimeInMs = new TimeSpan(playInfo.StartPositionTicks).TotalMilliseconds;
 
             args.Add("/start " + startTimeInMs);
 

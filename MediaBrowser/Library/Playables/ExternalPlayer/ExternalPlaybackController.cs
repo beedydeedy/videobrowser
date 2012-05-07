@@ -121,7 +121,12 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             //now restore MCE 
             wp.showCmd = 1; // 1 - Normal; 2 - Minimize; 3 - Maximize;
             SetWindowPlacement(mceWnd, ref wp);
-            ExternalSplashForm.Hide();
+
+            if (ShowSplashScreen)
+            {
+                ExternalSplashForm.Hide();
+            }
+
             SetForegroundWindow(mceWnd);
 
             OnExternalPlayerClosed();
@@ -184,9 +189,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         {
             IEnumerable<string> files = playable.FilesFormattedForPlayer;
 
-            if (playable.Resume)
+            if (playable.StartPlaylistPosition > 0)
             {
-                files = files.Skip(playable.MediaItems.First().PlaybackStatus.PlaylistPosition);
+                files = files.Skip(playable.StartPlaylistPosition);
             }
 
             if (files.Count() > 1)

@@ -27,9 +27,9 @@ namespace MediaBrowser.Library.Factories
             {
                 // Add the externals
                 RegisterExternalPlayerType<PlayableMpcHc, MpcHcConfigurator>();
-                RegisterExternalPlayerType<PlayableVLC2, VLC2Configurator>();
                 RegisterExternalPlayerType<PlayableTMT5, TMT5Configurator>();
                 RegisterExternalPlayerType<PlayableTMT5AddInForWMC, TMT5AddInForWMCConfigurator>();
+                RegisterExternalPlayerType<PlayableVLC2, VLC2Configurator>();
                 RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
             }
         }
@@ -66,23 +66,19 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public PlayableItem Create(IEnumerable<string> paths)
         {
-            return Create(paths, true);
+            PlayableItem playable = GetAllKnownPlayables().FirstOrDefault(p => p.CanPlay(paths)) ?? new PlayableInternal();
+
+            playable.Files = paths;
+
+            return playable;
         }
 
         /// <summary>
-        /// Creates a PlayableItem based on a list of files
+        /// Creates a PlayableItem based using the internal player
         /// </summary>
-        public PlayableItem Create(IEnumerable<string> paths, bool allowExternalPlayers)
+        public PlayableItem CreateForInternalPlayer(IEnumerable<string> paths)
         {
-            IEnumerable<PlayableItem> playables = GetAllKnownPlayables();
-
-            // Filter out external players if specified to do so
-            if (!allowExternalPlayers)
-            {
-                playables = playables.Where(p => !(p is PlayableExternal));
-            }
-
-            PlayableItem playable = playables.FirstOrDefault(p => p.CanPlay(paths)) ?? new PlayableInternal();
+            PlayableItem playable = new PlayableInternal();
 
             playable.Files = paths;
 

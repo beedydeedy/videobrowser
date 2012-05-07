@@ -189,14 +189,6 @@ namespace MediaBrowser.Library.Playables.MpcHc
                 return false;
             }
         }
-
-        public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
     }
 
 }

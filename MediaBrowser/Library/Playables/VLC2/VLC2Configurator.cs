@@ -58,14 +58,6 @@ namespace MediaBrowser.Library.Playables.VLC2
                 return false;
             }
         }
-
-        public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
     }
 
 }

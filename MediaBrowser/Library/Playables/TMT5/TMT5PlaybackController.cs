@@ -90,10 +90,9 @@ namespace MediaBrowser.Library.Playables.TMT5
                 {
                     PlayableItem playItem = GetCurrentPlayableItem();
 
-                    if (playItem.Resume)
+                    if (playItem.StartPositionTicks > 0 || playItem.StartPlaylistPosition > 0)
                     {
-                        var playstate = playItem.MediaItems.First().PlaybackStatus;
-                        ExecuteResumeCommand(playstate.PlaylistPosition, playstate.PositionTicks);
+                        ExecuteResumeCommand(playItem.StartPlaylistPosition, playItem.StartPositionTicks);
                     }
                 }
 

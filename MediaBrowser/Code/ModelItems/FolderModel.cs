@@ -800,7 +800,7 @@ namespace MediaBrowser.Library {
         private void SelectedChildChanged() {
             FirePropertyChanged("SelectedChildIndex");
             FirePropertyChanged("SelectedChild");
-            Application.CurrentInstance.CurrentItemChanged();
+            Application.CurrentInstance.OnCurrentItemChanged();
         }
 
         public override void SetWatched(bool value) {

@@ -67,6 +67,34 @@ namespace MediaBrowser
         public System.Drawing.Bitmap ExtSplashBmp;
         private Item lastPlayed;
 
+        #region CurrentItemChanged EventHandler
+        volatile EventHandler<GenericEventArgs<Item>> _CurrentItemChanged;
+        /// <summary>
+        /// Fires whenever CurrentItem changes
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Item>> CurrentItemChanged
+        {
+            add
+            {
+                _CurrentItemChanged += value;
+            }
+            remove
+            {
+                _CurrentItemChanged -= value;
+            }
+        }
+
+        internal void OnCurrentItemChanged()
+        {
+            FirePropertyChanged("CurrentItem"); 
+            
+            if (_CurrentItemChanged != null)
+            {
+                _CurrentItemChanged(this, new GenericEventArgs<Item>() { Item = CurrentItem });
+            }
+        }
+        #endregion
+
         #region NavigatedInto EventHandler
         volatile EventHandler<GenericEventArgs<Item>> _NavigationInto;
         /// <summary>
@@ -286,14 +314,9 @@ namespace MediaBrowser
                 if (currentItem != value)
                 {
                     currentItem = value;
-                    CurrentItemChanged();
+                    OnCurrentItemChanged();
                 }
             }
-        }
-
-        public void CurrentItemChanged()
-        {
-            FirePropertyChanged("CurrentItem");
         }
 
         private List<MenuItem> currentContextMenu;
@@ -622,7 +645,7 @@ namespace MediaBrowser
 
                     // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
                     // us to delete the file we are trying to delete
-                    PlayableItem playable = PlayableItemFactory.Instance.Create(new string[] { DingFile }, false);
+                    PlayableItem playable = PlayableItemFactory.Instance.CreateForInternalPlayer(new string[] { DingFile });
 
                     playable.GoFullScreen = false;
                     playable.RaiseGlobalPlaybackEvents = false;

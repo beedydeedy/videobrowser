@@ -52,5 +52,13 @@ namespace MediaBrowser.Library.Playables.TMT5
                 return false;
             }
         }
+
+        public override bool AllowMinimizeMCEEditing
+        {
+            get
+            {
+                return false;
+            }
+        }
     }
 }

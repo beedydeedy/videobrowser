@@ -40,7 +40,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             args.Add("{0}");
 
             // Be explicit about start time, to avoid any possible player auto-resume settings
-            double startTimeInSeconds = playInfo.Resume ? new TimeSpan(playInfo.MediaItems.First().PlaybackStatus.PositionTicks).TotalSeconds : 0;
+            double startTimeInSeconds = new TimeSpan(playInfo.StartPositionTicks).TotalSeconds;
 
             args.Add("--start-time=" + startTimeInSeconds);
 
@@ -325,28 +325,44 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             Video video = media as Video;
 
-            // Prefix dvd's with dvd://
-            if (video != null && video.MediaType == Library.MediaType.DVD)
+            if (video != null)
             {
-                files = files.Select(i => GetDVDPath(i));
+                files = files.Select(i => FormatPath(i, video.MediaType));
             }
 
             return files;
         }
 
         /// <summary>
-        /// Takes a path to a DVD folder and returns the path to send to the player
+        /// Formats a path to send to the player
         /// </summary>
-        private string GetDVDPath(string path)
+        private string FormatPath(string path, Library.MediaType mediaType)
         {
-            if (path.StartsWith("\\\\"))
+            if (path.EndsWith(":\\"))
             {
-                path = path.Substring(2);
+                path = path.TrimEnd('\\');
             }
 
-            path = path.Replace("\\", "/").TrimEnd('/');
+            if (mediaType == MediaType.DVD)
+            {
+                path = "dvd:///" + path;
+            }
 
-            return "dvd:///" + path;
+            return path;
+        }
+
+        /// <summary>
+        /// When playback is based purely on files, this will take the files that were supplied to the PlayableItem,
+        /// and create the actual paths that will be sent to the player
+        /// </summary>
+        internal override IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
+        {
+            foreach (string file in files)
+            {
+                MediaBrowser.Library.MediaType mediaType = MediaBrowser.Library.MediaTypeResolver.DetermineType(file);
+
+                yield return FormatPath(file, mediaType);
+            }
         }
 
         protected override void Dispose(bool isDisposing)
