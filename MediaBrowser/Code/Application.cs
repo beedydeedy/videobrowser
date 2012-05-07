@@ -90,7 +90,10 @@ namespace MediaBrowser
             
             if (_CurrentItemChanged != null)
             {
-                _CurrentItemChanged(this, new GenericEventArgs<Item>() { Item = CurrentItem });
+                Async.Queue("OnCurrentItemChanged", () =>
+                {
+                    _CurrentItemChanged(this, new GenericEventArgs<Item>() { Item = CurrentItem });
+                }); 
             }
         }
         #endregion
@@ -114,10 +117,10 @@ namespace MediaBrowser
 
         internal void OnNavigationInto(Item item)
         {
-            if (_NavigationInto != null)
+            Async.Queue("OnNavigationInto", () =>
             {
                 _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
-            }
+            }); 
         }
         #endregion
 
