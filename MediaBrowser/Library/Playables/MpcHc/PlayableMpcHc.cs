@@ -1,0 +1,16 @@
+﻿using System;
+using MediaBrowser.Library.Playables.ExternalPlayer;
+
+namespace MediaBrowser.Library.Playables.MpcHc
+{
+    public class PlayableMpcHc : PlayableExternal
+    {
+        protected override Type PlaybackControllerType
+        {
+            get
+            {
+                return typeof(MpcHcPlaybackController);
+            }
+        }       
+    }
+}
