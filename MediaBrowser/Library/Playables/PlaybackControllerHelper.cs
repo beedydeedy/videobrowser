@@ -21,39 +21,14 @@ namespace MediaBrowser.Library.Playables
     {
         static MediaBrowser.Library.Transcoder transcoder;
 
-        public static Microsoft.MediaCenter.MediaType GetMediaType(string file)
-        {
-            Microsoft.MediaCenter.MediaType type = !Path.HasExtension(file) || Helper.IsVideo(file) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
-            return type;
-        }
-
-        public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
-        {
-            if (playable.HasMediaItems)
-            {
-                Video video = playable.MediaItems.First() as Video;
-
-                if (video != null && video.MediaType == MediaType.DVD)
-                {
-                    return Microsoft.MediaCenter.MediaType.Dvd;
-                }
-            }
-
-            return GetMediaType(playable.Files.First());
-        }
-
-        public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
-        {
-            if (!mediaCenterEnvironment.PlayMedia(type, media, queue))
-            {
-                Logger.ReportInfo("PlayMedia returned false");
-            }
-        }
-
         public static bool UseLegacyApi(PlayableItem item)
         {
-            return true;
-            /*if (Application.RunningOnExtender)
+            if (Application.RunningOnExtender)
+            {
+                return true;
+            }
+
+            if (item.FilesFormattedForPlayer.Count() > 200)
             {
                 return true;
             }
@@ -72,13 +47,13 @@ namespace MediaBrowser.Library.Playables
             }
             else
             {
-                // Use legacy if there's no video files
-                return !item.Files.Any(f => Helper.IsVideo(f));
+                // Use legacy if first file is not video
+                return !Helper.IsVideo(item.Files.First());
             }
 
-            return false;*/
+            return false;
         }
-        
+
         /// <summary>
         /// Retrieves the current playback item using MediaCollection properties
         /// </summary>
@@ -93,7 +68,7 @@ namespace MediaBrowser.Library.Playables
             {
                 return null;
             }
-
+            Logger.ReportVerbose("Active item: " + activeItem.Media.ToString());
             Guid playableItemId = new Guid(activeItem.FriendlyData["PlayableItemId"].ToString());
             filePlaylistPosition = int.Parse(activeItem.FriendlyData["FilePlaylistPosition"].ToString());
 
@@ -105,6 +80,166 @@ namespace MediaBrowser.Library.Playables
             }
 
             return allPlayableItems.FirstOrDefault(p => p.Id == playableItemId);
+        }
+
+        /// <summary>
+        /// Then playback is based on Media items, this will populate the MediaCollection using the items
+        /// </summary>
+        public static void PopulateMediaCollectionUsingMediaItems(PlaybackController controllerInstance, MediaCollection coll, PlayableItem playable)
+        {
+            int currentFileIndex = 0;
+            int collectionIndex = coll.Count;
+            int numItems = playable.MediaItems.Count();
+
+            for (int mediaIndex = 0; mediaIndex < numItems; mediaIndex++)
+            {
+                Media media = playable.MediaItems.ElementAt(mediaIndex);
+
+                IEnumerable<string> files = controllerInstance.GetPlayableFiles(media);
+
+                int numFiles = files.Count();
+
+                // Create a MediaCollectionItem for each file to play
+                for (int i = 0; i < numFiles; i++)
+                {
+                    string path = files.ElementAt(i);
+
+                    Dictionary<string, object> friendlyData = new Dictionary<string, object>();
+
+                    // Embed the playlist index, since we could have multiple playlists queued up
+                    // which prevents us from being able to use MediaCollection.CurrentIndex
+                    friendlyData["FilePlaylistPosition"] = currentFileIndex.ToString();
+
+                    // Embed the PlayableItemId so we can identify which one to track progress for
+                    friendlyData["PlayableItemId"] = playable.Id.ToString();
+
+                    // Embed the Media index so we can identify which one to track progress for
+                    friendlyData["MediaIndex"] = mediaIndex.ToString();
+
+                    // Set a friendly title
+                    friendlyData["Title"] = media.Name;
+
+                    coll.AddItem(path, collectionIndex, -1, string.Empty, friendlyData);
+
+                    currentFileIndex++;
+                    collectionIndex++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// When playback is based purely on file paths, this will populate the MediaCollection using the paths
+        /// </summary>
+        public static void PopulateMediaCollectionUsingFiles(MediaCollection coll, PlayableItem playable)
+        {
+            PopulateMediaCollectionUsingFiles(coll, playable, 0, playable.Files.Count());
+        }
+
+        /// <summary>
+        /// When playback is based purely on file paths, this will populate the MediaCollection using the paths
+        /// </summary>
+        public static void PopulateMediaCollectionUsingFiles(MediaCollection coll, PlayableItem playable, int startIndex, int count)
+        {
+            int numFiles = playable.Files.Count();
+            string idString = playable.Id.ToString();
+
+            // Create a MediaCollectionItem for each file to play
+            for (int i = startIndex; i < count; i++)
+            {
+                string path = playable.Files.ElementAt(i);
+
+                Dictionary<string, object> friendlyData = new Dictionary<string, object>();
+
+                // Embed the playlist index, since we could have multiple playlists queued up
+                // which prevents us from being able to use MediaCollection.CurrentIndex
+                friendlyData["FilePlaylistPosition"] = i.ToString();
+
+                // Embed the PlayableItemId so we can identify which one to track progress for
+                friendlyData["PlayableItemId"] = idString;
+                
+                coll.AddItem(path, i, -1, string.Empty, friendlyData);
+            }
+        }
+
+        /// <summary>
+        /// Takes a path to a DVD folder and returns the path to send to the player
+        /// </summary>
+        public static string GetDVDPath(string path)
+        {
+            path = path.Replace("\\", "/").Trim('/');
+
+            return "DVD://" + path + "/";
+        }
+
+        /// <summary>
+        /// For Bluray folders this will return the largest m2ts file contained within. For the internal wmc player, this is the best we can do
+        /// </summary>
+        public static string GetBluRayPath(string path)
+        {
+            string folder = Path.Combine(path, "bdmv\\stream");
+
+            string movieFile = string.Empty;
+            long size = 0;
+
+            foreach (FileInfo file in new DirectoryInfo(folder).GetFiles("*.m2ts"))
+            {
+                long currSize = file.Length;
+
+                if (currSize > size)
+                {
+                    movieFile = file.FullName;
+                    size = currSize;
+                }
+            }
+
+            return movieFile;
+        }
+        
+        public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
+        {
+            MediaType videoMediaType = MediaType.Unknown;
+
+            string firstFile = playable.Files.First();
+
+            if (playable.HasMediaItems)
+            {
+                Video video = playable.MediaItems.First() as Video;
+
+                if (video != null)
+                {
+                    videoMediaType = video.MediaType;
+                }
+            }
+            else
+            {
+                videoMediaType = MediaTypeResolver.DetermineType(firstFile);
+            }
+
+            // If we have a known video type, return DVD or Video
+            if (videoMediaType == MediaType.DVD)
+            {
+                return Microsoft.MediaCenter.MediaType.Dvd;
+            }
+            else if (videoMediaType != MediaType.Unknown && videoMediaType != MediaType.PlayList)
+            {
+                return Microsoft.MediaCenter.MediaType.Video;
+            }
+
+            // Assume this is video
+            if (firstFile.ToLower().EndsWith(".wpl"))
+            {
+                return Microsoft.MediaCenter.MediaType.Video;
+            }
+
+            return !Path.HasExtension(firstFile) || Helper.IsVideo(firstFile) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+        }
+
+        public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
+        {
+            if (!mediaCenterEnvironment.PlayMedia(type, media, queue))
+            {
+                Logger.ReportInfo("PlayMedia returned false");
+            }
         }
 
         public static PlayableItem GetCurrentPlaybackItemUsingMetadataTitle(PlaybackController controllerInstance, IEnumerable<PlayableItem> playableItems, string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
@@ -145,7 +280,7 @@ namespace MediaBrowser.Library.Playables
                 else
                 {
                     // There are no Media items so just find the index using the Files property
-                    int index = PlaybackControllerHelper.GetIndexOfFileInPlaylist(playable.Files, metadataTitle);
+                    int index = PlaybackControllerHelper.GetIndexOfFileInPlaylist(playable.FilesFormattedForPlayer, metadataTitle);
 
                     if (index != -1)
                     {
@@ -175,78 +310,6 @@ namespace MediaBrowser.Library.Playables
             }
 
             return -1;
-        }
-
-        /// <summary>
-        /// Then playback is based on Media items, this will populate the MediaCollection using the items
-        /// </summary>
-        public static void PopulateMediaCollectionUsingMediaItems(PlaybackController controllerInstance, MediaCollection coll, PlayableItem playable)
-        {
-            int currentFileIndex = 0;
-            int collectionIndex = coll.Count;
-            int numItems = playable.MediaItems.Count();
-
-            for (int mediaIndex = 0; mediaIndex < numItems; mediaIndex++)
-            {
-                Media media = playable.MediaItems.ElementAt(mediaIndex);
-
-                IEnumerable<string> files = controllerInstance.GetPlayableFiles(media);
-
-                int numFiles = files.Count();
-
-                // Create a MediaCollectionItem for each file to play
-                for (int i = 0; i < numFiles; i++)
-                {
-                    string path = files.ElementAt(i);
-
-                    Dictionary<string, object> friendlyData = new Dictionary<string, object>();
-
-                    // Embed the playlist index, since we could have multiple playlists queued up
-                    // which prevents us from being able to use MediaCollection.CurrentIndex
-                    friendlyData["FilePlaylistPosition"] = currentFileIndex.ToString();
-
-                    // Embed the PlayableItemId so we can identify which one to track progress for
-                    friendlyData["PlayableItemId"] = playable.Id.ToString();
-
-                    // Embed the Media index so we can identify which one to track progress for
-                    friendlyData["MediaIndex"] = mediaIndex.ToString();
-
-                    // Set a friendly title
-                    friendlyData["Title"] = media.Name;
-                    
-                    coll.AddItem(path, collectionIndex, -1, string.Empty, friendlyData);
-
-                    currentFileIndex++;
-                    collectionIndex++;
-                }
-            }
-        }
-
-        /// <summary>
-        /// When playback is based purely on file paths, this will populate the MediaCollection using the paths
-        /// </summary>
-        public static void PopulateMediaCollectionUsingFiles(MediaCollection coll, PlayableItem playable)
-        {
-            int numFiles = playable.Files.Count();
-            string idString = playable.Id.ToString();
-
-            // Create a MediaCollectionItem for each file to play
-            for (int i = 0; i < numFiles; i++)
-            {
-                string path = playable.Files.ElementAt(i);
-
-                MediaCollectionItem item = new MediaCollectionItem();
-                item.Media = path;
-
-                // Embed the playlist index, since we could have multiple playlists queued up
-                // which prevents us from being able to use MediaCollection.CurrentIndex
-                item.FriendlyData["FilePlaylistPosition"] = i.ToString();
-
-                // Embed the PlayableItemId so we can identify which one to track progress for
-                item.FriendlyData["PlayableItemId"] = idString;
-                
-                coll.Add(item);
-            }
         }
 
         public static Microsoft.MediaCenter.Extensibility.MediaType GetCurrentMediaType()
@@ -363,9 +426,9 @@ namespace MediaBrowser.Library.Playables
         public static string GetTitleOfCurrentlyPlayingMedia(MediaMetadata metadata)
         {
             if (metadata == null) return string.Empty;
-            
+
             string title = string.Empty;
-            
+
             // Changed this to get the "Name" property instead.  That makes it compatable with DVD playback as well.
             if (metadata.ContainsKey("Name"))
             {
@@ -384,7 +447,7 @@ namespace MediaBrowser.Library.Playables
                     // Use this for audio. Will get the path to the audio file even in the context of a playlist
                     // But with video this will return the wpl file
                     title = metadata["Uri"] as string;
-                } 
+                }
             }
 
             return string.IsNullOrEmpty(title) ? string.Empty : title;
@@ -431,17 +494,7 @@ namespace MediaBrowser.Library.Playables
 
         public static bool RequiresWPL(PlayableItem playable)
         {
-            if (playable.HasMediaItems)
-            {
-                if (playable.MediaItems.Count() > 1)
-                {
-                    return true;
-                }
-
-                return playable.MediaItems.First().Files.Count() > 1;
-            }
-
-            return playable.Files.Count() > 1;
+            return playable.FilesFormattedForPlayer.Count() > 1;
         }
 
         public static string GetTranscodedPath(string path)
@@ -477,7 +530,7 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        public static string CreateWPLPlaylist(string name, IEnumerable<string> files, bool transcode, int startIndex)
+        public static string CreateWPLPlaylist(string name, IEnumerable<string> files, int startIndex)
         {
 
             // we need to filter out all invalid chars 
@@ -503,10 +556,8 @@ namespace MediaBrowser.Library.Playables
             {
                 string file = files.ElementAt(i);
 
-                string fileToPlay = transcode ? GetTranscodedPath(file) : file;
-
                 xml.WriteStartElement("media");
-                xml.WriteAttributeString("src", fileToPlay);
+                xml.WriteAttributeString("src", file);
                 xml.WriteEndElement();
             }
 

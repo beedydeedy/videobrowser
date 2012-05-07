@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 
-namespace MediaBrowser.Library.Playables.VLC
+namespace MediaBrowser.Library.Playables.VLC2
 {
     /// <summary>
     /// Controls editing VLC settings within the configurator
     /// </summary>
-    public class PlayableVLCConfigurator : PlayableExternalConfigurator
+    public class VLC2Configurator : PlayableExternalConfigurator
     {
         /// <summary>
         /// Returns a unique name for the external player
@@ -52,22 +52,6 @@ namespace MediaBrowser.Library.Playables.VLC
         }
 
         public override bool AllowArgumentsEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowShowSplashScreenEditing
         {
             get
             {

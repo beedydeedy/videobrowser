@@ -1,17 +1,17 @@
 ﻿using System;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
     /// <summary>
     /// Represents an external player that uses the WMC add-in
     /// </summary>
-    public class PlayableTMTAddInForWMC : PlayableTMT
+    public class PlayableTMT5AddInForWMC : PlayableTMT5
     {
         protected override Type PlaybackControllerType
         {
             get
             {
-                return typeof(TMTAddInPlaybackController);
+                return typeof(TMT5AddInPlaybackController);
             }
         }
     }

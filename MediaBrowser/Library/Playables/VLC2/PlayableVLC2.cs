@@ -1,16 +1,16 @@
 ﻿using System;
-using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Playables.ExternalPlayer;
 
-namespace MediaBrowser.Library.Playables.VLC
+namespace MediaBrowser.Library.Playables.VLC2
 {
-    public class PlayableVLC : PlayableExternal
+    public class PlayableVLC2 : PlayableExternal
     {
         protected override Type PlaybackControllerType
         {
             get
             {
-                return typeof(VLCPlaybackController);
+                return typeof(VLC2PlaybackController);
             }
         }
 

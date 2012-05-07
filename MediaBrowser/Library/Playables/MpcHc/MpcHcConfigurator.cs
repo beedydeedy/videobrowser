@@ -7,7 +7,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
     /// <summary>
     /// Controls editing MPC-HC settings within the configurator
     /// </summary>
-    public class PlayableMpcHcConfigurator : PlayableExternalConfigurator
+    public class MpcHcConfigurator : PlayableExternalConfigurator
     {
         /// <summary>
         /// Returns a unique name for the external player
@@ -183,22 +183,6 @@ namespace MediaBrowser.Library.Playables.MpcHc
         }
 
         public override bool AllowArgumentsEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowShowSplashScreenEditing
         {
             get
             {

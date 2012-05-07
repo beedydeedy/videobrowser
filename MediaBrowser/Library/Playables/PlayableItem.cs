@@ -128,6 +128,11 @@ namespace MediaBrowser.Library.Playables
         public IEnumerable<string> Files { get { return _Files; } internal set { _Files = value; } }
 
         /// <summary>
+        /// Internal  use only. The PlaybackController will use this property to store the list playable files, after formatting them for entry to the player.
+        /// </summary>
+        internal IEnumerable<string> FilesFormattedForPlayer { get; set; }
+
+        /// <summary>
         /// Describes how the item was played by the user
         /// </summary>
         public PlayMethod PlayMethod { get; internal set; }
@@ -146,6 +151,60 @@ namespace MediaBrowser.Library.Playables
         /// If true, Playback will be resumed from the last known position
         /// </summary>
         public bool Resume { get; set; }
+
+        private long? _StartPositionTicks = null;
+        /// <summary>
+        /// Gets or sets the position in ticks from which playback should start.
+        /// Unless explicitly set this will be driven off of Resume and Playstate settings
+        /// </summary>
+        public long StartPositionTicks
+        {
+            get
+            {
+                if (_StartPositionTicks.HasValue)
+                {
+                    return _StartPositionTicks.Value;
+                }
+
+                if (Resume)
+                {
+                    return MediaItems.First().PlaybackStatus.PositionTicks;
+                }
+
+                return 0;
+            }
+            set
+            {
+                _StartPositionTicks = value;
+            }
+        }
+
+        private int? _StartPlaylistPosition = null;
+        /// <summary>
+        /// Gets or sets the playlist position from which playback should start.
+        /// Unless explicitly set this will be driven off of Resume and Playstate settings
+        /// </summary>
+        public int StartPlaylistPosition
+        {
+            get
+            {
+                if (_StartPlaylistPosition.HasValue)
+                {
+                    return _StartPlaylistPosition.Value;
+                }
+
+                if (Resume)
+                {
+                    return MediaItems.First().PlaybackStatus.PlaylistPosition;
+                }
+
+                return 0;
+            }
+            set
+            {
+                _StartPlaylistPosition = value;
+            }
+        }
 
         /// <summary>
         /// Holds the time that playback was started

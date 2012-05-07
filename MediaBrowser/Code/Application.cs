@@ -67,6 +67,37 @@ namespace MediaBrowser
         public System.Drawing.Bitmap ExtSplashBmp;
         private Item lastPlayed;
 
+        #region CurrentItemChanged EventHandler
+        volatile EventHandler<GenericEventArgs<Item>> _CurrentItemChanged;
+        /// <summary>
+        /// Fires whenever CurrentItem changes
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Item>> CurrentItemChanged
+        {
+            add
+            {
+                _CurrentItemChanged += value;
+            }
+            remove
+            {
+                _CurrentItemChanged -= value;
+            }
+        }
+
+        internal void OnCurrentItemChanged()
+        {
+            FirePropertyChanged("CurrentItem"); 
+            
+            if (_CurrentItemChanged != null)
+            {
+                Async.Queue("OnCurrentItemChanged", () =>
+                {
+                    _CurrentItemChanged(this, new GenericEventArgs<Item>() { Item = CurrentItem });
+                }); 
+            }
+        }
+        #endregion
+
         #region NavigatedInto EventHandler
         volatile EventHandler<GenericEventArgs<Item>> _NavigationInto;
         /// <summary>
@@ -86,10 +117,10 @@ namespace MediaBrowser
 
         internal void OnNavigationInto(Item item)
         {
-            if (_NavigationInto != null)
+            Async.Queue("OnNavigationInto", () =>
             {
                 _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
-            }
+            }); 
         }
         #endregion
 
@@ -286,14 +317,9 @@ namespace MediaBrowser
                 if (currentItem != value)
                 {
                     currentItem = value;
-                    CurrentItemChanged();
+                    OnCurrentItemChanged();
                 }
             }
-        }
-
-        public void CurrentItemChanged()
-        {
-            FirePropertyChanged("CurrentItem");
         }
 
         private List<MenuItem> currentContextMenu;
@@ -481,8 +507,7 @@ namespace MediaBrowser
                     }
                     catch (Exception ex)
                     {
-                        Logger.ReportException("Error in RunningOnExtender.", ex);
-                        Logger.ReportError("Application has broken MediaCenterEnvironment.  Hopefully, this is a temporary situation...");
+                        Logger.ReportException("Error in RunningOnExtender. If you're on a PC this is not a problem.", ex);
                         //don't crash - just assume we are on a regular install and something went wrong momentarily - it'll have a problem later if it is real
                         return false;
                     }
@@ -623,7 +648,7 @@ namespace MediaBrowser
 
                     // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
                     // us to delete the file we are trying to delete
-                    PlayableItem playable = PlayableItemFactory.Instance.Create(new string[] { DingFile }, false);
+                    PlayableItem playable = PlayableItemFactory.Instance.CreateForInternalPlayer(new string[] { DingFile });
 
                     playable.GoFullScreen = false;
                     playable.RaiseGlobalPlaybackEvents = false;
