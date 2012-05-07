@@ -633,15 +633,7 @@ namespace MediaBrowser.Library.Entities {
         {
             get
             {
-                foreach (var item in RecursiveChildren)
-                {
-                    Media media = item as Media;
-
-                    if (media != null)
-                    {
-                        yield return media;
-                    }
-                }
+                return RecursiveChildren.OfType<Media>();
             }
         }
 

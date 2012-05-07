@@ -1,19 +1,15 @@
 ﻿using System.Collections.Generic;
-using MediaBrowser.Library.Playables.ExternalPlayer;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
-    /// <summary>
-    /// Controls editing TMT settings within the configurator
-    /// </summary>
-    public class PlayableTMTConfigurator : PlayableExternalConfigurator
+    public class TMT5AddInForWMCConfigurator : TMT5Configurator
     {
         /// <summary>
         /// Returns a unique name for the external player
         /// </summary>
         public override string ExternalPlayerName
         {
-            get { return "TotalMedia Theatre 5"; }
+            get { return "TotalMedia Theatre 5 WMC Add-On"; }
         }
 
         /// <summary>
@@ -23,8 +19,7 @@ namespace MediaBrowser.Library.Playables.TMT
         {
             ConfigData.ExternalPlayer config = base.GetDefaultConfiguration();
 
-            config.SupportsPlaylists = false;
-            config.SupportsMultiFileCommandArguments = false;
+            config.LaunchType = ConfigData.ExternalPlayerLaunchType.WMCNavigate;
 
             return config;
         }
@@ -33,7 +28,7 @@ namespace MediaBrowser.Library.Playables.TMT
         {
             get
             {
-                return "You will need to enable \"always on top\" and \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
+                return "You will need to enable \"auto-fullscreen\". There is no resume support at this time. There is no multi-part movie or folder-based playback support at this time.";
             }
         }
 
@@ -41,16 +36,16 @@ namespace MediaBrowser.Library.Playables.TMT
         {
             get
             {
-                return "The path to uTotalMediaTheatre5.exe within the TMT installation directory.";
+                return "The path to PlayerLoader.htm within the TMT installation directory.";
             }
         }
 
         public override IEnumerable<string> GetKnownPlayerPaths()
         {
-            return GetProgramFilesPaths("ArcSoft\\TotalMedia Theatre 5\\uTotalMediaTheatre5.exe");
+            return GetProgramFilesPaths("ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
         }
 
-        public override bool AllowArgumentsEditing
+        public override bool AllowShowSplashScreenEditing
         {
             get
             {
@@ -65,14 +60,5 @@ namespace MediaBrowser.Library.Playables.TMT
                 return false;
             }
         }
-
-        public override bool AllowShowSplashScreenEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
     }
-
 }

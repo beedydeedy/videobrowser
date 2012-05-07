@@ -169,10 +169,7 @@ namespace MediaBrowser.Code.ModelItems
         public void Play(PlayableItem playable)
         {
             // Break down the Media items into raw files
-            if (playable.HasMediaItems)
-            {
-                PopulatePlayableFiles(playable);
-            }
+            PopulatePlayableFiles(playable);
 
             // Add it to the list of active PlayableItems
             CurrentPlayableItems.Add(playable);
@@ -253,7 +250,7 @@ namespace MediaBrowser.Code.ModelItems
                 // See if the current file is a video
                 if (!string.IsNullOrEmpty(currentFile))
                 {
-                    return Helper.IsVideo(currentFile);                     
+                    return Helper.IsVideo(currentFile);
                 }
 
                 // If we can't determine the current file, test them all
@@ -309,14 +306,23 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void PopulatePlayableFiles(PlayableItem playable)
         {
-            List<string> files = new List<string>(playable.MediaItems.Count());
-
-            foreach (Media media in playable.MediaItems)
+            if (playable.HasMediaItems)
             {
-                files.AddRange(GetPlayableFiles(media));
-            }
+                List<string> files = new List<string>(playable.MediaItems.Count());
 
-            playable.Files = files;
+                foreach (Media media in playable.MediaItems)
+                {
+                    files.AddRange(GetPlayableFiles(media));
+                }
+
+                playable.Files = files;
+
+                playable.FilesFormattedForPlayer = files;
+            }
+            else
+            {
+                playable.FilesFormattedForPlayer = GetPlayableFiles(playable.Files);
+            }
         }
 
         /// <summary>
@@ -392,7 +398,7 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            string currentFile = state.Item.Files.ElementAt(state.CurrentFileIndex);
+            string currentFile = state.Item.FilesFormattedForPlayer.ElementAt(state.CurrentFileIndex);
 
             int numMediaItems = playable.MediaItems.Count();
 
@@ -400,10 +406,7 @@ namespace MediaBrowser.Code.ModelItems
             {
                 Media media = playable.MediaItems.ElementAt(i);
 
-                List<string> playableFiles = GetPlayableFiles(media).ToList();
-                int index = playableFiles.IndexOf(currentFile);
-
-                if (index != -1)
+                if (GetPlayableFiles(media).Contains(currentFile))
                 {
                     state.CurrentMediaIndex = i;
                     break;
@@ -428,7 +431,7 @@ namespace MediaBrowser.Code.ModelItems
         private void UpdateResumeStatusInUI()
         {
             Item item = Application.CurrentInstance.CurrentItem;
-            
+
             if (item.IsPlayable)
             {
                 item.UpdateResume();
@@ -436,7 +439,7 @@ namespace MediaBrowser.Code.ModelItems
         }
 
         /// <summary>
-        /// Gets the raw playable files for a given Media object
+        /// When playback is based on media items, this will take a single Media object and return the raw list of files that will be played
         /// </summary>
         internal virtual IEnumerable<string> GetPlayableFiles(Media media)
         {
@@ -448,6 +451,15 @@ namespace MediaBrowser.Code.ModelItems
             }
 
             return media.Files;
+        }
+
+        /// <summary>
+        /// When playback is based purely on files, this will take the files that were supplied to the PlayableItem,
+        /// and create the actual paths that will be sent to the player
+        /// </summary>
+        internal virtual IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
+        {
+            return files;
         }
 
         protected override void Dispose(bool isDisposing)

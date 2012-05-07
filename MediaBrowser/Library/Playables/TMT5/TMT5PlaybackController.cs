@@ -8,9 +8,9 @@ using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
 
-namespace MediaBrowser.Library.Playables.TMT
+namespace MediaBrowser.Library.Playables.TMT5
 {
-    public class TMTPlaybackController : ConfigurableExternalPlaybackController
+    public class TMT5PlaybackController : ConfigurableExternalPlaybackController
     {
         // All of these hold state about what's being played. They're all reset when playback starts
         private bool _HasStartedPlaying = false;
@@ -90,10 +90,9 @@ namespace MediaBrowser.Library.Playables.TMT
                 {
                     PlayableItem playItem = GetCurrentPlayableItem();
 
-                    if (playItem.Resume)
+                    if (playItem.StartPositionTicks > 0 || playItem.StartPlaylistPosition > 0)
                     {
-                        var playstate = playItem.MediaItems.First().PlaybackStatus;
-                        ExecuteResumeCommand(playstate.PlaylistPosition, playstate.PositionTicks);
+                        ExecuteResumeCommand(playItem.StartPlaylistPosition, playItem.StartPositionTicks);
                     }
                 }
 
@@ -211,15 +210,7 @@ namespace MediaBrowser.Library.Playables.TMT
         {
             get
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft\\" + PlayStatePathAppName);
-            }
-        }
-
-        protected virtual string PlayStatePathAppName
-        {
-            get
-            {
-                return "ArcSoft TotalMedia Theatre 5";
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft");
             }
         }
     }
