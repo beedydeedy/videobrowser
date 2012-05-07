@@ -299,6 +299,17 @@ namespace MediaBrowser.Library {
                 _PlayStateSaved -= value;
             }
         }
+        internal void OnPlayStateSaved(BaseItem media, PlaybackStatus playstate)
+        {
+            // Fire off event in async so we don't tie anything up
+            if (_PlayStateSaved != null)
+            {
+                Async.Queue("OnPlayStateSaved", () =>
+                {
+                    _PlayStateSaved(this, new PlayStateSaveEventArgs() { PlaybackStatus = playstate, Item = media });
+                });
+            }
+        }
         #endregion
 
 
@@ -1045,16 +1056,19 @@ namespace MediaBrowser.Library {
         /// <summary>
         /// Persists a PlaybackStatus object
         /// </summary>
+        public void SavePlayState(PlaybackStatus playstate)
+        {
+            SavePlayState(null, playstate);
+        }
+
+        /// <summary>
+        /// Persists a PlaybackStatus object
+        /// </summary>
         /// <param name="media">The item it belongs to. This can be null, but it's used to notify listeners of PlayStateSaved which item it belongs to.</param>
         public void SavePlayState(BaseItem media, PlaybackStatus playstate)
         {
             Kernel.Instance.ItemRepository.SavePlayState(playstate);
-
-            // Fire off event
-            if (_PlayStateSaved != null)
-            {
-                _PlayStateSaved(this, new PlayStateSaveEventArgs() { PlaybackStatus = playstate, Item = media });
-            }
+            OnPlayStateSaved(media, playstate);
         }
 
     }
