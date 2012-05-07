@@ -117,10 +117,13 @@ namespace MediaBrowser
 
         internal void OnNavigationInto(Item item)
         {
-            Async.Queue("OnNavigationInto", () =>
+            if (_NavigationInto != null)
             {
-                _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
-            }); 
+                Async.Queue("OnNavigationInto", () =>
+                {
+                    _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
+                });
+            }
         }
         #endregion
 
