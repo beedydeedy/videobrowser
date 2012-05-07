@@ -237,7 +237,7 @@ namespace MediaBrowser.Library {
             }
         }
 
-        #region OnItemAddedToLibrary EventHandler
+        #region Item Added/Deleted EventHandler
         volatile EventHandler<GenericEventArgs<BaseItem>> _ItemAddedToLibrary;
         /// <summary>
         /// Fires whenever a folder is navigated into
@@ -259,6 +259,29 @@ namespace MediaBrowser.Library {
             if (_ItemAddedToLibrary != null)
             {
                 _ItemAddedToLibrary(this, new GenericEventArgs<BaseItem>() { Item = item });
+            }
+        }
+        volatile EventHandler<GenericEventArgs<BaseItem>> _ItemRemovedFromLibrary;
+        /// <summary>
+        /// Fires whenever a folder is navigated into
+        /// </summary>
+        public event EventHandler<GenericEventArgs<BaseItem>> ItemRemovedFromLibrary
+        {
+            add
+            {
+                _ItemRemovedFromLibrary += value;
+            }
+            remove
+            {
+                _ItemRemovedFromLibrary -= value;
+            }
+        }
+
+        internal void OnItemRemovedFromLibrary(BaseItem item)
+        {
+            if (_ItemRemovedFromLibrary != null)
+            {
+                _ItemRemovedFromLibrary(this, new GenericEventArgs<BaseItem>() { Item = item });
             }
         }
         #endregion

@@ -740,6 +740,8 @@ namespace MediaBrowser.Library.Entities {
                     {
                         ActualChildren.RemoveAll(current => current.Id == item.Id);
                     }
+                    // Notify the kernel that an item was removed
+                    Kernel.Instance.OnItemRemovedFromLibrary(item);
                 }
 
             }
