@@ -240,7 +240,7 @@ namespace MediaBrowser.Library {
         #region Item Added/Deleted EventHandler
         volatile EventHandler<GenericEventArgs<BaseItem>> _ItemAddedToLibrary;
         /// <summary>
-        /// Fires whenever a folder is navigated into
+        /// Fires whenever an item is added via validation
         /// </summary>
         public event EventHandler<GenericEventArgs<BaseItem>> ItemAddedToLibrary
         {
@@ -263,7 +263,7 @@ namespace MediaBrowser.Library {
         }
         volatile EventHandler<GenericEventArgs<BaseItem>> _ItemRemovedFromLibrary;
         /// <summary>
-        /// Fires whenever a folder is navigated into
+        /// Fires whenever an item is removed via validation
         /// </summary>
         public event EventHandler<GenericEventArgs<BaseItem>> ItemRemovedFromLibrary
         {
