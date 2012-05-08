@@ -199,9 +199,13 @@ namespace MediaBrowser.Library.Playables.MpcHc
         {
             for (int i = 0; i <= 19; i++)
             {
-                if (values["File Name " + i].StartsWith(filename))
+                string currentFileName = values["File Name " + i];
+
+                if (!string.IsNullOrEmpty(currentFileName) && currentFileName.StartsWith(filename))
                 {
-                    return long.Parse(values["File Position " + i]);
+                    string position = values["File Position " + i];
+
+                    return string.IsNullOrEmpty(position) ? 0 : long.Parse(position);
                 }
             }
 
