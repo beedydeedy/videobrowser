@@ -28,6 +28,7 @@ namespace MediaBrowser.Library.Playables
                 return true;
             }
 
+            // MediaCollections have performance issues with a large number of items
             if (item.FilesFormattedForPlayer.Count() > 200)
             {
                 return true;
@@ -35,7 +36,7 @@ namespace MediaBrowser.Library.Playables
 
             if (item.HasMediaItems)
             {
-                // Try to determine if there's a Song here
+                // Try to determine if there's a non-video type
                 Media media = item.MediaItems.First();
 
                 Video video = media as Video;
@@ -68,7 +69,7 @@ namespace MediaBrowser.Library.Playables
             {
                 return null;
             }
-            Logger.ReportVerbose("Active item: " + activeItem.Media.ToString());
+            
             Guid playableItemId = new Guid(activeItem.FriendlyData["PlayableItemId"].ToString());
             filePlaylistPosition = int.Parse(activeItem.FriendlyData["FilePlaylistPosition"].ToString());
 

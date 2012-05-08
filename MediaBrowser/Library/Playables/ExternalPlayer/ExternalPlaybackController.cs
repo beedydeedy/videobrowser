@@ -63,9 +63,25 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         protected override void PlayMediaInternal(PlayableItem playable)
         {
+            // Need to stop other players, in particular the internal 7MC player
+            Application.CurrentInstance.StopAllPlayback();
+
             // Two different launch methods depending on how the player is configured
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
+                if (Application.CurrentInstance.IsPlaying)
+                {
+                    // Make certain playback has stopped
+                    int count = 0;
+
+                    while (Application.CurrentInstance.IsPlaying && count < 4)
+                    {
+                        System.Threading.Thread.Sleep(500);
+
+                        count++;
+                    }
+                }
+
                 PlayUsingWMCNavigation(playable);
 
                 OnExternalPlayerLaunched(playable);

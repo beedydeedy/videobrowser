@@ -7,6 +7,7 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.RemoteControl;
+using MediaBrowser.Library.Threading;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -70,22 +71,27 @@ namespace MediaBrowser.Library.Playables
 
         private void OnPlayStateChanged()
         {
-            if (PlayState == PlayableItemPlayState.Stopped)
+            Async.Queue("OnPlayStateChanged", () =>
             {
-                MarkWatchedIfNeeded();
-
-                Application.CurrentInstance.RunPostPlayProcesses(this);
-
-                if (UnmountISOAfterPlayback)
+                if (PlayState == PlayableItemPlayState.Stopped)
                 {
-                    Application.CurrentInstance.UnmountIso();
-                }
-            }
+                    MarkWatchedIfNeeded();
 
-            if (_PlayStateChanged != null)
-            {
-                _PlayStateChanged(this, new GenericEventArgs<PlayableItem>() { Item = this });
-            }
+                    Application.CurrentInstance.RunPostPlayProcesses(this);
+                }
+                else if (PlayState == PlayableItemPlayState.PostPlayActionsComplete)
+                {
+                    if (UnmountISOAfterPlayback)
+                    {
+                        Application.CurrentInstance.UnmountIso();
+                    }
+                }
+
+                if (_PlayStateChanged != null)
+                {
+                    _PlayStateChanged(this, new GenericEventArgs<PlayableItem>() { Item = this });
+                }
+            });
         }
         #endregion
 
