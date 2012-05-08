@@ -143,8 +143,10 @@ namespace MBMigrate
         {
             XmlNodeList nodes = externalPlayersNode.SelectNodes("ExternalPlayer");
 
+            bool merged = false;
+
             // Loop through each node starting with the last and counting down
-            for (int i = nodes.Count - 1; i > 0; i--)
+            for (int i = 1; i < nodes.Count; i++ )
             {
                 XmlNode node = nodes[i];
 
@@ -155,12 +157,9 @@ namespace MBMigrate
                 XmlNode nodeToMergeWith = null;
 
                 // Now go through each one from the beginning and see if there's another player using the same command
-                foreach (XmlNode testNode in nodes)
+                for (int j = 0; j < i; j++)
                 {
-                    if (testNode == node)
-                    {
-                        continue;
-                    }
+                    var testNode = nodes[j];
 
                     // Found a match
                     if (testNode.SelectSingleNode("Command").InnerText.ToLower() == command)
@@ -177,7 +176,15 @@ namespace MBMigrate
                     mediaTypeElem.InnerText = mediaType;
                     nodeToMergeWith.SelectSingleNode("MediaTypes").AppendChild(mediaTypeElem);
                     externalPlayersNode.RemoveChild(node);
+                    merged = true;
+                    break;
                 }
+            }
+
+            // Keep going until there are no more merges
+            if (merged)
+            {
+                MergeExternalPlayers(doc, externalPlayersNode);
             }
         }
 
