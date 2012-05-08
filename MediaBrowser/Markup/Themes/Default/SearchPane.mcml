@@ -112,7 +112,6 @@
             </LayoutInput>
             <Children>
               <st:SpinnerText Model="[RatingsStrings]" Label="[Application.LocalStrings.#Rated!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="80,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="Any" />
-              <!--<Text Content="[Application.LocalStrings.#Or!cor:String] " Font="font://f:SE_DefaultFont" Color="color://s:FontColorMedium" />-->
               <st:SpinnerText Model="[RatingDirection]" Label="[Application.LocalStrings.#Or!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="40,0" ValueMinSize="150,0" ValueFont="font://f:SE_DefaultFont" DefaultString="[Application.LocalStrings.#Lower!cor:String]" />
               
             </Children>
