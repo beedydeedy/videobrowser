@@ -1816,12 +1816,10 @@ namespace MediaBrowser
                         // Either advance to the next playlist position, or reset it back to 0
                         if (playlistPosition < (media.Files.Count() - 1))
                         {
-                            Logger.ReportVerbose("Increment playlist pos");
                             playlistPosition++;
                         }
                         else
                         {
-                            Logger.ReportVerbose("Reset playlist pos"); 
                             playlistPosition = 0;
                         }
                     }
