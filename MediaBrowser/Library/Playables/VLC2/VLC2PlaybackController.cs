@@ -13,7 +13,7 @@ namespace MediaBrowser.Library.Playables.VLC2
 {
     public class VLC2PlaybackController : ConfigurableExternalPlaybackController
     {
-        private const int HttpRequestInterval = 1000;
+        private const int ProgressInterval = 1000;
 
         // All of these hold state about what's being played. They're all reset when playback starts
         private int _CurrrentPlayingFileIndex = -1;
@@ -148,7 +148,7 @@ namespace MediaBrowser.Library.Playables.VLC2
                     }
                 }
 
-                Thread.Sleep(HttpRequestInterval);
+                Thread.Sleep(ProgressInterval);
             }
         }
 
