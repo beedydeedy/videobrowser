@@ -55,6 +55,8 @@ namespace MediaBrowser.Library.Playables.VLC2
             // Disable system screen saver during playback
             args.Add("--disable-screensaver");
 
+            args.Add("--qt-minimal-view");
+            
             // Startup the Http interface so we can send out requests to monitor playstate
             args.Add("--extraintf=http");
             args.Add("--http-host=" + VlcHttpServer);
