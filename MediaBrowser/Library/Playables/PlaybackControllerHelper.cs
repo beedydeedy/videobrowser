@@ -23,13 +23,22 @@ namespace MediaBrowser.Library.Playables
 
         public static bool UseLegacyApi(PlayableItem item)
         {
+            // Extenders don't support MediaCollections
             if (Application.RunningOnExtender)
             {
                 return true;
             }
 
+            int numFiles = item.FilesFormattedForPlayer.Count();
+
+            // Use the old api when there is just one file in order to avoid the annoying ding sound after playback.
+            if (numFiles == 1)
+            {
+                return true;
+            }
+
             // MediaCollections have performance issues with a large number of items
-            if (item.FilesFormattedForPlayer.Count() > 200)
+            if (numFiles > 200)
             {
                 return true;
             }
