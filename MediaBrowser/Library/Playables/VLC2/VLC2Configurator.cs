@@ -34,7 +34,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         {
             get
             {
-                return "Version 2.0+ required. No special configuration is required.";
+                return "Version 2.0 required. For a better transition from MB to VLC, it is recommended to enable View -> Fullscreen interface in VLC.";
             }
         }
 

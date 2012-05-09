@@ -63,9 +63,25 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         protected override void PlayMediaInternal(PlayableItem playable)
         {
+            // Need to stop other players, in particular the internal 7MC player
+            Application.CurrentInstance.StopAllPlayback();
+
             // Two different launch methods depending on how the player is configured
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
+                if (Application.CurrentInstance.IsPlaying)
+                {
+                    // Make certain playback has stopped
+                    int count = 0;
+
+                    while (Application.CurrentInstance.IsPlaying && count < 4)
+                    {
+                        System.Threading.Thread.Sleep(500);
+
+                        count++;
+                    }
+                }
+
                 PlayUsingWMCNavigation(playable);
 
                 OnExternalPlayerLaunched(playable);
@@ -111,9 +127,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                 wp.showCmd = 2; // 1 - Normal; 2 - Minimize; 3 - Maximize;
                 SetWindowPlacement(mceWnd, ref wp);
             }
+            
+            player.Refresh();
+            player.WaitForInputIdle(5000);
 
-            //give the player focus
-            Async.Queue("Ext Player Focus", () => GiveFocusToExtPlayer(player, playable));
+            OnExternalPlayerLaunched(playable);
 
             //and wait for it to exit
             player.WaitForExit();
@@ -130,16 +148,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             SetForegroundWindow(mceWnd);
 
             OnExternalPlayerClosed();
-        }
-
-        private void GiveFocusToExtPlayer(Process player, PlayableItem playable)
-        {
-            //set external player to foreground
-            Logger.ReportVerbose("Giving focus to external player window");
-            player.Refresh();
-            player.WaitForInputIdle(5000); //give the external player 5 secs to show up and then minimize MCE
-            OnExternalPlayerLaunched(playable);
-            SetForegroundWindow(player.MainWindowHandle);
         }
         
         /// <summary>

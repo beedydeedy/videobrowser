@@ -23,14 +23,5 @@ namespace MediaBrowser.Library.Playables.TMT5
         {
             return base.GetFilePathCommandArgument(filesToPlay).Replace("\"", string.Empty).Replace('\\', '/');
         }
-
-        protected override void OnExternalPlayerClosed()
-        {
-            base.OnExternalPlayerClosed();
-
-            ExternalSplashForm.Display(Application.CurrentInstance.ExtSplashBmp);
-            PlaybackControllerHelper.ReturnToApplication(false);
-            ExternalSplashForm.Hide();
-        }
     }
 }

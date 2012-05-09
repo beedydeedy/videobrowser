@@ -65,9 +65,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         {
             base.Prepare();
 
-            // Need to stop other players, in particular the internal 7MC player
-            Application.CurrentInstance.StopAllPlayback();
-
             (PlaybackController as ConfigurableExternalPlaybackController).ExternalPlayerConfiguration = ExternalPlayerConfiguration;
         }
     }

@@ -249,20 +249,10 @@ namespace MediaBrowser
             // Get metadata from player
             MediaMetadata metadata = mce.MediaMetadata;
 
-            int filePlaylistPosition;
-            int currentMediaIndex;
-
             string metadataTitle = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata);
-            PlayableItem currentPlaybackItem = GetCurrentPlaybackItemFromPlayerState(metadataTitle, out filePlaylistPosition, out currentMediaIndex);
+            long metadataDuration = PlaybackControllerHelper.GetDurationOfCurrentlyPlayingMedia(metadata);
 
-            PlaybackStateEventArgs eventArgs = new PlaybackStateEventArgs()
-            {
-                Position = positionTicks,
-                CurrentFileIndex = filePlaylistPosition,
-                DurationFromPlayer = PlaybackControllerHelper.GetDurationOfCurrentlyPlayingMedia(metadata),
-                Item = currentPlaybackItem,
-                CurrentMediaIndex = currentMediaIndex
-            };
+            PlaybackStateEventArgs eventArgs = GetCurrentPlaybackState(metadataTitle, metadataDuration, positionTicks);
 
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
             if (positionTicks > 0)
@@ -275,9 +265,9 @@ namespace MediaBrowser
             if (property == "PlayState")
             {
                 // Get the title from the PlayableItem, if it's available. Otherwise use MediaMetadata
-                string title = currentPlaybackItem == null ? metadataTitle : (currentPlaybackItem.HasMediaItems ? currentPlaybackItem.MediaItems.ElementAt(currentMediaIndex).Name : currentPlaybackItem.Files.ElementAt(filePlaylistPosition));
-                
-                Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, filePlaylistPosition);
+                string title = eventArgs.Item == null ? metadataTitle : (eventArgs.Item.HasMediaItems ? eventArgs.Item.MediaItems.ElementAt(eventArgs.CurrentMediaIndex).Name : eventArgs.Item.Files.ElementAt(eventArgs.CurrentFileIndex));
+
+                Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
                 
                 HandlePlaystateChanged(mce, transport, isStopped, eventArgs);
             }
@@ -286,16 +276,35 @@ namespace MediaBrowser
         /// <summary>
         /// Retrieves the current playback item using properties from MediaExperience and Transport
         /// </summary>
-        private PlayableItem GetCurrentPlaybackItemFromPlayerState(string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)
+        private PlaybackStateEventArgs GetCurrentPlaybackState(string metadataTitle, long metadataDuration, long positionTicks)
         {
+            int filePlaylistPosition;
+            int currentMediaIndex;
+            PlayableItem currentPlayableItem;
+
             if (CurrentMediaCollection == null)
             {
-                return PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
+                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
             }
             else
             {
-                return PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
+                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
+
+                // When playing multiple files with MediaCollections, if you allow playback to finish, CurrentIndex will be reset to 0, but transport.Position will be equal to the duration of the last item played
+                if (filePlaylistPosition == 0 && positionTicks >= metadataDuration)
+                {
+                    positionTicks = 0;
+                }
             }
+
+            return new PlaybackStateEventArgs()
+            {
+                Position = positionTicks,
+                CurrentFileIndex = filePlaylistPosition,
+                DurationFromPlayer = metadataDuration,
+                Item = currentPlayableItem,
+                CurrentMediaIndex = currentMediaIndex
+            };
         }
 
         /// <summary>

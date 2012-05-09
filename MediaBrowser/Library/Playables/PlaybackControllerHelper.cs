@@ -23,19 +23,29 @@ namespace MediaBrowser.Library.Playables
 
         public static bool UseLegacyApi(PlayableItem item)
         {
+            // Extenders don't support MediaCollections
             if (Application.RunningOnExtender)
             {
                 return true;
             }
 
-            if (item.FilesFormattedForPlayer.Count() > 200)
+            int numFiles = item.FilesFormattedForPlayer.Count();
+
+            // Use the old api when there is just one file in order to avoid the annoying ding sound after playback.
+            if (numFiles == 1)
+            {
+                return true;
+            }
+
+            // MediaCollections have performance issues with a large number of items
+            if (numFiles > 200)
             {
                 return true;
             }
 
             if (item.HasMediaItems)
             {
-                // Try to determine if there's a Song here
+                // Try to determine if there's a non-video type
                 Media media = item.MediaItems.First();
 
                 Video video = media as Video;
@@ -68,7 +78,7 @@ namespace MediaBrowser.Library.Playables
             {
                 return null;
             }
-            Logger.ReportVerbose("Active item: " + activeItem.Media.ToString());
+            
             Guid playableItemId = new Guid(activeItem.FriendlyData["PlayableItemId"].ToString());
             filePlaylistPosition = int.Parse(activeItem.FriendlyData["FilePlaylistPosition"].ToString());
 

@@ -16,7 +16,19 @@ namespace MediaBrowser.Library.Factories
     /// </summary>
     public class PlayableItemFactory
     {
-        public static PlayableItemFactory Instance = new PlayableItemFactory();
+        private static PlayableItemFactory _Instance = null;
+        public static PlayableItemFactory Instance
+        {
+            get
+            {
+                if (_Instance == null)
+                {
+                    _Instance = new PlayableItemFactory();
+                }
+
+                return _Instance;
+            }
+        }
 
         private List<Type> RegisteredTypes = new List<Type>();
         private List<KeyValuePair<Type, Type>> RegisteredExternalPlayerTypes = new List<KeyValuePair<Type, Type>>();
@@ -94,7 +106,7 @@ namespace MediaBrowser.Library.Factories
 
             bool unmountISOAfterPlayback = false;
             bool useAutoPlay = false;
-            
+
             if (video != null && video.MediaType == MediaType.ISO && !CanPlayIsoDirectly(GetAllKnownPlayables(), video))
             {
                 media = MountAndGetNewMedia(video);
@@ -144,7 +156,7 @@ namespace MediaBrowser.Library.Factories
         /// <summary>
         /// Creates a PlayableItem based on a Folder object
         /// </summary>
-        public PlayableItem Create(Folder folder) 
+        public PlayableItem Create(Folder folder)
         {
             PlayableItem playable = Create(folder.RecursiveMedia);
 

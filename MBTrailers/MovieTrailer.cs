@@ -72,6 +72,7 @@ namespace MBTrailers
             this.SortName = RealMovie.SortName;
             this.Studios = RealMovie.Studios;
             this.Path = RealMovie.TrailerFiles.First();
+            this.MediaType = MediaTypeResolver.DetermineType(Path);
             this.MediaInfo = RealMovie.MediaInfo;
             this.DateCreated = System.IO.File.GetCreationTime(this.Path);
             this.DisplayMediaType = "Trailer";
