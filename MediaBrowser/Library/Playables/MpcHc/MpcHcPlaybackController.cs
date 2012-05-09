@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
@@ -14,7 +13,6 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
-
         /// <summary>
         /// Takes a Media object and returns the list of files that will be sent to the player
         /// </summary>
@@ -99,12 +97,11 @@ namespace MediaBrowser.Library.Playables.MpcHc
             return GetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings"));
         }
 
-        private static string _MPCIniFilePath = string.Empty;
-        private static bool? _MPCIniFileDiscovered = null;
+        private static Dictionary<string, string> _CachedIniFileLocations = new Dictionary<string, string>();
 
         public static string GetIniFilePath(ConfigData.ExternalPlayer currentConfiguration)
         {
-            if (!_MPCIniFileDiscovered.HasValue)
+            if (!_CachedIniFileLocations.ContainsKey(currentConfiguration.Command))
             {
                 string directory = Path.GetDirectoryName(currentConfiguration.Command);
 
@@ -112,20 +109,25 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
                 if (File.Exists(path))
                 {
-                    _MPCIniFilePath = path;
+                    _CachedIniFileLocations[currentConfiguration.Command] = path;
                 }
-
-                path = Path.Combine(directory, "mpc-hc64.ini");
-
-                if (File.Exists(path))
+                else
                 {
-                    _MPCIniFilePath = path;
+                    path = Path.Combine(directory, "mpc-hc64.ini");
+
+                    if (File.Exists(path))
+                    {
+                        _CachedIniFileLocations[currentConfiguration.Command] = path;
+                    }
+                    else
+                    {
+                        _CachedIniFileLocations[currentConfiguration.Command] = string.Empty;
+                    }
                 }
 
-                _MPCIniFileDiscovered = true;
             }
 
-            return _MPCIniFilePath;
+            return _CachedIniFileLocations[currentConfiguration.Command];
         }
 
         /// <summary>

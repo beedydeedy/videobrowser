@@ -1,5 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
+using System.Linq;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
+using MediaBrowser.LibraryManagement;
 using Microsoft.Win32;
 
 namespace MediaBrowser.Library.Playables.MpcHc
@@ -96,16 +102,18 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["DontUseSearchInFolder"] = 1;
             values["UseGlobalMedia"] = 1;
             values["JumpDistM"] = 30000;
-
+            
             string iniPath = MpcHcPlaybackController.GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
-                SetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings", true), values);
+                RegistryKey key = Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings", true);
+
+                SetRegistryKeyValues(key, values);
             }
             else
             {
-                SetIniFileValues(iniPath, "Settings", values);
+                Helper.SetIniFileValues(iniPath, values);
             }
         }
 
@@ -131,7 +139,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["CommandMod11"] = "930 1 27 \"\" 5 0 0 0";
             values["CommandMod12"] = "931 1 26 \"\" 5 0 0 0";
             values["CommandMod13"] = "932 1 28 \"\" 5 0 0 0";
-            values["CommandMod15"] = "933 1 d \"\" 5 0 0 0";
+            values["CommandMod14"] = "933 1 d \"\" 5 0 0 0";
             values["CommandMod15"] = "934 1 8 \"\" 5 0 1 0";
             values["CommandMod16"] = "32778 b 49 \"\" 5 0 66057 0";
             values["CommandMod17"] = "32780 3 59 \"\" 5 0 0 0";
@@ -141,37 +149,70 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             if (string.IsNullOrEmpty(iniPath))
             {
-                SetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Commands2", true), values);
+                RegistryKey key = Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Commands2", true);
+                
+                SetRegistryKeyValues(key, values);
             }
             else
             {
-                SetIniFileValues(iniPath, "Commands2", values);
+                AddCommandModSettingsToIniFile(iniPath, 19);
+                Helper.SetIniFileValues(iniPath, values);
             }
+        }
+
+        /// <summary>
+        /// The CommandMod ini values may not actually exist in the file.
+        /// If that's the case this will add them.
+        /// </summary>
+        private static void AddCommandModSettingsToIniFile(string iniPath, int numMods)
+        {
+            List<string> lines = File.ReadAllLines(iniPath).ToList();
+
+            NameValueCollection values = Helper.ParseIniFile(iniPath);
+
+            string sectionName = "[Commands2]";
+
+            if (!lines.Contains(sectionName))
+            {
+                lines.Add(sectionName);
+            }
+
+            int commandsIndex = lines.IndexOf(sectionName);
+
+            for (int i = 0; i < numMods; i++)
+            {
+                string key = "CommandMod" + i;
+
+                if (!values.AllKeys.Contains(key))
+                {
+                    string line = key + "=";
+
+                    lines.Insert(commandsIndex + 1, line);
+                }
+                commandsIndex++;
+            }
+
+            File.WriteAllLines(iniPath, lines.ToArray());
         }
 
         /// <summary>
         /// Sets values within a registry key
         /// </summary>
-        private static void SetRegistryKeyValues(RegistryKey key, Dictionary<string, object> values)
+        public static void SetRegistryKeyValues(RegistryKey key, Dictionary<string, object> values)
         {
-            foreach (string keyName in values.Keys)
+            try
             {
-                key.SetValue(keyName, values[keyName]);
+                foreach (string valueName in values.Keys)
+                {
+                    key.SetValue(valueName, values[valueName]);
+                }
             }
-        }
-
-        private void SetIniFileValues(string path, string sectionName, Dictionary<string, object> values)
-        {
-            IniFile instance = new IniFile();
-
-            instance.Load(path);
-
-            foreach (string keyName in values.Keys)
+            catch (Exception ex)
             {
-                instance.SetKeyValue(sectionName, keyName, values[keyName].ToString());
+                Logger.ReportException("MpcHc - SetRegistryKeyValues", ex);
             }
 
-            instance.Save(path);
+            key.Close();
         }
 
         public override bool ShowIsoDirectLaunchWarning

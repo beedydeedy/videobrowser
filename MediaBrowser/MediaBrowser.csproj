@@ -281,7 +281,6 @@
     <Compile Include="Library\ThreadPoolSizes.cs" />
     <Compile Include="Library\Transcode.cs" />
     <Compile Include="Library\Extensions\XmlExtensions.cs" />
-    <Compile Include="Library\Util\IniFileCs.cs" />
     <Compile Include="Library\Util\Lazy.cs" />
     <Compile Include="Library\Util\MutexWrapper.cs" />
     <Compile Include="Library\VideoFormat.cs" />

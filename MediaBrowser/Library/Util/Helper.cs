@@ -1,32 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Text;
-using System.Resources;
-using System.Runtime.InteropServices;
 using System.IO;
-using System.Security.Cryptography;
-using Microsoft.Win32;
-using System.Reflection;
-using System.Management;
-//using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
-using MediaBrowser.Library.Configuration;
+using System.Management;
+using System.Runtime.InteropServices;
+using System.Text;
+using MediaBrowser.Interop;
 using MediaBrowser.Library;
+using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Extensions;
 using MediaBrowser.Library.ImageManagement;
 using Microsoft.MediaCenter.UI;
-using MediaBrowser.Interop;
-
+using Microsoft.Win32;
 
 namespace MediaBrowser.LibraryManagement
 {
-    using System.Drawing.Drawing2D;
-    using System.Diagnostics;
-    using System.Text.RegularExpressions;
-    using MediaBrowser.Util;
     using System.Net;
+    using System.Text.RegularExpressions;
     using System.Xml;
     using MediaBrowser.Library.Logging;
 
@@ -702,5 +693,30 @@ namespace MediaBrowser.LibraryManagement
             return values;
         }
 
+        /// <summary>
+        /// Sets values into an ini file. The value names are expected to already be there
+        /// </summary>
+        public static void SetIniFileValues(string path, Dictionary<string, object> values)
+        {
+            File.WriteAllLines(path, File.ReadAllLines(path).Select(line =>
+            {
+                string[] data = line.Split('=');
+
+                if (data.Length < 2)
+                {
+                    return line;
+                }
+
+                string key = data[0];
+
+                if (!values.ContainsKey(key))
+                {
+                    return line;
+                }
+
+                return key + "=" + values[key];
+
+            }).ToArray());
+        }
     }
 }
