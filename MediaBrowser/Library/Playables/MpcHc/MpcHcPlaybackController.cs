@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
@@ -13,6 +14,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
+
         /// <summary>
         /// Takes a Media object and returns the list of files that will be sent to the player
         /// </summary>
@@ -97,25 +99,33 @@ namespace MediaBrowser.Library.Playables.MpcHc
             return GetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings"));
         }
 
+        private static string _MPCIniFilePath = string.Empty;
+        private static bool? _MPCIniFileDiscovered = null;
+
         public static string GetIniFilePath(ConfigData.ExternalPlayer currentConfiguration)
         {
-            string directory = Path.GetDirectoryName(currentConfiguration.Command);
-
-            string path = Path.Combine(directory, "mpc-hc.ini");
-
-            if (File.Exists(path))
+            if (!_MPCIniFileDiscovered.HasValue)
             {
-                return path;
+                string directory = Path.GetDirectoryName(currentConfiguration.Command);
+
+                string path = Path.Combine(directory, "mpc-hc.ini");
+
+                if (File.Exists(path))
+                {
+                    _MPCIniFilePath = path;
+                }
+
+                path = Path.Combine(directory, "mpc-hc64.ini");
+
+                if (File.Exists(path))
+                {
+                    _MPCIniFilePath = path;
+                }
+
+                _MPCIniFileDiscovered = true;
             }
 
-            path = Path.Combine(directory, "mpc-hc64.ini");
-
-            if (File.Exists(path))
-            {
-                return path;
-            }
-
-            return string.Empty;
+            return _MPCIniFilePath;
         }
 
         /// <summary>
