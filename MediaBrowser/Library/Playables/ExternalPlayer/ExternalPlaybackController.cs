@@ -127,9 +127,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                 wp.showCmd = 2; // 1 - Normal; 2 - Minimize; 3 - Maximize;
                 SetWindowPlacement(mceWnd, ref wp);
             }
+            
+            player.Refresh();
+            player.WaitForInputIdle(5000);
 
-            //give the player focus
-            Async.Queue("Ext Player Focus", () => GiveFocusToExtPlayer(player, playable));
+            OnExternalPlayerLaunched(playable);
 
             //and wait for it to exit
             player.WaitForExit();
@@ -146,16 +148,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             SetForegroundWindow(mceWnd);
 
             OnExternalPlayerClosed();
-        }
-
-        private void GiveFocusToExtPlayer(Process player, PlayableItem playable)
-        {
-            //set external player to foreground
-            Logger.ReportVerbose("Giving focus to external player window");
-            player.Refresh();
-            player.WaitForInputIdle(5000); //give the external player 5 secs to show up and then minimize MCE
-            OnExternalPlayerLaunched(playable);
-            SetForegroundWindow(player.MainWindowHandle);
         }
         
         /// <summary>
