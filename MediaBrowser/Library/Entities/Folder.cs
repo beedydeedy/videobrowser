@@ -9,6 +9,7 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
 using MediaBrowser.Library.Localization;
+using MediaBrowser.Library.Persistance;
 using System.Collections;
 using System.Diagnostics;
 
@@ -406,6 +407,7 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        [Persist]
         protected int? mediaCount;
         public int MediaCount
         {
@@ -413,7 +415,8 @@ namespace MediaBrowser.Library.Entities {
             {
                 if (mediaCount == null)
                 {
-                    mediaCount = this.RecursiveMedia.Count();
+                    mediaCount = this.RecursiveMedia.Distinct(i => i.Id).Count();
+                    Kernel.Instance.ItemRepository.SaveItem(this);
                 }
                 return mediaCount == null ? 0 : mediaCount.Value;
             }
