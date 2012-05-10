@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -164,27 +163,16 @@ namespace MediaBrowser.Library.Playables.TMT5
         }
 
         /// <summary>
-        /// Sends a command to the MMC console to close the player.
-        /// Do not use this for the WMC add-in because it will close WMC
-        /// </summary>
-        private void ClosePlayer()
-        {
-            SendCommandToMMC("-close");
-        }
-
-        /// <summary>
         /// Tells the MMC console to resume playback where last left off for the current file
         /// </summary>
         private void ExecuteResumeCommand(int playlistPosition, long positionTicks)
         {
-            // This doesn't actually work right now, but who knows. Perhaps TMT will fix it and this will start working.
-            SendCommandToMMC("-resume");
         }
 
         /// <summary>
         /// Sends an arbitrary command to the TMT MMC console
         /// </summary>
-        private void SendCommandToMMC(string command)
+        protected void SendCommandToMMC(string command)
         {
             string directory = new FileInfo(ExternalPlayerConfiguration.Command).DirectoryName;
             string exe = Path.Combine(directory, "MMCEDT5.exe");
@@ -244,6 +232,30 @@ namespace MediaBrowser.Library.Playables.TMT5
 
                 return base.IsPaused;
             }
+        }
+
+        public override void Pause()
+        {
+            SendCommandToMMC("-pause");
+        }
+
+        protected override void StopInternal()
+        {
+            ClosePlayer();
+        }
+
+        public override void UnPause()
+        {
+            SendCommandToMMC("-play");
+        }
+
+        /// <summary>
+        /// Sends a command to the MMC console to close the player.
+        /// Do not use this for the WMC add-in because it will close WMC
+        /// </summary>
+        protected virtual void ClosePlayer()
+        {
+            SendCommandToMMC("-close");
         }
     }
 }

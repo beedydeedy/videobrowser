@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Playables;
 

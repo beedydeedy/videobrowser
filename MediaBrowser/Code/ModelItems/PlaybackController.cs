@@ -490,6 +490,18 @@ namespace MediaBrowser
         }
 
         /// <summary>
+        /// Unpauses playback
+        /// </summary>
+        public override void UnPause()
+        {
+            var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
+            if (transport != null)
+            {
+                transport.PlayRate = 2;
+            }
+        }
+
+        /// <summary>
         /// Stops playback
         /// </summary>
         protected override void StopInternal()

@@ -201,6 +201,7 @@ namespace MediaBrowser.Code.ModelItems
         }
 
         public abstract void Pause();
+        public abstract void UnPause();
         protected abstract void PlayMediaInternal(PlayableItem playable);
         protected abstract void StopInternal();
         public abstract void Seek(long position);

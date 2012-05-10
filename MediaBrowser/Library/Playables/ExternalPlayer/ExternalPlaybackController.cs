@@ -333,6 +333,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             
         }
 
+        public override void UnPause()
+        {
+            
+        }
+
         protected abstract string GetCommandPath(PlayableItem playable);
         protected abstract List<string> GetCommandArgumentsList(PlayableItem playable);
     }

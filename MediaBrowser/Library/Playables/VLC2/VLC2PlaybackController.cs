@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -57,7 +58,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             args.Add("--disable-screensaver");
 
             args.Add("--qt-minimal-view");
-            
+
             // Startup the Http interface so we can send out requests to monitor playstate
             args.Add("--extraintf=http");
             args.Add("--http-host=" + HttpServer);
@@ -97,6 +98,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             _CurrrentPlayingFileIndex = -1;
             _CurrentPlayingPosition = 0;
             _CurrentFileDuration = 0;
+            _CurrentPlayState = string.Empty;
 
             if (_StatusRequestClient == null)
             {
@@ -130,14 +132,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             {
                 if (_MonitorPlayback)
                 {
-                    try
-                    {
-                        _StatusRequestClient.DownloadStringAsync(statusUri);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.ReportException("Error connecting to VLC status url", ex);
-                    }
+                    SendStatusRequest(statusUri);
 
                     try
                     {
@@ -150,6 +145,18 @@ namespace MediaBrowser.Library.Playables.VLC2
                 }
 
                 Thread.Sleep(ProgressInterval);
+            }
+        }
+
+        private void SendStatusRequest(Uri uri)
+        {
+            try
+            {
+                _StatusRequestClient.DownloadStringAsync(uri);
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportException("Error connecting to VLC status url", ex);
             }
         }
 
@@ -219,6 +226,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         {
             // Stop sending requests to VLC's http interface
             _MonitorPlayback = false;
+            _CurrentPlayState = string.Empty;
 
             // Cleanup events
             _PlaylistRequestClient.DownloadStringCompleted -= playlistRequestCompleted;
@@ -363,6 +371,42 @@ namespace MediaBrowser.Library.Playables.VLC2
 
                 return base.IsPaused;
             }
+        }
+
+        public override void Pause()
+        {
+            SendStatusRequest(new Uri(StatusUrl + "?command=pl_pause"));
+        }
+
+        public override void UnPause()
+        {
+            SendStatusRequest(new Uri(StatusUrl + "?command=pl_play"));
+        }
+
+        protected override void StopInternal()
+        {
+            ClosePlayer();
+        }
+
+        private void ClosePlayer()
+        {
+            PlayableItem playable = GetCurrentPlayableItem();
+
+            string commandPath = playable == null ? ExternalPlayerConfiguration.Command : GetCommandPath(playable);
+            string commandArgs = "vlc://quit";
+
+            ProcessStartInfo processInfo = new ProcessStartInfo(commandPath, commandArgs);
+
+            processInfo.CreateNoWindow = true;
+
+            Process.Start(processInfo);
+        }
+
+        public override void Seek(long position)
+        {
+            TimeSpan time = TimeSpan.FromTicks(position);
+
+            SendStatusRequest(new Uri(StatusUrl + "?command=seek&val=" + time.TotalSeconds));
         }
 
         protected override void Dispose(bool isDisposing)
