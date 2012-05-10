@@ -20,6 +20,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         private long _CurrentFileDuration = 0;
         private long _CurrentPlayingPosition = 0;
         private bool _MonitorPlayback;
+        private string _CurrentPlayState;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -166,6 +167,8 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             XmlNode fileNameNode = docElement.SelectSingleNode("information/category[@name='meta']/info[@name='filename']");
 
+            _CurrentPlayState = docElement.SafeGetString("state", string.Empty).ToLower();
+
             // Check the filename node for null first, because if that's the case then it means nothing's currently playing.
             // This could happen after playback has stopped, but before the player has exited
             if (fileNameNode != null)
@@ -238,40 +241,9 @@ namespace MediaBrowser.Library.Playables.VLC2
                 state.Item = playable;
 
                 state.CurrentFileIndex = _CurrrentPlayingFileIndex;
-
-                if (playable.HasMediaItems)
-                {
-                    SetMediaEventPropertiesBasedOnCurrentFileIndex(playable, state);
-                }
             }
 
             return state;
-        }
-
-        private void SetMediaEventPropertiesBasedOnCurrentFileIndex(PlayableItem playable, PlaybackStateEventArgs state)
-        {
-            int mediaIndex = -1;
-
-            if (_CurrrentPlayingFileIndex != -1)
-            {
-                int totalFileCount = 0;
-                int numMediaItems = playable.MediaItems.Count();
-
-                for (int i = 0; i < numMediaItems; i++)
-                {
-                    int numFiles = playable.MediaItems.ElementAt(i).Files.Count();
-
-                    if (totalFileCount + numFiles > _CurrrentPlayingFileIndex)
-                    {
-                        mediaIndex = i;
-                        break;
-                    }
-
-                    totalFileCount += numFiles;
-                }
-            }
-
-            state.CurrentMediaIndex = mediaIndex;
         }
 
         /// <summary>
@@ -364,6 +336,32 @@ namespace MediaBrowser.Library.Playables.VLC2
                 MediaBrowser.Library.MediaType mediaType = MediaBrowser.Library.MediaTypeResolver.DetermineType(file);
 
                 yield return FormatPath(file, mediaType);
+            }
+        }
+
+        public override bool IsPlaying
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "playing";
+                }
+
+                return base.IsPlaying;
+            }
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "paused";
+                }
+
+                return base.IsPaused;
             }
         }
 

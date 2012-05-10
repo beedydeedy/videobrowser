@@ -441,7 +441,7 @@ namespace MediaBrowser
         {
             if (Config.EnableScreenSaver) 
             {
-                if (!IsPlayingVideo)
+                if (!HasActiveVideo)
                 {
                     if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
                     {
@@ -572,6 +572,9 @@ namespace MediaBrowser
             }
         }
 
+        /// <summary>
+        /// Determines whether or not a PlaybackController is currently playing
+        /// </summary>
         public bool IsPlaying
         {
             get
@@ -579,12 +582,37 @@ namespace MediaBrowser
                 return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlaying);
             }
         }
-        
+
+        /// <summary>
+        /// Determines whether or not a PlaybackController is currently playing video
+        /// </summary>
         public bool IsPlayingVideo
         {
             get
             {
                 return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlayingVideo);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not a PlaybackController has any active content - be it playing or paused
+        /// </summary>
+        public bool HasActiveMedia
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsActive);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not a PlaybackController has any active video - be it playing or paused
+        /// </summary>
+        public bool HasActiveVideo
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsActiveWithVideo);
             }
         }
 
@@ -760,7 +788,7 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
-                    ShowNowPlaying = IsPlayingVideo;
+                    ShowNowPlaying = HasActiveMedia;
 
                     // setup image to use in external splash screen
                     string splashFilename = Path.Combine(Path.Combine(ApplicationPaths.AppIBNPath,"General"),"splash.png");

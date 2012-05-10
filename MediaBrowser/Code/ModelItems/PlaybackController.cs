@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Threading;
 using Microsoft.MediaCenter;
 using Microsoft.MediaCenter.Hosting;
 using Microsoft.MediaCenter.UI;
@@ -360,41 +358,66 @@ namespace MediaBrowser
             }
         }
 
-        #region Playback status
+        /// <summary>
+        /// Determines if the PlaybackController is currently playing video
+        /// </summary>
         public override bool IsPlayingVideo
         {
             get
             {
-                // If the base class knows a PlayableItem is playing, use it
-                if (base.IsPlaying)
-                {
-                    return base.IsPlayingVideo;
-                }
-
                 if (!IsPlaying)
                 {
                     return false;
                 }
 
-                // Otherwise see if another app within wmc is currently playing (such as live tv)
+                // Need to override to see if another app within wmc is currently playing (such as live tv)
                 Microsoft.MediaCenter.Extensibility.MediaType mediaType = PlaybackControllerHelper.GetCurrentMediaType();
 
                 return mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Unknown && mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Audio;
             }
         }
 
+        /// <summary>
+        /// Determines if the PlaybackController has any active video, be it playing or paused
+        /// </summary>
+        public override bool IsActiveWithVideo
+        {
+            get
+            {
+                if (!IsActive)
+                {
+                    return false;
+                }
+
+                // Need to override to see if another app within wmc is currently playing (such as live tv)
+                Microsoft.MediaCenter.Extensibility.MediaType mediaType = PlaybackControllerHelper.GetCurrentMediaType();
+
+                return mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Unknown && mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Audio;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the PlaybackController has any active content, be it playing or paused
+        /// </summary>
         public override bool IsPlaying
         {
             get
             {
-                // If the base class knows a PlayableItem is playing
-                if (base.IsPlaying)
-                {
-                    return true;
-                }
-
-                // Otherwise see if another app within wmc is currently playing (such as live tv)
+                // Need to override to see if another app within wmc is currently playing (such as live tv)
                 return PlaybackControllerHelper.GetCurrentPlayState() == PlayState.Playing;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the PlaybackController has any active content, be it playing or paused
+        /// </summary>
+        public override bool IsActive
+        {
+            get
+            {
+                Microsoft.MediaCenter.PlayState playstate = PlaybackControllerHelper.GetCurrentPlayState();
+
+                return playstate == PlayState.Playing || playstate == PlayState.Paused || playstate == PlayState.Buffering;
             }
         }
 
@@ -402,8 +425,6 @@ namespace MediaBrowser
         {
             get { return PlaybackControllerHelper.GetCurrentPlayState() == PlayState.Paused; }
         }
-
-        #endregion
 
         protected MediaExperience MediaExperience
         {

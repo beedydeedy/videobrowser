@@ -135,6 +135,12 @@ namespace MediaBrowser.Code.ModelItems
 
             if (playable != null)
             {
+                // Auto-fill current file index if there's only one file
+                if (args.CurrentFileIndex == -1 && playable.FilesFormattedForPlayer.Count() == 1)
+                {
+                    args.CurrentFileIndex = 0;
+                }
+
                 // Fill this in if the subclass wasn't able to supply it
                 if (playable.HasMediaItems && args.CurrentMediaIndex == -1)
                 {
@@ -146,7 +152,7 @@ namespace MediaBrowser.Code.ModelItems
                     }
                     else
                     {
-                        SetMediaEventPropertiesBasedOnCurrentFile(playable, args);
+                        SetMediaEventPropertiesBasedOnCurrentFileIndex(playable, args);
                     }
                 }
             }
@@ -207,7 +213,7 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                return CurrentPlayableItems.Count > 0;
+                return CurrentPlayableItems.Count > 0 && !IsPaused;
             }
         }
 
@@ -218,11 +224,52 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                if (!IsPlaying)
-                {
-                    return false;
-                }
+                return IsPlaying && HasVideo;
+            }
+        }
 
+        /// <summary>
+        /// Determines if the PlaybackController has any active content, be it playing or paused
+        /// </summary>
+        public virtual bool IsActive
+        {
+            get
+            {
+                return IsPlaying || IsPaused;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the PlaybackController has any active content, be it playing or paused
+        /// </summary>
+        public virtual bool IsActiveWithVideo
+        {
+            get
+            {
+                return IsActive && HasVideo;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the player is currently paused
+        /// </summary>
+        public virtual bool IsPaused
+        {
+            get
+            {
+                // For the majority of players there will be no way to determine this
+                // Those that can should override
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the current media is video
+        /// </summary>
+        private bool HasVideo
+        {
+            get
+            {
                 PlayableItem playable = GetCurrentPlayableItem();
 
                 // If something is playing but we can't determine what, then we'll just have to assume true
@@ -255,30 +302,6 @@ namespace MediaBrowser.Code.ModelItems
 
                 // If we can't determine the current file, test them all
                 return playable.Files.Any(f => Helper.IsVideo(f));
-            }
-        }
-
-        /// <summary>
-        /// Determines whether or not the controller is currently stopped
-        /// </summary>
-        public virtual bool IsStopped
-        {
-            get
-            {
-                return !IsPlaying;
-            }
-        }
-
-        /// <summary>
-        /// Determines if the player is currently paused
-        /// </summary>
-        public virtual bool IsPaused
-        {
-            get
-            {
-                // For the majority of players there will be no way to determine this
-                // Those that can should override
-                return false;
             }
         }
 
@@ -396,22 +419,30 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Takes the current playing file in PlaybackStateEventArgs and uses that to determine the corresponding Media object
         /// </summary>
-        private void SetMediaEventPropertiesBasedOnCurrentFile(PlayableItem playable, PlaybackStateEventArgs state)
+        private void SetMediaEventPropertiesBasedOnCurrentFileIndex(PlayableItem playable, PlaybackStateEventArgs state)
         {
-            string currentFile = state.Item.FilesFormattedForPlayer.ElementAt(state.CurrentFileIndex);
+            int mediaIndex = -1;
 
-            int numMediaItems = playable.MediaItems.Count();
-
-            for (int i = 0; i < numMediaItems; i++)
+            if (state.CurrentFileIndex != -1)
             {
-                Media media = playable.MediaItems.ElementAt(i);
+                int totalFileCount = 0;
+                int numMediaItems = playable.MediaItems.Count();
 
-                if (GetPlayableFiles(media).Contains(currentFile))
+                for (int i = 0; i < numMediaItems; i++)
                 {
-                    state.CurrentMediaIndex = i;
-                    break;
+                    int numFiles = playable.MediaItems.ElementAt(i).Files.Count();
+
+                    if (totalFileCount + numFiles > state.CurrentFileIndex)
+                    {
+                        mediaIndex = i;
+                        break;
+                    }
+
+                    totalFileCount += numFiles;
                 }
             }
+
+            state.CurrentMediaIndex = mediaIndex;
         }
 
         /// <summary>

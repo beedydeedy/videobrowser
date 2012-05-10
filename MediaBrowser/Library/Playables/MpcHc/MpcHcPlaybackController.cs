@@ -23,6 +23,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
         private long _CurrentFileDuration = 0;
         private long _CurrentPlayingPosition = 0;
         private bool _MonitorPlayback;
+        private string _CurrentPlayState;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -41,6 +42,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             _CurrentPlayingFileName = string.Empty;
             _CurrentPlayingPosition = 0;
             _CurrentFileDuration = 0;
+            _CurrentPlayState = string.Empty;
 
             if (_StatusRequestClient == null)
             {
@@ -101,6 +103,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             _CurrentPlayingPosition = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(2))).Ticks;
             _CurrentFileDuration = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(4))).Ticks;
             _CurrentPlayingFileName = values.Last().ToLower();
+            _CurrentPlayState = values.ElementAt(1).ToLower();
 
             OnProgress(GetPlaybackState());
         }
@@ -109,6 +112,10 @@ namespace MediaBrowser.Library.Playables.MpcHc
         {
             // Stop checking status
             _MonitorPlayback = false;
+
+            // Reset this since we can't read it from the player anymore
+            // We'll let the base class determine it
+            _CurrentPlayState = string.Empty;
 
             // Cleanup events
             _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
@@ -272,6 +279,32 @@ namespace MediaBrowser.Library.Playables.MpcHc
             get
             {
                 return "http://" + HttpServer + ":" + HttpPort + "/status.html";
+            }
+        }
+
+        public override bool IsPlaying
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "playing";
+                }
+
+                return base.IsPlaying;
+            }
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "paused";
+                }
+
+                return base.IsPaused;
             }
         }
 

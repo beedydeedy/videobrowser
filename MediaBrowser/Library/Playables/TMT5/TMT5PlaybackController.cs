@@ -16,6 +16,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         private bool _HasStartedPlaying = false;
         private PlaybackStateEventArgs _LastPlaybackState;
         private FileSystemWatcher _StatusFileWatcher;
+        private string _CurrentPlayState;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
@@ -46,6 +47,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
             _LastPlaybackState = null;
             _HasStartedPlaying = false;
+            _CurrentPlayState = string.Empty;
 
             // If the playstate directory exists, start watching it
             if (Directory.Exists(PlayStateDirectory))
@@ -81,7 +83,9 @@ namespace MediaBrowser.Library.Playables.TMT5
                 return;
             }
 
-            string tmtPlayState = values["State"];
+            string tmtPlayState = values["State"].ToLower();
+
+            _CurrentPlayState = tmtPlayState;
 
             if (tmtPlayState == "play")
             {
@@ -154,6 +158,8 @@ namespace MediaBrowser.Library.Playables.TMT5
             // In case anything went wrong trying to do this during the event
             DisposeFileSystemWatcher();
 
+            _CurrentPlayState = string.Empty;
+
             base.OnExternalPlayerClosed();
         }
 
@@ -211,6 +217,32 @@ namespace MediaBrowser.Library.Playables.TMT5
             get
             {
                 return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft");
+            }
+        }
+
+        public override bool IsPlaying
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "play";
+                }
+
+                return base.IsPlaying;
+            }
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_CurrentPlayState))
+                {
+                    return _CurrentPlayState == "pause";
+                }
+
+                return base.IsPaused;
             }
         }
     }

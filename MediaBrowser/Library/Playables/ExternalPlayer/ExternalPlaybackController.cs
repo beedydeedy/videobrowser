@@ -88,8 +88,29 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
             else
             {
+                KillProcesses(playable);
                 PlayUsingCommandLine(playable);
             }           
+        }
+
+        /// <summary>
+        /// Kills all existing external player processes before trying to launch a new one.
+        /// </summary>
+        private void KillProcesses(PlayableItem playable)
+        {
+            string filename = Path.GetFileNameWithoutExtension(GetCommandPath(playable));
+
+            foreach (Process process in Process.GetProcessesByName(filename))
+            {
+                try
+                {
+                    process.Kill();
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Error killing {0}. There may be problems launching a new instance", ex, filename);
+                }
+            }
         }
 
         // Launch the external player using the command line
