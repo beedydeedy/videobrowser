@@ -59,8 +59,8 @@ namespace MediaBrowser.Library.Playables.VLC2
             
             // Startup the Http interface so we can send out requests to monitor playstate
             args.Add("--extraintf=http");
-            args.Add("--http-host=" + VlcHttpServer);
-            args.Add("--http-port=" + VlcHttpPort);
+            args.Add("--http-host=" + HttpServer);
+            args.Add("--http-port=" + HttpPort);
 
             // Map the stop button on the remote to close the player
             args.Add("--global-key-quit=\"Media Stop\"");
@@ -103,7 +103,7 @@ namespace MediaBrowser.Library.Playables.VLC2
                 _PlaylistRequestClient = new WebClient();
 
                 // Start up the thread that will perform the monitoring
-                _StatusRequestThread = new Thread(MonitorVlcStatusUrl);
+                _StatusRequestThread = new Thread(MonitorStatus);
                 _StatusRequestThread.IsBackground = true;
                 _StatusRequestThread.Start();
             }
@@ -120,9 +120,9 @@ namespace MediaBrowser.Library.Playables.VLC2
         /// <summary>
         /// Sends out requests to VLC's Http interface
         /// </summary>
-        private void MonitorVlcStatusUrl()
+        private void MonitorStatus()
         {
-            Uri statusUri = new Uri(VlcStatusXmlUrl);
+            Uri statusUri = new Uri(StatusUrl);
             Uri playlistUri = new Uri(VlcPlaylistXmlUrl);
 
             while (!_IsDisposing)
@@ -277,7 +277,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         /// <summary>
         /// Gets the server name that VLC's Http interface will be running on
         /// </summary>
-        private string VlcHttpServer
+        private string HttpServer
         {
             get
             {
@@ -288,7 +288,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         /// <summary>
         /// Gets the port that VLC's Http interface will be running on
         /// </summary>
-        private string VlcHttpPort
+        private string HttpPort
         {
             get
             {
@@ -299,11 +299,11 @@ namespace MediaBrowser.Library.Playables.VLC2
         /// <summary>
         /// Gets the url of VLC's xml status file
         /// </summary>
-        private string VlcStatusXmlUrl
+        private string StatusUrl
         {
             get
             {
-                return "http://" + VlcHttpServer + ":" + VlcHttpPort + "/requests/status.xml";
+                return "http://" + HttpServer + ":" + HttpPort + "/requests/status.xml";
             }
         }
 
@@ -314,7 +314,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         {
             get
             {
-                return "http://" + VlcHttpServer + ":" + VlcHttpPort + "/requests/playlist.xml";
+                return "http://" + HttpServer + ":" + HttpPort + "/requests/playlist.xml";
             }
         }
 

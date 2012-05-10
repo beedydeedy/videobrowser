@@ -15,7 +15,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         // All of these hold state about what's being played. They're all reset when playback starts
         private bool _HasStartedPlaying = false;
         private PlaybackStateEventArgs _LastPlaybackState;
-        private FileSystemWatcher _TMTInfoFileWatcher;
+        private FileSystemWatcher _StatusFileWatcher;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
@@ -50,23 +50,23 @@ namespace MediaBrowser.Library.Playables.TMT5
             // If the playstate directory exists, start watching it
             if (Directory.Exists(PlayStateDirectory))
             {
-                StartWatchingTMTInfoFile();
+                StartWatchingStatusFile();
             }
         }
 
-        private void StartWatchingTMTInfoFile()
+        private void StartWatchingStatusFile()
         {
             Logging.Logger.ReportVerbose("Watching TMT folder: " + PlayStateDirectory);
-            _TMTInfoFileWatcher = new FileSystemWatcher(PlayStateDirectory, "*.set");
+            _StatusFileWatcher = new FileSystemWatcher(PlayStateDirectory, "*.set");
 
             // Need to include subdirectories since there are subfolders undearneath this with the TMT version #.
-            _TMTInfoFileWatcher.IncludeSubdirectories = true;
+            _StatusFileWatcher.IncludeSubdirectories = true;
 
-            _TMTInfoFileWatcher.Changed += _TMTInfoFileWatcher_Changed;
-            _TMTInfoFileWatcher.EnableRaisingEvents = true;
+            _StatusFileWatcher.Changed += _StatusFileWatcher_Changed;
+            _StatusFileWatcher.EnableRaisingEvents = true;
         }
 
-        void _TMTInfoFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        void _StatusFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             NameValueCollection values;
 
@@ -140,12 +140,12 @@ namespace MediaBrowser.Library.Playables.TMT5
 
         private void DisposeFileSystemWatcher()
         {
-            if (_TMTInfoFileWatcher != null)
+            if (_StatusFileWatcher != null)
             {
-                _TMTInfoFileWatcher.EnableRaisingEvents = false;
-                _TMTInfoFileWatcher.Changed -= _TMTInfoFileWatcher_Changed;
-                _TMTInfoFileWatcher.Dispose();
-                _TMTInfoFileWatcher = null;
+                _StatusFileWatcher.EnableRaisingEvents = false;
+                _StatusFileWatcher.Changed -= _StatusFileWatcher_Changed;
+                _StatusFileWatcher.Dispose();
+                _StatusFileWatcher = null;
             }
         }
 
