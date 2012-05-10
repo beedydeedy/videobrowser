@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -13,6 +16,106 @@ namespace MediaBrowser.Library.Playables.MpcHc
 {
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
+        private const int ProgressInterval = 1000;
+
+        // All of these hold state about what's being played. They're all reset when playback starts
+        private string _CurrentPlayingFileName;
+        private long _CurrentFileDuration = 0;
+        private long _CurrentPlayingPosition = 0;
+        private bool _MonitorPlayback;
+
+        // This will get the current file position
+        private WebClient _StatusRequestClient;
+        private Thread _StatusRequestThread;
+
+        private bool _IsDisposing = false;
+
+        /// <summary>
+        /// Starts monitoring playstate using the player's Http interface
+        /// </summary>
+        protected override void OnExternalPlayerLaunched(PlayableItem playbackInfo)
+        {
+            base.OnExternalPlayerLaunched(playbackInfo);
+
+            // Reset these fields since they hold state
+            _CurrentPlayingFileName = string.Empty;
+            _CurrentPlayingPosition = 0;
+            _CurrentFileDuration = 0;
+
+            if (_StatusRequestClient == null)
+            {
+                _StatusRequestClient = new WebClient();
+
+                // Start up the thread that will perform the monitoring
+                _StatusRequestThread = new Thread(MonitorStatus);
+                _StatusRequestThread.IsBackground = true;
+                _StatusRequestThread.Start();
+            }
+
+            _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
+            _StatusRequestClient.DownloadStringCompleted += statusRequestCompleted;
+
+            _MonitorPlayback = true;
+        }
+
+        /// <summary>
+        /// Sends out requests to the player's Http interface
+        /// </summary>
+        private void MonitorStatus()
+        {
+            Uri statusUri = new Uri(StatusUrl);
+
+            while (!_IsDisposing)
+            {
+                if (_MonitorPlayback)
+                {
+                    try
+                    {
+                        _StatusRequestClient.DownloadStringAsync(statusUri);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error connecting to MPC status url", ex);
+                    }
+                }
+
+                Thread.Sleep(ProgressInterval);
+            }
+        }
+
+        void statusRequestCompleted(object sender, DownloadStringCompletedEventArgs e)
+        {
+            // If playback just finished, or if there was some type of error, skip it
+            if (!_MonitorPlayback || e.Cancelled || e.Error != null || string.IsNullOrEmpty(e.Result))
+            {
+                return;
+            }
+
+            string result = e.Result;
+
+            result = result.Substring(result.IndexOf('\''));
+            result = result.Substring(0, result.LastIndexOf('\''));
+
+            IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
+
+            _CurrentPlayingPosition = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(2))).Ticks;
+            _CurrentFileDuration = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(4))).Ticks;
+            _CurrentPlayingFileName = values.Last().ToLower();
+
+            OnProgress(GetPlaybackState());
+        }
+
+        protected override void OnExternalPlayerClosed()
+        {
+            // Stop checking status
+            _MonitorPlayback = false;
+
+            // Cleanup events
+            _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
+
+            base.OnExternalPlayerClosed();
+        }
+
         /// <summary>
         /// Takes a Media object and returns the list of files that will be sent to the player
         /// </summary>
@@ -68,175 +171,115 @@ namespace MediaBrowser.Library.Playables.MpcHc
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState()
         {
+            PlaybackStateEventArgs args = new PlaybackStateEventArgs();
+
             PlayableItem playable = GetCurrentPlayableItem();
+
+            args.DurationFromPlayer = _CurrentFileDuration;
+            args.Position = _CurrentPlayingPosition;
 
             if (playable != null)
             {
-                NameValueCollection values = GetMPCHCSettings();
+                args.Item = playable;
 
-                PlaybackStateEventArgs state = GetPlaybackState(values, playable);
-
-                state.Item = playable;
-
-                return state;
-            }
-
-            return new PlaybackStateEventArgs();
-        }
-
-        private NameValueCollection GetMPCHCSettings()
-        {
-            // mpc-hc.ini will only exist if the user has enabled "Store settings to ini file"
-            string playstatePath = GetIniFilePath(ExternalPlayerConfiguration);
-
-            if (!string.IsNullOrEmpty(playstatePath))
-            {
-                return Helper.ParseIniFile(playstatePath);
-            }
-
-            return GetRegistryKeyValues(Registry.CurrentUser.OpenSubKey("Software\\Gabest\\Media Player Classic\\Settings"));
-        }
-
-        private static Dictionary<string, string> _CachedIniFileLocations = new Dictionary<string, string>();
-
-        public static string GetIniFilePath(ConfigData.ExternalPlayer currentConfiguration)
-        {
-            if (!_CachedIniFileLocations.ContainsKey(currentConfiguration.Command))
-            {
-                string directory = Path.GetDirectoryName(currentConfiguration.Command);
-
-                string path = Path.Combine(directory, "mpc-hc.ini");
-
-                if (File.Exists(path))
+                if (playable.HasMediaItems)
                 {
-                    _CachedIniFileLocations[currentConfiguration.Command] = path;
+                    int currentFileIndex;
+                    args.CurrentMediaIndex = GetCurrentPlayingMediaIndex(playable, out currentFileIndex);
+                    args.CurrentFileIndex = currentFileIndex;
                 }
                 else
                 {
-                    path = Path.Combine(directory, "mpc-hc64.ini");
-
-                    if (File.Exists(path))
-                    {
-                        _CachedIniFileLocations[currentConfiguration.Command] = path;
-                    }
-                    else
-                    {
-                        _CachedIniFileLocations[currentConfiguration.Command] = string.Empty;
-                    }
+                    args.CurrentFileIndex = GetCurrentPlayingFileIndex(playable);
                 }
-
             }
 
-            return _CachedIniFileLocations[currentConfiguration.Command];
+            return args;
         }
 
-        /// <summary>
-        /// Looks through ini file values to find playstate for a given collection of files
-        /// </summary>
-        private PlaybackStateEventArgs GetPlaybackState(NameValueCollection values, PlayableItem playable)
+        private int GetCurrentPlayingFileIndex(PlayableItem playable)
         {
-            return playable.HasMediaItems ? GetPlaybackStateBasedOnMediaItems(values, playable) : GetPlaybackStateBasedOnFiles(values, playable);
+            return GetIndexOfFile(playable.FilesFormattedForPlayer, _CurrentPlayingFileName);
         }
 
-        /// <summary>
-        /// Looks through ini file values to find playstate for a given collection of files
-        /// </summary>
-        private PlaybackStateEventArgs GetPlaybackStateBasedOnMediaItems(NameValueCollection values, PlayableItem playable)
+        private int GetCurrentPlayingMediaIndex(PlayableItem playable, out int currentPlayingFileIndex)
         {
-            PlaybackStateEventArgs args = new PlaybackStateEventArgs();
+            currentPlayingFileIndex = -1;
 
             int numMediaItems = playable.MediaItems.Count();
             int totalFileCount = 0;
 
             for (int i = 0; i < numMediaItems; i++)
             {
-                args.CurrentMediaIndex = i;
+                IEnumerable<string> mediaFiles = GetPlayableFiles(playable.MediaItems.ElementAt(i));
 
-                Media media = playable.MediaItems.ElementAt(i);
+                int fileIndex = GetIndexOfFile(mediaFiles, _CurrentPlayingFileName);
 
-                IEnumerable<string> files = GetPlayableFiles(media);
-
-                int numFiles = files.Count();
-
-                for (int j = 0; j < numFiles; j++)
+                if (fileIndex != -1)
                 {
-                    args.CurrentFileIndex = totalFileCount + j;
-
-                    args.Position = GetPlaybackPosition(values, files.ElementAt(j));
-
-                    // If file position is > 0 that means playback was stopped during this file
-                    if (args.Position > 0)
-                    {
-                        return args;
-                    }
+                    currentPlayingFileIndex = totalFileCount + fileIndex;
+                    return i;
                 }
 
-                totalFileCount += numFiles;
+                totalFileCount += mediaFiles.Count();
             }
 
-            return args;
+            return -1;
         }
 
-        /// <summary>
-        /// Looks through ini file values to find playstate for a given collection of files
-        /// </summary>
-        private PlaybackStateEventArgs GetPlaybackStateBasedOnFiles(NameValueCollection values, PlayableItem playable)
+        private int GetIndexOfFile(IEnumerable<string> files, string file)
         {
-            PlaybackStateEventArgs args = new PlaybackStateEventArgs();
-
-            IEnumerable<string> files = playable.FilesFormattedForPlayer;
-
             int numFiles = files.Count();
 
             for (int i = 0; i < numFiles; i++)
             {
-                args.CurrentFileIndex = i;
-
-                args.Position = GetPlaybackPosition(values, files.ElementAt(i));
-
-                // If file position is > 0 that means playback was stopped during this file
-                if (args.Position > 0)
+                if (file.StartsWith(files.ElementAt(i).ToLower()))
                 {
-                    break;
+                    return i;
                 }
             }
 
-            return args;
+            return -1;
         }
 
         /// <summary>
-        /// Looks through ini file values to find playstate for a given file
+        /// Gets the server name that the http interface will be running on
         /// </summary>
-        private long GetPlaybackPosition(NameValueCollection values, string filename)
+        private string HttpServer
         {
-            for (int i = 0; i <= 19; i++)
+            get
             {
-                string currentFileName = values["File Name " + i];
-
-                if (!string.IsNullOrEmpty(currentFileName) && currentFileName.StartsWith(filename))
-                {
-                    string position = values["File Position " + i];
-
-                    return string.IsNullOrEmpty(position) ? 0 : long.Parse(position);
-                }
+                return "localhost";
             }
-
-            return 0;
         }
 
         /// <summary>
-        /// Gets all names and values of a registry key
+        /// Gets the port that the web interface will be running on
         /// </summary>
-        private static NameValueCollection GetRegistryKeyValues(RegistryKey key)
+        public static string HttpPort
         {
-            NameValueCollection values = new NameValueCollection();
-
-            foreach (string keyName in key.GetValueNames())
+            get
             {
-                values[keyName] = key.GetValue(keyName).ToString();
+                return "13579";
             }
+        }
 
-            return values;
+        /// <summary>
+        /// Gets the url of that will be called to for status
+        /// </summary>
+        private string StatusUrl
+        {
+            get
+            {
+                return "http://" + HttpServer + ":" + HttpPort + "/status.html";
+            }
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            _IsDisposing = isDisposing;
+
+            base.Dispose(isDisposing);
         }
     }
 }

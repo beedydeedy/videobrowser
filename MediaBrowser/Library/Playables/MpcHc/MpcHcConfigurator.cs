@@ -44,7 +44,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
         {
             get
             {
-                return "Enable the following settings: \"Keep history of recently opened files\", \"Always on top\" and \"Don't use search in folder on commands skip back/forward\". Also map \"MEDIA_STOP\" to the \"exit\" command.";
+                return "A number of settings need to be configured. Please click configure my player for more information.";
             }
         }
 
@@ -62,17 +62,17 @@ namespace MediaBrowser.Library.Playables.MpcHc
         {
             get
             {
-                string msg = "The following settings will be configured for you:";
+                string msg = "The following MPC-HC settings will be configured for you:\n";
 
-                msg += "\n\n-Enable: Keep history of recently opened files";
                 msg += "\n-Disable: Remember file position";
                 msg += "\n-Disable: Remember DVD position";
+                msg += "\n-Enable: Web interface on port " + MpcHcPlaybackController.HttpPort;
                 msg += "\n-Enable: Use global media keys";
                 msg += "\n-Enable: Don't use 'search in folder' on commands 'Skip back/forward' when only one item in playlist";
                 msg += "\n-Set medium jump size to 30 seconds (for rewind/ff buttons)";
                 msg += "\n-Configure basic media center remote buttons";
 
-                msg += "\n\nAre you sure you would like to continue?";
+                msg += "\n\nWould like to continue?";
 
                 return msg;
             }
@@ -101,9 +101,11 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["SearchInDirAfterPlayBack"] = 0;
             values["DontUseSearchInFolder"] = 1;
             values["UseGlobalMedia"] = 1;
+            values["EnableWebServer"] = 1;
+            values["WebServerPort"] = int.Parse(MpcHcPlaybackController.HttpPort);
             values["JumpDistM"] = 30000;
             
-            string iniPath = MpcHcPlaybackController.GetIniFilePath(currentConfiguration);
+            string iniPath = GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
@@ -145,7 +147,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["CommandMod17"] = "32780 3 59 \"\" 5 0 0 0";
             values["CommandMod18"] = "32781 3 55 \"\" 5 0 0 0";
 
-            string iniPath = MpcHcPlaybackController.GetIniFilePath(currentConfiguration);
+            string iniPath = GetIniFilePath(currentConfiguration);
 
             if (string.IsNullOrEmpty(iniPath))
             {
@@ -209,9 +211,9 @@ namespace MediaBrowser.Library.Playables.MpcHc
             }
             catch (Exception ex)
             {
-                Logger.ReportException("MpcHc - SetRegistryKeyValues", ex);
+                Logger.ReportException("MpcHcConfigurator.SetRegistryKeyValues", ex);
             }
-
+            
             key.Close();
         }
 
@@ -229,6 +231,27 @@ namespace MediaBrowser.Library.Playables.MpcHc
             {
                 return false;
             }
+        }
+
+        private static string GetIniFilePath(ConfigData.ExternalPlayer currentConfiguration)
+        {
+            string directory = Path.GetDirectoryName(currentConfiguration.Command);
+
+            string path = Path.Combine(directory, "mpc-hc.ini");
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            path = Path.Combine(directory, "mpc-hc64.ini");
+
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            return string.Empty;
         }
     }
 
