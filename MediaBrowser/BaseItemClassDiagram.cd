@@ -10,14 +10,22 @@
   <Class Name="MediaBrowser.Library.Entities.BaseItem" Collapsed="true">
     <Position X="0.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>ABCCAAUSEAsBAAMAYADgQsQQkAjECKCAQDAEAQiwIAE=</HashCode>
+      <HashCode>ABCCAAUSEAsBCAMgYADgQsQQkAjECKiAQDAEAQiwIAE=</HashCode>
       <FileName>Library\Entities\BaseItem.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="MediaBrowser.Library.Entities.Folder" Collapsed="true">
     <Position X="4.5" Y="1.75" Width="1.5" />
+    <NestedTypes>
+      <Class Name="MediaBrowser.Library.Entities.Folder.BaseItemIndexComparer" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Library\Entities\Folder.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
-      <HashCode>YIAAQARgIAAAUAQEIJAVhACCo4CAQABAAEEAoAZhAAg=</HashCode>
+      <HashCode>YIAAQQRgJAAIdAQEYJAXhAiip4DAQABAAEEAoAdhAEg=</HashCode>
       <FileName>Library\Entities\Folder.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -39,7 +47,7 @@
   <Class Name="MediaBrowser.Library.Entities.Media">
     <Position X="11.25" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAACAIAEAAAABAAAAAAAAAAAAAAAgAIA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAgIAEAAAgBAAAAAAgAAAAAAAAAAIA=</HashCode>
       <FileName>Library\Entities\Media.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -67,7 +75,7 @@
   <Class Name="MediaBrowser.Library.Entities.Video">
     <Position X="11.25" Y="5.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAEAQIAAAAAIgAQAAACAADAAAAAAQAAAAAAAAABIA=</HashCode>
+      <HashCode>AAAAEAQIAAAAAIgARAAACAgDAAAAAAYAAAAAAAAIBIA=</HashCode>
       <FileName>Library\Entities\Video.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -84,6 +92,43 @@
     <TypeIdentifier>
       <HashCode>AAAAgAAAAAAAAIIAICCAAAAAAAAAAAARAAAAIAAAAAA=</HashCode>
       <FileName>Library\Entities\VodCastVideo.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MediaBrowser.Library.Entities.AggregateFolder" Collapsed="true">
+    <Position X="7.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAEAAACAAAAAgAAAAAAAAAAAAABACA=</HashCode>
+      <FileName>Library\Entities\AggregateFolder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MediaBrowser.Library.Entities.BoxSet" Collapsed="true">
+    <Position X="13.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAABAEQBAAgAQCAgIACAEAAAgAAAYAAAAAAAABAAE=</HashCode>
+      <FileName>Library\Entities\BoxSet.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MediaBrowser.Library.Entities.Index" Collapsed="true">
+    <Position X="16" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EBAAAAABIAAIAAQAABCAAAQAgAAAAIAAAAAEAAQgIAA=</HashCode>
+      <FileName>Library\Entities\Index.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MediaBrowser.Library.Entities.Series" Collapsed="true">
+    <Position X="18.25" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAABEEQBAAgAQCAgIACAEAAAgAAAAAAAEAAAABAAE=</HashCode>
+      <FileName>Library\Entities\Series.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MediaBrowser.Library.Entities.VodCast" Collapsed="true">
+    <Position X="20.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAARAAgAAgAQgARCAAAEAICAAAAAgCEAAAAQAAAA=</HashCode>
+      <FileName>Library\Entities\VodCast.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Font Name="Segoe UI" Size="9" />

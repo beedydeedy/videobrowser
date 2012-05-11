@@ -150,6 +150,7 @@ namespace MediaBrowser
             {
                 _PrePlayback(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
             }
+            Async.Queue("IsPlayingVideo delay", () => { FirePropertyChanged("IsPlayingVideo"); FirePropertyChanged("IsPlaying"); }, 1500);
         }
         #endregion
 
@@ -176,6 +177,8 @@ namespace MediaBrowser
             {
                 _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
             }
+            FirePropertyChanged("IsPlayingVideo");
+            FirePropertyChanged("IsPlaying");
         }
         #endregion
 
@@ -1315,7 +1318,7 @@ namespace MediaBrowser
                 return;
             }
 
-            if (item.BaseItem is Media && item.BaseItem is IShow)
+            if (item.BaseItem is Show)
             {
                 if ((item.HasDataForDetailPage && item.BaseItem is Movie) ||
                     this.Config.AlwaysShowDetailsPage)
