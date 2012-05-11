@@ -450,21 +450,22 @@ namespace MediaBrowser
                 // Another application could be responsible for the content playing, so try to come up with a title
                 MediaExperience exp = MediaExperience;
 
-                if (exp == null)
+                if (exp != null)
                 {
-                    return "Unknown";
+                    MediaMetadata metadata = exp.MediaMetadata;
+
+                    if (metadata != null)
+                    {
+                        string name = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata).Trim('/');
+
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            return FormatPathForDisplay(name);
+                        }
+                    }
                 }
 
-                MediaMetadata metadata = exp.MediaMetadata;
-
-                if (metadata == null)
-                {
-                    return "Unknown";
-                }
-
-                string name = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata).Trim('/');
-
-                return FormatPathForDisplay(name);
+                return PlaybackControllerHelper.GetCurrentMediaType().ToString();
             }
         }
 

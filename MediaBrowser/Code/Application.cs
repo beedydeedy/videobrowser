@@ -1789,7 +1789,7 @@ namespace MediaBrowser
         {
             foreach (var controller in Kernel.Instance.PlaybackControllers)
             {
-                if (controller.IsPlaying)
+                if (controller.IsActive)
                 {
                     controller.Stop();
                 }

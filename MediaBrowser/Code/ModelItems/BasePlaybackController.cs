@@ -74,14 +74,14 @@ namespace MediaBrowser.Code.ModelItems
 
             PlayableItem playable = args.Item;
 
-            // Update playstates
+            // Update PlayableItem progress event
             if (playable != null)
             {
                 // Fire it's progress event handler
                 playable.OnProgress(this, args);
             }
 
-            // Fire event handler
+            // Fire PlaybackController progress event
             if (_Progress != null)
             {
                 _Progress(this, args);
@@ -95,25 +95,23 @@ namespace MediaBrowser.Code.ModelItems
         {
             NormalizeEventProperties(args);
 
-            PlayableItem playable = args.Item;
-
-            if (playable != null)
+            // Fire the finished event for each PlayableItem
+            foreach (PlayableItem playable in CurrentPlayableItems)
             {
                 playable.OnPlaybackFinished(this, args);
             }
 
-            SetPlaybackStage(PlayableItemPlayState.Stopped);
-
-            // Show or hide the resume button depending on playstate
-            UpdateResumeStatusInUI();
-
-            // Fire event handler
+            // Fire the playback controller's finished event
             if (_PlaybackFinished != null)
             {
                 _PlaybackFinished(this, args);
             }
 
+            // Run the kernel's post play processes
             RunPostPlayProcesses();
+
+            // Show or hide the resume button depending on playstate
+            UpdateResumeStatusInUI();
 
             SetPlaybackStage(PlayableItemPlayState.PostPlayActionsComplete);
 

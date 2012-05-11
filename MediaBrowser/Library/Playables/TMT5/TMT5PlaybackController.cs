@@ -241,7 +241,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
         protected override void StopInternal()
         {
-            ClosePlayer();
+            SendCommandToMMC("-stop");
         }
 
         public override void UnPause()
@@ -253,7 +253,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         /// Sends a command to the MMC console to close the player.
         /// Do not use this for the WMC add-in because it will close WMC
         /// </summary>
-        protected virtual void ClosePlayer()
+        private void ClosePlayer()
         {
             SendCommandToMMC("-close");
         }

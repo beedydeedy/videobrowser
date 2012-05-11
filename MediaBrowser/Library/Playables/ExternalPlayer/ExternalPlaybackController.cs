@@ -16,6 +16,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
     public abstract class ExternalPlaybackController : BasePlaybackController
     {
+        protected string CurrentProcessName { get; private set; }
+        protected Process CurrentProcess { get; private set; }
+
         #region Unmanaged methods
         //alesbal: begin
         [DllImport("user32.dll")]
@@ -63,9 +66,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         protected override void PlayMediaInternal(PlayableItem playable)
         {
-            // Need to stop other players, in particular the internal 7MC player
-            Application.CurrentInstance.StopAllPlayback();
-
             // Two different launch methods depending on how the player is configured
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
@@ -88,7 +88,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
             else
             {
-                KillProcesses(playable);
                 PlayUsingCommandLine(playable);
             }           
         }
@@ -96,11 +95,9 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// <summary>
         /// Kills all existing external player processes before trying to launch a new one.
         /// </summary>
-        private void KillProcesses(PlayableItem playable)
+        protected void KillProcesses(string name)
         {
-            string filename = Path.GetFileNameWithoutExtension(GetCommandPath(playable));
-
-            foreach (Process process in Process.GetProcessesByName(filename))
+            foreach (Process process in Process.GetProcessesByName(name))
             {
                 try
                 {
@@ -108,7 +105,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                 }
                 catch (Exception ex)
                 {
-                    Logger.ReportException("Error killing {0}. There may be problems launching a new instance", ex, filename);
+                    Logger.ReportException("Error killing {0}. There may be problems launching a new instance", ex, name);
                 }
             }
         }
@@ -121,9 +118,13 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             Logging.Logger.ReportInfo("Starting command line " + commandPath + " " + commandArgs);
 
-            Process player = Process.Start(commandPath, commandArgs);
+            CurrentProcessName = Path.GetFileNameWithoutExtension(commandPath);
 
-            Async.Queue("Ext Player Mgmt", () => ManageExtPlayer(player, playable));
+            KillProcesses(CurrentProcessName);
+
+            CurrentProcess = Process.Start(commandPath, commandArgs);
+
+            Async.Queue("Ext Player Mgmt", () => ManageExtPlayer(CurrentProcess, playable));
         }
 
         private void ManageExtPlayer(Process player, PlayableItem playable)
@@ -141,18 +142,21 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                     ExternalSplashForm.Display(Application.CurrentInstance.ExtSplashBmp);
                 }
             }
-
+            
             if (MinimizeMCE)
             {
                 Logger.ReportVerbose("Minimizing Windows Media Center");
                 wp.showCmd = 2; // 1 - Normal; 2 - Minimize; 3 - Maximize;
                 SetWindowPlacement(mceWnd, ref wp);
             }
-            
-            player.Refresh();
-            player.WaitForInputIdle(5000);
 
-            OnExternalPlayerLaunched(playable);
+            // async this so it doesn't slow us down if the service isn't responding for some reason
+            Async.Queue("Wait for external player to launch", () =>
+            {
+                player.Refresh();
+                player.WaitForInputIdle(5000);
+                OnExternalPlayerLaunched(playable);
+            });
 
             //and wait for it to exit
             player.WaitForExit();
@@ -199,6 +203,8 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         protected virtual void OnExternalPlayerClosed()
         {
+            CurrentProcessName = string.Empty;
+
             // Just use base method
             OnPlaybackFinished(GetPlaybackState());
         }

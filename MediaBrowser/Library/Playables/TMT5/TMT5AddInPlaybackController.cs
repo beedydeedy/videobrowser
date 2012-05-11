@@ -23,10 +23,5 @@ namespace MediaBrowser.Library.Playables.TMT5
         {
             return base.GetFilePathCommandArgument(filesToPlay).Replace("\"", string.Empty).Replace('\\', '/');
         }
-
-        protected override void StopInternal()
-        {
-            SendCommandToMMC("-stop");
-        }
     }
 }

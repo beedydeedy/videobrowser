@@ -22,6 +22,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         private long _CurrentPlayingPosition = 0;
         private bool _MonitorPlayback;
         private string _CurrentPlayState;
+        private bool _HasStartedPlaying;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -99,6 +100,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             _CurrentPlayingPosition = 0;
             _CurrentFileDuration = 0;
             _CurrentPlayState = string.Empty;
+            _HasStartedPlaying = false;
 
             if (_StatusRequestClient == null)
             {
@@ -182,6 +184,18 @@ namespace MediaBrowser.Library.Playables.VLC2
             {
                 _CurrentPlayingPosition = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("time").InnerText)).Ticks;
                 _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
+            }
+
+            if (_CurrentPlayState == "stopped")
+            {
+                if (_HasStartedPlaying)
+                {
+                    ClosePlayer();
+                }
+            }
+            else
+            {
+                _HasStartedPlaying = true;
             }
         }
 
@@ -390,16 +404,17 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         private void ClosePlayer()
         {
-            PlayableItem playable = GetCurrentPlayableItem();
+            Logger.ReportVerbose("Sending close command to VLC");
 
-            string commandPath = playable == null ? ExternalPlayerConfiguration.Command : GetCommandPath(playable);
-            string commandArgs = "vlc://quit";
-
-            ProcessStartInfo processInfo = new ProcessStartInfo(commandPath, commandArgs);
-
-            processInfo.CreateNoWindow = true;
-
-            Process.Start(processInfo);
+            // Unfortunately the VLC quit command doesn't work at the moment so we'll have to do it with brute force
+            try
+            {
+                CurrentProcess.CloseMainWindow();
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportException("Error closing VLC", ex);
+            }
         }
 
         public override void Seek(long position)

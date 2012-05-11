@@ -29,6 +29,8 @@ namespace MediaBrowser.Library.Playables.MpcHc
         private WebClient _StatusRequestClient;
         private Thread _StatusRequestThread;
 
+        private WebClient _CommandClient;
+
         private bool _IsDisposing = false;
 
         /// <summary>
@@ -95,6 +97,13 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             string result = e.Result;
 
+            // Sample result
+            // OnStatus('test.avi', 'Playing', 5292, '00:00:05', 1203090, '00:20:03', 0, 100, 'C:\test.avi')
+            // 5292 = position in ms
+            // 00:00:05 = position
+            // 1203090 = duration in ms
+            // 00:20:03 = duration
+
             result = result.Substring(result.IndexOf('\''));
             result = result.Substring(0, result.LastIndexOf('\''));
 
@@ -105,7 +114,15 @@ namespace MediaBrowser.Library.Playables.MpcHc
             _CurrentPlayingFileName = values.Last().ToLower();
             _CurrentPlayState = values.ElementAt(1).ToLower();
 
-            OnProgress(GetPlaybackState());
+            if (_CurrentPlayState == "stopped")
+            {
+                StopInternal();
+            }
+            else
+            {
+                // Don't report progress here because position will be reset to 0
+                OnProgress(GetPlaybackState());
+            }
         }
 
         protected override void OnExternalPlayerClosed()
@@ -282,6 +299,17 @@ namespace MediaBrowser.Library.Playables.MpcHc
             }
         }
 
+        /// <summary>
+        /// Gets the url of that will be called to send commands
+        /// </summary>
+        private string CommandUrl
+        {
+            get
+            {
+                return "http://" + HttpServer + ":" + HttpPort + "/command.html";
+            }
+        }
+
         public override bool IsPlaying
         {
             get
@@ -306,6 +334,70 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
                 return base.IsPaused;
             }
+        }
+
+        public override void Pause()
+        {
+            SendCommandToPlayer("888", new Dictionary<string, string>());
+        }
+
+        public override void UnPause()
+        {
+            SendCommandToPlayer("887", new Dictionary<string, string>());
+        }
+
+        protected override void StopInternal()
+        {
+            SendCommandToPlayer("816", new Dictionary<string, string>());
+        }
+
+        public override void Seek(long position)
+        {
+            Dictionary<string, string> additionalParams = new Dictionary<string, string>();
+
+            TimeSpan time = TimeSpan.FromTicks(position);
+
+            string timeString = time.Hours + ":" + time.Minutes + ":" + time.Seconds;
+
+            additionalParams.Add("position", timeString);
+
+            SendCommandToPlayer("-1", additionalParams);
+        }
+
+        /// <summary>
+        /// Sends a command to MPC using the HTTP interface
+        /// http://www.autohotkey.net/~specter333/MPC/HTTP%20Commands.txt
+        /// </summary>
+        private void SendCommandToPlayer(string commandNumber, Dictionary<string, string> additionalParams)
+        {
+            string url = CommandUrl + "?wm_command=" + commandNumber;
+
+            foreach (string name in additionalParams.Keys)
+            {
+                url += "&" + name + "=" + additionalParams[name];
+            }
+
+            if (_CommandClient == null)
+            {
+                _CommandClient = new WebClient();
+                _CommandClient.DownloadStringCompleted += _CommandClient_DownloadStringCompleted;
+            }
+
+            Logger.ReportVerbose("Sending command to MPC: " + url);
+
+            try
+            {
+                _CommandClient.DownloadStringAsync(new Uri(url));
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportException("Error connecting to MPC command url", ex);
+            }
+        }
+
+        void _CommandClient_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        {
+            Logger.ReportVerbose("MPC Request Complete");
         }
 
         protected override void Dispose(bool isDisposing)

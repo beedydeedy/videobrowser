@@ -71,42 +71,61 @@ namespace MediaBrowser.Library.Playables
 
         private void OnPlayStateChanged()
         {
-            Async.Queue("OnPlayStateChanged", () =>
+            if (_PlayStateChanged != null)
             {
-                if (PlayState == PlayableItemPlayState.Stopped)
-                {
-                    MarkWatchedIfNeeded();
-
-                    Application.CurrentInstance.RunPostPlayProcesses(this);
-                }
-                else if (PlayState == PlayableItemPlayState.PostPlayActionsComplete)
-                {
-                    if (UnmountISOAfterPlayback)
-                    {
-                        Application.CurrentInstance.UnmountIso();
-                    }
-                }
-
-                if (_PlayStateChanged != null)
-                {
-                    _PlayStateChanged(this, new GenericEventArgs<PlayableItem>() { Item = this });
-                }
-            });
+                _PlayStateChanged(this, new GenericEventArgs<PlayableItem>() { Item = this });
+            }
         }
         #endregion
 
+        #region PlaybackFinished EventHandler
+        volatile EventHandler<GenericEventArgs<PlayableItem>> _PlaybackFinished;
+        /// <summary>
+        /// Fires when the PlaybackController reports playback finished
+        /// </summary>
+        public event EventHandler<GenericEventArgs<PlayableItem>> PlaybackFinished
+        {
+            add
+            {
+                _PlaybackFinished += value;
+            }
+            remove
+            {
+                _PlaybackFinished -= value;
+            }
+        }
+
         internal void OnPlaybackFinished(BasePlaybackController controller, PlaybackStateEventArgs args)
         {
-            // If there's still a valid position, fire progress one last time
-            if (args.Position > 0)
+            if (args.Item == this)
             {
-                OnProgress(controller, args);
+                // If there's still a valid position, fire progress one last time
+                if (args.Position > 0)
+                {
+                    OnProgress(controller, args);
+                }
+
+                PlaybackStoppedByUser = args.StoppedByUser;
+
+                MarkWatchedIfNeeded();
             }
 
-            PlaybackStoppedByUser = args.StoppedByUser;
-
             PlayState = PlayableItemPlayState.Stopped;
+
+            // Fire finished event
+            if (_PlaybackFinished != null)
+            {
+                _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = this });
+            }
+
+            Application.CurrentInstance.RunPostPlayProcesses(this);
+
+            if (UnmountISOAfterPlayback)
+            {
+                Application.CurrentInstance.UnmountIso();
+            }
         }
+        #endregion
 
         private Guid _Id = Guid.NewGuid();
         /// <summary>
@@ -274,6 +293,17 @@ namespace MediaBrowser.Library.Playables
                 }
 
                 return _PlaybackController;
+            }
+        }
+
+        /// <summary>
+        /// Determines if all playback across MB should be stopped before playing
+        /// </summary>
+        protected virtual bool StopAllPlaybackBeforePlaying
+        {
+            get
+            {
+                return false;
             }
         }
 
@@ -524,6 +554,11 @@ namespace MediaBrowser.Library.Playables
             {
                 // Abort playback if one of them returns false
                 return;
+            }
+
+            if (StopAllPlaybackBeforePlaying)
+            {
+                Application.CurrentInstance.StopAllPlayback();
             }
 
             Logger.ReportInfo(GetType().Name + " about to play " + DisplayName);

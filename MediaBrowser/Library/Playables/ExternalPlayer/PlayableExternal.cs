@@ -14,22 +14,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         #region CanPlay
         public override bool CanPlay(IEnumerable<string> files)
         {
-            if (files.Any(f => !Helper.IsVideo(f)))
-            {
-                return false;
-            }
-
             return ConfigData.CanPlay(ExternalPlayerConfiguration, files);
         }
 
         public override bool CanPlay(IEnumerable<Media> mediaList)
         {
-            // For now, external players can only handle video
-            if (mediaList.Any(m => !(m is Video)))
-            {
-                return false;
-            }
-
             return ConfigData.CanPlay(ExternalPlayerConfiguration, mediaList);
         }
 
@@ -66,6 +55,14 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             base.Prepare();
 
             (PlaybackController as ConfigurableExternalPlaybackController).ExternalPlayerConfiguration = ExternalPlayerConfiguration;
+        }
+
+        protected override bool StopAllPlaybackBeforePlaying
+        {
+            get
+            {
+                return true;
+            }
         }
     }
 }
