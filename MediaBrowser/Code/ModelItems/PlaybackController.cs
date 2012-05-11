@@ -336,7 +336,7 @@ namespace MediaBrowser
                 OnPlaybackFinished(e);
             }
 
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayStateChanged());
+            PlayStateChanged();
         }
 
         /// <summary>
@@ -469,16 +469,7 @@ namespace MediaBrowser
             }
         }
 
-        protected void PlayStateChanged()
-        {
-            FirePropertyChanged("PlayState");
-            FirePropertyChanged("IsPlaying");
-            FirePropertyChanged("IsPlayingVideo");
-            FirePropertyChanged("IsStopped");
-            FirePropertyChanged("IsPaused");
-        }
-
-        /// <summary>
+       /// <summary>
         /// Pauses playback
         /// </summary>
         public override void Pause()

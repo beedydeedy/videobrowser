@@ -119,6 +119,8 @@ namespace MediaBrowser.Code.ModelItems
             CurrentPlayableItemId = Guid.Empty;
             CurrentPlayableItems.Clear();
 
+            PlayStateChanged();
+
             Logger.ReportVerbose("All post-playback actions have completed.");
         }
 
@@ -188,6 +190,8 @@ namespace MediaBrowser.Code.ModelItems
 
             // Set the current playback stage
             playable.PlayState = playable.QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
+
+            PlayStateChanged();
         }
 
         /// <summary>
@@ -490,6 +494,17 @@ namespace MediaBrowser.Code.ModelItems
         internal virtual IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
         {
             return files;
+        }
+
+        protected void PlayStateChanged()
+        {
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => {
+                FirePropertyChanged("PlayState");
+                FirePropertyChanged("IsPlaying");
+                FirePropertyChanged("IsPlayingVideo");
+                FirePropertyChanged("IsStopped");
+                FirePropertyChanged("IsPaused");
+            }); 
         }
 
         protected override void Dispose(bool isDisposing)
