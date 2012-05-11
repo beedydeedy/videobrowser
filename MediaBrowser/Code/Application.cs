@@ -1395,6 +1395,33 @@ namespace MediaBrowser
         }
 
         /// <summary>
+        /// Themes can use this to disable playback in expired mode.
+        /// </summary>
+        /// <param name="themeName"></param>
+        /// <param name="value"></param>
+        /// <returns>True if the theme was found false if not</returns>
+        public bool SetPlaybackEnabled(string themeName, bool value)
+        {
+            if (AvailableThemes.ContainsKey(themeName))
+            {
+                AvailableThemes[themeName].PlaybackEnabled = value;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// This will return the playback capability of the current theme.  Themes should use SetPlaybackEnabled(themename) to set.
+        /// </summary>
+        public bool PlaybackEnabled
+        {
+            get
+            {
+                return CurrentTheme.PlaybackEnabled;
+            }
+        }
+
+        /// <summary>
         /// Takes an item and plays all items within the same folder, starting with the supplied Item
         /// </summary>
         public void PlayFolderBeginningWithItem(Item item)
@@ -1463,6 +1490,13 @@ namespace MediaBrowser
 
         public void Play(Item item, bool resume, bool queue, PlayMethod playMethod, bool shuffle)
         {
+            //if playback is disabled display a message
+            if (!PlaybackEnabled)
+            {
+                DisplayDialog("Playback is disabled.  You may need to register your current theme.", "Cannot Play");
+                return;
+            }
+
             PlayableItem playable = PlayableItemFactory.Instance.Create(item);
 
             // This could happen if both item.IsFolder and item.IsPlayable are false

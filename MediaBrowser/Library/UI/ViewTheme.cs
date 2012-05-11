@@ -107,6 +107,8 @@ namespace MediaBrowser.Library.UI
             get { return configObject; }
             set { configObject = value; }
         }
+
+        public bool PlaybackEnabled = true;
         
     }
 }
