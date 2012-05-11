@@ -52,32 +52,6 @@ namespace MediaBrowser.Library.Playables
         }
         #endregion
 
-        #region PlayStateChanged EventHandler
-        volatile EventHandler<GenericEventArgs<PlayableItem>> _PlayStateChanged;
-        /// <summary>
-        /// Fires when the current instance finishes playback
-        /// </summary>
-        public event EventHandler<GenericEventArgs<PlayableItem>> PlayStateChanged
-        {
-            add
-            {
-                _PlayStateChanged += value;
-            }
-            remove
-            {
-                _PlayStateChanged -= value;
-            }
-        }
-
-        private void OnPlayStateChanged()
-        {
-            if (_PlayStateChanged != null)
-            {
-                _PlayStateChanged(this, new GenericEventArgs<PlayableItem>() { Item = this });
-            }
-        }
-        #endregion
-
         #region PlaybackFinished EventHandler
         volatile EventHandler<GenericEventArgs<PlayableItem>> _PlaybackFinished;
         /// <summary>
@@ -307,28 +281,10 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
-        private PlayableItemPlayState _PlayState = PlayableItemPlayState.Created;
         /// <summary>
         /// Gets or sets the current playback stage
         /// </summary>
-        public PlayableItemPlayState PlayState
-        {
-            get
-            {
-                return _PlayState;
-            }
-            internal set
-            {
-                var changed = _PlayState != value;
-
-                _PlayState = value;
-
-                if (changed)
-                {
-                    OnPlayStateChanged();
-                }
-            }
-        }
+        public PlayableItemPlayState PlayState { get; internal set; }
 
         /// <summary>
         /// Gets the Media Items that have actually been played up to this point
