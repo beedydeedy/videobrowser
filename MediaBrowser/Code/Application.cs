@@ -1315,7 +1315,7 @@ namespace MediaBrowser
                 return;
             }
 
-            if (item.BaseItem is Media && item.BaseItem is IShow)
+            if (item.BaseItem is Show)
             {
                 if ((item.HasDataForDetailPage && item.BaseItem is Movie) ||
                     this.Config.AlwaysShowDetailsPage)
