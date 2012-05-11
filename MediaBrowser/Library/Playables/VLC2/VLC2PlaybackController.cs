@@ -404,16 +404,19 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         private void ClosePlayer()
         {
-            Logger.ReportVerbose("Sending close command to VLC");
+            if (CurrentProcess != null)
+            {
+                Logger.ReportVerbose("Sending close command to VLC");
 
-            // Unfortunately the VLC quit command doesn't work at the moment so we'll have to do it with brute force
-            try
-            {
-                CurrentProcess.CloseMainWindow();
-            }
-            catch (Exception ex)
-            {
-                Logger.ReportException("Error closing VLC", ex);
+                // Unfortunately the VLC quit command doesn't work at the moment so we'll have to do it with brute force
+                try
+                {
+                    CurrentProcess.CloseMainWindow();
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Error closing VLC", ex);
+                }
             }
         }
 

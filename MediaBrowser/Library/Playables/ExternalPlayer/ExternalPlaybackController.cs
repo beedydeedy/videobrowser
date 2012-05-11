@@ -204,6 +204,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         protected virtual void OnExternalPlayerClosed()
         {
             CurrentProcessName = string.Empty;
+            CurrentProcess = null;
 
             // Just use base method
             OnPlaybackFinished(GetPlaybackState());
@@ -317,31 +318,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             {
                 return ConfigData.ExternalPlayerLaunchType.CommandLine;
             }
-        }
-
-        protected override void StopInternal()
-        {
-            
-        }
-
-        public override void GoToFullScreen()
-        {
-            
-        }
-
-        public override void Pause()
-        {
-            
-        }
-
-        public override void Seek(long position)
-        {
-            
-        }
-
-        public override void UnPause()
-        {
-            
         }
 
         protected abstract string GetCommandPath(PlayableItem playable);

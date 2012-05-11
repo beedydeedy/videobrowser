@@ -93,5 +93,30 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             return args;
         }
+
+        protected override void StopInternal()
+        {
+
+        }
+
+        public override void GoToFullScreen()
+        {
+
+        }
+
+        public override void Pause()
+        {
+
+        }
+
+        public override void Seek(long position)
+        {
+
+        }
+
+        public override void UnPause()
+        {
+
+        }
     }
 }
