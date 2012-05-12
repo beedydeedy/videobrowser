@@ -116,7 +116,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             if (_CurrentPlayState == "stopped")
             {
-                StopInternal();
+                ClosePlayer();
             }
             else
             {
@@ -347,6 +347,11 @@ namespace MediaBrowser.Library.Playables.MpcHc
         }
 
         protected override void StopInternal()
+        {
+            SendCommandToPlayer("890", new Dictionary<string, string>());
+        }
+
+        private void ClosePlayer()
         {
             SendCommandToPlayer("816", new Dictionary<string, string>());
         }

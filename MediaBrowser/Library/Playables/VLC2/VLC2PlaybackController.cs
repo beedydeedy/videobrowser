@@ -399,7 +399,7 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         protected override void StopInternal()
         {
-            ClosePlayer();
+            SendStatusRequest(new Uri(StatusUrl + "?command=pl_stop"));
         }
 
         private void ClosePlayer()
