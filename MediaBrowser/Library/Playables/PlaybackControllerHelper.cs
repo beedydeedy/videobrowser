@@ -355,9 +355,10 @@ namespace MediaBrowser.Library.Playables
                         return transport.PlayState;
                     }
                 }
-                catch (InvalidOperationException)
+                catch (InvalidOperationException ex)
                 {
                     // We may not have access to the Transport if another application is playing media
+                    Logger.ReportException("GetCurrentPlayState", ex);
                 }
 
                 // If we weren't able to access MediaExperience.Transport, it's likely due to another application playing media

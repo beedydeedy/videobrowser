@@ -125,7 +125,7 @@ namespace MediaBrowser.Library
                                 }
 
                                 // set npv visibility according to current state
-                                Application.CurrentInstance.ShowNowPlaying = Application.CurrentInstance.HasActiveMedia;
+                                Application.CurrentInstance.ShowNowPlaying = Application.CurrentInstance.IsPlaying;
 
                                 //tell MC to navigate to us
                                 Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.ReturnToApplication();

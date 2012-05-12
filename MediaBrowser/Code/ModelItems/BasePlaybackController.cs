@@ -216,7 +216,7 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                return CurrentPlayableItems.Count > 0 && !IsPaused;
+                return CurrentPlayableItems.Count > 0;
             }
         }
 
@@ -228,28 +228,6 @@ namespace MediaBrowser.Code.ModelItems
             get
             {
                 return IsPlaying && HasVideo;
-            }
-        }
-
-        /// <summary>
-        /// Determines if the PlaybackController has any active content, be it playing or paused
-        /// </summary>
-        public virtual bool IsActive
-        {
-            get
-            {
-                return IsPlaying || IsPaused;
-            }
-        }
-
-        /// <summary>
-        /// Determines if the PlaybackController has any active content, be it playing or paused
-        /// </summary>
-        public virtual bool IsActiveWithVideo
-        {
-            get
-            {
-                return IsActive && HasVideo;
             }
         }
 
@@ -406,9 +384,14 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Gets the item currently playing
         /// </summary>
-        protected PlayableItem GetCurrentPlayableItem()
+        public PlayableItem GetCurrentPlayableItem()
         {
             return GetPlayableItem(CurrentPlayableItemId);
+        }
+
+        public IEnumerable<PlayableItem> GetAllPlayableItems()
+        {
+            return CurrentPlayableItems;
         }
 
         /// <summary>
