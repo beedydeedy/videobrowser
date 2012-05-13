@@ -7,7 +7,7 @@ using MediaBrowser.Library.Localization;
 
 namespace MediaBrowser.Library.Entities
 {
-    class BoxSet : Folder, IMovie
+    public class BoxSet : Folder, IMovie
     {
         [Persist]
         public string MpaaRating { get; set; }
