@@ -174,10 +174,35 @@ namespace MediaBrowser.Library.Providers
             string matchedName = null;
             string url3 = string.Format(search3, UrlEncode(name), ApiKey, language);
             var json = Helper.ToJsonDict(Helper.FetchJson(url3));
+
             List<string> possibleTitles = new List<string>();
             if (json != null)
             {
                 System.Collections.ArrayList results = (System.Collections.ArrayList)json["results"];
+                if (results == null || results.Count == 0)
+                {
+                    //try replacing numbers
+                    foreach (var pair in ReplaceStartNumbers)
+                    {
+                        if (name.StartsWith(pair.Key))
+                        {
+                            name = name.Remove(0, pair.Key.Length);
+                            name = pair.Value + name;
+                        }
+                    }
+                    foreach (var pair in ReplaceEndNumbers)
+                    {
+                        if (name.EndsWith(pair.Key))
+                        {
+                            name = name.Remove(name.IndexOf(pair.Key), pair.Key.Length);
+                            name = name + pair.Value;
+                        }
+                    }
+                    Logger.ReportInfo("MovieDBProvider - No results.  Trying replacement numbers: " + name);
+                    url3 = string.Format(search3, UrlEncode(name), ApiKey, language);
+                    json = Helper.ToJsonDict(Helper.FetchJson(url3));
+                    results = (System.Collections.ArrayList)json["results"];
+                }
                 if (results != null) {
                     string compName = GetComparableName(name);
                     foreach (Dictionary<string,object> possible in results)
@@ -198,6 +223,7 @@ namespace MediaBrowser.Library.Providers
                             }
                         }
 
+                        Logger.ReportVerbose("MovieDbProvider - " + compName + " didn't match " + n);
                         //if main title matches we don't have to look for alternatives
                         if (matchedName == null)
                         {
@@ -662,6 +688,36 @@ namespace MediaBrowser.Library.Providers
         static string remove = "\"'!`?";
         // "Face/Off" support.
         static string spacers = "/,.:;\\(){}[]+-_=–*";  // (there are not actually two - in the they are different char codes)
+        static Dictionary<string, string> ReplaceStartNumbers = new Dictionary<string, string>() {
+            {"1 ","one "},
+            {"2 ","two "},
+            {"3 ","three "},
+            {"4 ","four "},
+            {"5 ","five "},
+            {"6 ","six "},
+            {"7 ","seven "},
+            {"8 ","eight "},
+            {"9 ","nine "},
+            {"10 ","ten "},
+            {"11 ","eleven "},
+            {"12 ","twelve "},
+            {"13 ","thirteen "},
+            {"100 ","one hundred "},
+            {"101 ","one hundred one "}
+        };
+
+        static Dictionary<string, string> ReplaceEndNumbers = new Dictionary<string, string>() {
+            {" 1"," i"},
+            {" 2"," ii"},
+            {" 3"," iii"},
+            {" 4"," iv"},
+            {" 5"," v"},
+            {" 6"," vi"},
+            {" 7"," vii"},
+            {" 8"," viii"},
+            {" 9"," ix"},
+            {" 10"," x"}
+        };
 
         internal static string GetComparableName(string name)
         {
@@ -673,6 +729,24 @@ namespace MediaBrowser.Library.Providers
             name = name.Replace("ú", "u");
             name = name.Replace("ü", "u");
             name = name.Replace("ñ", "n");
+            foreach (var pair in ReplaceStartNumbers)
+            {
+                if (name.StartsWith(pair.Key))
+                {
+                    name = name.Remove(0, pair.Key.Length);
+                    name = pair.Value + name;
+                    Logger.ReportInfo("MovieDbProvider - Replaced Start Numbers: " + name);
+                }
+            }
+            foreach (var pair in ReplaceEndNumbers)
+            {
+                if (name.EndsWith(pair.Key))
+                {
+                    name = name.Remove(name.IndexOf(pair.Key), pair.Key.Length);
+                    name = name + pair.Value;
+                    Logger.ReportInfo("MovieDbProvider - Replaced End Numbers: " + name);
+                }
+            }
             name = name.Normalize(NormalizationForm.FormKD);
             StringBuilder sb = new StringBuilder();
             foreach (char c in name)
