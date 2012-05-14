@@ -626,6 +626,10 @@ namespace MediaBrowser
         public static bool CanPlay(ConfigData.ExternalPlayer externalPlayer, IEnumerable<MediaType> mediaTypes, IEnumerable<VideoFormat> videoFormats, bool isMultiFile)
         {
             // Check options to see if this is not a match
+            if (Application.RunningOnExtender)
+            {
+                return false;
+            }
 
             // If it's not even capable of playing multiple files in sequence, it's no good
             if (isMultiFile && !externalPlayer.SupportsMultiFileCommandArguments && !externalPlayer.SupportsPlaylists)
