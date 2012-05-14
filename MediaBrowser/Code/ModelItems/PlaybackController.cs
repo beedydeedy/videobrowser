@@ -268,10 +268,7 @@ namespace MediaBrowser
             PlaybackStateEventArgs eventArgs = GetCurrentPlaybackState(metadataTitle, metadataDuration, positionTicks);
 
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
-            if (positionTicks > 0)
-            {
-                OnProgress(eventArgs);
-            }
+            OnProgress(eventArgs);
 
             Application.CurrentInstance.ShowNowPlaying = true;
 
