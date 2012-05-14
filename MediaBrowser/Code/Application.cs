@@ -1610,12 +1610,12 @@ namespace MediaBrowser
             // Get all the top VF's
             var topParents = root.Children;
 
-            // Loop through the items that were sent to the player
+            // Loop through the items that were played
             foreach (Media media in playableItem.PlayedMediaItems)
             {
                 Item item = ItemFactory.Instance.Create(media);
 
-                // This does not get set during creation and it will be needed
+                // This does not get set during ItemFactory.Instance.Create and it will be needed
                 item.PhysicalParent = ItemFactory.Instance.Create(item.BaseItem.Parent) as FolderModel;
 
                 // Find the top Parent by using the item's TopParent property.
@@ -1633,7 +1633,7 @@ namespace MediaBrowser
 
                 if (topFolderModel == null)
                 {
-                    Logger.ReportVerbose("Count not find top folder model for: " + item.Name);
+                    Logger.ReportWarning("Count not find top parent for {0}, cannot add it to the RAL.", item.Name);
                 }
                 else
                 {
