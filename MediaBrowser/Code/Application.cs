@@ -1584,9 +1584,9 @@ namespace MediaBrowser
         /// </summary>
         public void RunPostPlayProcesses(PlayableItem playableItem)
         {
-            Async.Queue("AddPlayedMediaToWatchedList", () =>
+            Async.Queue("AddNewlyWatched", () =>
             {
-                AddPlayedMediaToWatchedList(playableItem);
+                AddNewlyWatched(playableItem);
             });
 
             Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
@@ -1595,52 +1595,21 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Adds the played Media items to the RAL and sets the LastWatched property
+        /// Resets last played item for the top level parents of the played media 
         /// </summary>
-        private void AddPlayedMediaToWatchedList(PlayableItem playableItem)
+        private void AddNewlyWatched(PlayableItem playableItem)
         {
-            // First get a hold of the root folder
-            var root = CurrentFolderModel ?? CurrentItem.PhysicalParent;
-
-            while (!root.IsRoot)
+            if (playableItem.HasMediaItems)
             {
-                root = root.PhysicalParent;
-            }
-
-            // Get all the top VF's
-            var topParents = root.Children;
-
-            // Loop through the items that were played
-            foreach (Media media in playableItem.PlayedMediaItems)
-            {
-                Item item = ItemFactory.Instance.Create(media);
-
-                // This does not get set during ItemFactory.Instance.Create and it will be needed
-                item.PhysicalParent = ItemFactory.Instance.Create(item.BaseItem.Parent) as FolderModel;
-
-                // Find the top Parent by using the item's TopParent property.
-                // This will return null for episodes since TopParent returns the Season
-                var topParent = topParents.FirstOrDefault(i => i.BaseItem.Id == item.TopParent.BaseItem.Id);
-
-                // If we couldn't find it, try to figure it out by looking for the item in RecursiveMedia
-                if (topParent == null)
+                // get the top parents of all items that were played
+                var topParents = playableItem.MediaItems.Select(i => i.TopParentID).Distinct();
+                // and reset the watched list for each of them
+                foreach (FolderModel folderModel in RootFolderModel.Children.Where(f => topParents.Contains(f.Id)))
                 {
-                    topParent = topParents.FirstOrDefault(p => (p.BaseItem as Folder).RecursiveMedia.Any(m => m.Id == item.BaseItem.Id));
+                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playableItem.MediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
                 }
-
-                // If we found it, call AddNewlyWatched
-                var topFolderModel = topParent as FolderModel;
-
-                if (topFolderModel == null)
-                {
-                    Logger.ReportWarning("Count not find top parent for {0}, cannot add it to the RAL.", item.Name);
-                }
-                else
-                {
-                    topFolderModel.AddNewlyWatched(item);
-                }
-
-                this.lastPlayed = item;
+                //I don't think anyone actually uses this but just in case...
+                this.lastPlayed = ItemFactory.Instance.Create(playableItem.MediaItems.LastOrDefault());
             }
         }
 
