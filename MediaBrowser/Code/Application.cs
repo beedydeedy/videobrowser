@@ -1584,19 +1584,64 @@ namespace MediaBrowser
         /// </summary>
         public void RunPostPlayProcesses(PlayableItem playableItem)
         {
+            Async.Queue("AddPlayedMediaToWatchedList", () =>
+            {
+                AddPlayedMediaToWatchedList(playableItem);
+            });
+
+            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
+
+            OnPlaybackFinished(playableItem);
+        }
+
+        /// <summary>
+        /// Adds the played Media items to the RAL and sets the LastWatched property
+        /// </summary>
+        private void AddPlayedMediaToWatchedList(PlayableItem playableItem)
+        {
+            // First get a hold of the root folder
+            var root = CurrentFolderModel ?? CurrentItem.PhysicalParent;
+
+            while (!root.IsRoot)
+            {
+                root = root.PhysicalParent;
+            }
+
+            // Get all the top VF's
+            var topParents = root.Children;
+
             // Loop through the items that were sent to the player
             foreach (Media media in playableItem.PlayedMediaItems)
             {
                 Item item = ItemFactory.Instance.Create(media);
 
-                item.AddNewlyWatched();
+                // This does not get set during creation and it will be needed
+                item.PhysicalParent = ItemFactory.Instance.Create(item.BaseItem.Parent) as FolderModel;
+
+                // Find the top Parent by using the item's TopParent property.
+                // This will return null for episodes since TopParent returns the Season
+                var topParent = topParents.FirstOrDefault(i => i.BaseItem.Id == item.TopParent.BaseItem.Id);
+
+                // If we couldn't find it, try to figure it out by looking for the item in RecursiveMedia
+                if (topParent == null)
+                {
+                    topParent = topParents.FirstOrDefault(p => (p.BaseItem as Folder).RecursiveMedia.Any(m => m.Id == item.BaseItem.Id));
+                }
+
+                // If we found it, call AddNewlyWatched
+                var topFolderModel = topParent as FolderModel;
+
+                if (topFolderModel == null)
+                {
+                    Logger.ReportVerbose("Count not find top folder model for: " + item.Name);
+                }
+                else
+                {
+                    topFolderModel.AddNewlyWatched(item);
+                }
 
                 this.lastPlayed = item;
             }
-
-            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
-
-            OnPlaybackFinished(playableItem);
         }
 
         /// <summary>

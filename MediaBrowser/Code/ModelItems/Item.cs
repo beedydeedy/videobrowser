@@ -61,7 +61,7 @@ namespace MediaBrowser.Library
 
         public FolderModel PhysicalParent { get; internal set; }
 
-        private FolderModel TopParent
+        internal FolderModel TopParent
         {
             get
             {
