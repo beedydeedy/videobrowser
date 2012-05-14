@@ -1602,14 +1602,14 @@ namespace MediaBrowser
             if (playableItem.HasMediaItems)
             {
                 // get the top parents of all items that were played
-                var topParents = playableItem.MediaItems.Select(i => i.TopParentID).Distinct();
+                var topParents = playableItem.PlayedMediaItems.Select(i => i.TopParentID).Distinct();
                 // and reset the watched list for each of them
                 foreach (FolderModel folderModel in RootFolderModel.Children.Where(f => topParents.Contains(f.Id)))
                 {
-                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playableItem.MediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
+                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playableItem.PlayedMediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
                 }
                 //I don't think anyone actually uses this but just in case...
-                this.lastPlayed = ItemFactory.Instance.Create(playableItem.MediaItems.LastOrDefault());
+                this.lastPlayed = ItemFactory.Instance.Create(playableItem.PlayedMediaItems.LastOrDefault());
             }
         }
 
