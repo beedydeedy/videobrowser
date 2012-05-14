@@ -327,6 +327,7 @@ namespace MediaBrowser.LibraryManagement
 
         public static string RemoveInvalidFileChars(string filename) {
 
+            if (filename == null) return "";
             var cleanName = new StringBuilder();
             foreach (var letter in filename) {
                 if (!System.IO.Path.GetInvalidFileNameChars().Contains(letter)) {

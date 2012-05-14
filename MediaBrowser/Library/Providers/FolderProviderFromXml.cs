@@ -51,12 +51,14 @@ namespace MediaBrowser.Library.Providers
         private string XmlLocation()
         {
             string location = Item.Path;
-            //look for specialized name first (for virtual folders) - need to strip out vf name from path...
-            string cleanName = LibraryManagement.Helper.RemoveInvalidFileChars(Item.Name);
-            string vlocation = Path.Combine(location.Substring(0,location.LastIndexOf("\\")), cleanName+".folder.xml");
-            //Logger.ReportInfo("Looking for vlocation " + vlocation);
             if (File.Exists(location))
-                return vlocation;
+            {
+                //look for specialized name (for virtual folders) - need to strip out vf name from path...
+                //Logger.ReportInfo("Looking for vlocation " + vlocation);
+                string cleanName = LibraryManagement.Helper.RemoveInvalidFileChars(Item.Name);
+                int len = location.LastIndexOf("\\");
+                return Path.Combine(location.Substring(0, len > 0 ? len : location.Length), cleanName + ".folder.xml");
+            }
             else
                 return Path.Combine(location, "folder.xml");
             
