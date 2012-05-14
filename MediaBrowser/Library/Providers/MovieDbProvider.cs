@@ -163,7 +163,8 @@ namespace MediaBrowser.Library.Providers
         public virtual string AttemptFindId(string name, int? year, string language)
         {
             //if id is specified in the file name return it directly
-            string id = Helper.GetAttributeFromPath(Item.Path, "tmdbid");
+            string justName = Item.Path != null ? Item.Path.Substring(Item.Path.LastIndexOf("\\")) : "";
+            string id = Helper.GetAttributeFromPath(justName, "tmdbid");
             if (id != null)
             {
                 Logger.ReportInfo("MovieDbProvider: tMDb ID specified in file path.  Using: " + id);
