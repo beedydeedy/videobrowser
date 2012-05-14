@@ -24,6 +24,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
         private long _CurrentPositionTicks = 0;
         private long _CurrentDurationTicks = 0;
         private string _CurrentPlayState = string.Empty;
+        private int _ConsecutiveFailedHttpRequests = 0;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -64,6 +65,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             _CurrentPositionTicks = 0;
             _CurrentDurationTicks = 0;
             _CurrentPlayState = string.Empty;
+            _ConsecutiveFailedHttpRequests = 0;
 
             if (_StatusRequestClient != null)
             {
@@ -88,11 +90,21 @@ namespace MediaBrowser.Library.Playables.MpcHc
                     }
                     catch (Exception ex)
                     {
+                        _ConsecutiveFailedHttpRequests++;
                         Logger.ReportException("Error connecting to MPC status url", ex);
+
+                        // Try to detect MPC hanging after closing
+                        // If there are several failed consecutive requests then kill the process
+                        // But only do so if we have had at least one request succeed that way we don't kill the process if the user has the web interface disabled.
+                        if (_ConsecutiveFailedHttpRequests > 5 && !string.IsNullOrEmpty(_CurrentPlayState))
+                        {
+                            Logger.ReportVerbose("Killing MPC-HC process because it appears to have hung after closing.");
+                            KillProcesses(CurrentProcessName);
+                        }
                     }
                 }
 
-                Thread.Sleep(ProgressInterval);
+                Thread.Sleep(ProgressInterval); 
             }
         }
 
@@ -103,6 +115,8 @@ namespace MediaBrowser.Library.Playables.MpcHc
             {
                 return;
             }
+
+            _ConsecutiveFailedHttpRequests = 0;
 
             string result = e.Result;
             
