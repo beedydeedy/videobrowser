@@ -18,7 +18,26 @@ namespace MediaBrowser
     /// </summary>
     public class PlaybackController : BasePlaybackController
     {
-        private MediaCollection CurrentMediaCollection;
+        // After calling MediaCenterEnvironment.PlayMedia, playback will begin with a state of Stopped and position 0
+        // We'll record it when we see it so we don't get tripped up into thinking playback has actually stopped
+        private bool _HasStartedPlaying = false;
+        private MediaCollection _CurrentMediaCollection;
+        private DateTime _LastTransportUpdateTime = DateTime.Now;
+        private Microsoft.MediaCenter.PlayState _CurrentPlayState;
+
+        public override string ControllerName
+        {
+            get { return "Internal Player"; }
+        }
+
+        protected override void ResetPlaybackProperties()
+        {
+            base.ResetPlaybackProperties();
+
+            _CurrentMediaCollection = null;
+            _HasStartedPlaying = false;
+            _CurrentPlayState = Microsoft.MediaCenter.PlayState.Undefined;
+        }
 
         /// <summary>
         /// Plays Media
@@ -35,16 +54,12 @@ namespace MediaBrowser
             }
         }
 
-        // After calling MediaCenterEnvironment.PlayMedia, playback will begin with a state of Stopped and position 0
-        // We'll record it when we see it so we don't get tripped up into thinking playback has actually stopped
-        private bool HasStartedPlaying = false;
-
         /// <summary>
         /// Plays or queues Media
         /// </summary>
         protected virtual void PlayPlayableItem(PlayableItem playable)
         {
-            HasStartedPlaying = false;
+            _HasStartedPlaying = false;
 
             // Get this now since we'll be using it frequently
             MediaCenterEnvironment mediaCenterEnvironment = AddInHost.Current.MediaCenterEnvironment;
@@ -88,7 +103,7 @@ namespace MediaBrowser
             if (PlaybackControllerHelper.UseLegacyApi(playable))
             {
                 CallPlayMediaLegacy(mediaCenterEnvironment, playable);
-                CurrentMediaCollection = null;
+                _CurrentMediaCollection = null;
             }
             else
             {
@@ -119,8 +134,8 @@ namespace MediaBrowser
                 coll[playstate.PlaylistPosition].Start = new TimeSpan(playstate.PositionTicks);
             }
 
-            CurrentMediaCollection = coll;
-            PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, CurrentMediaCollection, false);
+            _CurrentMediaCollection = coll;
+            PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, _CurrentMediaCollection, false);
         }
 
         /// <summary>
@@ -129,7 +144,7 @@ namespace MediaBrowser
         private void CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
             Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
-            
+
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
@@ -157,7 +172,7 @@ namespace MediaBrowser
 
         protected virtual void QueuePlayableItem(PlayableItem playable)
         {
-            if (CurrentMediaCollection == null)
+            if (_CurrentMediaCollection == null)
             {
                 QueuePlayableItemLegacy(playable);
             }
@@ -172,11 +187,11 @@ namespace MediaBrowser
             // Create a MediaCollectionItem for each file to play
             if (playable.HasMediaItems)
             {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, CurrentMediaCollection, playable);
+                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, _CurrentMediaCollection, playable);
             }
             else
             {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(CurrentMediaCollection, playable);
+                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(_CurrentMediaCollection, playable);
             }
         }
 
@@ -189,8 +204,6 @@ namespace MediaBrowser
                 PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true);
             }
         }
-
-        DateTime lastCall = DateTime.Now;
 
         /// <summary>
         /// Handles the MediaTransport.PropertyChanged event, which most of the time will be due to Position
@@ -217,12 +230,14 @@ namespace MediaBrowser
                 state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
             }
 
+            _CurrentPlayState = state;
+
             // Don't get tripped up at the initial state of Stopped with position 0
-            if (!HasStartedPlaying)
+            if (!_HasStartedPlaying)
             {
                 if (state == Microsoft.MediaCenter.PlayState.Playing)
                 {
-                    HasStartedPlaying = true;
+                    _HasStartedPlaying = true;
                 }
                 else
                 {
@@ -231,7 +246,7 @@ namespace MediaBrowser
             }
 
             // protect against really agressive calls
-            var diff = (DateTime.Now - lastCall).TotalMilliseconds;
+            var diff = (DateTime.Now - _LastTransportUpdateTime).TotalMilliseconds;
 
             // Only cancel out Position reports
             if (diff < 1000 && diff >= 0 && property == "Position")
@@ -239,7 +254,7 @@ namespace MediaBrowser
                 return;
             }
 
-            lastCall = DateTime.Now;
+            _LastTransportUpdateTime = DateTime.Now;
 
             // Determine if playback has stopped. Per MSDN documentation, Finished is no longer used with Windows 7
             bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined;
@@ -266,7 +281,7 @@ namespace MediaBrowser
                 string title = eventArgs.Item == null ? metadataTitle : (eventArgs.Item.HasMediaItems ? eventArgs.Item.MediaItems.ElementAt(eventArgs.CurrentMediaIndex).Name : eventArgs.Item.Files.ElementAt(eventArgs.CurrentFileIndex));
 
                 Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
-                
+
                 HandlePlaystateChanged(mce, transport, isStopped, eventArgs);
             }
         }
@@ -280,13 +295,13 @@ namespace MediaBrowser
             int currentMediaIndex;
             PlayableItem currentPlayableItem;
 
-            if (CurrentMediaCollection == null)
+            if (_CurrentMediaCollection == null)
             {
                 currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
             }
             else
             {
-                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
+                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, _CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
 
                 // When playing multiple files with MediaCollections, if you allow playback to finish, CurrentIndex will be reset to 0, but transport.Position will be equal to the duration of the last item played
                 if (filePlaylistPosition == 0 && positionTicks >= metadataDuration)
@@ -316,9 +331,9 @@ namespace MediaBrowser
                 transport.PropertyChanged -= MediaTransport_PropertyChanged;
 
                 // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
-                HasStartedPlaying = false;
+                _HasStartedPlaying = false;
 
-                CurrentMediaCollection = null;
+                _CurrentMediaCollection = null;
 
                 var mediaType = mce.MediaType;
 
@@ -358,50 +373,6 @@ namespace MediaBrowser
             }
         }
 
-        /// <summary>
-        /// Determines if the PlaybackController is currently playing video
-        /// </summary>
-        public override bool IsPlayingVideo
-        {
-            get
-            {
-                if (!IsPlaying)
-                {
-                    return false;
-                }
-
-                // Need to override to see if another app within wmc is currently playing (such as live tv)
-                Microsoft.MediaCenter.Extensibility.MediaType mediaType = PlaybackControllerHelper.GetCurrentMediaType();
-
-                return mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Unknown && mediaType != Microsoft.MediaCenter.Extensibility.MediaType.Audio;
-            }
-        }
-
-        /// <summary>
-        /// Determines if the PlaybackController has any active content, be it playing or paused
-        /// </summary>
-        public override bool IsPlaying
-        {
-            get
-            {
-                // If the base class knows about active PlayableItems, use it
-                if (base.IsPlaying)
-                {
-                    return true;
-                }
-
-                // Check if another app within WMC is playing
-                Microsoft.MediaCenter.PlayState playstate = PlaybackControllerHelper.GetCurrentPlayState();
-
-                return playstate == PlayState.Playing || playstate == PlayState.Paused || playstate == PlayState.Buffering;
-            }
-        }
-
-        public override bool IsPaused
-        {
-            get { return PlaybackControllerHelper.GetCurrentPlayState() == PlayState.Paused; }
-        }
-
         protected MediaExperience MediaExperience
         {
             get
@@ -411,41 +382,6 @@ namespace MediaBrowser
         }
 
         /// <summary>
-        /// Gets a friendly (displayable) title of what's currently playing
-        /// </summary>
-        public override string NowPlayingTitle
-        {
-            get
-            {
-                // If base class knows of a PlayableItem playing, return base value
-                if (base.IsPlaying)
-                {
-                    return base.NowPlayingTitle;
-                }
-
-                // Another application could be responsible for the content playing, so try to come up with a title
-                MediaExperience exp = MediaExperience;
-
-                if (exp != null)
-                {
-                    MediaMetadata metadata = exp.MediaMetadata;
-
-                    if (metadata != null)
-                    {
-                        string name = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata).Trim('/');
-
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            return FormatPathForDisplay(name);
-                        }
-                    }
-                }
-
-                return PlaybackControllerHelper.GetCurrentMediaType().ToString();
-            }
-        }
-
-       /// <summary>
         /// Pauses playback
         /// </summary>
         public override void Pause()
@@ -474,11 +410,7 @@ namespace MediaBrowser
         /// </summary>
         protected override void StopInternal()
         {
-            var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
-            if (transport != null)
-            {
-                transport.PlayRate = 0;
-            }
+            PlaybackControllerHelper.Stop();
         }
 
         /// <summary>
@@ -561,6 +493,14 @@ namespace MediaBrowser
             Logger.ReportVerbose("Trying to seek position :" + new TimeSpan(position).ToString());
             PlaybackControllerHelper.WaitForStream(mce);
             mce.MediaExperience.Transport.Position = new TimeSpan(position);
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                return _CurrentPlayState == Microsoft.MediaCenter.PlayState.Paused;
+            }
         }
     }
 }

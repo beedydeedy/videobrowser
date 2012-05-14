@@ -444,7 +444,7 @@ namespace MediaBrowser
         {
             if (Config.EnableScreenSaver) 
             {
-                if (!IsPlayingVideo)
+                if (!IsPlayingVideo && !IsExternalWmcApplicationPlaying)
                 {
                     if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
                     {
@@ -594,6 +594,21 @@ namespace MediaBrowser
             get
             {
                 return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlayingVideo);
+            }
+        }
+
+        public bool IsExternalWmcApplicationPlaying
+        {
+            get
+            {
+                if (IsPlaying)
+                {
+                    return false;
+                }
+
+                var playstate = PlaybackControllerHelper.GetCurrentPlayState();
+
+                return playstate == Microsoft.MediaCenter.PlayState.Playing || playstate == Microsoft.MediaCenter.PlayState.Paused || playstate == Microsoft.MediaCenter.PlayState.Buffering;
             }
         }
 
@@ -769,7 +784,7 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
-                    ShowNowPlaying = IsPlaying;
+                    ShowNowPlaying = IsPlaying || IsExternalWmcApplicationPlaying;
 
                     // setup image to use in external splash screen
                     string splashFilename = Path.Combine(Path.Combine(ApplicationPaths.AppIBNPath,"General"),"splash.png");
@@ -1092,6 +1107,11 @@ namespace MediaBrowser
                         {
                             return controller.NowPlayingTitle;
                         }
+                    }
+
+                    if (IsExternalWmcApplicationPlaying)
+                    {
+                        return PlaybackControllerHelper.GetNowPlayingTextForExternalWmcApplication();
                     }
 
                 }
@@ -1520,18 +1540,6 @@ namespace MediaBrowser
             {
                 currentPlaybackController = playable.PlaybackController;
 
-                // If the controller already has active playable items, stop it and wait for it to flush out
-                if (!playable.QueueItem && playable.PlaybackController.IsPlaying)
-                {
-                    playable.PlaybackController.Stop();
-
-                    while (playable.PlaybackController.GetAllPlayableItems().Any())
-                    {
-                        Logger.ReportVerbose("Waiting for playback controller to stop and flush out existing playable items");
-                        System.Threading.Thread.Sleep(500);
-                    }
-                }
-
                 playable.Play();
 
                 if (!playable.QueueItem)
@@ -1811,15 +1819,39 @@ namespace MediaBrowser
         /// <summary>
         /// Tells all registered PlayBackControllers to stop playback
         /// </summary>
-        public void StopAllPlayback()
+        public void StopAllPlayback(bool waitForStop)
         {
             foreach (var controller in Kernel.Instance.PlaybackControllers)
             {
                 if (controller.IsPlaying)
                 {
+                    Logger.ReportVerbose("Stopping playback on " + controller.ControllerName); 
                     controller.Stop();
                 }
             }
+
+            if (IsExternalWmcApplicationPlaying)
+            {
+                Logger.ReportVerbose("Stopping playback from another wmc application, such as live tv");
+                StopExternalWmcApplication();
+            }
+
+            if (waitForStop)
+            {
+                int i = 0;
+
+                // Try to wait for playback to completely stop, but don't get hung up too long
+                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 5)
+                {
+                    System.Threading.Thread.Sleep(500);
+                    i++;
+                }
+            }
+        }
+
+        public void StopExternalWmcApplication()
+        {
+            PlaybackControllerHelper.Stop();
         }
 
         /// <summary>

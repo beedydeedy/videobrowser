@@ -8,6 +8,7 @@ using System.Xml;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter;
 using Microsoft.MediaCenter.Hosting;
@@ -228,7 +229,7 @@ namespace MediaBrowser.Library.Playables
             // If we have a known video type, return DVD or Video
             if (videoMediaType == MediaType.DVD)
             {
-                return Microsoft.MediaCenter.MediaType.Dvd;
+                return Microsoft.MediaCenter.MediaType.Video;
             }
             else if (videoMediaType != MediaType.Unknown && videoMediaType != MediaType.PlayList)
             {
@@ -375,6 +376,21 @@ namespace MediaBrowser.Library.Playables
             // At this point nothing worked, so return Undefined
             return PlayState.Undefined;
 
+        }
+
+        public static string GetNowPlayingTextForExternalWmcApplication()
+        {
+            return GetCurrentMediaType().ToString();
+        }
+
+        public static void Stop()
+        {
+            var transport = GetCurrentMediaTransport();
+
+            if (transport != null)
+            {
+                transport.PlayRate = 0;
+            }
         }
 
         // Cache this so we don't have to keep retrieving it
@@ -595,7 +611,7 @@ namespace MediaBrowser.Library.Playables
                 catch (InvalidOperationException e)
                 {
                     // well if we are inactive we are not allowed to get media experience ...
-                    Logger.ReportException("EXCEPTION : ", e);
+                    Logger.ReportException("GetCurrentMediaTransport : ", e);
                 }
             }
 

@@ -16,6 +16,12 @@ namespace MediaBrowser.Code.ModelItems
     /// </summary>
     public abstract class BasePlaybackController : BaseModelItem
     {
+        public long CurrentFilePositionTicks { get; private set; }
+        public long CurrentFileDurationTicks { get; private set; }
+        private bool _IsStopping;
+
+        protected bool IsDisposing { get; private set; }
+
         /// <summary>
         /// Subclasses can use this to examine the items that are currently in the player.
         /// </summary>
@@ -67,6 +73,9 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected void OnProgress(PlaybackStateEventArgs args)
         {
+            CurrentFileDurationTicks = args.DurationFromPlayer;
+            CurrentFilePositionTicks = args.Position;
+
             // Set the current PlayableItem based on the incoming args
             CurrentPlayableItemId = args.Item == null ? Guid.Empty : args.Item.Id;
 
@@ -93,6 +102,8 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
+            _IsStopping = true;
+
             NormalizeEventProperties(args);
 
             // Fire the finished event for each PlayableItem
@@ -118,6 +129,8 @@ namespace MediaBrowser.Code.ModelItems
             // Clear state
             CurrentPlayableItemId = Guid.Empty;
             CurrentPlayableItems.Clear();
+
+            ResetPlaybackProperties();
 
             PlayStateChanged();
 
@@ -194,6 +207,11 @@ namespace MediaBrowser.Code.ModelItems
             PlayStateChanged();
         }
 
+        protected virtual void ResetPlaybackProperties()
+        {
+            _IsStopping = false;
+        }
+
         /// <summary>
         /// Stops whatever is currently playing
         /// </summary>
@@ -201,6 +219,11 @@ namespace MediaBrowser.Code.ModelItems
         {
             StopInternal();
         }
+
+        /// <summary>
+        /// Gets a friendly, displayable name for the current controller
+        /// </summary>
+        public abstract string ControllerName { get; }
 
         public abstract void Pause();
         public abstract void UnPause();
@@ -210,13 +233,38 @@ namespace MediaBrowser.Code.ModelItems
         public abstract void GoToFullScreen();
 
         /// <summary>
+        /// Gets the current playstate of the player
+        /// </summary>
+        public PlaybackControllerPlayState PlayState
+        {
+            get
+            {
+                if (CurrentPlayableItems.Any())
+                {
+                    if (_IsStopping)
+                    {
+                        return PlaybackControllerPlayState.Stopping;
+                    }
+                    else if (IsPaused)
+                    {
+                        return PlaybackControllerPlayState.Paused;
+                    }
+
+                    return PlaybackControllerPlayState.Playing;
+                }
+
+                return PlaybackControllerPlayState.Idle;
+            }
+        }
+        
+        /// <summary>
         /// Determines whether or not the controller is currently playing
         /// </summary>
         public virtual bool IsPlaying
         {
             get
             {
-                return CurrentPlayableItems.Count > 0;
+                return CurrentPlayableItems.Any();
             }
         }
 
@@ -238,8 +286,6 @@ namespace MediaBrowser.Code.ModelItems
         {
             get
             {
-                // For the majority of players there will be no way to determine this
-                // Those that can should override
                 return false;
             }
         }
@@ -481,20 +527,34 @@ namespace MediaBrowser.Code.ModelItems
 
         protected void PlayStateChanged()
         {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => {
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
+            {
                 FirePropertyChanged("PlayState");
                 FirePropertyChanged("IsPlaying");
                 FirePropertyChanged("IsPlayingVideo");
                 FirePropertyChanged("IsStopped");
                 FirePropertyChanged("IsPaused");
-            }); 
+            });
         }
 
         protected override void Dispose(bool isDisposing)
         {
-            Logger.ReportVerbose(GetType().Name + " is disposing");
+            if (isDisposing)
+            {
+                Logger.ReportVerbose(ControllerName + " is disposing");
+            }
+
+            IsDisposing = IsDisposing;
 
             base.Dispose(isDisposing);
         }
+    }
+
+    public enum PlaybackControllerPlayState
+    {
+        Idle = 0,
+        Stopping = 1,
+        Playing = 2,
+        Paused = 3
     }
 }

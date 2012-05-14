@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -13,9 +14,10 @@ namespace MediaBrowser.Library.Playables.TMT5
     {
         // All of these hold state about what's being played. They're all reset when playback starts
         private bool _HasStartedPlaying = false;
-        private PlaybackStateEventArgs _LastPlaybackState;
         private FileSystemWatcher _StatusFileWatcher;
-        private string _CurrentPlayState;
+        private long _CurrentPositionTicks = 0;
+        private long _CurrentDurationTicks = 0;
+        private string _CurrentPlayState = string.Empty;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
@@ -25,7 +27,14 @@ namespace MediaBrowser.Library.Playables.TMT5
         /// </summary>
         protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            return _LastPlaybackState ?? base.GetPlaybackState();
+            PlaybackStateEventArgs state = base.GetPlaybackState();
+
+            state.DurationFromPlayer = _CurrentDurationTicks;
+            state.Position = _CurrentPositionTicks;
+
+            state.CurrentFileIndex = 0;
+
+            return state;
         }
 
         /// <summary>
@@ -40,13 +49,21 @@ namespace MediaBrowser.Library.Playables.TMT5
             return args;
         }
 
+        protected override void ResetPlaybackProperties()
+        {
+            base.ResetPlaybackProperties();
+
+            _HasStartedPlaying = false;
+            _CurrentPositionTicks = 0;
+            _CurrentDurationTicks = 0;
+            _CurrentPlayState = string.Empty;
+
+            DisposeFileSystemWatcher();
+        }
+
         protected override void OnExternalPlayerLaunched(PlayableItem playbackInfo)
         {
             base.OnExternalPlayerLaunched(playbackInfo);
-
-            _LastPlaybackState = null;
-            _HasStartedPlaying = false;
-            _CurrentPlayState = string.Empty;
 
             // If the playstate directory exists, start watching it
             if (Directory.Exists(PlayStateDirectory))
@@ -117,9 +134,10 @@ namespace MediaBrowser.Library.Playables.TMT5
             // Then check if playback has stopped
             if (_HasStartedPlaying)
             {
-                _LastPlaybackState = GetPlaybackState(values);
+                _CurrentDurationTicks = TimeSpan.Parse(values["TotalTime"]).Ticks;
+                _CurrentPositionTicks = TimeSpan.Parse(values["CurTime"]).Ticks;
 
-                OnProgress(_LastPlaybackState);
+                OnProgress(GetPlaybackState());
 
                 // Playback has stopped
                 if (tmtPlayState == "stop")
@@ -152,16 +170,6 @@ namespace MediaBrowser.Library.Playables.TMT5
             }
         }
 
-        protected override void OnExternalPlayerClosed()
-        {
-            // In case anything went wrong trying to do this during the event
-            DisposeFileSystemWatcher();
-
-            _CurrentPlayState = string.Empty;
-
-            base.OnExternalPlayerClosed();
-        }
-
         /// <summary>
         /// Tells the MMC console to resume playback where last left off for the current file
         /// </summary>
@@ -184,53 +192,11 @@ namespace MediaBrowser.Library.Playables.TMT5
             Process.Start(processInfo);
         }
 
-        /// <summary>
-        /// Reads the TMTInfo.set file and returns the current play state
-        /// </summary>
-        private PlaybackStateEventArgs GetPlaybackState(NameValueCollection state)
-        {
-            Guid playableItemId = Guid.Empty;
-
-            return new PlaybackStateEventArgs()
-            {
-                Position = TimeSpan.Parse(state["CurTime"]).Ticks,
-                CurrentFileIndex = 0,
-                DurationFromPlayer = TimeSpan.Parse(state["TotalTime"]).Ticks,
-                Item = GetCurrentPlayableItem()
-            };
-        }
-
         private string PlayStateDirectory
         {
             get
             {
                 return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ArcSoft");
-            }
-        }
-
-        public override bool IsPlaying
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(_CurrentPlayState))
-                {
-                    return _CurrentPlayState == "play";
-                }
-
-                return base.IsPlaying;
-            }
-        }
-
-        public override bool IsPaused
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(_CurrentPlayState))
-                {
-                    return _CurrentPlayState == "pause";
-                }
-
-                return base.IsPaused;
             }
         }
 
@@ -256,6 +222,14 @@ namespace MediaBrowser.Library.Playables.TMT5
         private void ClosePlayer()
         {
             SendCommandToMMC("-close");
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                return _CurrentPlayState == "pause";
+            }
         }
     }
 }

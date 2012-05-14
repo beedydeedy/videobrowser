@@ -16,6 +16,11 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             set;
         }
 
+        public override string ControllerName
+        {
+            get { return ExternalPlayerConfiguration.ExternalPlayerName; }
+        }
+
         /// <summary>
         /// Gets the launch method to use
         /// </summary>

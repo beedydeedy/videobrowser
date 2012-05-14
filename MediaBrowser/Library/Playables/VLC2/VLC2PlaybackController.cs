@@ -18,11 +18,11 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         // All of these hold state about what's being played. They're all reset when playback starts
         private int _CurrrentPlayingFileIndex = -1;
-        private long _CurrentFileDuration = 0;
-        private long _CurrentPlayingPosition = 0;
-        private bool _MonitorPlayback;
-        private string _CurrentPlayState;
-        private bool _HasStartedPlaying;
+        private long _CurrentPositionTicks = 0;
+        private long _CurrentDurationTicks = 0;
+        private bool _MonitorPlayback = false;
+        private bool _HasStartedPlaying = false;
+        private string _CurrentPlayState = string.Empty;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -30,8 +30,6 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         // This will get the current file index
         private WebClient _PlaylistRequestClient;
-
-        private bool _IsDisposing = false;
 
         /// <summary>
         /// Gets arguments to be passed to the command line.
@@ -95,13 +93,6 @@ namespace MediaBrowser.Library.Playables.VLC2
         {
             base.OnExternalPlayerLaunched(playbackInfo);
 
-            // Reset these fields since they hold state
-            _CurrrentPlayingFileIndex = -1;
-            _CurrentPlayingPosition = 0;
-            _CurrentFileDuration = 0;
-            _CurrentPlayState = string.Empty;
-            _HasStartedPlaying = false;
-
             if (_StatusRequestClient == null)
             {
                 _StatusRequestClient = new WebClient();
@@ -122,6 +113,30 @@ namespace MediaBrowser.Library.Playables.VLC2
             _MonitorPlayback = true;
         }
 
+        protected override void ResetPlaybackProperties()
+        {
+            base.ResetPlaybackProperties();
+
+            // Reset these fields since they hold state
+            _CurrrentPlayingFileIndex = -1;
+            _CurrentPositionTicks = 0;
+            _CurrentDurationTicks = 0;
+            _HasStartedPlaying = false;
+            _MonitorPlayback = false;
+            _CurrentPlayState = string.Empty;
+
+            // Cleanup events
+            if (_PlaylistRequestClient != null)
+            {
+                _PlaylistRequestClient.DownloadStringCompleted -= playlistRequestCompleted;
+            }
+
+            if (_StatusRequestClient != null)
+            {
+                _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
+            }
+        }
+
         /// <summary>
         /// Sends out requests to VLC's Http interface
         /// </summary>
@@ -130,7 +145,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             Uri statusUri = new Uri(StatusUrl);
             Uri playlistUri = new Uri(VlcPlaylistXmlUrl);
 
-            while (!_IsDisposing)
+            while (!IsDisposing)
             {
                 if (_MonitorPlayback)
                 {
@@ -176,17 +191,19 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             XmlNode fileNameNode = docElement.SelectSingleNode("information/category[@name='meta']/info[@name='filename']");
 
-            _CurrentPlayState = docElement.SafeGetString("state", string.Empty).ToLower();
+            string playstate = docElement.SafeGetString("state", string.Empty).ToLower();
 
             // Check the filename node for null first, because if that's the case then it means nothing's currently playing.
             // This could happen after playback has stopped, but before the player has exited
             if (fileNameNode != null)
             {
-                _CurrentPlayingPosition = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("time").InnerText)).Ticks;
-                _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
+                _CurrentPositionTicks = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("time").InnerText)).Ticks;
+                _CurrentDurationTicks = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
             }
 
-            if (_CurrentPlayState == "stopped")
+            _CurrentPlayState = playstate;
+
+            if (playstate == "stopped")
             {
                 if (_HasStartedPlaying)
                 {
@@ -215,7 +232,7 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             if (leafNode != null)
             {
-                _CurrentFileDuration = TimeSpan.FromSeconds(int.Parse(leafNode.Attributes["duration"].Value)).Ticks;
+                _CurrentDurationTicks = TimeSpan.FromSeconds(int.Parse(leafNode.Attributes["duration"].Value)).Ticks;
 
                 _CurrrentPlayingFileIndex = IndexOfNode(leafNode.ParentNode.ChildNodes, leafNode);
 
@@ -236,32 +253,15 @@ namespace MediaBrowser.Library.Playables.VLC2
             return -1;
         }
 
-        protected override void OnExternalPlayerClosed()
-        {
-            // Stop sending requests to VLC's http interface
-            _MonitorPlayback = false;
-            _CurrentPlayState = string.Empty;
-
-            // Cleanup events
-            _PlaylistRequestClient.DownloadStringCompleted -= playlistRequestCompleted;
-            _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
-
-            base.OnExternalPlayerClosed();
-        }
-
         protected override PlaybackStateEventArgs GetPlaybackState()
         {
-            PlaybackStateEventArgs state = new PlaybackStateEventArgs();
+            PlaybackStateEventArgs state = base.GetPlaybackState();
 
-            PlayableItem playable = GetCurrentPlayableItem();
+            state.DurationFromPlayer = _CurrentDurationTicks;
+            state.Position = _CurrentPositionTicks;
 
-            state.Position = _CurrentPlayingPosition;
-            state.DurationFromPlayer = _CurrentFileDuration;
-
-            if (playable != null)
+            if (state.Item != null)
             {
-                state.Item = playable;
-
                 state.CurrentFileIndex = _CurrrentPlayingFileIndex;
             }
 
@@ -361,32 +361,6 @@ namespace MediaBrowser.Library.Playables.VLC2
             }
         }
 
-        public override bool IsPlaying
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(_CurrentPlayState))
-                {
-                    return _CurrentPlayState == "playing";
-                }
-
-                return base.IsPlaying;
-            }
-        }
-
-        public override bool IsPaused
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(_CurrentPlayState))
-                {
-                    return _CurrentPlayState == "paused";
-                }
-
-                return base.IsPaused;
-            }
-        }
-
         public override void Pause()
         {
             SendStatusRequest(new Uri(StatusUrl + "?command=pl_pause"));
@@ -427,11 +401,12 @@ namespace MediaBrowser.Library.Playables.VLC2
             SendStatusRequest(new Uri(StatusUrl + "?command=seek&val=" + time.TotalSeconds));
         }
 
-        protected override void Dispose(bool isDisposing)
+        public override bool IsPaused
         {
-            _IsDisposing = isDisposing;
-
-            base.Dispose(isDisposing);
+            get
+            {
+                return _CurrentPlayState == "paused";
+            }
         }
     }
 }

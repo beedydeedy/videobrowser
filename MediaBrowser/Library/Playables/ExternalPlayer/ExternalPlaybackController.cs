@@ -64,24 +64,19 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         //alesbal: end
         #endregion
 
+        protected override void ResetPlaybackProperties()
+        {
+            base.ResetPlaybackProperties();
+
+            CurrentProcess = null;
+            CurrentProcessName = string.Empty;
+        }
+
         protected override void PlayMediaInternal(PlayableItem playable)
         {
             // Two different launch methods depending on how the player is configured
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
-                if (Application.CurrentInstance.IsPlaying)
-                {
-                    // Make certain playback has stopped
-                    int count = 0;
-
-                    while (Application.CurrentInstance.IsPlaying && count < 4)
-                    {
-                        System.Threading.Thread.Sleep(500);
-
-                        count++;
-                    }
-                }
-
                 PlayUsingWMCNavigation(playable);
 
                 OnExternalPlayerLaunched(playable);
@@ -89,7 +84,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             else
             {
                 PlayUsingCommandLine(playable);
-            }           
+            }
         }
 
         /// <summary>
@@ -142,7 +137,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                     ExternalSplashForm.Display(Application.CurrentInstance.ExtSplashBmp);
                 }
             }
-            
+
             if (MinimizeMCE)
             {
                 Logger.ReportVerbose("Minimizing Windows Media Center");
@@ -174,7 +169,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             OnExternalPlayerClosed();
         }
-        
+
         /// <summary>
         /// Play by launching another WMC app
         /// </summary>
@@ -203,9 +198,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         protected virtual void OnExternalPlayerClosed()
         {
-            CurrentProcessName = string.Empty;
-            CurrentProcess = null;
-
             // Just use base method
             OnPlaybackFinished(GetPlaybackState());
         }
@@ -260,7 +252,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             File.WriteAllText(playListFile, contents.ToString());
             return playListFile;
         }
-        
+
         /// <summary>
         /// Formats the path to the media based on what the external player is expecting
         /// </summary>
@@ -277,7 +269,10 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// </summary>
         protected virtual PlaybackStateEventArgs GetPlaybackState()
         {
-            return new PlaybackStateEventArgs() { Item = GetCurrentPlayableItem() };
+            return new PlaybackStateEventArgs()
+            {
+                Item = GetCurrentPlayableItem()
+            };
         }
 
         protected virtual bool SupportsMultiFileCommandArguments

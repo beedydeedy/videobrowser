@@ -505,6 +505,20 @@ namespace MediaBrowser.Library.Playables
                 return;
             }
 
+            // If the controller already has active playable items, stop it and wait for it to flush out
+            if (!QueueItem && PlaybackController.IsPlaying)
+            {
+                Logger.ReportVerbose("Stopping {0} because it's already playing.", PlaybackController.ControllerName);
+                
+                PlaybackController.Stop();
+
+                while (PlaybackController.IsPlaying)
+                {
+                    Logger.ReportVerbose("Still waiting for {0} to stop", PlaybackController.ControllerName); 
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
+
             // Run all pre-play processes
             if (!RunPrePlayProcesses())
             {
@@ -514,10 +528,10 @@ namespace MediaBrowser.Library.Playables
 
             if (StopAllPlaybackBeforePlaying)
             {
-                Application.CurrentInstance.StopAllPlayback();
+                Application.CurrentInstance.StopAllPlayback(true);
             }
 
-            Logger.ReportInfo(GetType().Name + " about to play " + DisplayName);
+            Logger.ReportInfo(PlaybackController.ControllerName + " about to play " + DisplayName);
 
             if (UseAutoPlay)
             {
