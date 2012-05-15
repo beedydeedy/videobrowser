@@ -71,7 +71,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// This updates Playstates and fires the Progress event
         /// </summary>
-        protected void OnProgress(PlaybackStateEventArgs args)
+        protected virtual void OnProgress(PlaybackStateEventArgs args)
         {
             CurrentFileDurationTicks = args.DurationFromPlayer;
             CurrentFilePositionTicks = args.Position;
@@ -102,7 +102,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// This updates Playstates, runs post-play actions and fires the PlaybackFinished event
         /// </summary>
-        protected void OnPlaybackFinished(PlaybackStateEventArgs args)
+        protected virtual void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
             _IsStopping = true;
 
