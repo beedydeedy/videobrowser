@@ -27,7 +27,7 @@ namespace MediaBrowser.Library.Entities {
 
         public Folder Parent { get; set; }
 
-        public Guid TopParent
+        public Folder TopParent
         {
             get
             {
@@ -36,7 +36,14 @@ namespace MediaBrowser.Library.Entities {
                 {
                     parent = parent.Parent;
                 }
-                return parent != null ? parent.Id : Guid.Empty;
+                return parent;
+            }
+        }
+        public Guid TopParentID
+        {
+            get
+            {
+                return TopParent.Id;
             }
         }
 
