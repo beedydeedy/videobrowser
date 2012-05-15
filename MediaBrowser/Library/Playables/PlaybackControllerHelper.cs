@@ -265,6 +265,7 @@ namespace MediaBrowser.Library.Playables
             // If we have a known video type, return DVD or Video
             if (videoMediaType == MediaType.DVD)
             {
+                // Some dvd's will not play when using Microsoft.MediaCenter.MediaType.DVD
                 return Microsoft.MediaCenter.MediaType.Video;
             }
             else if (videoMediaType != MediaType.Unknown && videoMediaType != MediaType.PlayList)
