@@ -336,17 +336,8 @@
             </TabItem>
 
                 <TabItem Header="external players" x:Name="externalPlayersTab" Foreground="#FF323232" FontSize="14" FontWeight="Normal" Visibility="Collapsed" IsSelected="True">
-                    <StackPanel Orientation="Vertical" Margin="20 20 20 20">
-                        <ListView x:Name="lstExternalPlayers" Height="325" FontSize="12" SelectionChanged="lstExternalPlayers_SelectionChanged" MouseDoubleClick="lstExternalPlayers_MouseDoubleClick">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding ExternalPlayerName}" Width="200" />
-                                    <GridViewColumn Header="Command" DisplayMemberBinding="{Binding CommandFileName}" Width="200" />
-                                    <GridViewColumn Header="Media Types" DisplayMemberBinding="{Binding MediaTypesFriendlyString}" Width="304" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                        <StackPanel Orientation="Horizontal" Margin="0 20 0 0">
+                    <DockPanel Margin="20 20 20 20" LastChildFill="True">
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0 20 0 0" VerticalAlignment="Bottom" >
                             <StackPanel.Resources>
                                 <Style TargetType="{x:Type Button}">
                                     <Setter Property="Margin" Value="0 0 10 0"/>
@@ -359,7 +350,16 @@
                             <Button x:Name="btnMoveExternalPlayerUp" ToolTip="Move external player up" Content="Move Up" Click="btnMoveExternalPlayerUp_Click" IsEnabled="False"/>
                             <Button x:Name="btnMoveExternalPlayerDown" ToolTip="Move external player down" Content="Move Down" Click="btnMoveExternalPlayerDown_Click" IsEnabled="False"/>
                         </StackPanel>
-                    </StackPanel>
+                        <ListView DockPanel.Dock="Top" x:Name="lstExternalPlayers" FontSize="12" SelectionChanged="lstExternalPlayers_SelectionChanged" MouseDoubleClick="lstExternalPlayers_MouseDoubleClick">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding ExternalPlayerName}" Width="200" />
+                                    <GridViewColumn Header="Command" DisplayMemberBinding="{Binding CommandFileName}" Width="200" />
+                                    <GridViewColumn Header="Media Types" DisplayMemberBinding="{Binding MediaTypesFriendlyString}" Width="304" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
                 </TabItem>
                 <TabItem Header="cache" Name="cacheTab" FontSize="14" Visibility="Collapsed" IsSelected="True">
                 <Grid>
