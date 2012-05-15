@@ -19,12 +19,10 @@ namespace MediaBrowser.Library.Playables.MpcHc
         private const int ProgressInterval = 1000;
 
         // All of these hold state about what's being played. They're all reset when playback starts
-        private string _CurrentPlayingFileName = string.Empty;
         private bool _MonitorPlayback = false;
-        private long _CurrentPositionTicks = 0;
-        private long _CurrentDurationTicks = 0;
         private string _CurrentPlayState = string.Empty;
         private int _ConsecutiveFailedHttpRequests = 0;
+        private bool _HasStartedPlaying = false;
 
         // This will get the current file position
         private WebClient _StatusRequestClient;
@@ -60,12 +58,10 @@ namespace MediaBrowser.Library.Playables.MpcHc
             base.ResetPlaybackProperties();
 
             // Reset these fields since they hold state
-            _CurrentPlayingFileName = string.Empty;
             _MonitorPlayback = false;
-            _CurrentPositionTicks = 0;
-            _CurrentDurationTicks = 0;
             _CurrentPlayState = string.Empty;
             _ConsecutiveFailedHttpRequests = 0;
+            _HasStartedPlaying = false;
 
             if (_StatusRequestClient != null)
             {
@@ -132,9 +128,9 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
 
-            _CurrentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(2))).Ticks;
-            _CurrentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(4))).Ticks;
-            _CurrentPlayingFileName = values.Last().ToLower();
+            long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(2))).Ticks;
+            long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(4))).Ticks;
+            string currentPlayingFileName = values.Last().ToLower();
 
             string playstate = values.ElementAt(1).ToLower();
 
@@ -142,13 +138,30 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             if (playstate == "stopped")
             {
-                ClosePlayer();
+                if (_HasStartedPlaying)
+                {
+                    ClosePlayer();
+                }
             }
-            else
+            else 
             {
-                // Don't report progress here because position will be reset to 0
-                OnProgress(GetPlaybackState());
+                if (playstate == "playing")
+                {
+                    _HasStartedPlaying = true;
+                }
+
+                if (_HasStartedPlaying)
+                {
+                    OnProgress(GetPlaybackState(currentPositionTicks, currentDurationTicks, currentPlayingFileName));
+                }
             }
+        }
+
+        protected override void OnPlaybackFinished(PlaybackStateEventArgs args)
+        {
+            _MonitorPlayback = false;
+
+            base.OnPlaybackFinished(args);
         }
 
         /// <summary>
@@ -202,38 +215,38 @@ namespace MediaBrowser.Library.Playables.MpcHc
         }
 
         /// <summary>
-        /// Gets the watched state after playback has stopped.
+        /// Constructs a PlaybackStateEventArgs based on current playback properties
         /// </summary>
-        protected override PlaybackStateEventArgs GetPlaybackState()
+        private PlaybackStateEventArgs GetPlaybackState(long positionTicks, long durationTicks, string currentFilename)
         {
-            PlaybackStateEventArgs args = base.GetPlaybackState();
+            PlaybackStateEventArgs args = new PlaybackStateEventArgs() { Item = GetCurrentPlayableItem() };
 
-            args.DurationFromPlayer = _CurrentDurationTicks;
-            args.Position = _CurrentPositionTicks;
+            args.DurationFromPlayer = durationTicks;
+            args.Position = positionTicks;
 
             if (args.Item != null)
             {
                 if (args.Item.HasMediaItems)
                 {
                     int currentFileIndex;
-                    args.CurrentMediaIndex = GetCurrentPlayingMediaIndex(args.Item, out currentFileIndex);
+                    args.CurrentMediaIndex = GetCurrentPlayingMediaIndex(args.Item, currentFilename, out currentFileIndex);
                     args.CurrentFileIndex = currentFileIndex;
                 }
                 else
                 {
-                    args.CurrentFileIndex = GetCurrentPlayingFileIndex(args.Item);
+                    args.CurrentFileIndex = GetCurrentPlayingFileIndex(args.Item, currentFilename);
                 }
             }
 
             return args;
         }
 
-        private int GetCurrentPlayingFileIndex(PlayableItem playable)
+        private int GetCurrentPlayingFileIndex(PlayableItem playable, string currentFilename)
         {
-            return GetIndexOfFile(playable.FilesFormattedForPlayer, _CurrentPlayingFileName);
+            return GetIndexOfFile(playable.FilesFormattedForPlayer, currentFilename);
         }
 
-        private int GetCurrentPlayingMediaIndex(PlayableItem playable, out int currentPlayingFileIndex)
+        private int GetCurrentPlayingMediaIndex(PlayableItem playable, string currentFilename, out int currentPlayingFileIndex)
         {
             currentPlayingFileIndex = -1;
 
@@ -244,7 +257,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             {
                 IEnumerable<string> mediaFiles = GetPlayableFiles(playable.MediaItems.ElementAt(i));
 
-                int fileIndex = GetIndexOfFile(mediaFiles, _CurrentPlayingFileName);
+                int fileIndex = GetIndexOfFile(mediaFiles, currentFilename);
 
                 if (fileIndex != -1)
                 {

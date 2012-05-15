@@ -528,7 +528,7 @@ namespace MediaBrowser.Library.Playables
 
             if (StopAllPlaybackBeforePlaying)
             {
-                Application.CurrentInstance.StopAllPlayback(true);
+                StopAllApplicationPlayback();
             }
 
             Logger.ReportInfo(PlaybackController.ControllerName + " about to play " + DisplayName);
@@ -543,6 +543,11 @@ namespace MediaBrowser.Library.Playables
             {
                 PlaybackController.Play(this);
             }
+        }
+
+        protected virtual void StopAllApplicationPlayback()
+        {
+            Application.CurrentInstance.StopAllPlayback(true);
         }
 
         /// <summary>

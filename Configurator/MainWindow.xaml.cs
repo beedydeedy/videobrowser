@@ -1243,15 +1243,32 @@ sortorder: {2}
 
         private void btnRemovePlayer_Click(object sender, RoutedEventArgs e)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
+            string message;
+            string title = "Remove External Player Confirmation";
 
-            var message = "About to remove \"" + mediaPlayer.ExternalPlayerName + "\" from the external players.\nAre you sure?";
-            if (MessageBox.Show(message, "Remove Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (lstExternalPlayers.SelectedItems.Count > 1)
             {
-                config.ExternalPlayers.Remove(mediaPlayer);
-                lstExternalPlayers.Items.Remove(mediaPlayer);
-                SaveConfig();
+                message = "About to remove the selected external players. Are you sure?";
             }
+            else
+            {
+                var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
+
+                message = "About to remove " + mediaPlayer.ExternalPlayerName + ". Are you sure?";                             
+            }
+
+            if (MessageBox.Show(message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            foreach (ConfigData.ExternalPlayer player in lstExternalPlayers.SelectedItems)
+            {
+                config.ExternalPlayers.Remove(player);               
+            }
+
+            SaveConfig();
+            RefreshPlayers();
         }
 
         private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
@@ -1304,11 +1321,12 @@ sortorder: {2}
         {
             int selectedIndex = lstExternalPlayers.SelectedIndex;
             bool hasSelection = selectedIndex >= 0;
+            bool hasMultiSelection = lstExternalPlayers.SelectedItems.Count > 1;
 
             btnRemovePlayer.IsEnabled = hasSelection;
-            btnEditPlayer.IsEnabled = hasSelection;
-            btnMoveExternalPlayerUp.IsEnabled = hasSelection && selectedIndex > 0;
-            btnMoveExternalPlayerDown.IsEnabled = hasSelection && selectedIndex < ( lstExternalPlayers.Items.Count - 1);
+            btnEditPlayer.IsEnabled = hasSelection && !hasMultiSelection;
+            btnMoveExternalPlayerUp.IsEnabled = hasSelection && !hasMultiSelection && selectedIndex > 0;
+            btnMoveExternalPlayerDown.IsEnabled = hasSelection && !hasMultiSelection && selectedIndex < (lstExternalPlayers.Items.Count - 1);
         }
 
         void btnMoveExternalPlayerUp_Click(object sender, RoutedEventArgs e)

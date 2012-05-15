@@ -44,22 +44,58 @@ namespace MediaBrowser.Library.Playables
                 return true;
             }
 
+            if (HasVideo(item))
+            {
+                return false;
+            }
+
+            // No videos found, use the legacy api
+            return true;
+        }
+
+        public static bool HasVideo(PlayableItem item)
+        {
             if (item.HasMediaItems)
             {
-                // Try to determine if there's a non-video type
-                Media media = item.MediaItems.First();
-
-                Video video = media as Video;
-
-                if (video != null && !video.ContainsRippedMedia)
-                {
-                    return !Helper.IsVideo(video.Files.First());
-                }
+                return item.MediaItems.Any(m => IsVideo(m));
             }
             else
             {
-                // Use legacy if first file is not video
-                return !Helper.IsVideo(item.Files.First());
+                // File-based playback - use new api if there are any videos found
+                return item.Files.Any(m => IsVideo(m));
+            }
+        }
+
+        public static bool IsVideo(Media media)
+        {
+            Video video = media as Video;
+
+            if (video != null)
+            {
+                // See if it has a known video type 
+                if (video.MediaType != MediaType.Unknown)
+                {
+                    return true;
+                }
+
+                // See if we can detect the first file as a video
+                if (Helper.IsVideo(video.Files.First()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsVideo(string path)
+        {
+            MediaType type = MediaTypeResolver.DetermineType(path);
+
+            // Assume video if type is not unknown
+            if (type != MediaType.Unknown || Helper.IsVideo(path))
+            {
+                return true;
             }
 
             return false;
@@ -229,6 +265,7 @@ namespace MediaBrowser.Library.Playables
             // If we have a known video type, return DVD or Video
             if (videoMediaType == MediaType.DVD)
             {
+                // Some dvd's will not play when using Microsoft.MediaCenter.MediaType.DVD
                 return Microsoft.MediaCenter.MediaType.Video;
             }
             else if (videoMediaType != MediaType.Unknown && videoMediaType != MediaType.PlayList)

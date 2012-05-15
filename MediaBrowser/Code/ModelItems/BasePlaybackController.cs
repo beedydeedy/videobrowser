@@ -71,7 +71,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// This updates Playstates and fires the Progress event
         /// </summary>
-        protected void OnProgress(PlaybackStateEventArgs args)
+        protected virtual void OnProgress(PlaybackStateEventArgs args)
         {
             CurrentFileDurationTicks = args.DurationFromPlayer;
             CurrentFilePositionTicks = args.Position;
@@ -102,7 +102,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// This updates Playstates, runs post-play actions and fires the PlaybackFinished event
         /// </summary>
-        protected void OnPlaybackFinished(PlaybackStateEventArgs args)
+        protected virtual void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
             _IsStopping = true;
 
@@ -314,23 +314,22 @@ namespace MediaBrowser.Code.ModelItems
                     // If we can pinpoint the current Media object, test that
                     if (media != null)
                     {
-                        return media is Video;
+                        return PlaybackControllerHelper.IsVideo(media);
                     }
-
-                    // Otherwise test them all
-                    return playable.MediaItems.Any(m => m is Video);
                 }
-
-                string currentFile = playable.CurrentFile;
-
-                // See if the current file is a video
-                if (!string.IsNullOrEmpty(currentFile))
+                else
                 {
-                    return Helper.IsVideo(currentFile);
+                    string currentFile = playable.CurrentFile;
+
+                    // See if the current file is a video
+                    if (!string.IsNullOrEmpty(currentFile))
+                    {
+                        return PlaybackControllerHelper.IsVideo(currentFile);
+                    }
                 }
 
-                // If we can't determine the current file, test them all
-                return playable.Files.Any(f => Helper.IsVideo(f));
+                return PlaybackControllerHelper.HasVideo(playable);
+
             }
         }
 
