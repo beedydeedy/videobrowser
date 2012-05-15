@@ -19,6 +19,8 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         protected string CurrentProcessName { get; private set; }
         protected Process CurrentProcess { get; private set; }
 
+        private PlaybackStateEventArgs _LastProgressPlaybackState;
+
         #region Unmanaged methods
         //alesbal: begin
         [DllImport("user32.dll")]
@@ -70,6 +72,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             CurrentProcess = null;
             CurrentProcessName = string.Empty;
+            _LastProgressPlaybackState = null;
         }
 
         protected override void PlayMediaInternal(PlayableItem playable)
@@ -78,7 +81,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
                 PlayUsingWMCNavigation(playable);
-
+                
                 OnExternalPlayerLaunched(playable);
             }
             else
@@ -167,7 +170,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
             SetForegroundWindow(mceWnd);
 
-            OnExternalPlayerClosed();
+            OnPlaybackFinished(GetFinishedPlaybackState());
         }
 
         /// <summary>
@@ -194,12 +197,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// </summary>
         protected virtual void OnExternalPlayerLaunched(PlayableItem playable)
         {
-        }
-
-        protected virtual void OnExternalPlayerClosed()
-        {
-            // Just use base method
-            OnPlaybackFinished(GetPlaybackState());
         }
 
         private string GetCommandArguments(PlayableItem playable)
@@ -263,13 +260,20 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             return string.Join(" ", filesToPlay.ToArray());
         }
 
+        protected override void OnProgress(PlaybackStateEventArgs args)
+        {
+            base.OnProgress(args);
+
+            _LastProgressPlaybackState = args;
+        }
+
         /// <summary>
         /// Gets the watched state after playback has stopped.
         /// Subclasses will need to provide their own support for this.
         /// </summary>
-        protected virtual PlaybackStateEventArgs GetPlaybackState()
+        protected virtual PlaybackStateEventArgs GetFinishedPlaybackState()
         {
-            return new PlaybackStateEventArgs()
+            return _LastProgressPlaybackState ?? new PlaybackStateEventArgs()
             {
                 Item = GetCurrentPlayableItem()
             };

@@ -17,9 +17,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         private const int ProgressInterval = 1000;
 
         // All of these hold state about what's being played. They're all reset when playback starts
-        private int _CurrrentPlayingFileIndex = -1;
         private long _CurrentPositionTicks = 0;
-        private long _CurrentDurationTicks = 0;
         private bool _MonitorPlayback = false;
         private bool _HasStartedPlaying = false;
         private string _CurrentPlayState = string.Empty;
@@ -118,9 +116,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             base.ResetPlaybackProperties();
 
             // Reset these fields since they hold state
-            _CurrrentPlayingFileIndex = -1;
             _CurrentPositionTicks = 0;
-            _CurrentDurationTicks = 0;
             _HasStartedPlaying = false;
             _MonitorPlayback = false;
             _CurrentPlayState = string.Empty;
@@ -198,7 +194,6 @@ namespace MediaBrowser.Library.Playables.VLC2
             if (fileNameNode != null)
             {
                 _CurrentPositionTicks = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("time").InnerText)).Ticks;
-                _CurrentDurationTicks = TimeSpan.FromSeconds(int.Parse(docElement.SelectSingleNode("length").InnerText)).Ticks;
             }
 
             _CurrentPlayState = playstate;
@@ -232,12 +227,19 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             if (leafNode != null)
             {
-                _CurrentDurationTicks = TimeSpan.FromSeconds(int.Parse(leafNode.Attributes["duration"].Value)).Ticks;
+                long currentDurationTicks = TimeSpan.FromSeconds(int.Parse(leafNode.Attributes["duration"].Value)).Ticks;
 
-                _CurrrentPlayingFileIndex = IndexOfNode(leafNode.ParentNode.ChildNodes, leafNode);
+                int currrentPlayingFileIndex = IndexOfNode(leafNode.ParentNode.ChildNodes, leafNode);
 
-                OnProgress(GetPlaybackState());
+                OnProgress(GetPlaybackState(_CurrentPositionTicks, currentDurationTicks, currrentPlayingFileIndex));
             }
+        }
+
+        protected override void OnPlaybackFinished(PlaybackStateEventArgs args)
+        {
+            _MonitorPlayback = false;
+
+            base.OnPlaybackFinished(args);
         }
 
         private int IndexOfNode(XmlNodeList nodes, XmlNode node)
@@ -253,17 +255,14 @@ namespace MediaBrowser.Library.Playables.VLC2
             return -1;
         }
 
-        protected override PlaybackStateEventArgs GetPlaybackState()
+        private PlaybackStateEventArgs GetPlaybackState(long positionTicks, long durationTicks, int currentFileIndex)
         {
-            PlaybackStateEventArgs state = base.GetPlaybackState();
+            PlaybackStateEventArgs state = new PlaybackStateEventArgs() { Item = GetCurrentPlayableItem() };
 
-            state.DurationFromPlayer = _CurrentDurationTicks;
-            state.Position = _CurrentPositionTicks;
+            state.DurationFromPlayer = durationTicks;
+            state.Position = positionTicks;
 
-            if (state.Item != null)
-            {
-                state.CurrentFileIndex = _CurrrentPlayingFileIndex;
-            }
+            state.CurrentFileIndex = currentFileIndex;
 
             return state;
         }

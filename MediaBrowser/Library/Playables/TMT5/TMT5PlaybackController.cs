@@ -15,27 +15,10 @@ namespace MediaBrowser.Library.Playables.TMT5
         // All of these hold state about what's being played. They're all reset when playback starts
         private bool _HasStartedPlaying = false;
         private FileSystemWatcher _StatusFileWatcher;
-        private long _CurrentPositionTicks = 0;
-        private long _CurrentDurationTicks = 0;
         private string _CurrentPlayState = string.Empty;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
-
-        /// <summary>
-        /// Gets the watched state after playback has stopped.
-        /// </summary>
-        protected override PlaybackStateEventArgs GetPlaybackState()
-        {
-            PlaybackStateEventArgs state = base.GetPlaybackState();
-
-            state.DurationFromPlayer = _CurrentDurationTicks;
-            state.Position = _CurrentPositionTicks;
-
-            state.CurrentFileIndex = 0;
-
-            return state;
-        }
 
         /// <summary>
         /// Gets arguments to be passed to the command line.
@@ -54,8 +37,6 @@ namespace MediaBrowser.Library.Playables.TMT5
             base.ResetPlaybackProperties();
 
             _HasStartedPlaying = false;
-            _CurrentPositionTicks = 0;
-            _CurrentDurationTicks = 0;
             _CurrentPlayState = string.Empty;
 
             DisposeFileSystemWatcher();
@@ -106,16 +87,6 @@ namespace MediaBrowser.Library.Playables.TMT5
             if (tmtPlayState == "play")
             {
                 // Playback just started
-                if (!_HasStartedPlaying)
-                {
-                    PlayableItem playItem = GetCurrentPlayableItem();
-
-                    if (playItem.StartPositionTicks > 0 || playItem.StartPlaylistPosition > 0)
-                    {
-                        ExecuteResumeCommand(playItem.StartPlaylistPosition, playItem.StartPositionTicks);
-                    }
-                }
-
                 _HasStartedPlaying = true;
 
                 // Protect against really agressive calls
@@ -134,10 +105,12 @@ namespace MediaBrowser.Library.Playables.TMT5
             // Then check if playback has stopped
             if (_HasStartedPlaying)
             {
-                _CurrentDurationTicks = TimeSpan.Parse(values["TotalTime"]).Ticks;
-                _CurrentPositionTicks = TimeSpan.Parse(values["CurTime"]).Ticks;
+                long currentDurationTicks = TimeSpan.Parse(values["TotalTime"]).Ticks;
+                long currentPositionTicks = TimeSpan.Parse(values["CurTime"]).Ticks;
 
-                OnProgress(GetPlaybackState());
+                PlaybackStateEventArgs state = GetPlaybackState(currentPositionTicks, currentDurationTicks);
+
+                OnProgress(state);
 
                 // Playback has stopped
                 if (tmtPlayState == "stop")
@@ -153,12 +126,27 @@ namespace MediaBrowser.Library.Playables.TMT5
                     {
                         // But we can't do that with the internal TMT player since it will shut down WMC
                         // So just notify the base class that playback stopped
-                        OnExternalPlayerClosed();
+                        OnPlaybackFinished(state);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Constructs a PlaybackStateEventArgs based on current playback properties
+        /// </summary>
+        protected PlaybackStateEventArgs GetPlaybackState(long positionTicks, long durationTicks)
+        {
+            PlaybackStateEventArgs state = new PlaybackStateEventArgs() { Item = GetCurrentPlayableItem() };
+
+            state.DurationFromPlayer = durationTicks;
+            state.Position = positionTicks;
+
+            state.CurrentFileIndex = 0;
+
+            return state;
+        }
+      
         private void DisposeFileSystemWatcher()
         {
             if (_StatusFileWatcher != null)
@@ -168,13 +156,6 @@ namespace MediaBrowser.Library.Playables.TMT5
                 _StatusFileWatcher.Dispose();
                 _StatusFileWatcher = null;
             }
-        }
-
-        /// <summary>
-        /// Tells the MMC console to resume playback where last left off for the current file
-        /// </summary>
-        private void ExecuteResumeCommand(int playlistPosition, long positionTicks)
-        {
         }
 
         /// <summary>
