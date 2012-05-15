@@ -1,0 +1,141 @@
+<Mcml xmlns="http://schemas.microsoft.com/2008/mcml"
+      xmlns:cor="assembly://MSCorLib/System"
+	    xmlns:a="assembly://MediaBrowser/MediaBrowser"
+      xmlns:te="resx://MediaBrowser/MediaBrowser.Resources/TextEdit"
+      xmlns:cb="resx://MediaBrowser/MediaBrowser.Resources/CheckBox"
+      xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/SpinnerText"
+      xmlns:sb="resx://MediaBrowser/MediaBrowser.Resources/SimpleButton"
+  	  xmlns:f="file://Fonts_DoNotEdit.mcml"
+      xmlns:s="file://Styles_DoNotEdit.mcml"
+      xmlns:addin="assembly://Microsoft.MediaCenter/Microsoft.MediaCenter.Hosting"
+      >
+
+  <UI Name="SearchPane">
+
+    <Properties>
+      <a:Application Name="Application" Application="$Required"/>
+      <Command Name="Close" Command="$Required"/>
+    </Properties>
+
+    <Locals>
+      <EditableText Name="SearchValue"/>
+      <ShortcutHandler Name="Back" Handle="true" HandlerStage="Bubbled" Shortcut="Back"/>
+      <Command Name="Search"/>
+      <BooleanChoice Name="IncludeNested" />
+      <BooleanChoice Name="UnwatchedOnly" />
+
+      <Choice Name="RatingsStrings">
+        <Options>
+          <cor:String String="G" />
+          <cor:String String="PG" />
+          <cor:String String="PG-13" />
+          <cor:String String="R" />
+          <cor:String String="NC-17" />
+          <cor:String String="Any" />
+        </Options>
+      </Choice>
+      <Choice Name="RatingsValues">
+        <Options>
+          <cor:Int32 Int32="1" />
+          <cor:Int32 Int32="2" />
+          <cor:Int32 Int32="3" />
+          <cor:Int32 Int32="4" />
+          <cor:Int32 Int32="5" />
+          <cor:Int32 Int32="999" />
+          <cor:Int32 Int32="-1" />
+        </Options>
+      </Choice>
+      <Choice Name="RatingDirection">
+        <Options>
+          <cor:String String="[Application.LocalStrings.#Lower!cor:String]" />
+          <cor:String String="[Application.LocalStrings.#Higher!cor:String]" />
+        </Options>
+      </Choice>
+      <Choice Name="RatingDirectionValues">
+        <Options>
+          <cor:Int32 Int32="1" />
+          <cor:Int32 Int32="-1" />
+        </Options>
+      </Choice>
+    </Locals>
+
+    <Rules>
+      <Changed Source="[Back.Invoked]" >
+        <Actions>
+          <Invoke Target="[Close.Invoke]" />
+        </Actions>
+      </Changed>
+
+      <Changed Source="[Search.Invoked]" >
+        <Conditions>
+          <IsValid Source="[Application.CurrentFolderModel]"/>
+        </Conditions>
+        <Actions>
+          <Invoke Target="[Application.CurrentFolderModel.Search]" 
+                  searchValue="[SearchValue.Value]" 
+                  includeSubs="[IncludeNested.Value]" 
+                  unwatchedOnly="[UnwatchedOnly.Value]"
+                  rating="[RatingsValues.Chosen!cor:Int32]"
+                  ratingFactor="[RatingDirectionValues.Chosen!cor:Int32]"
+                  />
+          <Invoke Target="[Close.Invoke]" />
+        </Actions>
+      </Changed>
+
+      <Binding Source="[RatingsStrings.ChosenIndex]" Target="[RatingsValues.ChosenIndex]" />
+      <Binding Source="[RatingDirection.ChosenIndex]" Target="[RatingDirectionValues.ChosenIndex]" />
+
+    </Rules>
+
+    <Content>
+      <Panel Layout="Form" Navigation="ContainAll">
+        <Children>
+          <Text Content="[Application.LocalStrings.#Search!cor:String]" Alpha=".55" Color="AliceBlue" Font="Segoe Media Center, 64" >
+            <LayoutInput>
+              <FormLayoutInput Top="Parent,0,10" Right="Parent,1,-20"/>
+            </LayoutInput>
+          </Text>
+          <Panel Name="Title" Layout="HorizontalFlow" Margins="20,50,0,0" >
+            <LayoutInput>
+              <FormLayoutInput Top="Parent,0,10" Left="Parent,0,10"/>
+            </LayoutInput>
+            <Children>
+              <te:TextEdit Name="SearchField" Margins="20,0,0,0" Label="[Application.LocalStrings.#TitleContains!cor:String]" EditableText="[SearchValue]" MaximumSize="500,0" EditSize="250,34" Font="font://f:SE_DefaultFont" MaxChars="50" />
+              <cb:CheckBox Name="Nested" Label="[Application.LocalStrings.#IncludeNested!cor:String]" Checked="[IncludeNested]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
+              <cb:CheckBox Name="Unwatched" Label="[Application.LocalStrings.#UnwatchedOnly!cor:String]" Checked="[UnwatchedOnly]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
+            </Children>
+            
+          </Panel>
+          <Panel Layout="HorizontalFlow" >
+            <LayoutInput>
+              <FormLayoutInput Top="Title,1,20" Left="Parent,0,565" />
+            </LayoutInput>
+            <Children>
+              <st:SpinnerText Model="[RatingsStrings]" Label="[Application.LocalStrings.#Rated!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="80,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="Any" />
+              <st:SpinnerText Model="[RatingDirection]" Label="[Application.LocalStrings.#Or!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="40,0" ValueMinSize="150,0" ValueFont="font://f:SE_DefaultFont" DefaultString="[Application.LocalStrings.#Lower!cor:String]" />
+              
+            </Children>
+          </Panel>
+
+
+          <Panel Name="ButtonPanel" Layout="HorizontalFlow" Margins="10,0,0,10" >
+            <LayoutInput>
+              <FormLayoutInput Vertical="Far" Horizontal="Near" />
+            </LayoutInput>
+            <Children>
+              <sb:SimpleButton Name="CancelButton" Text="[Application.LocalStrings.#Cancel!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Close]" />
+              <sb:SimpleButton Name="SearchButton" Text="[Application.LocalStrings.#Search!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Search]" />
+              
+            </Children>
+          </Panel>
+            
+          <ColorFill Content="Black" Alpha=".75" Layout="Fill"/>
+          
+        </Children>
+      </Panel>
+
+    </Content>
+
+  </UI>
+
+</Mcml>
