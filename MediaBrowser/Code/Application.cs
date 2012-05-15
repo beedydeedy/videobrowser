@@ -1599,7 +1599,7 @@ namespace MediaBrowser
         /// </summary>
         private void AddNewlyWatched(PlayableItem playableItem)
         {
-            if (playableItem.HasMediaItems)
+            if (playableItem.HasMediaItems && playableItem.PlayedMediaItems.Count() > 0)
             {
                 // get the top parents of all items that were played
                 var topParents = playableItem.PlayedMediaItems.Select(i => i.TopParentID).Distinct();
