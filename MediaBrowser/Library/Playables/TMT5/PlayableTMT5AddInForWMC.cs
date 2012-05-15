@@ -14,5 +14,14 @@ namespace MediaBrowser.Library.Playables.TMT5
                 return typeof(TMT5AddInPlaybackController);
             }
         }
+
+        protected override void StopAllApplicationPlayback()
+        {
+            base.StopAllApplicationPlayback();
+
+            // The TMT plugin seems to need some extra time after stopping playback.
+            // The internal player needs to completely wind down or TMT will have issues
+            System.Threading.Thread.Sleep(1000);
+        }
     }
 }
