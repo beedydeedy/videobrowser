@@ -79,7 +79,7 @@ namespace MediaBrowser.Library.Playables
                 }
 
                 // See if we can detect the first file as a video
-                if (Helper.IsVideo(video.Files.First()))
+                if (IsVideo(video.Files.First(), video.MediaType))
                 {
                     return true;
                 }
@@ -90,8 +90,11 @@ namespace MediaBrowser.Library.Playables
 
         public static bool IsVideo(string path)
         {
-            MediaType type = MediaTypeResolver.DetermineType(path);
+            return IsVideo(path, MediaTypeResolver.DetermineType(path));
+        }
 
+        public static bool IsVideo(string path, MediaType type)
+        {
             // Assume video if type is not unknown
             if (type != MediaType.Unknown || Helper.IsVideo(path))
             {
@@ -244,42 +247,12 @@ namespace MediaBrowser.Library.Playables
         
         public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
         {
-            MediaType videoMediaType = MediaType.Unknown;
-
-            string firstFile = playable.Files.First();
-
-            if (playable.HasMediaItems)
-            {
-                Video video = playable.MediaItems.First() as Video;
-
-                if (video != null)
-                {
-                    videoMediaType = video.MediaType;
-                }
-            }
-            else
-            {
-                videoMediaType = MediaTypeResolver.DetermineType(firstFile);
-            }
-
-            // If we have a known video type, return DVD or Video
-            if (videoMediaType == MediaType.DVD)
-            {
-                // Some dvd's will not play when using Microsoft.MediaCenter.MediaType.DVD
-                return Microsoft.MediaCenter.MediaType.Video;
-            }
-            else if (videoMediaType != MediaType.Unknown && videoMediaType != MediaType.PlayList)
+            if (HasVideo(playable))
             {
                 return Microsoft.MediaCenter.MediaType.Video;
             }
 
-            // Assume this is video
-            if (firstFile.ToLower().EndsWith(".wpl"))
-            {
-                return Microsoft.MediaCenter.MediaType.Video;
-            }
-
-            return !Path.HasExtension(firstFile) || Helper.IsVideo(firstFile) ? Microsoft.MediaCenter.MediaType.Video : Microsoft.MediaCenter.MediaType.Audio;
+            return Microsoft.MediaCenter.MediaType.Audio;
         }
 
         public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
