@@ -27,6 +27,9 @@ namespace MediaBrowser.Library.Playables.VLC2
 
             config.SupportsMultiFileCommandArguments = true;
 
+            // If you enable the full screen interface in VLC, you really don't need the splash screen.
+            config.ShowSplashScreen = false;
+
             return config;
         }
 

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -9,8 +7,6 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.LibraryManagement;
-using Microsoft.Win32;
 
 namespace MediaBrowser.Library.Playables.MpcHc
 {
@@ -94,8 +90,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
                         // But only do so if we have had at least one request succeed that way we don't kill the process if the user has the web interface disabled.
                         if (_ConsecutiveFailedHttpRequests > 5 && !string.IsNullOrEmpty(_CurrentPlayState))
                         {
-                            Logger.ReportVerbose("Killing MPC-HC process because it appears to have hung after closing.");
-                            KillProcesses(CurrentProcessName);
+                            //KillPlayer();
                         }
                     }
                 }
@@ -345,7 +340,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             SendCommandToPlayer("890", new Dictionary<string, string>());
         }
 
-        private void ClosePlayer()
+        protected override void ClosePlayer()
         {
             SendCommandToPlayer("816", new Dictionary<string, string>());
         }
