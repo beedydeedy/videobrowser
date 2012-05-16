@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
@@ -200,7 +199,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         /// Sends a command to the MMC console to close the player.
         /// Do not use this for the WMC add-in because it will close WMC
         /// </summary>
-        private void ClosePlayer()
+        protected override void ClosePlayer()
         {
             SendCommandToMMC("-close");
         }

@@ -81,7 +81,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             if (LaunchType == ConfigData.ExternalPlayerLaunchType.WMCNavigate)
             {
                 PlayUsingWMCNavigation(playable);
-                
+
                 OnExternalPlayerLaunched(playable);
             }
             else
@@ -93,7 +93,7 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         /// <summary>
         /// Kills all existing external player processes before trying to launch a new one.
         /// </summary>
-        protected void KillProcesses(string name)
+        private void KillProcesses(string name)
         {
             foreach (Process process in Process.GetProcessesByName(name))
             {
@@ -277,6 +277,49 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             {
                 Item = GetCurrentPlayableItem()
             };
+        }
+
+        protected virtual void ClosePlayer()
+        {
+            if (CurrentProcess != null)
+            {
+                Logger.ReportVerbose("Sending close command to player");
+
+                try
+                {
+                    CurrentProcess.CloseMainWindow();
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Error closing player", ex);
+                }
+            }
+        }
+
+        protected virtual void KillPlayer()
+        {
+            Logger.ReportVerbose("Killing {0}", ControllerName);
+
+            string processName = CurrentProcessName;
+
+            if (CurrentProcess != null)
+            {
+                Logger.ReportVerbose("Killing " + ControllerName);
+
+                try
+                {
+                    CurrentProcess.Kill();
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Error killing {0}", ex, ControllerName);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(processName))
+            {
+                KillProcesses(processName);
+            }
         }
 
         protected virtual bool SupportsMultiFileCommandArguments

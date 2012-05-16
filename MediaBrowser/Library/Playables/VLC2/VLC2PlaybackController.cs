@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -373,24 +372,6 @@ namespace MediaBrowser.Library.Playables.VLC2
         protected override void StopInternal()
         {
             SendStatusRequest(new Uri(StatusUrl + "?command=pl_stop"));
-        }
-
-        private void ClosePlayer()
-        {
-            if (CurrentProcess != null)
-            {
-                Logger.ReportVerbose("Sending close command to VLC");
-
-                // Unfortunately the VLC quit command doesn't work at the moment so we'll have to do it with brute force
-                try
-                {
-                    CurrentProcess.CloseMainWindow();
-                }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error closing VLC", ex);
-                }
-            }
         }
 
         public override void Seek(long position)
