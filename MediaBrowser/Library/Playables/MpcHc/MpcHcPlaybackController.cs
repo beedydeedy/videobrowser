@@ -90,7 +90,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
                         // But only do so if we have had at least one request succeed that way we don't kill the process if the user has the web interface disabled.
                         if (_ConsecutiveFailedHttpRequests > 5 && !string.IsNullOrEmpty(_CurrentPlayState))
                         {
-                            //KillPlayer();
+                            KillPlayer();
                         }
                     }
                 }
