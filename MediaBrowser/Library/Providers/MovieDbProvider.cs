@@ -108,21 +108,27 @@ namespace MediaBrowser.Library.Providers
             }
         }
 
-        public string FindId(string name, int? productionYear)
-        {
-            int? year = null;
+        protected void ParseName(string name, out string justName, out int? year) {
+            justName = null;
+            year = null;
             foreach (Regex re in nameMatches)
             {
                 Match m = re.Match(name);
                 if (m.Success)
                 {
-                    name = m.Groups["name"].Value.Trim();
+                    justName = m.Groups["name"].Value.Trim();
                     string y = m.Groups["year"] != null ? m.Groups["year"].Value : null;
                     int temp;
                     year = Int32.TryParse(y, out temp) ? temp : (int?)null;
                     break;
                 }
             }
+        }
+
+        public string FindId(string name, int? productionYear)
+        {
+            int? year = null;
+            ParseName(name, out name, out year);
 
             if (year == null && productionYear != null) {
                 year = productionYear;
@@ -130,7 +136,38 @@ namespace MediaBrowser.Library.Providers
 
             Logger.ReportInfo("MovieDbProvider: Finding id for movie: " + name);
             string language = Kernel.Instance.ConfigData.PreferredMetaDataLanguage.ToLower();
-            string id = AttemptFindId(name, year, language);
+
+            //if id is specified in the file name return it directly
+            string justName = Item.Path != null ? Item.Path.Substring(Item.Path.LastIndexOf("\\")) : "";
+            string id = Helper.GetAttributeFromPath(justName, "tmdbid");
+            if (id != null)
+            {
+                Logger.ReportInfo("MovieDbProvider: tMDb ID specified in file path.  Using: " + id);
+                return id;
+            }
+
+            //if we are a boxset - look at our first child
+            BoxSet boxset = Item as BoxSet;
+            if (boxset != null)
+            {
+                if (boxset.Children.Count > 1)
+                {
+                    var firstChild = boxset.Children[0];
+                    Logger.ReportVerbose("MovieDbProvider - Attempting to find boxset ID from: " + firstChild.Name);
+                    string childName;
+                    int? childYear;
+                    ParseName(firstChild.Name, out childName, out childYear);
+                    id = GetBoxsetIdFromMovie(childName, childYear, language);
+                    if (id != null)
+                    {
+                        Logger.ReportInfo("MovieDbProvider - Found Boxset ID: " + id);
+                        return id;
+                    }
+
+                }
+            }
+            //nope - search for it
+            id = AttemptFindId(name, year, language);
             if (id == null)
             {
                 //try in english if wasn't before
@@ -162,16 +199,7 @@ namespace MediaBrowser.Library.Providers
 
         public virtual string AttemptFindId(string name, int? year, string language)
         {
-            //if id is specified in the file name return it directly
-            string justName = Item.Path != null ? Item.Path.Substring(Item.Path.LastIndexOf("\\")) : "";
-            string id = Helper.GetAttributeFromPath(justName, "tmdbid");
-            if (id != null)
-            {
-                Logger.ReportInfo("MovieDbProvider: tMDb ID specified in file path.  Using: " + id);
-                return id;
-            }
-
-            //nope - search for it
+            string id = null;
             string matchedName = null;
             string url3 = string.Format(search3, UrlEncode(name), ApiKey, language);
             var json = Helper.ToJsonDict(Helper.FetchJson(url3));
@@ -275,6 +303,30 @@ namespace MediaBrowser.Library.Providers
         private static string UrlEncode(string name)
         {
             return HttpUtility.UrlEncode(name);
+        }
+
+        protected string GetBoxsetIdFromMovie(string name, int? year, string language)
+        {
+            string id = null;
+            string childId = AttemptFindId(name, year, language);
+            if (childId != null)
+            {
+                string url = string.Format(getInfo3, childId, ApiKey, language);
+                string json = Helper.FetchJson(url);
+                var jsonDict = Helper.ToJsonDict(json);
+                if (jsonDict != null)
+                {
+                    try
+                    {
+                        id = ((int)((Dictionary<string, object>)jsonDict["belongs_to_collection"])["id"]).ToString();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.ReportException("Unable to obtain boxset id.", e);
+                    }
+                }
+            }
+            return id;
         }
 
         void FetchMovieData(string id)
