@@ -736,19 +736,15 @@ namespace WebProxy {
             byte[] buffer = new byte[8000];
             FileStream fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            int retries = 100;
+            int retries = 500;
             int totalRead, bytesRead;
             totalRead = bytesRead = fs.Read(buffer, 0, buffer.Length);
             while (true) {
                 if (bytesRead == 0) {
-                    bool waitLonger = false;
-                    lock (info) {
-                        waitLonger = info.BytesRead > totalRead;
-                    }
-
-                    if (waitLonger && retries-- > 0) {
+                    if (retries-- > 0) {
                         Thread.Sleep(100);
                     } else {
+                        Logger.ReportVerbose("Returning from ServeCachedFile due to max number of retries");
                         break;
                     }
 
