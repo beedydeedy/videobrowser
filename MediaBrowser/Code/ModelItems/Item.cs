@@ -492,21 +492,26 @@ namespace MediaBrowser.Library
         {
             get
             {
-                if (playstate == null)
-                {
-
-                    Media media = baseItem as Media;
-
-                    if (media != null)
-                    {
-                        playstate = media.PlaybackStatus;
-                        // if we want any chance to reclaim memory we are going to have to use 
-                        // weak event handlers
-                        playstate.WasPlayedChanged += new EventHandler<EventArgs>(PlaybackStatusPlayedChanged);
-                        PlaybackStatusPlayedChanged(this, null);
-                    }
-                }
+                EnsurePlayStateChangesBoundToUI();
                 return playstate;
+            }
+        }
+
+        internal void EnsurePlayStateChangesBoundToUI()
+        {
+            if (playstate == null)
+            {
+
+                Media media = baseItem as Media;
+
+                if (media != null)
+                {
+                    playstate = media.PlaybackStatus;
+                    // if we want any chance to reclaim memory we are going to have to use 
+                    // weak event handlers
+                    playstate.WasPlayedChanged += new EventHandler<EventArgs>(PlaybackStatusPlayedChanged);
+                    PlaybackStatusPlayedChanged(this, null);
+                }
             }
         }
 
@@ -514,12 +519,17 @@ namespace MediaBrowser.Library
         {
             lock (watchLock)
                 unwatchedCountCache = -1;
-            FirePropertyChanged("HaveWatched");
-            FirePropertyChanged("UnwatchedCount");
-            FirePropertyChanged("ShowUnwatched");
-            FirePropertyChanged("UnwatchedCountString");
-            FirePropertyChanged("PlayState");
-            FirePropertyChanged("InProgress");
+
+            //force UI to update
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => 
+            {
+                FirePropertyChanged("HaveWatched");
+                FirePropertyChanged("UnwatchedCount");
+                FirePropertyChanged("ShowUnwatched");
+                FirePropertyChanged("UnwatchedCountString");
+                FirePropertyChanged("PlayState");
+                FirePropertyChanged("InProgress");
+            }); 
         }
 
         #endregion

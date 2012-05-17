@@ -145,6 +145,7 @@ namespace MediaBrowser.Library.Factories
             }
             else if (item.IsPlayable)
             {
+                item.EnsurePlayStateChangesBoundToUI();
                 return Create(item.BaseItem as Media);
             }
             else
