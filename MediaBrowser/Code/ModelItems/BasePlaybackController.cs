@@ -212,6 +212,9 @@ namespace MediaBrowser.Code.ModelItems
         protected virtual void ResetPlaybackProperties()
         {
             _IsStopping = false;
+
+            CurrentFileDurationTicks = 0;
+            CurrentFilePositionTicks = 0;
         }
 
         /// <summary>
