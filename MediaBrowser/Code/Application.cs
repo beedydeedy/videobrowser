@@ -175,7 +175,10 @@ namespace MediaBrowser
         {
             if (_PlaybackFinished != null)
             {
-                _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                Async.Queue("OnPlaybackFinished", () =>
+                {
+                    _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                }); 
             }
             FirePropertyChanged("IsPlayingVideo");
             FirePropertyChanged("IsPlaying");
@@ -1599,17 +1602,19 @@ namespace MediaBrowser
         /// </summary>
         private void AddNewlyWatched(PlayableItem playableItem)
         {
-            if (playableItem.HasMediaItems && playableItem.PlayedMediaItems.Count() > 0)
+            var playedMediaItems = playableItem.PlayedMediaItems;
+
+            if (playedMediaItems.Any())
             {
                 // get the top parents of all items that were played
-                var topParents = playableItem.PlayedMediaItems.Select(i => i.TopParentID).Distinct();
+                var topParents = playedMediaItems.Select(i => i.TopParentID).Distinct();
                 // and reset the watched list for each of them
                 foreach (FolderModel folderModel in RootFolderModel.Children.Where(f => topParents.Contains(f.Id)))
                 {
-                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playableItem.PlayedMediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
+                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playedMediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
                 }
                 //I don't think anyone actually uses this but just in case...
-                this.lastPlayed = ItemFactory.Instance.Create(playableItem.PlayedMediaItems.LastOrDefault());
+                this.lastPlayed = ItemFactory.Instance.Create(playedMediaItems.LastOrDefault());
             }
         }
 
@@ -1618,11 +1623,17 @@ namespace MediaBrowser
         /// </summary>
         public void RunPostPlayProcesses()
         {
-            Logger.ReportVerbose("Running Kernel post-play processes");
-
-            foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+            if (Kernel.Instance.PostPlayProcesses.Any())
             {
-                process();
+                Logger.ReportVerbose("Running Kernel post-play processes");
+
+                Async.Queue("RunPostPlayProcesses", () =>
+                {
+                    foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+                    {
+                        process();
+                    }
+                });
             }
         }
 
