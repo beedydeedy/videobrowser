@@ -52,7 +52,7 @@ namespace MediaBrowser.Code.ModelItems {
                 if (folder != null) StopListeningForChanges();
                 this.folderModel = folderModel;
                 this.folder = folderModel.Folder;
-
+                this.sortFunction = folder.SortFunction;  //make sure this is in sync
                 ListenForChanges();
                 childLoader.Enqueue(this);
             }

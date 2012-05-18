@@ -1226,6 +1226,14 @@ namespace MediaBrowser
         public FolderModel CurrentFolderModel
         {
             get { return CurrentFolder; }
+            set
+            {
+                if (CurrentFolder != value)
+                {
+                    CurrentFolder = value;
+                    FirePropertyChanged("CurrentFolderModel");
+                }
+            }
         }
 
         private void OpenFolderPage(FolderModel folder)
