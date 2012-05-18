@@ -36,6 +36,14 @@ namespace MediaBrowser.Library.Entities {
             children = new Lazy<List<BaseItem>>(() => GetChildren(true), () => OnChildrenChanged(null));
         }
 
+        public IComparer<BaseItem> SortFunction
+        {
+            get
+            {
+                return this.sortFunction;
+            }
+        }
+
         private Dictionary<string, IComparer<BaseItem>> sortOrderOptions= new Dictionary<string,IComparer<BaseItem>>() { 
             {LocalizedStrings.Instance.GetString("NameDispPref"), new BaseItemComparer(SortOrder.Name)},
             {LocalizedStrings.Instance.GetString("DateDispPref"), new BaseItemComparer(SortOrder.Date)},
@@ -376,7 +384,7 @@ namespace MediaBrowser.Library.Entities {
 
         }
 
-        public void Sort(IComparer<BaseItem> sortFunction) {
+        public virtual void Sort(IComparer<BaseItem> sortFunction) {
             Sort(sortFunction, true);
         }
 
@@ -882,7 +890,7 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        void Sort(IComparer<BaseItem> sortFunction, bool notifyChange) {
+        protected virtual void Sort(IComparer<BaseItem> sortFunction, bool notifyChange) {
             this.sortFunction = sortFunction;
             lock (ActualChildren) {
                 //Logger.ReportVerbose("=====sorting actual children for " + Name + " Sort function: "+sortFunction);
