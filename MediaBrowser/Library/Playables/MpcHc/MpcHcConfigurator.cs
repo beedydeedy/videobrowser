@@ -72,7 +72,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
                 msg += "\n-Set medium jump size to 30 seconds (for rewind/ff buttons)";
                 msg += "\n-Configure basic media center remote buttons";
 
-                msg += "\n\nWould like to continue?";
+                msg += "\n\nWould you like to continue?";
 
                 return msg;
             }
