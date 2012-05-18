@@ -32,6 +32,7 @@
     </Properties>
 
     <Locals>
+      <Timer Name="RefocusViewTimer" AutoRepeat="false" Interval="150" Enabled="true" />
       <lib:Item Name="SelectedItem" Item="[Item.SelectedChild]"/>
       <cor:String Name="Value" String=""/>
       <!-- Layouts for Episodes -->
@@ -86,7 +87,7 @@
           <Invoke Target="[Item.SetPreferredImageSmallToEstimatedScreenSize]"/>
         </Actions>
       </Rule>
-      
+
       <Binding Target="[Preview.Content]" Source="[SelectedItem.PreferredImageSmall]"/>
       <Binding Target="[StarRating.Value]" Source="[SelectedItem.ImdbRating]" />
       <Binding Target="[Title1.Content]" Source="[SelectedItem.Name]"/>
@@ -111,7 +112,7 @@
         </Conditions>
       </Binding>
       <Binding Target="[GenreRepeater.Source]" Source="[SelectedItem.Genres]"/>
-      
+
       <Binding Source="[SelectedItem.DynamicProperties.#ProductionYear!cor:String]" Target="[Value]">
         <Conditions>
           <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
@@ -121,8 +122,8 @@
         </Transformer>
       </Binding>
       <Binding Source="[SelectedItem.ProductionYearString]" Target="[Value]"/>
-      
-      <Binding Source="[Value]" Target="[ProductionYear.Content]" />      
+
+      <Binding Source="[Value]" Target="[ProductionYear.Content]" />
       <Rule>
         <Conditions>
           <Equality Source="[Value]" ConditionOp="Equals" Value=""/>
@@ -142,7 +143,7 @@
           <Set Value="true" Target="[ArtistList.Visible]"/>
         </Actions>
       </Rule>
-      
+
       <!-- Show Proper Overview Panel -->
       <Binding Source="[Application.Config.AutoScrollText]" Target="[AutoScrollOverview.Visible]" />
       <Binding Source="[Application.Config.AutoScrollText]" Target="[Summary.Visible]">
@@ -151,28 +152,48 @@
         </Transformer>
       </Binding>
 
-      <Changed Source="[SelectedItem]" InitialEvaluate="true">
+      <Rule>
+        <Conditions>
+          <Modified Source="[RefocusViewTimer.Tick]"/>
+        </Conditions>
+        <Actions>
+          <Invoke Target="[MyItems.NavigateInto]" />
+        </Actions>
+      </Rule>
+
+      <Rule ConditionLogicalOp="And">
+        <Conditions>
+          <Modified Source="[RefocusViewTimer.Tick]"/>
+          <IsType Source="[SelectedItem]" Type="lib:FolderModel"/>
+          <Equality Source="[SelectedItem.ShowNewestItems]" Value="true"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[RefocusViewTimer.Enabled]" Value="false" />
+          <Set Target="[NewItemList.Folder]" Value="[SelectedItem!lib:FolderModel]"/>
+        </Actions>
+      </Rule>
+
+
+      <Binding Source="[SelectedItem.ShowNewestItems]" Target="[NewItems.Visible]"/>
+      <Binding Source="[SelectedItem.ShowNewestItems]" Target="[InfoPanel2.Visible]">
+        <Transformer>
+          <BooleanTransformer Inverse="true"/>
+        </Transformer>
+      </Binding>
+
+      <Changed Source="[SelectedItem]">
         <Conditions>
           <Equality Source="[SelectedItem.ShowNewestItems]" Value="true"/>
         </Conditions>
         <Actions>
-          <Set Target="[NewItemList.Folder]" Value="[SelectedItem!lib:FolderModel]"/>
-          <Set Target="[NewItems.Visible]" Value="true"/>
-          <Set Target="[InfoPanel2.Visible]" Value="false"/>
+          <Set Target="[RefocusViewTimer.Enabled]" Value="true" />
         </Actions>
       </Changed>
 
 
-      <Changed Source="[SelectedItem]" InitialEvaluate="true" >
-        <Conditions>
-          <Equality Source="[SelectedItem.ShowNewestItems]" Value="false"/>
-        </Conditions>
-        <Actions>
-          <Set Target="[NewItems.Visible]" Value="false"/>
-          <Set Target="[InfoPanel2.Visible]" Value="true"/>
-        </Actions>
-      </Changed>
-      
+
+
+
     </Rules>
 
     <Content>
@@ -191,7 +212,7 @@
               <AnchorLayoutInput Left="MyItems,0" Top="MyItems,.9" Right="MyItems,1" Bottom="Parent,1"/>
             </LayoutInput>
           </ColorFill>
-          
+
           <!-- Details List -->
           <lv:ListView Visible="true" Application="[Application]" Folder="[Item]" Name="MyItems" Font="font://f:DV_ListButtonFont" FocusOrder="0" Padding="0,0,0,0">
             <LayoutInput>
@@ -235,7 +256,7 @@
                   <FlowLayout Orientation="Horizontal" AllowWrap="false" Spacing="25,0"/>
                 </Layout>
                 <Divider>
-                  <Text Content="●" Font="font://f:MM_GenreFont" Color="color://s:FontColorMedium" Alpha="0.6"  />
+                  <Text Content="â—" Font="font://f:MM_GenreFont" Color="color://s:FontColorMedium" Alpha="0.6"  />
                 </Divider>
                 <Content>
                   <gb:GenreButton Text="[RepeatedItem!cor:String]"
@@ -315,11 +336,24 @@
       <lib:FolderModel Name="Folder"/>
       <a:Application Name="Application" Application="$Required"/>
     </Properties>
+    <Locals>
+      <ScrollingHandler Name="ScrollingHandler"  HandleDirectionalKeys="true" HandleHomeEndKeys="true" HandleMouseWheel="true" HandlePageCommands="true" HandlePageKeys="true" HandlerStage="Bubbled" />
+      <ScrollingData Name="ScrollingData"/>
+    </Locals>
     <Rules>
+      <Binding Target="[ScrollingHandler.ScrollingData]" Source="[ScrollingData]"/>
+      <Binding Target="[Scroller.ScrollingData]" Source="[ScrollingData]" />
+      <Default Target="[ScrollingData.Repeater]" Value="[Repeater]" />
       <Binding Source="[Folder.NewestItems]" Target="[Repeater.Source]"/>
+      <Changed Source="[Folder]">
+        <Actions>
+          <Invoke Target="[ScrollingData.Home]" InvokePolicy="Synchronous" />
+        </Actions>
+      </Changed>
+
     </Rules>
     <Content>
-      <Scroller Orientation="Vertical" FadeSize="-20" Margins="0,0,0,0" Name="Scroller">
+      <Scroller Orientation="Vertical" FadeSize="-20" Margins="0,0,0,0" Name="Scroller" ScrollingData="[ScrollingData]" Navigation="PreferFocusOrder,ContainVertical,RememberFocus">
         <LayoutInput>
           <DockLayoutInput Alignment="Fill"  Position="Client"  />
         </LayoutInput>
@@ -337,5 +371,5 @@
     </Content>
   </UI>
 
- 
+
 </Mcml>
