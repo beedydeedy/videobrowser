@@ -30,6 +30,7 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         /// <summary>
         /// Gets arguments to be passed to the command line.
+        /// http://wiki.videolan.org/VLC_command-line_help
         /// </summary>
         protected override List<string> GetCommandArgumentsList(PlayableItem playInfo)
         {
@@ -53,7 +54,13 @@ namespace MediaBrowser.Library.Playables.VLC2
             // Disable system screen saver during playback
             args.Add("--disable-screensaver");
 
+            // Keep the ui minimal
             args.Add("--qt-minimal-view");
+            args.Add("--no-video-deco");
+            args.Add("--no-playlist-tree");
+
+            // OSD marquee font
+            args.Add("--freetype-outline-thickness=6");
 
             // Startup the Http interface so we can send out requests to monitor playstate
             args.Add("--extraintf=http");
@@ -387,6 +394,16 @@ namespace MediaBrowser.Library.Playables.VLC2
             {
                 return _CurrentPlayState == "paused";
             }
+        }
+
+        public override bool CanPause
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return true; }
         }
     }
 }

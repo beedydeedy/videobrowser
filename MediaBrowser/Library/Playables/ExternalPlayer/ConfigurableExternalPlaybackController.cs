@@ -123,5 +123,15 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         {
 
         }
+
+        public override bool CanPause
+        {
+            get { return false; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return false; }
+        }
     }
 }

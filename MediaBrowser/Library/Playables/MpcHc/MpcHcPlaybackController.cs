@@ -401,5 +401,15 @@ namespace MediaBrowser.Library.Playables.MpcHc
                 return _CurrentPlayState == "paused";
             }
         }
+
+        public override bool CanPause
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return true; }
+        }
     }
 }

@@ -30,7 +30,7 @@ namespace MediaBrowser.Code.ModelItems
         /// <summary>
         /// Holds the id of the currently playing PlayableItem
         /// </summary>
-        private Guid CurrentPlayableItemId;
+        public Guid CurrentPlayableItemId { get; private set; }
 
         #region Progress EventHandler
         volatile EventHandler<PlaybackStateEventArgs> _Progress;
@@ -230,6 +230,16 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         public abstract string ControllerName { get; }
 
+        /// <summary>
+        /// Determines if the player can be programatically paused
+        /// </summary>
+        public abstract bool CanPause { get; }
+
+        /// <summary>
+        /// Determines if the player can be programatically seeked
+        /// </summary>
+        public abstract bool CanSeek { get; }
+       
         public abstract void Pause();
         public abstract void UnPause();
         protected abstract void PlayMediaInternal(PlayableItem playable);

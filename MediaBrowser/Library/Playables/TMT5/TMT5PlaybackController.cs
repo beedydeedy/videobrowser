@@ -211,5 +211,15 @@ namespace MediaBrowser.Library.Playables.TMT5
                 return _CurrentPlayState == "pause";
             }
         }
+
+        public override bool CanPause
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return false; }
+        }
     }
 }

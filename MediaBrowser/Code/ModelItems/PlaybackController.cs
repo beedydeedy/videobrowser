@@ -499,5 +499,15 @@ namespace MediaBrowser
                 return _CurrentPlayState == Microsoft.MediaCenter.PlayState.Paused;
             }
         }
+
+        public override bool CanPause
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return true; }
+        }
     }
 }
