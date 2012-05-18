@@ -505,6 +505,8 @@ namespace MediaBrowser.Library.Playables
                 return;
             }
 
+            Logger.ReportInfo(PlaybackController.ControllerName + " about to play " + DisplayName);
+
             // If the controller already has active playable items, stop it and wait for it to flush out
             if (!QueueItem && PlaybackController.IsPlaying)
             {
@@ -530,8 +532,6 @@ namespace MediaBrowser.Library.Playables
             {
                 StopAllApplicationPlayback();
             }
-
-            Logger.ReportInfo(PlaybackController.ControllerName + " about to play " + DisplayName);
 
             if (UseAutoPlay)
             {

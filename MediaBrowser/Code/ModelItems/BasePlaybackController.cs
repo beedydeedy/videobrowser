@@ -199,8 +199,13 @@ namespace MediaBrowser.Code.ModelItems
             if (!playable.QueueItem)
             {
                 CurrentPlayableItemId = playable.Id;
+                Logger.ReportInfo(ControllerName + " playing " + playable.DisplayName);
             }
-
+            else
+            {
+                Logger.ReportInfo(ControllerName + " queuing " + playable.DisplayName);
+            }
+            
             PlayMediaInternal(playable);
 
             // Set the current playback stage
