@@ -37,6 +37,7 @@ namespace MediaBrowser
             _CurrentMediaCollection = null;
             _HasStartedPlaying = false;
             _CurrentPlayState = Microsoft.MediaCenter.PlayState.Undefined;
+            _LastTransportUpdateTime = DateTime.Now;
         }
 
         /// <summary>
@@ -83,7 +84,12 @@ namespace MediaBrowser
                 // Get this again as I've seen issues where it gets reset after the above call
                 mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
 
-                // Attach event handler
+                // Attach event handler to MediaCenterEnvironment
+                // We need this because if you press stop on a dvd menu without every playing, Transport property changed will never fire
+                mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged; 
+                mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
+
+                // Attach event handler to MediaTransport
                 MediaTransport transport = mediaExperience.Transport;
                 transport.PropertyChanged -= MediaTransport_PropertyChanged;
                 transport.PropertyChanged += MediaTransport_PropertyChanged;
@@ -206,14 +212,35 @@ namespace MediaBrowser
         }
 
         /// <summary>
+        /// Handles the MediaCenterEnvironment.PropertyChanged event
+        /// </summary>
+        protected void mediaCenterEnvironment_PropertyChanged(IPropertyObject sender, string property)
+        {
+            MediaCenterEnvironment env = sender as MediaCenterEnvironment;
+
+            MediaExperience mce = env.MediaExperience;
+
+            MediaTransport transport = mce.Transport;
+
+            HandlePropertyChange(env, mce, transport, property);
+        }
+
+        /// <summary>
         /// Handles the MediaTransport.PropertyChanged event, which most of the time will be due to Position
         /// </summary>
         protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
             MediaTransport transport = sender as MediaTransport;
 
-            MediaExperience mce = MediaExperience;
+            MediaCenterEnvironment env = AddInHost.Current.MediaCenterEnvironment;
 
+            MediaExperience mce = env.MediaExperience;
+
+            HandlePropertyChange(env, mce, transport, property);
+        }
+
+        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, string property)
+        {
             PlayState state;
             long positionTicks = 0;
 
@@ -246,12 +273,15 @@ namespace MediaBrowser
             }
 
             // protect against really agressive calls
-            var diff = (DateTime.Now - _LastTransportUpdateTime).TotalMilliseconds;
-
-            // Only cancel out Position reports
-            if (diff < 1000 && diff >= 0 && property == "Position")
+            if (property == "Position")
             {
-                return;
+                var diff = (DateTime.Now - _LastTransportUpdateTime).TotalMilliseconds;
+
+                // Only cancel out Position reports
+                if (diff < 1000 && diff >= 0)
+                {
+                    return;
+                }
             }
 
             _LastTransportUpdateTime = DateTime.Now;
@@ -279,8 +309,43 @@ namespace MediaBrowser
 
                 Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
 
-                HandlePlaystateChanged(mce, transport, isStopped, eventArgs);
+                HandlePlaystateChanged(env, mce, transport, isStopped, eventArgs);
             }
+        }
+
+        /// <summary>
+        /// Handles a change of Playstate by firing various events and post play processes
+        /// </summary>
+        private void HandlePlaystateChanged(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, bool isStopped, PlaybackStateEventArgs e)
+        {
+            if (isStopped)
+            {
+                // Stop listening to the events
+                env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+                transport.PropertyChanged -= MediaTransport_PropertyChanged;
+
+                // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
+                _HasStartedPlaying = false;
+
+                _CurrentMediaCollection = null;
+
+                var mediaType = mce.MediaType;
+
+                // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
+                if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
+                {
+                    Application.CurrentInstance.ShowNowPlaying = false;
+
+                    bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
+
+                    PlaybackControllerHelper.ReturnToApplication(forceReturn);
+                }
+
+                // Fire the OnFinished event for each item
+                OnPlaybackFinished(e);
+            }
+
+            PlayStateChanged();
         }
 
         /// <summary>
@@ -315,40 +380,6 @@ namespace MediaBrowser
                 Item = currentPlayableItem,
                 CurrentMediaIndex = currentMediaIndex
             };
-        }
-
-        /// <summary>
-        /// Handles a change of Playstate by firing various events and post play processes
-        /// </summary>
-        private void HandlePlaystateChanged(MediaExperience mce, MediaTransport transport, bool isStopped, PlaybackStateEventArgs e)
-        {
-            if (isStopped)
-            {
-                // Stop listening to the event
-                transport.PropertyChanged -= MediaTransport_PropertyChanged;
-
-                // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
-                _HasStartedPlaying = false;
-
-                _CurrentMediaCollection = null;
-
-                var mediaType = mce.MediaType;
-
-                // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
-                if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
-                {
-                    Application.CurrentInstance.ShowNowPlaying = false;
-
-                    bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
-
-                    PlaybackControllerHelper.ReturnToApplication(forceReturn);
-                }
-
-                // Fire the OnFinished event for each item
-                OnPlaybackFinished(e);
-            }
-
-            PlayStateChanged();
         }
 
         /// <summary>
