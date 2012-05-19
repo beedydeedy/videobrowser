@@ -309,43 +309,43 @@ namespace MediaBrowser
 
                 Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
 
-                HandlePlaystateChanged(env, mce, transport, isStopped, eventArgs);
+                PlayStateChanged();
+            }
+
+            if (isStopped)
+            {
+                HandleStoppedState(env, mce, transport, eventArgs);
             }
         }
 
         /// <summary>
         /// Handles a change of Playstate by firing various events and post play processes
         /// </summary>
-        private void HandlePlaystateChanged(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, bool isStopped, PlaybackStateEventArgs e)
+        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, PlaybackStateEventArgs e)
         {
-            if (isStopped)
+            // Stop listening to the events
+            env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+            transport.PropertyChanged -= MediaTransport_PropertyChanged;
+
+            // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
+            _HasStartedPlaying = false;
+
+            _CurrentMediaCollection = null;
+
+            var mediaType = mce.MediaType;
+
+            // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
+            if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
             {
-                // Stop listening to the events
-                env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
-                transport.PropertyChanged -= MediaTransport_PropertyChanged;
+                Application.CurrentInstance.ShowNowPlaying = false;
 
-                // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
-                _HasStartedPlaying = false;
+                bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
 
-                _CurrentMediaCollection = null;
-
-                var mediaType = mce.MediaType;
-
-                // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
-                if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
-                {
-                    Application.CurrentInstance.ShowNowPlaying = false;
-
-                    bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
-
-                    PlaybackControllerHelper.ReturnToApplication(forceReturn);
-                }
-
-                // Fire the OnFinished event for each item
-                OnPlaybackFinished(e);
+                PlaybackControllerHelper.ReturnToApplication(forceReturn);
             }
 
-            PlayStateChanged();
+            // Fire the OnFinished event for each item
+            OnPlaybackFinished(e);
         }
 
         /// <summary>
