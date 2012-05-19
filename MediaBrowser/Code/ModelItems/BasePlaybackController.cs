@@ -104,6 +104,8 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         protected virtual void OnPlaybackFinished(PlaybackStateEventArgs args)
         {
+            Logger.ReportVerbose("{0} playback finished", ControllerName);
+
             _IsStopping = true;
 
             NormalizeEventProperties(args);
@@ -205,7 +207,7 @@ namespace MediaBrowser.Code.ModelItems
             {
                 Logger.ReportInfo(ControllerName + " queuing " + playable.DisplayName);
             }
-            
+
             PlayMediaInternal(playable);
 
             // Set the current playback stage
@@ -244,7 +246,7 @@ namespace MediaBrowser.Code.ModelItems
         /// Determines if the player can be programatically seeked
         /// </summary>
         public abstract bool CanSeek { get; }
-       
+
         public abstract void Pause();
         public abstract void UnPause();
         protected abstract void PlayMediaInternal(PlayableItem playable);
@@ -276,7 +278,7 @@ namespace MediaBrowser.Code.ModelItems
                 return PlaybackControllerPlayState.Idle;
             }
         }
-        
+
         /// <summary>
         /// Determines whether or not the controller is currently playing
         /// </summary>
