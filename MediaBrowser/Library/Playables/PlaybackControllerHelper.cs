@@ -635,17 +635,13 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         public static void ReturnToApplication(bool force)
         {
-            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
+            Microsoft.MediaCenter.Hosting.ApplicationContext context = Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext;
+
+            if (force || !context.IsForegroundApplication)
             {
-                Microsoft.MediaCenter.Hosting.ApplicationContext context = Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext;
-
-                if (force || !context.IsForegroundApplication)
-                {
-                    Logger.ReportVerbose("Ensuring MB is front-most app");
-                    context.ReturnToApplication();
-                }
-
-            });
+                Logger.ReportVerbose("Ensuring MB is front-most app");
+                context.ReturnToApplication();
+            }
         }
     }
 }
