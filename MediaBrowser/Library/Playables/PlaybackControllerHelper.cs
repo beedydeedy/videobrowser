@@ -212,16 +212,6 @@ namespace MediaBrowser.Library.Playables
         }
 
         /// <summary>
-        /// Takes a path to a DVD folder and returns the path to send to the player
-        /// </summary>
-        public static string GetDVDPath(string path)
-        {
-            path = path.Replace("\\", "/").Trim('/');
-
-            return "DVD://" + path + "/";
-        }
-
-        /// <summary>
         /// For Bluray folders this will return the largest m2ts file contained within. For the internal wmc player, this is the best we can do
         /// </summary>
         public static string GetBluRayPath(string path)

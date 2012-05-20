@@ -488,11 +488,7 @@ namespace MediaBrowser
 
             if (video != null)
             {
-                if (video.MediaType == Library.MediaType.DVD)
-                {
-                    files = files.Select(i => PlaybackControllerHelper.GetDVDPath(i));
-                }
-                else if (video.MediaType == Library.MediaType.BluRay)
+                if (video.MediaType == Library.MediaType.BluRay)
                 {
                     files = files.Select(i => PlaybackControllerHelper.GetBluRayPath(i));
                 }
@@ -511,11 +507,7 @@ namespace MediaBrowser
             {
                 MediaBrowser.Library.MediaType mediaType = MediaBrowser.Library.MediaTypeResolver.DetermineType(file);
 
-                if (mediaType == Library.MediaType.DVD)
-                {
-                    yield return PlaybackControllerHelper.GetDVDPath(file);
-                }
-                else if (mediaType == Library.MediaType.BluRay)
+                if (mediaType == Library.MediaType.BluRay)
                 {
                     yield return PlaybackControllerHelper.GetBluRayPath(file);
                 }
