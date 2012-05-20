@@ -11,6 +11,14 @@ namespace MediaBrowser.Library.Playables.MpcHc
             {
                 return typeof(MpcHcPlaybackController);
             }
-        }       
+        }
+
+        public override Type ConfiguratorType
+        {
+            get
+            {
+                return typeof(MpcHcConfigurator);
+            }
+        }
     }
 }

@@ -144,11 +144,18 @@ namespace MediaBrowser
             }
         }
 
-        internal void OnPrePlayback(PlayableItem playableItem)
+        private void OnPrePlayback(PlayableItem playableItem)
         {
             if (_PrePlayback != null)
             {
-                _PrePlayback(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                try
+                {
+                    _PrePlayback(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Application.PrePlayback event listener had an error: ", ex);
+                }
             }
             Async.Queue("IsPlayingVideo delay", () => { FirePropertyChanged("IsPlayingVideo"); FirePropertyChanged("IsPlaying"); }, 1500);
         }
@@ -171,7 +178,7 @@ namespace MediaBrowser
             }
         }
 
-        internal void OnPlaybackFinished(PlayableItem playableItem)
+        private void OnPlaybackFinished(PlayableItem playableItem)
         {
             if (_PlaybackFinished != null)
             {
@@ -512,6 +519,7 @@ namespace MediaBrowser
                         Dictionary<string, object> capabilities = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities;
 
                         bool isLocal = capabilities.ContainsKey("Console") && (bool)capabilities["Console"];
+
                         _RunningOnExtender = !isLocal;
                     }
                     catch (Exception ex)
@@ -1600,7 +1608,7 @@ namespace MediaBrowser
                 AddNewlyWatched(playableItem);
             });
 
-            Logger.ReportVerbose("Firing OnPlaybackFinished for: " + playableItem.DisplayName);
+            Logger.ReportVerbose("Firing Application.PlaybackFinished for: " + playableItem.DisplayName);
 
             OnPlaybackFinished(playableItem);
         }

@@ -47,7 +47,14 @@ namespace MediaBrowser.Library.Playables
 
             if (_Progress != null)
             {
-                _Progress(this, new GenericEventArgs<PlayableItem>() { Item = this });
+                try
+                {
+                    _Progress(this, new GenericEventArgs<PlayableItem>() { Item = this });
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("PlayableItem Progress event listener had an error: ", ex);
+                }
             }
         }
         #endregion
@@ -89,10 +96,16 @@ namespace MediaBrowser.Library.Playables
             // Fire finished event
             if (_PlaybackFinished != null)
             {
-                _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = this });
+                Async.Queue("PlayableItem PlaybackFinished", () =>
+                {
+                    _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = this });
+                }); 
             }
 
-            Application.CurrentInstance.RunPostPlayProcesses(this);
+            if (RaiseGlobalPlaybackEvents)
+            {
+                Application.CurrentInstance.RunPostPlayProcesses(this);
+            }
 
             if (UnmountISOAfterPlayback)
             {
@@ -596,7 +609,16 @@ namespace MediaBrowser.Library.Playables
                 return true;
             }
 
-            return Application.CurrentInstance.RunPrePlayProcesses(PrimaryBaseItem, this);
+            try
+            {
+                return Application.CurrentInstance.RunPrePlayProcesses(PrimaryBaseItem, this);
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportException("PrePlayProcess had an error: ", ex);
+
+                return true;
+            }
         }
 
         /// <summary>

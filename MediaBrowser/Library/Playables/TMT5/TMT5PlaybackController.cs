@@ -6,6 +6,7 @@ using System.IO;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Playables.TMT5
 {
@@ -15,6 +16,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         private bool _HasStartedPlaying = false;
         private FileSystemWatcher _StatusFileWatcher;
         private string _CurrentPlayState = string.Empty;
+        protected bool _HasStopped = false;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
@@ -37,6 +39,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
             _HasStartedPlaying = false;
             _CurrentPlayState = string.Empty;
+            _HasStopped = false;
 
             DisposeFileSystemWatcher();
         }
@@ -104,31 +107,36 @@ namespace MediaBrowser.Library.Playables.TMT5
             // Then check if playback has stopped
             if (_HasStartedPlaying)
             {
-                long currentDurationTicks = TimeSpan.Parse(values["TotalTime"]).Ticks;
-                long currentPositionTicks = TimeSpan.Parse(values["CurTime"]).Ticks;
+                TimeSpan currentDuration = TimeSpan.FromTicks(0);
+                TimeSpan currentPosition = TimeSpan.FromTicks(0);
 
-                PlaybackStateEventArgs state = GetPlaybackState(currentPositionTicks, currentDurationTicks);
+                TimeSpan.TryParse(values["TotalTime"], out currentDuration);
+                TimeSpan.TryParse(values["CurTime"], out currentPosition);
+
+                PlaybackStateEventArgs state = GetPlaybackState(currentPosition.Ticks, currentDuration.Ticks);
 
                 OnProgress(state);
 
                 // Playback has stopped
                 if (tmtPlayState == "stop")
                 {
-                    DisposeFileSystemWatcher();
+                    Logger.ReportVerbose(ControllerName + " playstate changed to stopped");
 
-                    // If using the command line player, send a command to the MMC console to close the player
-                    if (ExternalPlayerConfiguration.LaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine)
+                    if (!_HasStopped)
                     {
-                        ClosePlayer();
-                    }
-                    else
-                    {
-                        // But we can't do that with the internal TMT player since it will shut down WMC
-                        // So just notify the base class that playback stopped
-                        OnPlaybackFinished(state);
+                        _HasStopped = true;
+
+                        DisposeFileSystemWatcher();
+
+                        HandleStoppedState(state);
                     }
                 }
             }
+        }
+
+        protected virtual void HandleStoppedState(PlaybackStateEventArgs args)
+        {
+            ClosePlayer();
         }
 
         /// <summary>
@@ -145,7 +153,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
             return state;
         }
-      
+
         private void DisposeFileSystemWatcher()
         {
             if (_StatusFileWatcher != null)

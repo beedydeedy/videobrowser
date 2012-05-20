@@ -15,6 +15,14 @@ namespace MediaBrowser.Library.Playables.TMT5
             }
         }
 
+        public override Type ConfiguratorType
+        {
+            get
+            {
+                return typeof(TMT5AddInForWMCConfigurator);
+            }
+        }
+
         protected override void StopAllApplicationPlayback()
         {
             base.StopAllApplicationPlayback();

@@ -14,6 +14,14 @@ namespace MediaBrowser.Library.Playables.VLC2
             }
         }
 
+        public override Type ConfiguratorType
+        {
+            get
+            {
+                return typeof(VLC2Configurator);
+            }
+        }
+
         protected override bool IsPlaylistCapable(Media media)
         {
             // VLC seems to handle everything in a playlist

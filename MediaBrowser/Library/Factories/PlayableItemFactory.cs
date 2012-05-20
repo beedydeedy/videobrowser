@@ -31,18 +31,18 @@ namespace MediaBrowser.Library.Factories
         }
 
         private List<Type> RegisteredTypes = new List<Type>();
-        private List<KeyValuePair<Type, Type>> RegisteredExternalPlayerTypes = new List<KeyValuePair<Type, Type>>();
+        private List<Type> RegisteredExternalPlayerTypes = new List<Type>();
 
         private PlayableItemFactory()
         {
             if (!Application.RunningOnExtender)
             {
                 // Add the externals
-                RegisterExternalPlayerType<PlayableMpcHc, MpcHcConfigurator>();
-                RegisterExternalPlayerType<PlayableTMT5, TMT5Configurator>();
-                RegisterExternalPlayerType<PlayableTMT5AddInForWMC, TMT5AddInForWMCConfigurator>();
-                RegisterExternalPlayerType<PlayableVLC2, VLC2Configurator>();
-                RegisterExternalPlayerType<PlayableExternal, PlayableExternalConfigurator>();
+                RegisterExternalPlayerType<PlayableMpcHc>();
+                RegisterExternalPlayerType<PlayableTMT5>();
+                RegisterExternalPlayerType<PlayableTMT5AddInForWMC>();
+                RegisterExternalPlayerType<PlayableVLC2>();
+                RegisterExternalPlayerType<PlayableExternal>();
             }
         }
 
@@ -58,11 +58,10 @@ namespace MediaBrowser.Library.Factories
         /// <summary>
         /// Registers a new type of PlayableExternal to be utilized by the Create methods AND show up in the extenral player section of the configurator
         /// </summary>
-        public void RegisterExternalPlayerType<TPlayableExternalType, TConfiguratorType>()
+        public void RegisterExternalPlayerType<TPlayableExternalType>()
             where TPlayableExternalType : PlayableExternal, new()
-            where TConfiguratorType : PlayableExternalConfigurator, new()
         {
-            RegisteredExternalPlayerTypes.Add(new KeyValuePair<Type, Type>(typeof(TPlayableExternalType), typeof(TConfiguratorType)));
+            RegisteredExternalPlayerTypes.Add(typeof(TPlayableExternalType));
         }
 
         /// <summary>
@@ -185,16 +184,20 @@ namespace MediaBrowser.Library.Factories
             List<PlayableItem> playables = new List<PlayableItem>();
 
             IEnumerable<KeyValuePair<PlayableExternal, PlayableExternalConfigurator>> allPlayableExternals =
-                RegisteredExternalPlayerTypes.Select(t => new KeyValuePair<PlayableExternal, PlayableExternalConfigurator>(Activator.CreateInstance(t.Key) as PlayableExternal, Activator.CreateInstance(t.Value) as PlayableExternalConfigurator));
+                RegisteredExternalPlayerTypes.Select(p => Activator.CreateInstance(p) as PlayableExternal)
+                .Select(p => new KeyValuePair<PlayableExternal, PlayableExternalConfigurator>(p, Activator.CreateInstance(p.ConfiguratorType) as PlayableExternalConfigurator));
 
             // Important - need to add them in the order they appear in configuration
             foreach (ConfigData.ExternalPlayer externalPlayerConfiguration in Config.Instance.ExternalPlayers)
             {
-                PlayableExternal playable = allPlayableExternals.First(p => p.Value.ExternalPlayerName == externalPlayerConfiguration.ExternalPlayerName).Key;
+                if (allPlayableExternals.Any(p => p.Value.ExternalPlayerName == externalPlayerConfiguration.ExternalPlayerName))
+                {
+                    PlayableExternal playable = allPlayableExternals.FirstOrDefault(p => p.Value.ExternalPlayerName == externalPlayerConfiguration.ExternalPlayerName).Key;
 
-                playable.ExternalPlayerConfiguration = externalPlayerConfiguration;
+                    playable.ExternalPlayerConfiguration = externalPlayerConfiguration;
 
-                playables.Add(playable);
+                    playables.Add(playable);
+                }
             }
 
             return playables;
@@ -205,7 +208,7 @@ namespace MediaBrowser.Library.Factories
         /// </summary>
         public IEnumerable<PlayableExternalConfigurator> GetAllPlayableExternalConfigurators()
         {
-            return RegisteredExternalPlayerTypes.Select(t => Activator.CreateInstance(t.Value) as PlayableExternalConfigurator);
+            return RegisteredExternalPlayerTypes.Select(t => Activator.CreateInstance(t) as PlayableExternal).Select(p => Activator.CreateInstance(p.ConfiguratorType) as PlayableExternalConfigurator);
         }
 
         /// <summary>
