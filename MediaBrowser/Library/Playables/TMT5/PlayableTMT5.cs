@@ -15,5 +15,13 @@ namespace MediaBrowser.Library.Playables.TMT5
                 return typeof(TMT5PlaybackController);
             }
         }
+
+        public override Type ConfiguratorType
+        {
+            get
+            {
+                return typeof(TMT5Configurator);
+            }
+        }
     }
 }

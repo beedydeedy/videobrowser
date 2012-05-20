@@ -95,7 +95,14 @@ namespace MediaBrowser.Code.ModelItems
             // Fire PlaybackController progress event
             if (_Progress != null)
             {
-                _Progress(this, args);
+                try
+                {
+                    _Progress(this, args);
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("PlaybackController.Progress event listener had an error: ", ex);
+                }
             }
         }
 
@@ -119,7 +126,14 @@ namespace MediaBrowser.Code.ModelItems
             // Fire the playback controller's finished event
             if (_PlaybackFinished != null)
             {
-                _PlaybackFinished(this, args);
+                try
+                {
+                    _PlaybackFinished(this, args);
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("PlaybackController.PlaybackFinished event listener had an error: ", ex);
+                } 
             }
 
             // Run the kernel's post play processes
@@ -287,6 +301,17 @@ namespace MediaBrowser.Code.ModelItems
             get
             {
                 return CurrentPlayableItems.Any();
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not the controller is currently stopped
+        /// </summary>
+        public virtual bool IsStopped
+        {
+            get
+            {
+                return !IsPlaying;
             }
         }
 

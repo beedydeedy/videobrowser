@@ -64,5 +64,13 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
                 return true;
             }
         }
+
+        public virtual Type ConfiguratorType
+        {
+            get
+            {
+                return typeof(PlayableExternalConfigurator);
+            }
+        }
     }
 }

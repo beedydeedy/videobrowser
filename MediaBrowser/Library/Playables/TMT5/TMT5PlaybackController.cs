@@ -6,6 +6,7 @@ using System.IO;
 using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Playables.TMT5
 {
@@ -104,16 +105,21 @@ namespace MediaBrowser.Library.Playables.TMT5
             // Then check if playback has stopped
             if (_HasStartedPlaying)
             {
-                long currentDurationTicks = TimeSpan.Parse(values["TotalTime"]).Ticks;
-                long currentPositionTicks = TimeSpan.Parse(values["CurTime"]).Ticks;
+                TimeSpan currentDuration = TimeSpan.FromTicks(0);
+                TimeSpan currentPosition = TimeSpan.FromTicks(0);
 
-                PlaybackStateEventArgs state = GetPlaybackState(currentPositionTicks, currentDurationTicks);
+                TimeSpan.TryParse(values["TotalTime"], out currentDuration);
+                TimeSpan.TryParse(values["CurTime"], out currentPosition);
+
+                PlaybackStateEventArgs state = GetPlaybackState(currentPosition.Ticks, currentDuration.Ticks);
 
                 OnProgress(state);
 
                 // Playback has stopped
                 if (tmtPlayState == "stop")
                 {
+                    Logger.ReportVerbose(ControllerName + " playstate changed to stopped");
+
                     DisposeFileSystemWatcher();
 
                     // If using the command line player, send a command to the MMC console to close the player
