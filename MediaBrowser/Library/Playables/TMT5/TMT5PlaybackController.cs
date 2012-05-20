@@ -16,6 +16,7 @@ namespace MediaBrowser.Library.Playables.TMT5
         private bool _HasStartedPlaying = false;
         private FileSystemWatcher _StatusFileWatcher;
         private string _CurrentPlayState = string.Empty;
+        protected bool _HasStopped = false;
 
         // Protect against really aggressive event handling
         private DateTime _LastFileSystemUpdate = DateTime.Now;
@@ -38,6 +39,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
             _HasStartedPlaying = false;
             _CurrentPlayState = string.Empty;
+            _HasStopped = false;
 
             DisposeFileSystemWatcher();
         }
@@ -120,21 +122,21 @@ namespace MediaBrowser.Library.Playables.TMT5
                 {
                     Logger.ReportVerbose(ControllerName + " playstate changed to stopped");
 
-                    DisposeFileSystemWatcher();
+                    if (!_HasStopped)
+                    {
+                        _HasStopped = true;
 
-                    // If using the command line player, send a command to the MMC console to close the player
-                    if (ExternalPlayerConfiguration.LaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine)
-                    {
-                        ClosePlayer();
-                    }
-                    else
-                    {
-                        // But we can't do that with the internal TMT player since it will shut down WMC
-                        // So just notify the base class that playback stopped
-                        OnPlaybackFinished(state);
+                        DisposeFileSystemWatcher();
+
+                        HandleStoppedState(state);
                     }
                 }
             }
+        }
+
+        protected virtual void HandleStoppedState(PlaybackStateEventArgs args)
+        {
+            ClosePlayer();
         }
 
         /// <summary>
@@ -151,7 +153,7 @@ namespace MediaBrowser.Library.Playables.TMT5
 
             return state;
         }
-      
+
         private void DisposeFileSystemWatcher()
         {
             if (_StatusFileWatcher != null)

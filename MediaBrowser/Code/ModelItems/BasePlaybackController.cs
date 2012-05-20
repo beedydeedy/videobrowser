@@ -133,7 +133,7 @@ namespace MediaBrowser.Code.ModelItems
                 catch (Exception ex)
                 {
                     Logger.ReportException("PlaybackController.PlaybackFinished event listener had an error: ", ex);
-                } 
+                }
             }
 
             // Run the kernel's post play processes
@@ -222,12 +222,42 @@ namespace MediaBrowser.Code.ModelItems
                 Logger.ReportInfo(ControllerName + " queuing " + playable.DisplayName);
             }
 
-            PlayMediaInternal(playable);
+            try
+            {
 
-            // Set the current playback stage
-            playable.PlayState = playable.QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
+                PlayMediaInternal(playable);
 
-            PlayStateChanged();
+                // Set the current playback stage
+                playable.PlayState = playable.QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
+
+                PlayStateChanged();
+            }
+            catch (Exception ex)
+            {
+                OnErrorPlayingItem(playable, ex);
+            }
+        }
+
+        protected void OnErrorPlayingItem(PlayableItem playable, Exception ex)
+        {
+            Logger.ReportException("Error playing item: ", ex);
+
+            if (!playable.QueueItem)
+            {
+                CurrentPlayableItemId = Guid.Empty;
+            }
+            CurrentPlayableItems.Remove(playable);
+        }
+
+        protected void OnErrorPlayingItem(PlayableItem playable, string error)
+        {
+            Logger.ReportVerbose("Error playing item: {0}", error);
+
+            if (!playable.QueueItem)
+            {
+                CurrentPlayableItemId = Guid.Empty;
+            }
+            CurrentPlayableItems.Remove(playable);
         }
 
         protected virtual void ResetPlaybackProperties()

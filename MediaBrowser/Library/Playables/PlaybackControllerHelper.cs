@@ -255,12 +255,9 @@ namespace MediaBrowser.Library.Playables
             return Microsoft.MediaCenter.MediaType.Audio;
         }
 
-        public static void CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
+        public static bool CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
         {
-            if (!mediaCenterEnvironment.PlayMedia(type, media, queue))
-            {
-                Logger.ReportInfo("PlayMedia returned false");
-            }
+            return mediaCenterEnvironment.PlayMedia(type, media, queue);
         }
 
         public static PlayableItem GetCurrentPlaybackItemUsingMetadataTitle(PlaybackController controllerInstance, IEnumerable<PlayableItem> playableItems, string metadataTitle, out int filePlaylistPosition, out int currentMediaIndex)

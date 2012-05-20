@@ -67,7 +67,11 @@ namespace MediaBrowser
 
             try
             {
-                CallPlayMediaForPlayableItem(mediaCenterEnvironment, playable);
+                if (!CallPlayMediaForPlayableItem(mediaCenterEnvironment, playable))
+                {
+                    OnErrorPlayingItem(playable, "PlayMedia returned false");
+                    return;
+                }
 
                 MediaExperience mediaExperience;
 
@@ -81,13 +85,13 @@ namespace MediaBrowser
                     }
                 }
 
+                // Attach event handler to MediaCenterEnvironment
+                // We need this because if you press stop on a dvd menu without ever playing, Transport property changed will never fire
+                mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+                mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
+
                 // Get this again as I've seen issues where it gets reset after the above call
                 mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
-
-                // Attach event handler to MediaCenterEnvironment
-                // We need this because if you press stop on a dvd menu without every playing, Transport property changed will never fire
-                mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged; 
-                mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
 
                 // Attach event handler to MediaTransport
                 MediaTransport transport = mediaExperience.Transport;
@@ -96,28 +100,29 @@ namespace MediaBrowser
             }
             catch (Exception ex)
             {
-                Logger.ReportException("Playing media failed.", ex);
-                Application.ReportBrokenEnvironment();
+                OnErrorPlayingItem(playable, ex);
             }
         }
 
         /// <summary>
         /// Calls PlayMedia using either a MediaCollection or a single file
         /// </summary>
-        protected virtual void CallPlayMediaForPlayableItem(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        private bool CallPlayMediaForPlayableItem(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
             if (PlaybackControllerHelper.UseLegacyApi(playable))
             {
-                CallPlayMediaLegacy(mediaCenterEnvironment, playable);
+
+                bool success = CallPlayMediaLegacy(mediaCenterEnvironment, playable);
                 _CurrentMediaCollection = null;
+                return success;
             }
             else
             {
-                CallPlayMediaUsingMediaCollection(mediaCenterEnvironment, playable);
+                return CallPlayMediaUsingMediaCollection(mediaCenterEnvironment, playable);
             }
         }
 
-        private void CallPlayMediaUsingMediaCollection(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        private bool CallPlayMediaUsingMediaCollection(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
             MediaCollection coll = new MediaCollection();
 
@@ -141,31 +146,42 @@ namespace MediaBrowser
             }
 
             _CurrentMediaCollection = coll;
-            PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, _CurrentMediaCollection, false);
+
+            bool success = PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, _CurrentMediaCollection, false);
+
+            if (!success)
+            {
+                _CurrentMediaCollection = null;
+            }
+
+            return success;
         }
 
         /// <summary>
         /// Calls PlayMedia
         /// </summary>
-        private void CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        private bool CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
         {
             Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
+
+            string file;
 
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
                 IEnumerable<string> files = playable.FilesFormattedForPlayer;
 
-                string file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playable.StartPlaylistPosition);
-
-                PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
+                file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playable.StartPlaylistPosition);
             }
             else
             {
                 // Play single file
-                string file = playable.FilesFormattedForPlayer.First();
+                file = playable.FilesFormattedForPlayer.First();
+            }
 
-                PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false);
+            if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false))
+            {
+                return false;
             }
 
             long position = playable.StartPositionTicks;
@@ -174,6 +190,8 @@ namespace MediaBrowser
             {
                 mediaCenterEnvironment.MediaExperience.Transport.Position = new TimeSpan(position);
             }
+
+            return true;
         }
 
         protected virtual void QueuePlayableItem(PlayableItem playable)
@@ -190,14 +208,21 @@ namespace MediaBrowser
 
         private void QueuePlayableItemIntoMediaCollection(PlayableItem playable)
         {
-            // Create a MediaCollectionItem for each file to play
-            if (playable.HasMediaItems)
+            try
             {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, _CurrentMediaCollection, playable);
+                // Create a MediaCollectionItem for each file to play
+                if (playable.HasMediaItems)
+                {
+                    PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, _CurrentMediaCollection, playable);
+                }
+                else
+                {
+                    PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(_CurrentMediaCollection, playable);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(_CurrentMediaCollection, playable);
+                OnErrorPlayingItem(playable, ex);
             }
         }
 
@@ -205,9 +230,20 @@ namespace MediaBrowser
         {
             Microsoft.MediaCenter.MediaType type = MediaType.Audio;
 
+            bool success = true;
+
             foreach (string file in playable.FilesFormattedForPlayer)
             {
-                PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true);
+                if (!PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true))
+                {
+                    success = false;
+                    break;
+                }
+            }
+
+            if (!success)
+            {
+                OnErrorPlayingItem(playable, "PlayMedia returned false");
             }
         }
 
