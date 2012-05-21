@@ -20,22 +20,14 @@ namespace MediaBrowser.Library.Persistance {
 
     public class SqliteItemRepository : SQLiteRepository, IItemRepository {
 
-        private static Guid MIGRATE_MARKER = new Guid("0FD78B4C-B9DA-4249-B880-3696761AE3B4");
+        const string CURRENT_SCHEMA_VERSION = "2.5.0.0";
+
         private Dictionary<Type, SQLInfo> ItemSQL = new Dictionary<Type, SQLInfo>();
+
+        private string dbFileName;
 
         protected static class SQLizer
         {
-            private static System.Reflection.Assembly serviceStackAssembly;
-            private static System.Reflection.Assembly ServiceStackResolver(object sender, ResolveEventArgs args)
-            {
-                Logger.ReportInfo(args.Name + " is being resolved!");
-                if (args.Name.StartsWith("ServiceStack.Text,"))
-                {
-                    return serviceStackAssembly;
-                }
-                return null;
-            }
-
             public static void Init(string path)
             {
                 //if (serviceStackAssembly == null)
@@ -47,9 +39,18 @@ namespace MediaBrowser.Library.Persistance {
 
             public static object Extract(SQLiteDataReader reader, SQLInfo.ColDef col) 
             {
-                var data = reader[col.ColName];
-                var typ = data.GetType();
+                object data = null;
+                try
+                {
+                    data = reader[col.ColName];
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Error reading data for col: " + col.ColName + " type is: " + col.ColType.Name, e);
+                    return null;
+                }
                 if (data is DBNull || data == null) return null;
+                var typ = data.GetType();
 
                 //Logger.ReportVerbose("Extracting: " + col.ColName + " Defined Type: "+col.ColType+"/"+col.NullableType + " Actual Type: "+typ.Name+" Value: "+data);
 
@@ -58,12 +59,18 @@ namespace MediaBrowser.Library.Persistance {
                     if (col.ColType == typeof(MediaType))
                         return Enum.Parse(typeof(MediaType), (string)data);
                     else
-                        if (col.ColType == typeof(Guid))
-                        {
-                            return new Guid((string)data);
-                        }
+                        if (col.ColType == typeof(MediaBrowser.Library.Network.DownloadPolicy))
+                            return Enum.Parse(typeof(MediaBrowser.Library.Network.DownloadPolicy), (string)data);
+                    else
+                        if (col.ColType == typeof(VideoFormat))
+                            return Enum.Parse(typeof(VideoFormat), (string)data);
                         else
-                            return data;
+                            if (col.ColType == typeof(Guid))
+                            {
+                                return new Guid((string)data);
+                            }
+                            else
+                                return data;
                 } else
                     if (typ == typeof(Int64)) {
                         if (col.ColType == typeof(DateTime))
@@ -105,6 +112,12 @@ namespace MediaBrowser.Library.Persistance {
 
                     case "mediatype":
                         return ((MediaType)data).ToString();
+
+                    case "videoformat":
+                        return ((VideoFormat)data).ToString();
+
+                    case "downloadpolicy":
+                        return ((MediaBrowser.Library.Network.DownloadPolicy)data).ToString();
 
                     case "int":
                     case "int16":
@@ -161,6 +174,7 @@ namespace MediaBrowser.Library.Persistance {
                 {
                     if (!dbCols.Contains(col.ColName))
                     {
+                        Logger.ReportInfo("Discovered new attribute: " + col.ColName + " on object type: "+ ObjType+". Adding to schema.");
                         connection.Exec("Alter table items add column "+col.ColName);
                     }
                 }
@@ -198,7 +212,13 @@ namespace MediaBrowser.Library.Persistance {
                 type = type.BaseType;
                 while (type != typeof(object) && type != null)
                 {
-                    Columns.AddRange(GetFields(type));
+                    foreach (var field in GetFields(type)) //iterate explicitly to eliminate duplicate (overridden) fields
+                    {
+                        if (Columns.FindIndex(c => c.ColName == field.ColName) == -1)
+                        {
+                            Columns.Add(field);
+                        }
+                    }
                     type = type.BaseType;
                 }
 
@@ -320,37 +340,50 @@ namespace MediaBrowser.Library.Persistance {
 
         }
 
+        //cascade delete triggers
+        protected string triggerSQL =
+            @"CREATE TRIGGER if not exists delete_item
+                AFTER DELETE
+                ON items
+                FOR EACH ROW
+                BEGIN
+                    DELETE FROM children WHERE children.guid = old.id;
+                    DELETE FROM children WHERE children.child = old.id;
+                    DELETE FROM list_items WHERE list_items.guid = old.id;
+                END";
 
-        // Used to save playstate 
-        ItemRepository itemRepo; 
+        // Display repo
+        SQLiteDisplayRepository displayRepo;
+        // Playstate repo
+        FileBasedDictionary<PlaybackStatus> playbackStatus;
 
         private SqliteItemRepository(string dbPath) {
 
-            SQLiteConnectionStringBuilder connectionstr = new SQLiteConnectionStringBuilder();
-            connectionstr.PageSize = 4096;
-            connectionstr.CacheSize = 4096;
-            connectionstr.SyncMode = SynchronizationModes.Normal;
-            connectionstr.DataSource = dbPath;
-            connectionstr.JournalMode = SQLiteJournalModeEnum.Persist; //maybe better performance...?
-            connection = new SQLiteConnection(connectionstr.ConnectionString);
-            connection.Open();
+            Logger.ReportInfo("==========Using new SQL Repo========");
+            dbFileName = dbPath;
 
-            itemRepo = new ItemRepository();
 
-            string playStateDBPath = Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate.db");
+            if (!ConnectToDB(dbPath)) throw new ApplicationException("CRITICAL ERROR - Unable to connect to database: " + dbPath + ".  Program cannot function.");
+
+            displayRepo = new SQLiteDisplayRepository(Path.Combine(ApplicationPaths.AppUserSettingsPath, "display.db"));
+            playbackStatus = new FileBasedDictionary<PlaybackStatus>(GetPath("playstate", ApplicationPaths.AppUserSettingsPath));
+
+            //string playStateDBPath = Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate.db");
 
             string[] queries = {"create table if not exists provider_data (guid, full_name, data)",
                                 "create unique index if not exists idx_provider on provider_data(guid, full_name)",
-                                "create table if not exists items (guid primary key, data)",
+                                "create table if not exists items (guid primary key)",
+                                "create index if not exists idx_items on items(guid)",
                                 "create table if not exists children (guid, child)", 
                                 "create unique index if not exists idx_children on children(guid, child)",
-                                "create table if not exists list_items(guid, property, value)",
+                                "create table if not exists list_items(guid, property, value, sort_order)",
                                 "create index if not exists idx_list on list_items(guid, property)",
-                                //"create table if not exists recent_list(top_parent, child, date_added)",
-                                //"create index if not exists idx_recent on recent_list(top_parent, child)",
-                                "attach database '"+playStateDBPath+"' as playstate_db",
-                                "create table if not exists playstate_db.play_states (guid primary key, play_count, position_ticks, playlist_position, last_played)",
-                                "pragma temp_store = memory"
+                                "create unique index if not exists idx_list_constraint on list_items(guid, property, value)",
+                                "create table if not exists schema_version (table_name primary key, version)",
+                                //triggers
+                                triggerSQL,
+                                //pragmas
+                                "pragma temp_store = memory",
                                // @"create table display_prefs (guid primary key, view_type, show_labels, vertical_scroll 
                                //        sort_order, index_by, use_banner, thumb_constraint_width, thumb_constraint_height, use_coverflow, use_backdrop )" 
                                 //,   "create table play_states (guid primary key, play_count, position_ticks, playlist_position, last_played)"
@@ -359,22 +392,67 @@ namespace MediaBrowser.Library.Persistance {
 
             foreach (var query in queries) {
                 try {
-
                     connection.Exec(query);
                 } catch (Exception e) {
                     Logger.ReportInfo(e.ToString());
                 }
             }
 
-
             alive = true; // tell writer to keep going
             Async.Queue("Sqlite Writer", DelayedWriter);
 
-            if (Kernel.LoadContext == MBLoadContext.Service) //don't want to be migrating simultaneously in service and core...
-            {
-                MigratePlayState();
-            }
         }
+
+        public override void ShutdownDatabase()
+        {
+            //we need to shut down our display repo too...
+            displayRepo.ShutdownDatabase();
+            playbackStatus.Dispose();
+            base.ShutdownDatabase();
+        }
+
+        public bool BackupDatabase()
+        {
+            bool success = true;
+            try
+            {
+                connection.Close();
+                File.Copy(dbFileName, dbFileName + ".bak", true);
+            }
+            catch (Exception e)
+            {
+                Logger.ReportException("Error attempting to backup db.", e);
+                success = false;
+            }
+            finally
+            {
+                connection.Open();
+            }
+            return success;
+        }
+
+        private string SchemaVersion(string tableName)
+        {
+            string version = "";
+            var cmd = connection.CreateCommand();
+            cmd.CommandText = "select version from schema_version where table_name = @1";
+            cmd.AddParam("@1", tableName);
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    version = reader.GetString(0);
+                }
+            }
+            return version;
+        }
+
+        private void SetSchemaVersion(string tableName, string version)
+        {
+            connection.Exec("replace into schema_version (table_name, version) values('" + tableName + "','" + version + "')");
+        }
+
 
         private string GetPath(string type, string root) {
             string path = Path.Combine(root, type);
@@ -383,10 +461,24 @@ namespace MediaBrowser.Library.Persistance {
             return path;
         }
 
-        private void MigrateData()
+
+
+        public void MigrateItems()
         {
             var guids = new List<Guid>();
             var cmd = connection.CreateCommand();
+            //test to see if it is an old repo (data won't exist in a new one)
+            cmd.CommandText = "select data from items";
+            try
+            {
+                using (var reader = cmd.ExecuteReader()) { reader.Read(); }
+            }
+            catch (Exception e)
+            {
+                Logger.ReportInfo("Brand new repo db.  Nothing to migrate. " + e.Message);
+                return;
+            }
+
             cmd.CommandText = "select guid from items";
 
             using (var reader = cmd.ExecuteReader())
@@ -396,74 +488,124 @@ namespace MediaBrowser.Library.Persistance {
                     guids.Add(reader.GetGuid(0));
                 }
             }
+            int cnt = 0;
             foreach (var id in guids)
             {
-                var item = RetrieveItem(id);
-                Logger.ReportVerbose("Migrating " + item.Name);
-                SaveItem(item);
-            }
-        }
-
-
-        private void MigratePlayState() {
-            if (RetrievePlayState(MIGRATE_MARKER).Id != MIGRATE_MARKER) { //haven't migrated
-                //delay this to allow playstate dictionary to load in old repo
-                Async.Queue("Playstate Migration", () =>
-                //using (ItemRepository repo = new ItemRepository())
+                var item = RetrieveItemOld(id);
+                if (item != null)
                 {
-                    Logger.ReportInfo("Attempting to migrate playstates to SQL");
-                    int cnt = 0;
-                    foreach (PlaybackStatus ps in itemRepo.AllPlayStates)
-                    {
-                        //Logger.ReportVerbose("Saving playstate for " + ps.Id);
-                        SavePlayState(ps);
-                        cnt++;
-                    }
-                    Logger.ReportInfo("Successfully migrated " + cnt + " playstate items.");
-                    var migrateMarker = new PlaybackStatus();
-                    migrateMarker.Id = MIGRATE_MARKER;
-                    SavePlayState(migrateMarker);
-                }, 5000);
-            }
-        }
-
-        public PlaybackStatus RetrievePlayState(Guid id) {
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "select guid, play_count, position_ticks, playlist_position, last_played from playstate_db.play_states where guid = @guid";
-            cmd.AddParam("@guid", id);
-
-            var state = new PlaybackStatus();
-            using (var reader = cmd.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    state.Id = reader.GetGuid(0);
-                    state.PlayCount = reader.GetInt32(1);
-                    state.PositionTicks = reader.GetInt64(2);
-                    state.PlaylistPosition = reader.GetInt32(3);
-                    state.LastPlayed = reader.GetDateTime(4);
+                    Logger.ReportInfo("Migrating " + item.Name);
+                    SaveItem(item);
+                    cnt++;
+                    // the removal of in-progress handling means we don't need the following yet...
+                    //if (item is Video && (item as Video).RunningTime != null)
+                    //{
+                    //    TimeSpan duration = TimeSpan.FromMinutes((item as Video).RunningTime.Value);
+                    //    if (duration.Ticks > 0)
+                    //    {
+                    //        PlaybackStatus ps = RetrievePlayState(id);
+                    //        decimal pctIn = Decimal.Divide(ps.PositionTicks, duration.Ticks) * 100;
+                    //        if (pctIn > Kernel.Instance.ConfigData.MaxResumePct)
+                    //        {
+                    //            Logger.ReportInfo("Setting " + item.Name + " to 'Watched' based on last played position.");
+                    //            ps.PositionTicks = 0;
+                    //            SavePlayState(ps);
+                    //        }
+                    //    }
+                    //}
+                    Thread.Sleep(20); //allow the delayed writer to keep up...
                 }
             }
-
-            return state;
+            Logger.ReportInfo("==== Migrated " + cnt + " items.");
+            SetSchemaVersion("items", CURRENT_SCHEMA_VERSION);
+            Logger.ReportInfo("Item migration complete.");
         }
+
+
+        public void MigratePlayState(ItemRepository itemRepo)
+        {
+            if (SchemaVersion("play_states") != CURRENT_SCHEMA_VERSION)
+            { //haven't migrated
+                Logger.ReportInfo("Attempting to migrate playstates to SQL");
+                int cnt = 0;
+                foreach (PlaybackStatus ps in itemRepo.AllPlayStates)
+                {
+                    //Logger.ReportVerbose("Saving playstate for " + ps.Id);
+                    SavePlayState(ps);
+                    cnt++;
+                }
+                Logger.ReportInfo("Successfully migrated " + cnt + " playstate items.");
+                //move this so we don't do it again in a shared situation
+                itemRepo.Backup("playstate");
+                SetSchemaVersion("play_states", CURRENT_SCHEMA_VERSION);
+            }
+        }
+
+        public void MigrateDisplayPrefs(ItemRepository itemRepo)
+        {
+            if (SchemaVersion("display_prefs") != CURRENT_SCHEMA_VERSION)
+            {
+                //need to migrate
+                Logger.ReportInfo("Attempting to migrate display preferences to SQL");
+                int num = displayRepo.MigrateDisplayPrefs();
+                Logger.ReportInfo("Migrated " + num + " display preferences.");
+                //move this so we don't do it again in a shared situation
+                itemRepo.Backup("display");
+                SetSchemaVersion("display_prefs", CURRENT_SCHEMA_VERSION);
+            }
+        }
+
+        public PlaybackStatus RetrievePlayState(Guid id)
+        {
+            return playbackStatus[id];
+        }
+
+        //public PlaybackStatus RetrievePlayState(Guid id)
+        //{
+        //    var cmd = connection.CreateCommand();
+        //    cmd.CommandText = "select guid, play_count, position_ticks, playlist_position, last_played from playstate_db.play_states where guid = @guid";
+        //    cmd.AddParam("@guid", id);
+
+        //    var state = new PlaybackStatus();
+        //    using (var reader = cmd.ExecuteReader())
+        //    {
+        //        if (reader.Read())
+        //        {
+        //            state.Id = reader.GetGuid(0);
+        //            state.PlayCount = reader.GetInt32(1);
+        //            state.PositionTicks = reader.GetInt64(2);
+        //            state.PlaylistPosition = reader.GetInt32(3);
+        //            state.LastPlayed = reader.GetDateTime(4);
+        //        }
+        //        else state = null;
+        //    }
+
+        //    return state;
+        //}
 
         public ThumbSize RetrieveThumbSize(Guid id)
         {
-            return itemRepo.RetrieveThumbSize(id);
+            return displayRepo.RetrieveThumbSize(id);
         }
 
-        public void SavePlayState(PlaybackStatus playState) {
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "replace into playstate_db.play_states(guid, play_count, position_ticks, playlist_position, last_played) values(@guid, @playCount, @positionTicks, @playlistPosition, @lastPlayed)";
-            cmd.AddParam("@guid", playState.Id);
-            cmd.AddParam("@playCount", playState.PlayCount);
-            cmd.AddParam("@positionTicks", playState.PositionTicks);
-            cmd.AddParam("@playlistPosition", playState.PlaylistPosition);
-            cmd.AddParam("@lastPlayed", playState.LastPlayed);
-
-            QueueCommand(cmd);
+        public void SavePlayState(PlaybackStatus playState)
+        {
+            playbackStatus[playState.Id] = playState;
         }
+
+        //public void SavePlayState(PlaybackStatus playState)
+        //{
+        //    var cmd = connection.CreateCommand();
+        //    cmd.CommandText = "replace into playstate_db.play_states(guid, play_count, position_ticks, playlist_position, last_played) values(@guid, @playCount, @positionTicks, @playlistPosition, @lastPlayed)";
+        //    cmd.AddParam("@guid", playState.Id);
+        //    cmd.AddParam("@playCount", playState.PlayCount);
+        //    cmd.AddParam("@positionTicks", playState.PositionTicks);
+        //    cmd.AddParam("@playlistPosition", playState.PlaylistPosition);
+        //    cmd.AddParam("@lastPlayed", playState.LastPlayed);
+
+        //    //Logger.ReportInfo("Saving Playstate: " + playState.Id + " / " + playState.PlayCount + " / " + playState.LastPlayed);
+        //    QueueCommand(cmd);
+        //}
 
 
         public void SaveChildren(Guid id, IEnumerable<Guid> children) {
@@ -508,17 +650,20 @@ namespace MediaBrowser.Library.Persistance {
             return children.Count == 0 ? null : children;
         }
 
-        const string UNKNOWN = "<Unknown>";
+        // used to track series objects during indexing so we can group episodes in their series
+        private Dictionary<string, Dictionary<Guid, IContainer>> ContainerDict = new Dictionary<string, Dictionary<Guid, IContainer>>();
 
-        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
         {
-            List<BaseItem> index = new List<BaseItem>();
+            bool allowEpisodes = property == "Directors" || property == "ProductionYear";
+            List<Index> children = new List<Index>();
             var cmd = connection.CreateCommand();
-            //we'll build the unknown items as we go through the children the first time
+
+            //we'll build the unknown items now and leave them out of child table
             List<BaseItem> unknownItems = new List<BaseItem>();
 
             //create a temporary table of this folder's recursive children to use in the retrievals
-            string tableName = "[" + folder.Id.ToString().Replace("-", "") + "_" + property + "]";
+            string tableName = "["+folder.Id.ToString().Replace("-","")+"_"+property+"]";
             if (connection.TableExists(tableName))
             {
                 connection.Exec("delete from " + tableName);
@@ -528,25 +673,32 @@ namespace MediaBrowser.Library.Persistance {
                 connection.Exec("create temporary table if not exists " + tableName + "(child)");
             }
 
-            bool allowEpisodes = property == "Year"; //only go to episode level for year index
-
-            cmd.CommandText = "Insert into " + tableName + " (child) values(@1)";
+            cmd.CommandText = "Insert into "+tableName+" (child) values(@1)";
             var childParam = cmd.Parameters.Add("@1", DbType.Guid);
+
+            var containerList = new Dictionary<Guid, IContainer>();  //initialize this for our index
             SQLInfo.ColDef col = new SQLInfo.ColDef();
             Type currentType = null;
 
-            lock (connection)
+            lock (connection) //can't use delayed writer here - need this table now...
             {
                 var tran = connection.BeginTransaction();
 
                 foreach (var child in folder.RecursiveChildren)
                 {
-                    if (child is IShow && !(child is Season)) // && (allowEpisodes && !(child is Series)) || (!allowEpisodes && !(child is Episode)))
+                    if (child is IShow && !(child is Season) && ((allowEpisodes && !(child is Series)) || (!allowEpisodes && !(child is Episode))))
                     {
+                        if (child is IGroupInIndex)
+                        {
+                            //add the series object
+                            containerList[child.Id] = (child as IGroupInIndex).MainContainer;
+                        }
+
                         //determine if property has any value
-                        if (col.ColType != child.GetType()) {
+                        if (child.GetType() != currentType)
+                        {
                             currentType = child.GetType();
-                            col = ItemSQL[child.GetType()].Columns.Find(c => c.ColName == property);
+                            col = ItemSQL[currentType].Columns.Find(c => c.ColName == property);
                         }
                         object data = null;
                         if (col.MemberType == MemberTypes.Property)
@@ -557,25 +709,27 @@ namespace MediaBrowser.Library.Persistance {
                         {
                             data = col.FieldInfo.GetValue(child);
                         }
-                        if (data != null) //only save children with data
+                        if (data != null)
                         {
-                            //Logger.ReportInfo("Adding child " + child.Name + " to temp table");
+                            //Logger.ReportVerbose("Adding child " + child.Name + " to temp table");
                             childParam.Value = child.Id;
                             cmd.ExecuteNonQuery();
                         }
                         else
                         {
-                            //just as fast to do this now...
-                            unknownItems.Add(child);
+                            //add to Unknown
+                            AddItemToIndex("<Unknown>", unknownItems, containerList, child);
                         }
                     }
                 }
                 tran.Commit();
             }
 
-
-            //create our Unknown Index
-            index.Add(new Index(constructor(UNKNOWN), unknownItems));
+            //fill in series
+            ContainerDict[tableName] = containerList;
+            //create our Unknown Index - if there were any
+            if (unknownItems.Count > 0)
+                children.Add(new Index(constructor("<Unknown>"), unknownItems));
 
             //now retrieve the values for the main indicies
             cmd = connection.CreateCommand(); //new command
@@ -588,128 +742,100 @@ namespace MediaBrowser.Library.Persistance {
             }
             else
             {
-                cmd.CommandText = "select distinct " + property + " where guid in (select child from " + tableName + ") order by " + property;
+                cmd.CommandText = "select distinct " + property + " from items where guid in (select child from " + tableName + ") order by "+property;
             }
 
             using (var reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    //Logger.ReportInfo("Creating index " + reader[0].ToString() + " on " + folder.Name);
-                    index.Add(new Index(constructor(reader[0].ToString()), new List<BaseItem>()));
+                    //Logger.ReportVerbose("Creating index " + reader[0].ToString() + " on " + folder.Name);
+                    object value = reader[0];
+                    children.Add(new Index(constructor(value.ToString()), tableName, property, value));
                 }
             }
-            return index;
+            return children;
         }
 
-        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        public List<BaseItem> RetrieveSubIndex(string childTable, string property, object value)
         {
-            //convert list to dictionary for easy access
-            Dictionary<string, IList<BaseItem>> index = new Dictionary<string, IList<BaseItem>>();
-            foreach (var item in children)
+            List<BaseItem> children = new List<BaseItem>();
+            Dictionary<Guid, IContainer> containerList = ContainerDict[childTable];
+
+            bool listColumn = false;
+            try
             {
-                index[item.Name] = (item as Index).Children;
-                item.ReCacheAllImages(null);
+                connection.Exec("Select " + property + " from items");
+            }
+            catch (SQLiteException)
+            {
+                //must be a list column as it doesn't exist in items...
+                listColumn = true;
             }
 
-            SQLInfo.ColDef col = new SQLInfo.ColDef();
-            Type currentType = null;
+            var cmd = connection.CreateCommand();
 
-                foreach (var child in folder.RecursiveChildren)
-                {
-                    if (child is IShow && !(child is Season)) // && (allowEpisodes && !(child is Series)) || (!allowEpisodes && !(child is Episode)))
-                    {
-                        //get the value of the property we are indexing
-                        if (col.ColType != child.GetType()) {
-                            currentType = child.GetType();
-                            col = ItemSQL[child.GetType()].Columns.Find(c => c.ColName == property);
-                        }
-                        object data = null;
-                        //Logger.ReportInfo("Column is: "+col.ColName+"/"+col.ColType);
-                        //Logger.ReportInfo("Child is: " + child.Name);
-                        if (col.MemberType == MemberTypes.Property)
-                        {
-                            data = col.PropertyInfo.GetValue(child, null);
-                        }
-                        else if (col.MemberType == MemberTypes.Field)
-                        {
-                            data = col.FieldInfo.GetValue(child);
-                        }
-                        if (data != null)
-                        {
-                            if (col.ListType)
-                            {
-                                //go through the list
-                                System.Collections.ICollection list = data as System.Collections.ICollection;
-                                foreach (var item in list)
-                                {
-                                    if (item is Actor)
-                                    {
-                                        //need special handling here - all others should be "stringable"
-                                        AddItemToIndex(index, (item as Actor).Name, child);
-                                    }
-                                    else
-                                    {
-                                        AddItemToIndex(index, item.ToString(), child);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                //not list
-                                AddItemToIndex(index, data.ToString(), child);
-                            }
-                        }
-                        else
-                        {
-                            //add to Unknown
-                            AddItemToIndex(index, UNKNOWN, child);
-                        }
-                    }
-            }
-        }
-
-        private void AddItemToIndex(Dictionary<string, IList<BaseItem>> index, string value, BaseItem child)
-        {
-            IList<BaseItem> subItems;
-            if (!index.TryGetValue(value, out subItems))
+            if (listColumn)
             {
-                subItems = new List<BaseItem>();
-                index[value] = subItems;
-            }
-            if (child is Episode)
-            {
-                //we want to group these by series - find or create a series head
-                Episode episode = child as Episode;
-                Folder currentSeries = episode.Parent is IndexFolder ? episode.Parent : episode.Series; //may already be indexed
-                if (currentSeries == null)
-                {
-                    //bad tv format - no series associated create one
-                    currentSeries = new Series()
-                    {
-                        Name = "<Unknown>"
-                    };
-                }
-                IndexFolder series = null; // (IndexFolder)index[value].Find(i => i.Id == (value + currentSeries.Name).GetMD5());
-                if (series == null)
-                {
-                    series = new IndexFolder()
-                    {
-                        Id = (value + currentSeries.Name).GetMD5(),
-                        Name = currentSeries.Name,
-                        Overview = currentSeries.Overview,
-                        PrimaryImagePath = currentSeries.PrimaryImagePath,
-                        SecondaryImagePath = currentSeries.SecondaryImagePath,
-                        BannerImagePath = currentSeries.BannerImagePath,
-                        BackdropImagePaths = currentSeries.BackdropImagePaths
-                    };
-                    index[value].Add(series);
-                }
-                series.AddChild(episode);
+                cmd.CommandText = "select * from items where guid in (select guid from list_items where property = '"+property+"' and value = @1 and guid in (select child from " + childTable + "))";
             }
             else
             {
-                subItems.Add(child);
+                cmd.CommandText = "select * from items where " + property + " = @1 and guid in (select child from " + childTable + ")";
+            }
+            cmd.AddParam("@1", value);
+
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    AddItemToIndex(value.ToString(), children, containerList, GetItem(reader, (string)reader["obj_type"]));
+                }
+            }
+            return children;
+        }
+
+        private void AddItemToIndex(string indexName, List<BaseItem> index, Dictionary<Guid, IContainer> seriesList, BaseItem child)
+        {
+            if (child is IGroupInIndex)
+            {
+                //we want to group these by their main containers - find or create a head
+                IContainer currentContainer = seriesList[child.Id];
+
+                if (currentContainer == null)
+                {
+                    //couldn't find our container...
+                    currentContainer = new Series()
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "<Unknown>"
+                    };
+                }
+                IndexFolder container = (IndexFolder)index.Find(i => i.Id == (indexName + currentContainer.Name).GetMD5());
+                if (container == null)
+                {
+                    container = new IndexFolder()
+                    {
+                        Id = (indexName + currentContainer.Name).GetMD5(),
+                        Name = currentContainer.Name,
+                        Overview = currentContainer.Overview,
+                        MpaaRating = currentContainer.MpaaRating,
+                        Genres = currentContainer.Genres,
+                        ImdbRating = currentContainer.ImdbRating,
+                        Studios = currentContainer.Studios,
+                        PrimaryImagePath = currentContainer.PrimaryImagePath,
+                        SecondaryImagePath = currentContainer.SecondaryImagePath,
+                        BannerImagePath = currentContainer.BannerImagePath,
+                        BackdropImagePaths = currentContainer.BackdropImagePaths,
+                        DisplayMediaType = currentContainer.DisplayMediaType,
+                    };
+                    index.Add(container);
+                }
+                container.AddChild(child);
+            }
+            else
+            {
+                index.Add(child);
             }
         }
 
@@ -717,22 +843,22 @@ namespace MediaBrowser.Library.Persistance {
 
             List<BaseItem> children = new List<BaseItem>();
 
-            if (!Kernel.UseNewSQLRepo)
-            {
-                var cached = RetrieveChildrenOld(id);
-                if (cached != null)
-                {
-                    foreach (var guid in cached)
-                    {
-                        var item = RetrieveItem(guid);
-                        if (item != null)
-                        {
-                            children.Add(item);
-                        }
-                    }
-                }
-            }
-            else
+            //if (!Kernel.UseNewSQLRepo)
+            //{
+            //    var cached = RetrieveChildrenOld(id);
+            //    if (cached != null)
+            //    {
+            //        foreach (var guid in cached)
+            //        {
+            //            var item = RetrieveItem(guid);
+            //            if (item != null)
+            //            {
+            //                children.Add(item);
+            //            }
+            //        }
+            //    }
+            //}
+            //else
             {
                 var cmd = connection.CreateCommand();
                 cmd.CommandText = "select * from items where guid in (select child from children where guid = @guid)";
@@ -743,7 +869,11 @@ namespace MediaBrowser.Library.Persistance {
                 {
                     while (reader.Read())
                     {
-                        children.Add(GetItem(reader, (string)reader["obj_type"]));
+                        var item = GetItem(reader, (string)reader["obj_type"]);
+                        if (item != null)
+                        {
+                            children.Add(item);
+                        }
                     }
                 }
             }
@@ -751,12 +881,44 @@ namespace MediaBrowser.Library.Persistance {
         }
 
         public DisplayPreferences RetrieveDisplayPreferences(DisplayPreferences dp) {
-            return itemRepo.RetrieveDisplayPreferences(dp);
+                return displayRepo.RetrieveDisplayPreferences(dp);
         }
 
 
         public void SaveDisplayPreferences(DisplayPreferences prefs) {
-            itemRepo.SaveDisplayPreferences(prefs);
+                displayRepo.SaveDisplayPreferences(prefs);
+        }
+
+        public BaseItem RetrieveItemOld(Guid id)
+        {
+            BaseItem item = null;
+            var cmd = connection.CreateCommand();
+            cmd.CommandText = "select data from items where guid = @guid";
+            cmd.AddParam("@guid", id);
+
+            //Logger.ReportInfo("Retrieving old item " + id);
+            using (var reader = cmd.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    if (!(reader[0] is DBNull)) //during migration we could have some null entries here
+                    {
+                        var data = reader.GetBytes(0);
+                        using (var stream = new MemoryStream(data))
+                        {
+                            try
+                            {
+                                item = Serializer.Deserialize<BaseItem>(stream);
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.ReportException("Unable to deserialize object during legacy retrieval - probably old data (" + id + ").", e);
+                            }
+                        }
+                    }
+                }
+            }
+            return item;
         }
 
         public BaseItem RetrieveItem(Guid id) {
@@ -764,28 +926,12 @@ namespace MediaBrowser.Library.Persistance {
             BaseItem item = null;
             //using (new MediaBrowser.Util.Profiler("===========RetrieveItem============="))
             {
-                if (!Kernel.UseNewSQLRepo)
+                //if (!Kernel.UseNewSQLRepo)
+                //{
+                //    item = RetrieveItemOld(id);
+                //}
+                //else
                 {
-                    var cmd = connection.CreateCommand();
-                    cmd.CommandText = "select data from items where guid = @guid";
-                    cmd.AddParam("@guid", id);
-
-
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            var data = reader.GetBytes(0);
-                            using (var stream = new MemoryStream(data))
-                            {
-                                item = Serializer.Deserialize<BaseItem>(stream);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    //test
                     var cmd2 = connection.CreateCommand();
                     cmd2.CommandText = "select * from items where guid = @guid";
                     cmd2.AddParam("@guid", id);
@@ -804,8 +950,6 @@ namespace MediaBrowser.Library.Persistance {
                 }
             }
             
-            //
-            //Logger.ReportInfo("Item: " + item.Name);
             return item;
         }
 
@@ -821,63 +965,80 @@ namespace MediaBrowser.Library.Persistance {
                 Logger.ReportException("Error trying to create instance of type: " + itemType, e);
                 return null;
             }
-            SQLInfo itemSQL;
-            if (!ItemSQL.TryGetValue(item.GetType(), out itemSQL))
+            if (item != null)
             {
-                itemSQL = new SQLInfo(item);
-                ItemSQL.Add(item.GetType(), itemSQL);
-                //make sure our schema matches
-                itemSQL.FixUpSchema(connection);
-            }
-            foreach (var col in itemSQL.AtomicColumns)
-            {
-                var data = SQLizer.Extract(reader, col);
-                if (data != null)
-                    if (col.MemberType == MemberTypes.Property)
-                        col.PropertyInfo.SetValue(item, data, null);
-                    else
-                        col.FieldInfo.SetValue(item, data);
-
-            }
-            // and our list columns
-            //this is an optimization - we go get all the list values for this item in one statement
-            var listCmd = connection.CreateCommand();
-            listCmd.CommandText = "select property, value from list_items where guid = @guid and property != 'ActorName' order by property";
-            listCmd.AddParam("@guid", item.Id);
-            string currentProperty = "";
-            System.Collections.IList list = null;
-            SQLInfo.ColDef column = new SQLInfo.ColDef();
-            using (var listReader = listCmd.ExecuteReader())
-            {
-                while (listReader.Read())
+                SQLInfo itemSQL;
+                lock (ItemSQL)
                 {
-                    string property = listReader.GetString(0);
-                    if (property != currentProperty)
+                    if (!ItemSQL.TryGetValue(item.GetType(), out itemSQL))
                     {
-                        //new column...
-                        if (list != null)
-                        {
-                            //fill in the last one
-                            if (column.MemberType == MemberTypes.Property)
-                                column.PropertyInfo.SetValue(item, list, null);
-                            else
-                                column.FieldInfo.SetValue(item, list);
-                        }
-                        currentProperty = property;
-                        column = itemSQL.Columns.Find(c => c.ColName == property);
-                        list = (System.Collections.IList)column.ColType.GetConstructor(new Type[] { }).Invoke(null);
-                        //Logger.ReportVerbose("Added list item '" + listReader[0] + "' to " + col.ColName);
+                        itemSQL = new SQLInfo(item);
+                        ItemSQL.Add(item.GetType(), itemSQL);
+                        //make sure our schema matches
+                        itemSQL.FixUpSchema(connection);
                     }
-                    list.Add(SQLizer.Extract(listReader, new SQLInfo.ColDef() { ColName = "value", ColType = column.InternalType }));
                 }
-                if (list != null)
+                foreach (var col in itemSQL.AtomicColumns)
                 {
-                    //fill in the last one
-                    if (column.MemberType == MemberTypes.Property)
-                        column.PropertyInfo.SetValue(item, list, null);
-                    else
-                        column.FieldInfo.SetValue(item, list);
+                    var data = SQLizer.Extract(reader, col);
+                    if (data != null)
+                        if (col.MemberType == MemberTypes.Property)
+                            col.PropertyInfo.SetValue(item, data, null);
+                        else
+                            col.FieldInfo.SetValue(item, data);
+
                 }
+                // and our list columns
+                //this is an optimization - we go get all the list values for this item in one statement
+                var listCmd = connection.CreateCommand();
+                listCmd.CommandText = "select property, value from list_items where guid = @guid and property != 'ActorName' order by property, sort_order";
+                listCmd.AddParam("@guid", item.Id);
+                string currentProperty = "";
+                System.Collections.IList list = null;
+                SQLInfo.ColDef column = new SQLInfo.ColDef();
+                using (var listReader = listCmd.ExecuteReader())
+                {
+                    while (listReader.Read())
+                    {
+                        string property = listReader.GetString(0);
+                        if (property != currentProperty)
+                        {
+                            //new column...
+                            if (list != null)
+                            {
+                                //fill in the last one
+                                if (column.MemberType == MemberTypes.Property)
+                                    column.PropertyInfo.SetValue(item, list, null);
+                                else
+                                    column.FieldInfo.SetValue(item, list);
+                            }
+                            currentProperty = property;
+                            column = itemSQL.Columns.Find(c => c.ColName == property);
+                            list = (System.Collections.IList)column.ColType.GetConstructor(new Type[] { }).Invoke(null);
+                            //Logger.ReportVerbose("Added list item '" + listReader[0] + "' to " + col.ColName);
+                        }
+                        try
+                        {
+                            list.Add(SQLizer.Extract(listReader, new SQLInfo.ColDef() { ColName = "value", ColType = column.InternalType }));
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.ReportException("Error adding item to list " + column.ColName + " on item " + item.Name, e);
+                        }
+                    }
+                    if (list != null)
+                    {
+                        //fill in the last one
+                        if (column.MemberType == MemberTypes.Property)
+                            column.PropertyInfo.SetValue(item, list, null);
+                        else
+                            column.FieldInfo.SetValue(item, list);
+                    }
+                }
+            }
+            else
+            {
+                Logger.ReportWarning("Ignoring invalid item " + itemType + ".  Would not instantiate in current environment.");
             }
             return item;
         }
@@ -886,124 +1047,97 @@ namespace MediaBrowser.Library.Persistance {
         {
             if (item == null) return;
 
-            //using (new MediaBrowser.Util.Profiler("==== Save Item: " + item.Name))
+            if (!ItemSQL.ContainsKey(item.GetType()))
             {
-                if (!Kernel.UseNewSQLRepo)
+                ItemSQL.Add(item.GetType(), new SQLInfo(item));
+                //make sure our schema matches
+                ItemSQL[item.GetType()].FixUpSchema(connection);
+            }
+            var cmd2 = connection.CreateCommand();
+            cmd2.CommandText = ItemSQL[item.GetType()].UpdateStmt;
+
+
+            cmd2.AddParam("@0", item.Id);
+            cmd2.AddParam("@1", item.GetType().FullName);
+            int colNo = 2; //id was 0 type was 1...
+            foreach (var col in ItemSQL[item.GetType()].AtomicColumns)
+            {
+                if (col.MemberType == MemberTypes.Property)
+                    cmd2.AddParam("@" + colNo, SQLizer.Encode(col, col.PropertyInfo.GetValue(item, null)));
+                else
+                    cmd2.AddParam("@" + colNo, SQLizer.Encode(col, col.FieldInfo.GetValue(item)));
+                colNo++;
+            }
+            QueueCommand(cmd2);
+
+            //and now each of our list members
+            var delCmd = connection.CreateCommand();
+            delCmd.CommandText = "delete from list_items where guid = @guid";
+            delCmd.AddParam("@guid", item.Id);
+            delCmd.ExecuteNonQuery();
+            foreach (var col in ItemSQL[item.GetType()].ListColumns)
+            {
+                System.Collections.IEnumerable list = null;
+
+                if (col.MemberType == MemberTypes.Property)
                 {
-                    using (var fs = new MemoryStream())
-                    {
-                        BinaryWriter bw = new BinaryWriter(fs);
-                        Serializer.Serialize(bw.BaseStream, item);
-
-                        var cmd = connection.CreateCommand();
-                        cmd.CommandText = "replace into items(guid, data) values (@guid, @data)";
-
-                        SQLiteParameter guidParam = new SQLiteParameter("@guid");
-                        SQLiteParameter dataParam = new SQLiteParameter("@data");
-
-                        cmd.Parameters.Add(guidParam);
-                        cmd.Parameters.Add(dataParam);
-
-                        guidParam.Value = item.Id;
-                        dataParam.Value = fs.ToArray();
-
-                        QueueCommand(cmd);
-                    }
+                    //var it = col.PropertyInfo.GetValue(item, null);
+                    //Type ittype = it.GetType();
+                    list = col.PropertyInfo.GetValue(item, null) as System.Collections.IEnumerable;
                 }
                 else
+                    list = col.FieldInfo.GetValue(item) as System.Collections.IEnumerable;
+
+                if (list != null)
                 {
-                    //test
-                    if (!ItemSQL.ContainsKey(item.GetType()))
+                    var insCmd = connection.CreateCommand();
+                    insCmd.CommandText = "insert or ignore into list_items(guid, property, value, sort_order) values(@guid, @property, @value, @order)"; // possible another thread beat us to it...
+                    insCmd.AddParam("@guid", item.Id);
+                    insCmd.AddParam("@property", col.ColName);
+                    SQLiteParameter val = new SQLiteParameter("@value");
+                    insCmd.Parameters.Add(val);
+                    SQLiteParameter ord = new SQLiteParameter("@order");
+                    insCmd.Parameters.Add(ord);
+
+                    //special handling for actors because they are saved serialized - we also need to save them in a query-able form...
+                    var insActorCmd = connection.CreateCommand();
+                    bool isActor = col.InternalType == typeof(Actor);
+                    SQLiteParameter val2 = new SQLiteParameter("@value2");
+                    if (isActor)
                     {
-                        ItemSQL.Add(item.GetType(), new SQLInfo(item));
-                        //make sure our schema matches
-                        ItemSQL[item.GetType()].FixUpSchema(connection);
+                        insActorCmd.CommandText = "insert or ignore into list_items(guid, property, value, sort_order) values(@guid, 'ActorName', @value2, @order)";
+                        insActorCmd.AddParam("@guid", item.Id);
+                        insActorCmd.Parameters.Add(val2);
+                        insActorCmd.Parameters.Add(ord);
                     }
-                    var cmd2 = connection.CreateCommand();
-                    cmd2.CommandText = ItemSQL[item.GetType()].UpdateStmt;
 
-
-                    cmd2.AddParam("@0", item.Id);
-                    cmd2.AddParam("@1", item.GetType().FullName);
-                    int colNo = 2; //id was 0 type was 1...
-                    foreach (var col in ItemSQL[item.GetType()].AtomicColumns)
+                    int order = 0;
+                    foreach (var listItem in list)
                     {
-                        if (col.MemberType == MemberTypes.Property)
-                            cmd2.AddParam("@" + colNo, SQLizer.Encode(col, col.PropertyInfo.GetValue(item, null)));
-                        else
-                            cmd2.AddParam("@" + colNo, SQLizer.Encode(col, col.FieldInfo.GetValue(item)));
-                        colNo++;
-                    }
-                    QueueCommand(cmd2);
-
-                    //and now each of our list members
-                    //lock (connection)
-                    {
-                        //var tran = connection.BeginTransaction(); //more for performance than consistency...
-                        var delCmd = connection.CreateCommand();
-                        delCmd.CommandText = "delete from list_items where guid = @guid";
-                        delCmd.AddParam("@guid", item.Id);
-                        delCmd.ExecuteNonQuery();
-                        foreach (var col in ItemSQL[item.GetType()].ListColumns)
+                        val.Value = SQLizer.Encode(new SQLInfo.ColDef() { ColType = col.InternalType, InternalType = listItem.GetType() }, listItem);
+                        ord.Value = order;
+                        QueueCommand(insCmd);
+                        if (isActor)
                         {
-                            System.Collections.IEnumerable list = null;
-
-                            if (col.MemberType == MemberTypes.Property)
-                            {
-                                //var it = col.PropertyInfo.GetValue(item, null);
-                                //Type ittype = it.GetType();
-                                list = col.PropertyInfo.GetValue(item, null) as System.Collections.IEnumerable;
-                            }
-                            else
-                                list = col.FieldInfo.GetValue(item) as System.Collections.IEnumerable;
-
-                            if (list != null)
-                            {
-                                var insCmd = connection.CreateCommand();
-                                insCmd.CommandText = "insert into list_items(guid, property, value) values(@guid, @property, @value)";
-                                insCmd.AddParam("@guid", item.Id);
-                                insCmd.AddParam("@property", col.ColName);
-                                SQLiteParameter val = new SQLiteParameter("@value");
-                                insCmd.Parameters.Add(val);
-
-                                //special handling for actors because they are saved serialized - we also need to save them in a query-able form...
-                                var insActorCmd = connection.CreateCommand();
-                                bool isActor = col.InternalType == typeof(Actor);
-                                SQLiteParameter val2 = new SQLiteParameter("@value2");
-                                if (isActor)
-                                {
-                                    insActorCmd.CommandText = "insert into list_items(guid, property, value) values(@guid, 'ActorName', @value2)";
-                                    insActorCmd.AddParam("@guid", item.Id);
-                                    insActorCmd.Parameters.Add(val2);
-                                }
-
-                                foreach (var listItem in list)
-                                {
-                                    val.Value = SQLizer.Encode(new SQLInfo.ColDef() { ColType = col.InternalType, InternalType = listItem.GetType() }, listItem);
-                                    insCmd.ExecuteNonQuery();
-                                    if (isActor)
-                                    {
-                                        val2.Value = (listItem as Actor).Name.Trim();
-                                        insActorCmd.ExecuteNonQuery();
-                                    }
-                                }
-                            }
+                            //Logger.ReportInfo("Saving Actor Name '" + (listItem as Actor).Person.Name+"'");
+                            val2.Value = (listItem as Actor).Person.Name;
+                            QueueCommand(insActorCmd);
                         }
-                        //tran.Commit();
+                        order++;
                     }
-                    //finally, update the recent list
-                    //if (item is Media) //don't need to track non-media items
-                    //{
-                    //    var recCmd = connection.CreateCommand();
-                    //    recCmd.CommandText = "replace into recent_list(top_parent, child, date_added) values(@top, @child, @date)";
-                    //    recCmd.AddParam("@top", item.TopParent);
-                    //    recCmd.AddParam("@child", item.Id);
-                    //    recCmd.AddParam("@date", item.DateCreated);
-                    //    recCmd.ExecuteNonQuery();
-                    //}
+
                 }
 
-                //
+                //finally, update the recent list
+                //if (item is Media) //don't need to track non-media items
+                //{
+                //    var recCmd = connection.CreateCommand();
+                //    recCmd.CommandText = "replace into recent_list(top_parent, child, date_added) values(@top, @child, @date)";
+                //    recCmd.AddParam("@top", item.TopParent);
+                //    recCmd.AddParam("@child", item.Id);
+                //    recCmd.AddParam("@date", item.DateCreated);
+                //    recCmd.ExecuteNonQuery();
+                //}
             }
         }
 
@@ -1042,10 +1176,18 @@ namespace MediaBrowser.Library.Persistance {
 
             using (var reader = cmd.ExecuteReader()) {
                 while (reader.Read()) {
+                    //Logger.ReportVerbose("Retrieving Provider: " + reader.GetString(1));
                     using (var ms = new MemoryStream(reader.GetBytes(0))) {
 
-                        var data = (IMetadataProvider)Serializer.Deserialize<object>(ms);
-                        providers.Add(data);
+                        try
+                        {
+                            var data = (IMetadataProvider)Serializer.Deserialize<object>(ms);
+                            if (data != null) providers.Add(data);
+                        }
+                        catch (SerializationException e)
+                        {
+                            Logger.ReportException("Corrupt provider: " + reader.GetString(0), e);
+                        }
                     }
                 }
             }
@@ -1073,7 +1215,6 @@ namespace MediaBrowser.Library.Persistance {
                     cmd.AddParam("@full_name", provider.GetType().FullName);
                     var dataParam = cmd.AddParam("@data");
 
-
                     using (var ms = new MemoryStream()) {
                         Serializer.Serialize(ms, (object)provider);
                         dataParam.Value = ms.ToArray();
@@ -1083,8 +1224,30 @@ namespace MediaBrowser.Library.Persistance {
             }
         }
 
+        public int ClearCache(string objType)
+        {
+            int ret = -1;
+            lock (connection)
+            {
+                try
+                {
+
+                    ret = connection.Exec("delete from items where obj_type like '%" + objType + "'");
+                    connection.Exec("vacuum");
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Error trying to clear cache of object type: " + objType, e);
+                }
+            }
+            return ret;
+        }
+
+
         public bool ClearEntireCache() {
             lock (connection) {
+                //first drop our cascade delete triggers to speed this up
+                connection.Exec("drop trigger delete_item");
                 var tran = connection.BeginTransaction();
                 connection.Exec("delete from provider_data"); 
                 connection.Exec("delete from items");
@@ -1094,6 +1257,8 @@ namespace MediaBrowser.Library.Persistance {
                 // People will get annoyed if this is lost
                 // connection.Exec("delete from play_states");
                 tran.Commit(); 
+                //and put back the triggers
+                connection.Exec(triggerSQL);
                 connection.Exec("vacuum");
             }
 

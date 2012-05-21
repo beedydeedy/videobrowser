@@ -9,6 +9,7 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
 using MediaBrowser.Library.Localization;
+using MediaBrowser.Library.Persistance;
 using System.Collections;
 using System.Diagnostics;
 
@@ -24,20 +25,26 @@ namespace MediaBrowser.Library.Entities {
 
         Lazy<List<BaseItem>> children;
         protected IFolderMediaLocation location;
-        IComparer<BaseItem> sortFunction = new BaseItemComparer(SortOrder.Name);
+        protected IComparer<BaseItem> sortFunction = new BaseItemComparer(SortOrder.Name);
         object validateChildrenLock = new object();
         public MBDirectoryWatcher directoryWatcher;
+        Type childType;
+        protected IndexFolder quickListFolder;
 
         public Folder()
             : base() {
             children = new Lazy<List<BaseItem>>(() => GetChildren(true), () => OnChildrenChanged(null));
         }
 
-        //Dynamic Choice Items - these can be overidden or added to by sub-classes to provide for different options for different item types
-        /// <summary>
-        /// Dictionary of sort options - consists of a localized display string and an IComparer(Baseitem) for the sort
-        /// </summary>
-        public Dictionary<string, IComparer<BaseItem>> SortOrderOptions = new Dictionary<string,IComparer<BaseItem>>() { 
+        public IComparer<BaseItem> SortFunction
+        {
+            get
+            {
+                return this.sortFunction;
+            }
+        }
+
+        private Dictionary<string, IComparer<BaseItem>> sortOrderOptions= new Dictionary<string,IComparer<BaseItem>>() { 
             {LocalizedStrings.Instance.GetString("NameDispPref"), new BaseItemComparer(SortOrder.Name)},
             {LocalizedStrings.Instance.GetString("DateDispPref"), new BaseItemComparer(SortOrder.Date)},
             {LocalizedStrings.Instance.GetString("RatingDispPref"), new BaseItemComparer(SortOrder.Rating)},
@@ -45,20 +52,32 @@ namespace MediaBrowser.Library.Entities {
             {LocalizedStrings.Instance.GetString("UnWatchedDispPref"), new BaseItemComparer(SortOrder.Unwatched)},
             {LocalizedStrings.Instance.GetString("YearDispPref"), new BaseItemComparer(SortOrder.Year)}
         };
+        //Dynamic Choice Items - these can be overidden or added to by sub-classes to provide for different options for different item types
         /// <summary>
-        /// ArrayList of index options for display - should be localized and must match IndexByOptions positionally
+        /// Dictionary of sort options - consists of a localized display string and an IComparer(Baseitem) for the sort
         /// </summary>
-        public ArrayList IndexByDisplayOptions = new ArrayList() { LocalizedStrings.Instance.GetString("NoneDispPref"), 
-                                                   LocalizedStrings.Instance.GetString("ActorDispPref"), 
-                                                   LocalizedStrings.Instance.GetString("GenreDispPref"), 
-                                                   LocalizedStrings.Instance.GetString("DirectorDispPref"),
-                                                   LocalizedStrings.Instance.GetString("YearDispPref"), 
-                                                   LocalizedStrings.Instance.GetString("StudioDispPref") };
-
+        public virtual Dictionary<string, IComparer<BaseItem>> SortOrderOptions
+        {
+            get { return sortOrderOptions; }
+            set { sortOrderOptions = value; }
+        }
+        private Dictionary<string, string> indexByOptions = new Dictionary<string, string>() { 
+            {LocalizedStrings.Instance.GetString("NoneDispPref"), ""}, 
+            {LocalizedStrings.Instance.GetString("ActorDispPref"), "Actors"},
+            {LocalizedStrings.Instance.GetString("GenreDispPref"), "Genres"},
+            {LocalizedStrings.Instance.GetString("DirectorDispPref"), "Directors"},
+            {LocalizedStrings.Instance.GetString("YearDispPref"), "ProductionYear"},
+            {LocalizedStrings.Instance.GetString("OfficialRatingDispPref"), "MpaaRating"},
+            {LocalizedStrings.Instance.GetString("StudioDispPref"), "Studios"}
+        };
         /// <summary>
-        /// List of index by field names - must match exactly the object property names and match up positionally with IndexByDisplayOptions
+        /// Dictionary of index options - consists of a display value and a property name (must match the property exactly)
         /// </summary>
-        public List<string> IndexByOptions = new List<string>() { "None", "Actors", "Genres", "Directors", "ProductionYear", "Studios" };
+        public virtual Dictionary<string, string> IndexByOptions
+        {
+            get { return indexByOptions; }
+            set { indexByOptions = value; }
+        }
 
         /// <summary>
         /// By default children are loaded on first access, this operation is slow. So sometimes you may
@@ -82,6 +101,20 @@ namespace MediaBrowser.Library.Entities {
             this.location = location as IFolderMediaLocation;
         }
 
+        public Type ChildType
+        {
+            get {
+                if (childType == null)
+                {
+                    if (ActualChildren.Count > 0)
+                        childType = ActualChildren[0].GetType();
+                    else
+                        return typeof(BaseItem);
+                }
+                return childType; 
+            }
+        }
+
         public override bool PlayAction(Item item)
         {
             //set our flag to show the popup menu
@@ -94,6 +127,22 @@ namespace MediaBrowser.Library.Entities {
             {
                 // return only the children not protected
                 return Kernel.Instance.ParentalControls.RemoveDisallowed(ActualChildren);
+            }
+        }
+
+        public virtual bool PromptForChildRefresh
+        {
+            get
+            {
+                return Kernel.Instance.ConfigData.AskIncludeChildrenRefresh;
+            }
+        }
+
+        public virtual bool DefaultIncludeChildrenRefresh
+        {
+            get
+            {
+                return Kernel.Instance.ConfigData.DefaultIncludeChildrenRefresh;
             }
         }
 
@@ -112,25 +161,282 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        public void Sort(IComparer<BaseItem> sortFunction) {
+        protected BaseItem lastWatchedItem;
+        public BaseItem LastWatchedItem
+        {
+            get
+            {
+                if (lastWatchedItem == null)
+                {
+                    //using (new MediaBrowser.Util.Profiler("folder lastwatched search for "+this.Name))
+                    lastWatchedItem = this.RecursiveChildren.Where(i => i is Media && (i as Media).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Media).PlaybackStatus.LastPlayed).FirstOrDefault();
+                }
+                return lastWatchedItem;
+            }
+            set
+            {
+                lastWatchedItem = value;
+            }
+        }
+
+        protected List<BaseItem> newestItems;
+
+        public List<BaseItem> NewestItems
+        {
+            get
+            {
+                if (newestItems == null)
+                {
+                    newestItems = this.Children.OrderByDescending(i => i.DateCreated).Take(Kernel.Instance.ConfigData.RecentItemCount).ToList();
+                }
+                return newestItems;
+            }
+        }
+
+        protected Guid QuickListID(string option)
+        {
+            return ("quicklist" + option + this.Name + this.Path).GetMD5();
+        }
+
+        protected bool reBuildQuickList = false;
+        public virtual Folder QuickList
+        {
+            get
+            {
+                if (quickListFolder == null)
+                {
+                    if (this.ParentalAllowed)
+                    {
+                        string recentItemOption = Kernel.Instance.ConfigData.RecentItemOption;
+                        if (recentItemOption == "watched")
+                            reBuildQuickList = true;  //have to re-build these each time
+
+                        Logger.ReportVerbose("=====Retrieving Quicklist ID: " + QuickListID(recentItemOption));
+                        if (!reBuildQuickList) quickListFolder = Kernel.Instance.ItemRepository.RetrieveItem(QuickListID(recentItemOption)) as IndexFolder;
+                        if (quickListFolder == null || quickListFolder.Name != "ParentalControl:" + Kernel.Instance.ParentalControls.Enabled || quickListFolder.Children.Count == 0)
+                        {
+                            //re-build
+                            using (new MediaBrowser.Util.Profiler("RAL Load for " + this.Name)) UpdateQuickList(recentItemOption);
+                            //and then try and load again
+                            quickListFolder = Kernel.Instance.ItemRepository.RetrieveItem(QuickListID(recentItemOption)) as IndexFolder;
+                        }
+                    }
+
+                }
+                return quickListFolder ?? new IndexFolder();
+            }
+        }
+
+        public virtual void ResetQuickList()
+        {
+            quickListFolder = null; //it will re-load next time requested
+            reBuildQuickList = true;
+        }
+
+        protected void RemoveQuicklist()
+        {
+            //remove any persisted lists from the cache
+            quickListFolder = new IndexFolder(new List<BaseItem>()) { Id = QuickListID("added"), Name = "Reset" };
+            Kernel.Instance.ItemRepository.SaveItem(quickListFolder);
+            Kernel.Instance.ItemRepository.SaveChildren(quickListFolder.Id, new List<Guid>());
+            quickListFolder.Id = QuickListID("unwatched");
+            Kernel.Instance.ItemRepository.SaveItem(quickListFolder);
+            Kernel.Instance.ItemRepository.SaveChildren(quickListFolder.Id, new List<Guid>());
+            quickListFolder.Id = QuickListID("watched");
+            Kernel.Instance.ItemRepository.SaveItem(quickListFolder);
+            Kernel.Instance.ItemRepository.SaveChildren(quickListFolder.Id, new List<Guid>());
+        }
+
+        public virtual void UpdateQuickList(string recentItemOption) 
+        {
+            //rebuild the proper list
+            List<BaseItem> items = null;
+            int containerNo = 0;
+            int maxItems = this.ActualChildren.Count > 0 ? (this.ActualChildren[0] is IContainer || this.GetType().Name == "MusicMainFolder") && Kernel.Instance.ConfigData.RecentItemCollapseThresh <= 6 ? Kernel.Instance.ConfigData.RecentItemContainerCount : Kernel.Instance.ConfigData.RecentItemCount : Kernel.Instance.ConfigData.RecentItemCount;
+            Logger.ReportVerbose("Starting RAL ("+recentItemOption+") Build for " + this.Name + 
+                " with "+maxItems +" items out of "+this.RecursiveChildren.Count()+".");
+            switch (recentItemOption)
+            {
+                case "watched":
+                    items = this.RecursiveChildren.Where(i => i is Media && (i as Media).PlaybackStatus.PlayCount > 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => (i as Media).PlaybackStatus.LastPlayed).Take(maxItems).ToList();
+
+                    break;
+
+                case "unwatched":
+                    items = this.RecursiveChildren.Where(i => i is Media && (i as Media).PlaybackStatus.PlayCount == 0).Distinct(new BaseItemEqualityComparer()).OrderByDescending(v => v.DateCreated).Take(maxItems).ToList();
+                    break;
+
+                default:
+                    items = this.RecursiveChildren.Where(i => i is Media).Distinct(new BaseItemEqualityComparer()).OrderByDescending(i => i.DateCreated).Take(maxItems).ToList();
+                    break;
+
+            }
+            if (items != null)
+            {
+                Logger.ReportVerbose(recentItemOption + " list for " + this.Name + " loaded with " + items.Count + " items.");
+                List<BaseItem> folderChildren = new List<BaseItem>();
+                //now collapse anything that needs to be and create the child list for the list folder
+                var containers = from item in items
+                                 where item is IGroupInIndex
+                                 group item by (item as IGroupInIndex).MainContainer;
+
+                foreach (var container in containers) 
+                {
+                    Logger.ReportVerbose("Container "+(container.Key == null ? "--Unknown--" : container.Key.Name) + " items: "+container.Count());
+                    if (container.Count() < Kernel.Instance.ConfigData.RecentItemCollapseThresh)
+                    {
+                        //add the items without rolling up
+                        foreach (var i in container)
+                        {
+                            //make sure any inherited images get loaded
+                            var ignore = i.Parent != null ? i.Parent.BackdropImages : null;
+                            ignore = i.BackdropImages;
+                            var ignore2 = i.LogoImage;
+                            ignore2 = i.ArtImage;
+                            
+                            folderChildren.Add(i);
+                        }
+                    }
+                    else
+                    {
+                        var currentContainer = container.Key as IContainer ?? new IndexFolder() { Name = "<Unknown>"};
+                        containerNo++;
+                        IndexFolder aContainer = new IndexFolder(new List<BaseItem>())
+                            {
+                                Id = ("container"+recentItemOption + this.Name + this.Path + containerNo).GetMD5(),
+                                Name = currentContainer.Name + " ("+container.Count()+" Items)",
+                                Overview = currentContainer.Overview,
+                                MpaaRating = currentContainer.MpaaRating,
+                                Genres = currentContainer.Genres,
+                                ImdbRating = currentContainer.ImdbRating,
+                                Studios = currentContainer.Studios,
+                                PrimaryImagePath = currentContainer.PrimaryImagePath,
+                                SecondaryImagePath = currentContainer.SecondaryImagePath,
+                                BannerImagePath = currentContainer.BannerImagePath,
+                                BackdropImagePaths = currentContainer.BackdropImagePaths,
+                                TVDBSeriesId = currentContainer is Series ? (currentContainer as Series).TVDBSeriesId : null,
+                                LogoImagePath = currentContainer is Media ? (currentContainer as Media).LogoImagePath : null,
+                                ArtImagePath = currentContainer is Media ? (currentContainer as Media).ArtImagePath : null,
+                                ThumbnailImagePath = currentContainer is Media ? (currentContainer as Media).ThumbnailImagePath : null,
+                                DisplayMediaType = currentContainer.DisplayMediaType,
+                                DateCreated = container.First().DateCreated,
+                                Parent = this
+                            };
+                        if (container.Key is Series)
+                        {
+
+                            //always roll into seasons
+                            var seasons = from episode in container
+                                          group episode by episode.Parent;
+                            foreach (var season in seasons)
+                            {
+                                var currentSeason = season.Key as Series ?? new Season() { Name = "<Unknown>" };
+                                containerNo++;
+                                IndexFolder aSeason = new IndexFolder(season.ToList())
+                                {
+                                    Id = ("season"+recentItemOption + this.Name + this.Path + containerNo).GetMD5(),
+                                    Name = currentSeason.Name + " ("+season.Count()+" Items)",
+                                    Overview = currentSeason.Overview,
+                                    MpaaRating = currentSeason.MpaaRating,
+                                    Genres = currentSeason.Genres,
+                                    ImdbRating = currentSeason.ImdbRating,
+                                    Studios = currentSeason.Studios,
+                                    PrimaryImagePath = currentSeason.PrimaryImagePath,
+                                    SecondaryImagePath = currentSeason.SecondaryImagePath,
+                                    BannerImagePath = currentSeason.BannerImagePath,
+                                    BackdropImagePaths = currentSeason.BackdropImagePaths,
+                                    TVDBSeriesId = currentSeason.TVDBSeriesId,
+                                    LogoImagePath = currentSeason.LogoImagePath,
+                                    ArtImagePath = currentSeason.ArtImagePath,
+                                    ThumbnailImagePath = currentSeason.ThumbnailImagePath,
+                                    DisplayMediaType = currentSeason.DisplayMediaType,
+                                    DateCreated = season.First().DateCreated,
+                                    Parent = currentSeason == aContainer ? this : aContainer
+                                };
+                                Kernel.Instance.ItemRepository.SaveItem(aSeason);
+                                Kernel.Instance.ItemRepository.SaveChildren(aSeason.Id, season.Select(i => i.Id));
+                                aContainer.AddChild(aSeason);
+                            }
+                        }
+                        else
+                        {
+                            //not series so just add all children to container
+                            aContainer.AddChildren(container.ToList());
+                        }
+                        Kernel.Instance.ItemRepository.SaveItem(aContainer);
+                        Kernel.Instance.ItemRepository.SaveChildren(aContainer.Id, aContainer.Children.Select(i => i.Id));
+                        //and container to children
+                        folderChildren.Add(aContainer);
+                    }
+                }
+
+                //finally add all the items that don't go in containers
+                folderChildren.AddRange(items.Where(i => (!(i is IGroupInIndex))));
+
+                //and create our quicklist folder
+                //we save it with the current state of parental controls so we know when we re-load if it is valid
+                IndexFolder quickList = new IndexFolder(folderChildren) { Id = QuickListID(recentItemOption), Name = "ParentalControl:" + Kernel.Instance.ParentalControls.Enabled };
+                Logger.ReportVerbose(this.Name + " folderChildren: " + folderChildren.Count + " listfolder.children: " + quickList.Children.Count());
+                Kernel.Instance.ItemRepository.SaveItem(quickList);
+                Kernel.Instance.ItemRepository.SaveChildren(QuickListID(recentItemOption), folderChildren.Select(i => i.Id));
+
+            }
+
+        }
+
+        public virtual void Sort(IComparer<BaseItem> sortFunction) {
             Sort(sortFunction, true);
         }
 
+        //can't change the signature of virtual function so have to use this property to report changes -ebr
+        public bool FolderChildrenChanged = false;
 
         public virtual void ValidateChildren() {
             // we never want 2 threads validating children at the same time
             lock (validateChildrenLock) {
-                ValidateChildrenImpl();
+                FolderChildrenChanged = ValidateChildrenImpl();
+                if (FolderChildrenChanged)
+                {
+                    this.runtime = this.mediaCount = null;
+                }
+            }
+        }
+
+        protected int? runtime;
+        public int RunTime
+        {
+            get
+            {
+                if (runtime == null)
+                {
+                    runtime = this.RecursiveMedia.Select(m => m.RunTime).Sum();
+                }
+                return runtime == null ? 0 : runtime.Value;
+            }
+        }
+
+        [Persist]
+        protected int? mediaCount;
+        public int MediaCount
+        {
+            get
+            {
+                if (mediaCount == null)
+                {
+                    mediaCount = this.RecursiveMedia.Distinct(i => i.Id).Count();
+                    Kernel.Instance.ItemRepository.SaveItem(this);
+                }
+                return mediaCount == null ? 0 : mediaCount.Value;
             }
         }
 
         public bool Watched {
             set {
                 foreach (var item in this.EnumerateChildren()) {
-                    var video = item as Video;
-                    if (video != null) {
-                        video.PlaybackStatus.WasPlayed = value;
-                        video.PlaybackStatus.Save();
+                    var media = item as Media;
+                    if (media != null) {
+                        media.PlaybackStatus.WasPlayed = value;
+                        Kernel.Instance.SavePlayState(media, media.PlaybackStatus);
                     }
                     var folder = item as Folder;
                     if (folder != null) {
@@ -147,8 +453,8 @@ namespace MediaBrowser.Library.Entities {
                 // it may be expensive to bring in the playback status 
                 // so don't lock up the object during.
                 foreach (var item in this.Children) {
-                    var video = item as Video;
-                    if (video != null && video.PlaybackStatus.PlayCount == 0) {
+                    var media = item as Media;
+                    if (media != null && !media.PlaybackStatus.WasPlayed) {
                         count++;
                     } else {
                         var folder = item as Folder;
@@ -171,6 +477,7 @@ namespace MediaBrowser.Library.Entities {
 
             foreach (var item in RecursiveChildren) {
                 if (searchFunction(item) && !item.IsTrailer && (!Config.Instance.ExcludeRemoteContentInSearch || !item.IsRemoteContent)) {
+                    var ignore = item.BackdropImages; //force these to load
                     items[item.Id] = item;
                 }
             }
@@ -197,44 +504,42 @@ namespace MediaBrowser.Library.Entities {
                 .Select(s => func(s));
         }
 
-        public List<BaseItem> IndexBy(IndexType indexType) {
+        protected virtual Func<string, BaseItem> GetConstructor(string property) {
+            switch (property) {
+                case "Actors":
+                case "Directors":
+                    return a => Person.GetPerson(a);
 
-            if (indexType == IndexType.None) throw new ArgumentException("Index type should not be none!");
+                case "Genres":
+                    return g => Genre.GetGenre(g);
 
-            List<BaseItem> ret = null;
-            string property = "";
+                case "ProductionYear":
+                    return y => Year.GetYear(y);
 
-            switch (indexType) {
-                case IndexType.Actor:
-                    property = "Actors";
-                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Actors", a => Person.GetPerson(a));
-                    break;
-
-                case IndexType.Director:
-                    property = "Directors";
-                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Directors", d => Person.GetPerson(d));
-                    break;
-
-                case IndexType.Genre:
-                    property = "Genres";
-                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Genres", g => Genre.GetGenre(g));
-                    break;
-
-                case IndexType.Year:
-                    property = "ProductionYear";
-                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "ProductionYear", y => Year.GetYear(y));
-                    break;
-                case IndexType.Studio:
-                    property = "Studios";
-                    ret = Kernel.Instance.ItemRepository.RetrieveIndex(this, "Studios", s => Studio.GetStudio(s));
-                    break;
+                case "Studios":
+                    return s => Studio.GetStudio(s);
 
                 default:
-                    break;
+                    return i => GenericItem.GetItem(i);
             }
+        }
 
+        public virtual IList<Index> IndexBy(string property)
+        {
 
-            return ret;
+            if (string.IsNullOrEmpty(property)) throw new ArgumentException("Index type should not be none!");
+            var index = Kernel.Instance.ItemRepository.RetrieveIndex(this, property, GetConstructor(property));
+            //build in images
+            Async.Queue("Index image builder", () =>
+            {
+                foreach (var item in index)
+                {
+                    if (item.PrimaryImage == null) //this will keep us from blanking out images that are already there and the source is not available
+                        item.RefreshMetadata();
+                }
+            });
+
+            return index;
         }
 
         private static BaseItem UnknownItem(IndexType indexType) {
@@ -260,7 +565,7 @@ namespace MediaBrowser.Library.Entities {
         /// that are not hidden by parental controls.  Use for UI operations.
         ///   Safe for multithreaded use, since it operates on list clones
         /// </summary>
-        public IEnumerable<BaseItem> RecursiveChildren {
+        public virtual IEnumerable<BaseItem> RecursiveChildren {
             get {
                 foreach (var item in Children) {
                     if (item.ParentalAllowed || !Config.Instance.HideParentalDisAllowed)
@@ -283,7 +588,7 @@ namespace MediaBrowser.Library.Entities {
         /// ignoring parental controls (use only from refresh operations)
         ///   Safe for multithreaded use, since it operates on list clones
         /// </summary>
-        public IEnumerable<BaseItem> AllRecursiveChildren
+        public virtual IEnumerable<BaseItem> AllRecursiveChildren
         {
             get
             {
@@ -296,12 +601,50 @@ namespace MediaBrowser.Library.Entities {
                     var folder = item as Folder;
                     if (folder != null)
                     {
-                        foreach (var subitem in folder.RecursiveChildren)
+                        foreach (var subitem in folder.AllRecursiveChildren)
                         {
                             yield return subitem;
                         }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// A recursive enumerator that walks through all the sub children
+        /// that are folders and not hidden by parental controls.  Use for UI operations.
+        ///   Safe for multithreaded use, since it operates on list clones
+        /// </summary>
+        public virtual IEnumerable<Folder> RecursiveFolders
+        {
+            get
+            {
+                foreach (var item in Children)
+                {
+                    Folder folder = item as Folder;
+
+                    if (folder != null && (item.ParentalAllowed || !Config.Instance.HideParentalDisAllowed))
+                    {
+                        yield return folder;
+                        foreach (var subitem in folder.RecursiveFolders)
+                        {
+                            yield return subitem;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// A recursive enumerator that walks through all the sub children
+        /// that are some type of media and not hidden by parental controls.  Use for UI operations.
+        ///   Safe for multithreaded use, since it operates on list clones
+        /// </summary>
+        public virtual IEnumerable<Media> RecursiveMedia
+        {
+            get
+            {
+                return RecursiveChildren.OfType<Media>();
             }
         }
 
@@ -329,14 +672,23 @@ namespace MediaBrowser.Library.Entities {
 
         protected void OnChildrenChanged(ChildrenChangedEventArgs args) {
             Sort(sortFunction, false);
+            runtime = null;
 
-            if (ChildrenChanged != null) {
+            if (ChildrenChanged != null)
+            {
                 ChildrenChanged(this, args);
+                //Logger.ReportVerbose("Called Childrenchanged for " + Name);
+            }
+            else
+            {
+                //Logger.ReportVerbose("NOT Calling Childrenchanged for " + Name);
             }
         }
 
         bool ValidateChildrenImpl() {
+
             location = null;
+            int unavailableItems = 0;
             // cache a copy of the children
 
             var childrenCopy = ActualChildren.ToList(); //changed this to reference actual children so it wouldn't keep mucking up hidden ones -ebr
@@ -347,7 +699,6 @@ namespace MediaBrowser.Library.Entities {
             foreach (var item in childrenCopy) {
                 currentChildren[item.Id] = item;
             }
-
 
             bool changed = false;
             foreach (var item in validChildren) {
@@ -371,25 +722,49 @@ namespace MediaBrowser.Library.Entities {
                         ActualChildren.Add(item);
                         item.RefreshMetadata(MediaBrowser.Library.Metadata.MetadataRefreshOptions.Force); //necessary to get it to show up without user intervention
                         Kernel.Instance.ItemRepository.SaveItem(item);
-                        if (item is Folder)
+                        
+                        // Notify the kernel that a new item was added
+                        Kernel.Instance.OnItemAddedToLibrary(item);
+
+                        var folder = item as Folder;
+
+                        if (folder != null)
                         {
-                            (item as Folder).ValidateChildren();
+                            folder.ValidateChildren();
                         }
                     }
                 }
             }
 
-            foreach (var item in currentChildren.Values.Where(item => item != null)) {
-                changed = true;
-                Logger.ReportInfo("Removing missing item from library: "+item.Path);
-                lock (ActualChildren) {
-                    ActualChildren.RemoveAll(current => current.Id == item.Id);
+            foreach (var item in currentChildren.Values.Where(item => item != null))
+            {
+                if (FolderMediaLocation != null && FolderMediaLocation.IsUnavailable(item.Path))
+                {
+                    Logger.ReportInfo("Not removing missing item " + item.Name + " because its location is unavailable.");
+                    unavailableItems++;
                 }
+                else
+                {
+                    changed = true;
+                    Logger.ReportInfo("Removing missing item from library: (" + item.Id + ") " + item.Path);
+                    lock (ActualChildren)
+                    {
+                        ActualChildren.RemoveAll(current => current.Id == item.Id);
+                    }
+                    // Notify the kernel that an item was removed
+                    Kernel.Instance.OnItemRemovedFromLibrary(item);
+                }
+
             }
 
             // this is a rare concurrency bug workaround - which I already fixed (it protects against regressions)
-            if (!changed && childrenCopy.Count != validChildren.Count) {
-                //Debug.Assert(false,"For some reason we have duplicate items in our folder, fixing this up!");
+            if (!changed && childrenCopy.Count != (validChildren.Count + unavailableItems)) {
+                Logger.ReportWarning("For some reason we have duplicate items in folder "+Name+", fixing this up!");
+                Logger.ReportVerbose("ChildrenCopy count: "+childrenCopy.Count + " ValidChildren count: "+(validChildren.Count + unavailableItems));
+                Logger.ReportVerbose("ChildrenCopy contents are: ");
+                foreach (var item in childrenCopy) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
+                Logger.ReportVerbose("ValidChildren contents are: ");
+                foreach (var item in validChildren) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
                 childrenCopy = childrenCopy
                     .Distinct(i => i.Id)
                     .ToList();
@@ -405,6 +780,10 @@ namespace MediaBrowser.Library.Entities {
 
             if (changed) {
                 SaveChildren(Children);
+                //we need to blank out the persisted RAL items for the top level folder
+                var item = this;
+                while (item != null && item.Parent != Kernel.Instance.RootFolder) item = item.Parent;
+                if (item != null) item.RemoveQuicklist();
                 OnChildrenChanged(new ChildrenChangedEventArgs { FolderContentChanged = true });
             }
             return changed;
@@ -421,7 +800,7 @@ namespace MediaBrowser.Library.Entities {
                 items = GetNonCachedChildren();
 
                 if (allowCache) {
-                    SaveChildren(items);
+                    SaveChildren(items, true);
                 }
             }
 
@@ -432,27 +811,23 @@ namespace MediaBrowser.Library.Entities {
         protected virtual List<BaseItem> GetNonCachedChildren() {
 
             List<BaseItem> items = new List<BaseItem>();
-            bool networkChecked = false;
 
             // don't bomb out on invalid folders - its correct to say we have no children
             if (this.FolderMediaLocation != null) {
-                //if we point to a network location, be sure it is available first
-                //if this.FolderMediaLocation.Path
                 foreach (var location in this.FolderMediaLocation.Children) {
                     if (location != null) {
-                        if (!networkChecked && location.Path.StartsWith("\\\\"))
+                        try
                         {
-                            //network location - test to be sure it is accessible
-                            if (!Helper.WaitForLocation(location.Path, Kernel.Instance.ConfigData.NetworkAvailableTimeOut))
-                            {
-                                throw new Exception("Network location unavailable attempting to validate " + this.Name + ". ABORTING to avoid cache corruption.");
+                            var item = Kernel.Instance.GetItem(location);
+                            if (item != null) {
+                                items.Add(item);
                             }
-                            networkChecked = true;
                         }
-                        var item = Kernel.Instance.GetItem(location);
-                        if (item != null) {
-                            items.Add(item);
+                        catch (Exception e)
+                        {
+                            Logger.ReportException("Error trying to load item from file system: " + location.Path, e);
                         }
+
                     }
                 }
             }
@@ -460,12 +835,20 @@ namespace MediaBrowser.Library.Entities {
            
         }
 
-        void SaveChildren(IList<BaseItem> items) {
+        protected void SaveChildren(IList<BaseItem> items)
+        {
+            SaveChildren(items, false);
+        }
+
+        protected void SaveChildren(IList<BaseItem> items, bool saveIndvidualChidren) {
             Kernel.Instance.ItemRepository.SaveChildren(Id, items.Select(i => i.Id));
-            //this is unecessary and very expensive - no reason to save every child because one of them changed...
-            //foreach (var item in items) {
-            //    Kernel.Instance.ItemRepository.SaveItem(item);
-            //}
+            if (saveIndvidualChidren)
+            {
+                foreach (var item in items)
+                {
+                    Kernel.Instance.ItemRepository.SaveItem(item); 
+                }
+            }
         }
 
         void SetParent(List<BaseItem> items) {
@@ -507,18 +890,20 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        void Sort(IComparer<BaseItem> sortFunction, bool notifyChange) {
+        protected virtual void Sort(IComparer<BaseItem> sortFunction, bool notifyChange) {
             this.sortFunction = sortFunction;
             lock (ActualChildren) {
+                //Logger.ReportVerbose("=====sorting actual children for " + Name + " Sort function: "+sortFunction);
                 ActualChildren.Sort(sortFunction);
             }
             if (notifyChange && ChildrenChanged != null)
                 {
                     ChildrenChanged(this, null);
                 }
+            //Logger.ReportVerbose("=====FINISHED sorting actual children for " + Name);
         }
 
-        List<BaseItem> GetCachedChildren() {
+        protected virtual List<BaseItem> GetCachedChildren() {
             List<BaseItem> items = null;
             //using (new MediaBrowser.Util.Profiler(this.Name + " child retrieval"))
             {

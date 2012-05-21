@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MediaBrowser.Library.Localization;
 
 /*
  This is a rough index implementation, this name can be an actor or genre or year. 
@@ -14,6 +15,7 @@ namespace MediaBrowser.Library.Entities {
         BaseItem shadowItem;
         string indexProperty;
         string childTableName;
+        object propertyValue;
 
         public override string Name {
             get {
@@ -21,6 +23,18 @@ namespace MediaBrowser.Library.Entities {
             }
             set {
                 shadowItem.Name = value;
+            }
+        }
+
+        public override string DisplayMediaType
+        {
+            get
+            {
+                return shadowItem.DisplayMediaType;
+            }
+            set
+            {
+                shadowItem.DisplayMediaType = value;
             }
         }
 
@@ -75,9 +89,38 @@ namespace MediaBrowser.Library.Entities {
             this.children = children;
             this.Id = Guid.NewGuid();
             this.shadowItem = item;
+            //don't want to allow indexing an index
+            this.IndexByOptions = new Dictionary<string, string>() {
+                    {LocalizedStrings.Instance.GetString("NoneDispPref"), ""} 
+            };
         }
 
-        protected override List<BaseItem> ActualChildren { get { return children; } }
+        public Index(BaseItem item, string childTable, string property, object value)
+        {
+            this.children = null;
+            this.Id = Guid.NewGuid();
+            this.indexProperty = property;
+            this.childTableName = childTable;
+            this.propertyValue = value;
+            this.shadowItem = item;
+            //don't want to allow indexing an index
+            this.IndexByOptions = new Dictionary<string, string>() {
+                    {LocalizedStrings.Instance.GetString("NoneDispPref"), ""} 
+            };
+        }
+
+        protected override List<BaseItem> ActualChildren
+        {
+            get
+            {
+                if (children == null)
+                {
+                    children = Kernel.Instance.ItemRepository.RetrieveSubIndex(childTableName, indexProperty, propertyValue);
+                }
+
+                return children;
+            }
+        }
 
         public override void ValidateChildren() {
             // do nothing

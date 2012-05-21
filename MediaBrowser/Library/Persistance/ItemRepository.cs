@@ -179,14 +179,15 @@ namespace MediaBrowser.Library {
             return children.Count == 0 ? null : children;
         }
 
-        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
         {
             //compatability with new repo
             return null;
         }
 
-        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        public List<BaseItem> RetrieveSubIndex(string childTable, string property, object value)
         {
+            return null;
         }
 
         public bool BackupDatabase()
@@ -208,6 +209,7 @@ namespace MediaBrowser.Library {
         {
             throw new NotImplementedException();
         }
+
         public PlaybackStatus RetrievePlayState(Guid id) {
             return playbackStatus[id]; 
         }

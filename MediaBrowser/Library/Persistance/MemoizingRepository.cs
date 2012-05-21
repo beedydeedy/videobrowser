@@ -75,15 +75,16 @@ namespace MediaBrowser.Library.Persistance {
             return Memoize(id, fullChildren, repository.RetrieveChildren);
         }
 
-        public List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
+        public IList<Index> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor)
         {
             return repository.RetrieveIndex(folder, property, constructor);
         }
 
-        public void FillSubIndexes(Folder folder, IList<BaseItem> children, string property)
+        public List<BaseItem> RetrieveSubIndex(string childTable, string property, object value)
         {
-            repository.FillSubIndexes(folder, children, property);
+            return repository.RetrieveSubIndex(childTable, property, value);
         }
+
 
         // Do not memoize these calls, as they are shared.
         public PlaybackStatus RetrievePlayState(Guid id) {
