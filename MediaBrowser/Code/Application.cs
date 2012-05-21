@@ -693,6 +693,8 @@ namespace MediaBrowser
 
                     Play(playable);
 
+                    playable.WaitForPlayState(PlayableItemPlayState.Stopped);
+
                     if (Directory.Exists(path))
                     {
                         Directory.Delete(path, true);
