@@ -1884,9 +1884,9 @@ namespace MediaBrowser
                 int i = 0;
 
                 // Try to wait for playback to completely stop, but don't get hung up too long
-                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 5)
+                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 10)
                 {
-                    System.Threading.Thread.Sleep(500);
+                    System.Threading.Thread.Sleep(250);
                     i++;
                 }
             }

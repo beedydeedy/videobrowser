@@ -530,7 +530,7 @@ namespace MediaBrowser.Library.Playables
                 while (PlaybackController.IsPlaying)
                 {
                     Logger.ReportVerbose("Still waiting for {0} to stop", PlaybackController.ControllerName); 
-                    System.Threading.Thread.Sleep(500);
+                    System.Threading.Thread.Sleep(250);
                 }
             }
 
