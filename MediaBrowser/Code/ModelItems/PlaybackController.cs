@@ -78,7 +78,7 @@ namespace MediaBrowser
                 if (playable.GoFullScreen)
                 {
                     mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
-
+                    
                     if (!mediaExperience.IsFullScreen)
                     {
                         mediaExperience.GoToFullScreen();
@@ -86,7 +86,7 @@ namespace MediaBrowser
                 }
 
                 // Attach event handler to MediaCenterEnvironment
-                // We need this because if you press stop on a dvd menu without ever playing, Transport property changed will never fire
+                // We need this because if you press stop on a dvd menu without ever playing, Transport.PropertyChanged will never fire
                 mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
                 mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
 
@@ -275,7 +275,7 @@ namespace MediaBrowser
             HandlePropertyChange(env, mce, transport, property);
         }
 
-        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, string property)
+        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience exp, MediaTransport transport, string property)
         {
             PlayState state;
             long positionTicks = 0;
@@ -290,7 +290,7 @@ namespace MediaBrowser
             }
             catch (InvalidOperationException)
             {
-                state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
+                state = exp.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
             }
 
             _CurrentPlayState = state;
@@ -307,7 +307,7 @@ namespace MediaBrowser
                     return;
                 }
             }
-
+            Logger.ReportVerbose("Property: " + property);
             // protect against really agressive calls
             if (property == "Position")
             {
@@ -326,7 +326,7 @@ namespace MediaBrowser
             bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined;
 
             // Get metadata from player
-            MediaMetadata metadata = mce.MediaMetadata;
+            MediaMetadata metadata = exp.MediaMetadata;
 
             string metadataTitle = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata);
             long metadataDuration = PlaybackControllerHelper.GetDurationOfCurrentlyPlayingMedia(metadata);
@@ -350,14 +350,14 @@ namespace MediaBrowser
 
             if (isStopped)
             {
-                HandleStoppedState(env, mce, transport, eventArgs);
+                HandleStoppedState(env, exp, transport, eventArgs);
             }
         }
 
         /// <summary>
         /// Handles a change of Playstate by firing various events and post play processes
         /// </summary>
-        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, PlaybackStateEventArgs e)
+        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience exp, MediaTransport transport, PlaybackStateEventArgs e)
         {
             // Stop listening to the events
             env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
@@ -368,7 +368,7 @@ namespace MediaBrowser
 
             _CurrentMediaCollection = null;
 
-            var mediaType = mce.MediaType;
+            var mediaType = exp.MediaType;
 
             // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
             if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
