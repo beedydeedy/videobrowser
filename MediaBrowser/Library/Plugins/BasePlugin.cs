@@ -9,6 +9,26 @@ namespace MediaBrowser.Library.Plugins {
     /// This is the class plugins should inherit off, it implements gathering basic version info
     /// </summary>
     public abstract class BasePlugin : IPlugin {
+
+        protected static List<string> knownPremiumPlugins = new List<string>() {
+            "CoverArt",
+            "Media Browser Intros",
+            "Pearl Theme",
+            "Jade Theme",
+            "Lotus Theme",
+            "Sapphire Theme",
+            "Supremacy Theme",
+            "Regency Theme",
+            "Ascendancy Theme",
+            "Imperium Theme",
+            "Kismet Theme",
+            "Centrality Theme",
+            "Maelstrom Theme",
+            "Harmony Theme",
+            "Vanilla Theme",
+            "Neo Theme"
+        };
+
         #region IPlugin Members
 
         public abstract void Init(Kernel kernel);
@@ -86,7 +106,15 @@ namespace MediaBrowser.Library.Plugins {
         {
             get
             {
-                return Name + " (v" + Version + ")";
+                return Name + " (v" + Version + ")"+premiumInd;
+            }
+        }
+
+        protected virtual string premiumInd
+        {
+            get
+            {
+                return IsPremium ? " (premium)" : "";
             }
         }
 
@@ -98,9 +126,9 @@ namespace MediaBrowser.Library.Plugins {
 
         public virtual MBLoadContext InitDirective { 
             get {
-                //by default, any plug-in that produces an interface should only init in core
+                //by default, any plug-in that produces an interface should only init in core and the configurator
                 if (InstallGlobally)
-                    return MBLoadContext.Core | MBLoadContext.Other;
+                    return MBLoadContext.Core | MBLoadContext.Configurator;
                 else
                     return MBLoadContext.All; 
             } 
@@ -109,6 +137,11 @@ namespace MediaBrowser.Library.Plugins {
         public virtual string PluginClass
         {
             get { return InstallGlobally ? PluginClasses.Themes : PluginClasses.Other; }
+        }
+
+        public virtual string UpgradeInfo
+        {
+            get { return ""; }
         }
 
         public virtual void Configure()
@@ -121,6 +154,13 @@ namespace MediaBrowser.Library.Plugins {
             }
         }
 
+        /// <summary>
+        /// Override to return true if plugin requries paid registration
+        /// </summary>
+        public virtual bool IsPremium
+        {
+            get { return knownPremiumPlugins.Contains(this.Name); }
+        }
 
         #endregion
 

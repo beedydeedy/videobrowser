@@ -8,6 +8,7 @@
 	  xmlns:mi="resx://MediaBrowser/MediaBrowser.Resources/MovieInfo"
 	  xmlns:lw="resx://MediaBrowser/MediaBrowser.Resources/LastWatched"
 	  xmlns:ts="resx://MediaBrowser/MediaBrowser.Resources/TitleSet"
+    xmlns:al="resx://MediaBrowser/MediaBrowser.Resources/ArtistList"
 	  xmlns:sy="resx://MediaBrowser/MediaBrowser.Resources/Summary"
     xmlns:as="resx://MediaBrowser/MediaBrowser.Resources/AutoScroller"
     xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/ScrollableText"
@@ -178,6 +179,17 @@
         </Actions>
       </Changed>
 
+      <Rule>
+        <Conditions>
+          <Equality Source="[SelectedItem.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[SelectedItem.Actors.Count]" ConditionOp="GreaterThan" Value="0" />
+        </Conditions>
+        <Actions>
+          <Set Value="[SelectedItem.Actors]" Target="[ArtistList.SourceData]"/>
+          <Set Value="true" Target="[ArtistList.Visible]"/>
+        </Actions>
+      </Rule>
+
     </Rules>
 
     <Content>
@@ -185,7 +197,7 @@
         <Children>
 
 
-          <Panel Name="DetailsSection" MouseInteractive="true" Padding="5,5,0,0" >
+          <Panel Name="DetailsSection" MouseInteractive="true" Padding="0,5,0,0" >
             <LayoutInput>
               <FormLayoutInput Left="Parent,0,30" Right="Backdrop,0" Top="Parent,0,130" />
             </LayoutInput>
@@ -194,20 +206,21 @@
             </Layout>
             <Children>
               <ts:TitleSet Name="TitleSet" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" Font="font://f:SV_TitleFont" SubFont="font://f:SV_SubTitleFont"/>
-              <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" />
+              <al:ArtistList Name="ArtistList" SourceData="[SelectedItem.Actors]" Font="font://f:SV_SubTitleFont" WordWrap="true" Visible="false"/>
+              <mi:MovieInfo Name="MovieInfo" Application="[Application]" Model="[SelectedItem]" ModelFast="[PreSelectedItem]" DisplayMediaInfo="false" DisplayMediaInfoPanel="true" />
             </Children>
           </Panel>
 
           <st:ScrollableText Name="Summary" Font="font://f:SV_SummaryFont" Color="color://s:FontColorMedium" FocusColor="color://s:FontColorLight">
           <!--<sy:SummaryNonScrolling Name="Summary" Model="[SelectedItem]"  ModelFast="[PreSelectedItem]" Color="color://s:FontColorLight" Font="font://f:SV_SummaryFont">-->
             <LayoutInput>
-              <FormLayoutInput Left="DetailsSection,0" Top="DetailsSection,1" Right="DetailsSection,1" Bottom="Counters,0,-10"></FormLayoutInput>
+              <FormLayoutInput Left="DetailsSection,0" Top="DetailsSection,1" Right="DetailsSection,1,-5" Bottom="Counters,0,28"></FormLayoutInput>
             </LayoutInput>
           </st:ScrollableText>
 
           <as:AutoScrollText ScrollSpeed="[Application.Config.AutoScrollSpeed]" ScrollDelay="[Application.Config.AutoScrollDelay]" Name="AutoScrollOverview" Text="[SelectedItem.Overview]" Font="font://f:SV_SummaryFont">
             <LayoutInput>
-              <FormLayoutInput Left="DetailsSection,0" Top="DetailsSection,1" Right="DetailsSection,1" Bottom="Counters,0,-10"></FormLayoutInput>
+              <FormLayoutInput Left="DetailsSection,0,-5" Top="DetailsSection,1" Right="DetailsSection,1" Bottom="Counters,0,10"></FormLayoutInput>
             </LayoutInput>
           </as:AutoScrollText>
 
@@ -216,8 +229,8 @@
               <FormLayoutInput Bottom="MyItems,0" Left="Parent,0,20"/>
             </LayoutInput>
             <Children>
-              <Text Content="-1" Name="CurrentItem" Color="color://s:FontColorLight" Font="font://f:SV_CounterFont"></Text>
-              <Text Content=" | " Color="color://s:FontColorLight" Font="font://f:SV_CounterFont"></Text>
+              <Text Content="-1" Name="CurrentItem" Color="color://s:FontColorMedium" Font="font://f:SV_CounterFont"></Text>
+              <Text Content=" | " Color="color://s:FontColorMedium" Font="font://f:SV_CounterFont"></Text>
               <Text Content="-1" Name="TotalItems" Color="color://s:FontColorMedium" Font="font://f:SV_CounterFont"></Text>
             </Children>
           </Panel>

@@ -31,11 +31,11 @@ namespace MusicPlugin.Code.ModelItems
             if (Config.Instance.EnableSyncViews)           
                 id = baseItem.GetType().FullName.GetMD5();
 
-            DisplayPreferences dp = Kernel.Instance.ItemRepository.RetrieveDisplayPreferences(id);
+            /*DisplayPreferences dp = Kernel.Instance.ItemRepository.RetrieveDisplayPreferences(id);
             if (dp == null) {
                 LoadDefaultDisplayPreferences(ref id, ref dp);
             }
-            this.DisplayPrefs = dp;
+            this.DisplayPrefs = dp;*/
         }
     }
 }

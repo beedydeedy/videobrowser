@@ -52,7 +52,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
             XmlDocument metadataDoc = new XmlDocument();
             metadataDoc.Load(metadataFile);
 
-            var seriesNode = metadataDoc.SelectSingleNode("Series");
+            var seriesNode = metadataDoc.SelectSingleNode("//Series");
             if (seriesNode == null) {
                 // support for sams metadata scraper 
                 seriesNode = metadataDoc.SelectSingleNode("Item");
@@ -63,7 +63,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 return;
             }
 
-            string id = seriesNode.SafeGetString("id");
+            string id = series.TVDBSeriesId = seriesNode.SafeGetString("id");
 
             var p = seriesNode.SafeGetString("banner");
             if (p != null) {
@@ -77,6 +77,9 @@ namespace MediaBrowser.Library.Providers.TVDB {
 
 
             Item.Overview = seriesNode.SafeGetString("Overview");
+            if (Item.Overview != null)
+                Item.Overview = Item.Overview.Replace("\n\n", "\n");
+
             Item.Name = seriesNode.SafeGetString("SeriesName");
 
             //used for extended actor information. will fetch actors with roles stored in <Persons> tag
@@ -100,15 +103,18 @@ namespace MediaBrowser.Library.Providers.TVDB {
             }
 
             //used for backwards compatibility. Will fetch actors stored in the <Actors> tag
-            string actors = seriesNode.SafeGetString("Actors");
-            if (actors != null)
+            if (series.Actors == null || series.Actors.Count == 0)
             {
-                if (series.Actors == null)
-                    series.Actors = new List<Actor>();
-
-                foreach (string n in actors.Trim('|').Split('|'))
+                string actors = seriesNode.SafeGetString("Actors");
+                if (actors != null)
                 {
-                    series.Actors.Add(new Actor { Name = n });
+                    if (series.Actors == null)
+                        series.Actors = new List<Actor>();
+
+                    foreach (string n in actors.Trim('|').Split('|'))
+                    {
+                        series.Actors.Add(new Actor { Name = n });
+                    }
                 }
             }
 
@@ -153,6 +159,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 //}
             }
 
+            series.CustomRating = seriesNode.SafeGetString("CustomRating");
+            series.CustomPIN = seriesNode.SafeGetString("CustomPIN");
 
             // Some XML files may have incorrect series ids so do not try to set the item, 
             // this would really mess up the internet provid

@@ -27,20 +27,21 @@ namespace MediaBrowser
         protected override void LoadPage(object target, string source, IDictionary<string, object> sourceData, IDictionary<string, object> uiProperties, bool navigateForward)
         {
             this.Application.NavigatingForward = navigateForward;
+
+            Item currentItem = GetCurrentItem(uiProperties);
+
             if (navigateForward)
             {
                 string current = "";
-
+                
                 if (breadcrumbs.Count == 0) {
                     current = Config.Instance.InitialBreadcrumbName;
                 }
-                else if ((uiProperties != null) && (uiProperties.ContainsKey("Item")))
+
+                else if (currentItem != null)
                 {
-                    current = ((Item)uiProperties["Item"]).Name;
+                    current = currentItem.Name;
                 } 
-                else if ((uiProperties != null) && (uiProperties.ContainsKey("Folder"))) {
-                    current = ((FolderModel)uiProperties["Folder"]).Name;
-                }
 
                 //check to see if we are going to the PIN page
                 else if (source == "resx://MediaBrowser/MediaBrowser.Resources/ParentalPINEntry")
@@ -58,8 +59,13 @@ namespace MediaBrowser
                 //clear out the protected folder list each time we go back to the root
                 if ((uiProperties != null) && (uiProperties.ContainsKey("Folder")))
                 {
-                    Application.CurrentInstance.CurrentFolder = uiProperties["Folder"] as FolderModel; //keep track of current folder on back
-                    if (((FolderModel)uiProperties["Folder"]).IsRoot) {
+                    FolderModel folder = currentItem as FolderModel;
+
+                    //keep track of current folder on back
+                    Application.CurrentInstance.CurrentFolder = folder; 
+                    
+                    if (folder.IsRoot)
+                    {
                         //we're backing into the root folder - clear the protected folder list
                         Kernel.Instance.ClearProtectedAllowedList();
                     }
@@ -67,6 +73,22 @@ namespace MediaBrowser
             }
             
             base.LoadPage(target, source, sourceData, uiProperties, navigateForward);
+
+            Application.CurrentInstance.OnNavigationInto(currentItem);
+        }
+
+        private Item GetCurrentItem(IDictionary<string, object> uiProperties)
+        {
+            if (uiProperties.ContainsKey("Item"))
+            {
+                return uiProperties["Item"] as Item;
+            }
+            else if (uiProperties.ContainsKey("Folder"))
+            {
+                return uiProperties["Folder"] as FolderModel;
+            }
+
+            return null;
         }
 
         public string Breadcrumbs

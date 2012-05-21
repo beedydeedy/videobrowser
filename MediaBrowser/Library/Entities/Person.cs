@@ -43,7 +43,7 @@ namespace MediaBrowser.Library.Entities {
         {
             get
             {
-                return Name;
+                return Sorting.SortHelper.GetSortableName(Name);
             }
             set
             {

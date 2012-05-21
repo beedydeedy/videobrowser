@@ -91,7 +91,7 @@ namespace MediaBrowser.Library
                     }
                     else
                     {
-                       getPrimaryBackdropImage(); 
+                        getFirstBackdropImage();
                     }
                 }
                 if (backdropImage != null) //may not have had time to fill this in yet - if not, a propertychanged event will fire it again
@@ -105,12 +105,25 @@ namespace MediaBrowser.Library
             }
         }
 
+        AsyncImageLoader primaryBackdropImage = null;
         private void getPrimaryBackdropImage()
         {
+            if (primaryBackdropImage == null)
+            {
+                primaryBackdropImage = backdropImage = new AsyncImageLoader(
+                    () => baseItem.PrimaryBackdropImage,
+                    null,
+                    () => this.FirePropertiesChanged("PrimaryBackdropImage"));
+                backdropImage.LowPriority = true;
+            }
+        }
+
+        private void getFirstBackdropImage()
+        {
             backdropImage = new AsyncImageLoader(
-                () => baseItem.BackdropImage,
+                () => baseItem.PrimaryBackdropImage,
                 null,
-                () => this.FirePropertyChanged("BackdropImage"));
+                () => this.FirePropertiesChanged("BackdropImage"));
             backdropImage.LowPriority = true;
         }
 
@@ -124,12 +137,15 @@ namespace MediaBrowser.Library
             else
             {
                 //just a single one required
-                backdropImageIndex = randomizer.Next(baseItem.BackdropImages.Count);
-                backdropImage = new AsyncImageLoader(
-                    () => baseItem.BackdropImages[backdropImageIndex],
-                    null,
-                    () => this.FirePropertyChanged("BackdropImage"));
-                backdropImage.LowPriority = true;
+                if (baseItem.BackdropImages.Count > 0)
+                {
+                    backdropImageIndex = randomizer.Next(baseItem.BackdropImages.Count);
+                    backdropImage = new AsyncImageLoader(
+                        () => baseItem.BackdropImages[backdropImageIndex],
+                        null,
+                        () => this.FirePropertyChanged("BackdropImage"));
+                    backdropImage.LowPriority = true;
+                }
             }
         }
 
@@ -138,7 +154,23 @@ namespace MediaBrowser.Library
             get
             {
                 getPrimaryBackdropImage();
-                return backdropImage.Image;
+                return primaryBackdropImage.Image;
+            }
+        }
+
+        public string PrimaryBackdropImagePath
+        {
+            get
+            {
+                return BaseItem.BackdropImagePath ?? "";
+            }
+        }
+
+        public List<string> BackdropImagePaths
+        {
+            get
+            {
+                return BaseItem.BackdropImagePaths ?? new List<string>();
             }
         }
 
@@ -166,7 +198,7 @@ namespace MediaBrowser.Library
 
                 lock (backdropImages)
                 {
-                    return backdropImages.Select(async => async.Image).ToList();
+                    return backdropImages.Select(asyncLoader => asyncLoader.Image).ToList();
                 }
             }
         }
@@ -203,7 +235,7 @@ namespace MediaBrowser.Library
         Random randomizer = new Random();
         public void GetNextBackDropImage()
         {
-            if (!Config.Instance.RotateBackdrops || Application.CurrentInstance.PlaybackController.IsPlaying) return; // only do this if we want to rotate
+            if (!Config.Instance.RotateBackdrops || Application.CurrentInstance.IsPlayingVideo || Application.CurrentInstance.IsExternalWmcApplicationPlaying) return; // only do this if we want to rotate
 
             EnsureAllBackdropsAreLoaded();
             var images = new List<AsyncImageLoader>();
@@ -311,14 +343,19 @@ namespace MediaBrowser.Library
                     if (primaryImage.IsLoaded &&
                         preferredImageSmallSize != null &&
                         (preferredImageSmallSize.Width > 0 ||
-                        preferredImageSmallSize.Height > 0)) {
+                        preferredImageSmallSize.Height > 0))
+                    {
 
-                        if (primaryImageSmall == null) {
+                        if (primaryImageSmall == null)
+                        {
                             LoadSmallPrimaryImage();
                         }
                     }
-
-                    return primaryImageSmall != null ? primaryImageSmall.Image : null;
+                    else
+                    {
+                        //Logger.ReportWarning("Primary image small size not set: " + Name);
+                    }
+                    return primaryImageSmall != null ? primaryImageSmall.Image : PrimaryImage;
                 } else {
                     return DefaultImage;
                 }
@@ -378,7 +415,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return preferBanner ? BannerImage : PrimaryImage;
+                return preferBanner ? BannerImage ?? PrimaryImage : PrimaryImage;
             }
         }
 
@@ -387,7 +424,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return preferBanner ? BannerImage : PrimaryImageSmall;
+                return preferBanner ? BannerImage ?? PrimaryImageSmall : PrimaryImageSmall;
             }
         }
 
@@ -410,15 +447,137 @@ namespace MediaBrowser.Library
             }
         }
 
+        AsyncImageLoader logoImage = null;
+        public Image LogoImage
+        {
+            get
+            {
+                if (!HasLogoImage)
+                {
+                    return null;
+                }
+                EnsureLogoImageIsSet();
+                return logoImage.Image;
+            }
+        }
+
+        private void EnsureLogoImageIsSet()
+        {
+            if (logoImage == null)
+            {
+                logoImage = new AsyncImageLoader(
+                    () => baseItem.LogoImage,
+                    DefaultImage,
+                    LogoImageChanged);
+                var ignore = logoImage.Image;
+            }
+        }
+
+        void LogoImageChanged()
+        {
+            FirePropertyChanged("LogoImage");
+        }
+
+        public bool HasLogoImage
+        {
+            get
+            {
+                return baseItem.LogoImagePath != null || (PhysicalParent != null ? PhysicalParent.HasLogoImage : false);
+            }
+        }
+
+
+        AsyncImageLoader artImage = null;
+        public Image ArtImage
+        {
+            get
+            {
+                if (!HasArtImage)
+                {
+                    return null;
+                }
+                EnsureArtImageIsSet();
+                return artImage.Image;
+            }
+        }
+
+        private void EnsureArtImageIsSet()
+        {
+            if (artImage == null)
+            {
+                artImage = new AsyncImageLoader(
+                    () => baseItem.ArtImage,
+                    DefaultImage,
+                    ArtImageChanged);
+                var ignore = artImage.Image;
+            }
+        }
+
+        void ArtImageChanged()
+        {
+            FirePropertyChanged("ArtImage");
+        }
+
+        public bool HasArtImage
+        {
+            get
+            {
+                return baseItem.ArtImagePath != null || (PhysicalParent != null ? PhysicalParent.HasArtImage : false);
+            }
+        }
+
+        AsyncImageLoader thumbnailImage = null;
+        public Image ThumbnailImage
+        {
+            get
+            {
+                if (!HasThumbnailImage)
+                {
+                    return null;
+                }
+                EnsureThumbnailImageIsSet();
+                return thumbnailImage.Image;
+            }
+        }
+
+        private void EnsureThumbnailImageIsSet()
+        {
+            if (thumbnailImage == null)
+            {
+                thumbnailImage = new AsyncImageLoader(
+                    () => baseItem.ThumbnailImage,
+                    DefaultImage,
+                    ThumbnailImageChanged);
+                var ignore = thumbnailImage.Image;
+            }
+        }
+
+        void ThumbnailImageChanged()
+        {
+            FirePropertyChanged("ThumbnailImage");
+        }
+
+        public bool HasThumbnailImage
+        {
+            get
+            {
+                return baseItem.ThumbnailImagePath != null;
+            }
+        }
 
         public bool HasPrimaryImage
         {
             get { return baseItem.PrimaryImagePath != null; }
         }
 
+        public bool HasSecondaryImage
+        {
+            get { return baseItem.SecondaryImagePath != null; }
+        }
+
         public bool HasPreferredImage
         {
-            get { return (PreferBanner ? HasBannerImage : HasPrimaryImage); }
+            get { return (HasPrimaryImage); }
         }
 
         bool preferBanner;

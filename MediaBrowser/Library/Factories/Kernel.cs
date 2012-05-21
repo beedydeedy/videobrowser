@@ -1,30 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
+using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.EntityDiscovery;
+using MediaBrowser.Library.Events;
+using MediaBrowser.Library.Factories;
 using MediaBrowser.Library.Filesystem;
 using MediaBrowser.Library.ImageManagement;
-using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Plugins;
-using MediaBrowser.Library.EntityDiscovery;
-using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Metadata;
-using MediaBrowser.Library.Interfaces;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.LibraryManagement;
-using MediaBrowser.Library.Persistance;
-using MediaBrowser.Library.Factories;
-using MediaBrowser.Library.Extensions;
-using MediaBrowser.Library.UI;
-using MediaBrowser.Library.Localization;
 using MediaBrowser.Library.Input;
-using System.IO;
-using System.Diagnostics;
-using System.Net;
-using MediaBrowser.Util;
-using MediaBrowser.Library.Threading;
-using Microsoft.MediaCenter.UI;
+using MediaBrowser.Library.Interfaces;
+using MediaBrowser.Library.Localization;
+using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Metadata;
+using MediaBrowser.Library.Persistance;
+using MediaBrowser.Library.Plugins;
 using MediaBrowser.Library.Providers;
+using MediaBrowser.Library.Threading;
+using MediaBrowser.Library.UI;
+using MediaBrowser.LibraryManagement;
+using MediaBrowser.Util;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser.Library {
 
@@ -47,7 +47,8 @@ namespace MediaBrowser.Library {
         Service = 0x1,
         Core = 0x2,
         Other = 0x4,
-        All = Service | Core | Other
+        Configurator = 0x8,
+        All = Service | Core | Other | Configurator
     }
 
     /// <summary>
@@ -67,7 +68,7 @@ namespace MediaBrowser.Library {
          * This should be set to "R" (or "SPn") with each official release and then immediately changed back to "R+" (or "SPn+")
          * so future trunk builds will indicate properly.
          * */
-        private const string versionExtension = "R+";
+        private const string versionExtension = "B5";
 
         public const string MBSERVICE_MUTEX_ID = "Global\\{E155D5F4-0DDA-47bb-9392-D407018D24B1}";
         public const string MBCLIENT_MUTEX_ID = "Global\\{9F043CB3-EC8E-41bf-9579-81D5F6E641B9}";
@@ -75,9 +76,7 @@ namespace MediaBrowser.Library {
         static object sync = new object();
         static Kernel kernel;
 
-        //test
-        public static bool UseNewSQLRepo = false;
-        //
+        public static bool IgnoreFileSystemMods = false;
 
         public bool MajorActivity
         {
@@ -133,9 +132,9 @@ namespace MediaBrowser.Library {
 
                 // we must set up some paths as well as a side effect (should be refactored) 
                 if (!string.IsNullOrEmpty(config.UserSettingsPath) && Directory.Exists(config.UserSettingsPath)) {
-                    ApplicationPaths.SetUserSettingsPath(config.UserSettingsPath);
+                    ApplicationPaths.SetUserSettingsPath(config.UserSettingsPath.Trim());
                 }
-                
+
                 // Its critical to have the logger initialized early so initialization 
                 //   routines can use the right logger.
                 if (Logger.LoggerInstance != null) {
@@ -147,14 +146,29 @@ namespace MediaBrowser.Library {
                 var kernel = GetDefaultKernel(config, directives);
                 Kernel.Instance = kernel;
 
-                //test
-                //using (new Profiler("============Root children load=========="))
-                //{
-                //    List<BaseItem> ignore = kernel.RootFolder.AllRecursiveChildren.ToList();
-                //}
-                //
-
-                if (LoadContext != MBLoadContext.Service)
+                // setup IBN if not there
+                string ibnLocation = Config.Instance.ImageByNameLocation;
+                if (string.IsNullOrEmpty(ibnLocation))
+                    ibnLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
+                if (!Directory.Exists(ibnLocation))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(ibnLocation);
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Genre"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "People"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Studio"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Year"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "General"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "MediaInfo"));
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.ReportException("Unable to create IBN location.", e);
+                    }
+                }
+                
+                if (LoadContext == MBLoadContext.Core || LoadContext == MBLoadContext.Configurator)
                 {
                     Async.Queue("Start Service", () =>
                     {
@@ -223,7 +237,110 @@ namespace MediaBrowser.Library {
             }
         }
 
-        private static string ResolveInitialFolder(string start) {
+        #region Item Added/Deleted EventHandler
+        volatile EventHandler<GenericEventArgs<BaseItem>> _ItemAddedToLibrary;
+        /// <summary>
+        /// Fires whenever an item is added via validation
+        /// </summary>
+        public event EventHandler<GenericEventArgs<BaseItem>> ItemAddedToLibrary
+        {
+            add
+            {
+                _ItemAddedToLibrary += value;
+            }
+            remove
+            {
+                _ItemAddedToLibrary -= value;
+            }
+        }
+
+        internal void OnItemAddedToLibrary(BaseItem item)
+        {
+            if (_ItemAddedToLibrary != null)
+            {
+                _ItemAddedToLibrary(this, new GenericEventArgs<BaseItem>() { Item = item });
+            }
+        }
+        volatile EventHandler<GenericEventArgs<BaseItem>> _ItemRemovedFromLibrary;
+        /// <summary>
+        /// Fires whenever an item is removed via validation
+        /// </summary>
+        public event EventHandler<GenericEventArgs<BaseItem>> ItemRemovedFromLibrary
+        {
+            add
+            {
+                _ItemRemovedFromLibrary += value;
+            }
+            remove
+            {
+                _ItemRemovedFromLibrary -= value;
+            }
+        }
+
+        internal void OnItemRemovedFromLibrary(BaseItem item)
+        {
+            if (_ItemRemovedFromLibrary != null)
+            {
+                _ItemRemovedFromLibrary(this, new GenericEventArgs<BaseItem>() { Item = item });
+            }
+        }
+        #endregion
+
+        #region PlayStateSaved EventHandler
+        volatile EventHandler<PlayStateSaveEventArgs> _PlayStateSaved;
+        public event EventHandler<PlayStateSaveEventArgs> PlayStateSaved
+        {
+            add
+            {
+                _PlayStateSaved += value;
+            }
+            remove
+            {
+                _PlayStateSaved -= value;
+            }
+        }
+        internal void OnPlayStateSaved(BaseItem media, PlaybackStatus playstate)
+        {
+            // Fire off event in async so we don't tie anything up
+            if (_PlayStateSaved != null)
+            {
+                Async.Queue("OnPlayStateSaved", () =>
+                {
+                    _PlayStateSaved(this, new PlayStateSaveEventArgs() { PlaybackStatus = playstate, Item = media });
+                });
+            }
+        }
+        #endregion
+
+
+        #region ApplicationInitialized EventHandler
+        volatile EventHandler<EventArgs> _ApplicationInitialized;
+        /// <summary>
+        /// Fires when Application.CurrentInstance is created.
+        /// </summary>
+        public event EventHandler<EventArgs> ApplicationInitialized
+        {
+            add
+            {
+                _ApplicationInitialized += value;
+            }
+            remove
+            {
+                _ApplicationInitialized -= value;
+            }
+        }
+
+        internal void OnApplicationInitialized()
+        {
+            if (_ApplicationInitialized != null)
+            {
+                _ApplicationInitialized(this, new EventArgs());
+            }
+        }
+        #endregion
+        
+        private static string ResolveInitialFolder(string start)
+        {
             if (start == Helper.MY_VIDEOS)
                 start = Helper.MyVideosPath;
             return start;
@@ -235,7 +352,8 @@ namespace MediaBrowser.Library {
                 new VodCastResolver(),
                 new EpisodeResolver(), 
                 new SeasonResolver(), 
-                new SeriesResolver(), 
+                new SeriesResolver(),
+                new BoxSetResolver(),
                 new MovieResolver(
                         config.EnableMoviePlaylists?config.PlaylistLimit:1, 
                         config.EnableNestedMovieFolders, 
@@ -255,64 +373,31 @@ namespace MediaBrowser.Library {
             };
         }
 
+        protected static List<System.Reflection.Assembly> PluginAssemblies = new List<System.Reflection.Assembly>();
+
         static List<IPlugin> DefaultPlugins(bool forceShadow) {
             List<IPlugin> plugins = new List<IPlugin>();
             foreach (var file in Directory.GetFiles(ApplicationPaths.AppPluginPath)) {
-                if (file.ToLower().EndsWith(".dll")) {
-                    try {
-                        plugins.Add(new Plugin(Path.Combine(ApplicationPaths.AppPluginPath, file),forceShadow));
-                    } catch (Exception ex) {
+                if (file.ToLower().EndsWith(".dll"))
+                {
+                    try
+                    {
+                        var plugin = new Plugin(Path.Combine(ApplicationPaths.AppPluginPath, file), forceShadow);
+                        plugins.Add(plugin);
+                        PluginAssemblies.Add(plugin.PluginAssembly);
+                        Logger.ReportVerbose("Added Plugin assembly: " + plugin.PluginAssembly.FullName);
+                    }
+                    catch (Exception ex)
+                    {
                         Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
                         Logger.ReportException("Failed to load plugin", ex);
                     }
-                } else
-                    //look for pointer plugin files - load these from ehome or GAC
-                    if (file.ToLower().EndsWith(".pgn"))
-                    {
-                        try
-                        {
-                            plugins.Add(new Plugin(Path.ChangeExtension(Path.GetFileName(file), ".dll"), forceShadow));
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            //couldn't find it in our home directory or GAC (may be called from another process)
-                            //try windows ehome directory
-                            try
-                            {
-                                plugins.Add(new Plugin(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), Path.ChangeExtension(Path.GetFileName(file), ".dll")), forceShadow));
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                                Logger.ReportException("Failed to load plugin", ex);
-                            }
-                        }
-                        catch (ArgumentException)
-                        {
-                            //couldn't find it in our home directory or GAC (may be called from another process)
-                            //try windows ehome directory
-                            try
-                            {
-                                plugins.Add(new Plugin(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("windir"), "ehome"), Path.ChangeExtension(Path.GetFileName(file), ".dll")), forceShadow));
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                                Logger.ReportException("Failed to load plugin", ex);
-                            }
-                        }
-
-
-                        catch (Exception ex)
-                        {
-                            Debug.Assert(false, "Failed to load plugin: " + ex.ToString());
-                            Logger.ReportException("Failed to load plugin", ex);
-                        }
-                    }
-
+                }
             }
             return plugins;
         }
+
+ 
 
         private static bool? _isVista;
         public static bool isVista
@@ -341,6 +426,9 @@ namespace MediaBrowser.Library {
                     else
                         if (assemblyName.Contains("ehexthost"))
                             _loadContext = MBLoadContext.Core;
+                        else
+                            if (assemblyName.Contains("configurator"))
+                                _loadContext = MBLoadContext.Configurator;
                             else
                                 _loadContext = MBLoadContext.Other;
                 }
@@ -351,33 +439,26 @@ namespace MediaBrowser.Library {
         static IItemRepository GetRepository(ConfigData config)
         {
             IItemRepository repository = null;
-            if (config.EnableExperimentalSqliteSupport)
+            if (kernel != null && kernel.ItemRepository != null) kernel.ItemRepository.ShutdownDatabase(); //we need to do this for SQLite
+            string sqliteDb = Path.Combine(ApplicationPaths.AppCachePath, "cache.db");
+            string sqliteDll = Path.Combine(ApplicationPaths.AppConfigPath, "system.data.sqlite.dll");
+            if (File.Exists(sqliteDll))
             {
-                if (kernel != null && kernel.ItemRepository != null) kernel.ItemRepository.ShutdownDatabase(); //we need to do this for SQLite
-                string sqliteDb = Path.Combine(ApplicationPaths.AppCachePath, "cache.db");
-                string sqliteDll = Path.Combine(ApplicationPaths.AppConfigPath, "system.data.sqlite.dll");
-                if (File.Exists(sqliteDll))
+                try
                 {
-                    try
-                    {
-                        repository = new SafeItemRepository(
-                            new MemoizingRepository(
-                                SqliteItemRepository.GetRepository(sqliteDb, sqliteDll)
-                            )
-                         );
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.ReportException("Failed to init sqlite!", e);
-                        repository = null;
-                    }
+                    repository = new SafeItemRepository(
+                        new MemoizingRepository(
+                            SqliteItemRepository.GetRepository(sqliteDb, sqliteDll)
+                        )
+                     );
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Failed to init sqlite!", e);
+                    repository = null;
                 }
             }
 
-            if (repository == null)
-            {
-                repository = new SafeItemRepository(new ItemRepository());
-            }
             return repository;
         }
 
@@ -387,7 +468,7 @@ namespace MediaBrowser.Library {
 
             var kernel = new Kernel()
             {
-             PlaybackControllers = new List<IPlaybackController>(),
+             PlaybackControllers = new List<BasePlaybackController>(),
              MetadataProviderFactories = MetadataProviderHelper.DefaultProviders(),
              ConfigData = config,
              ServiceConfigData = ServiceConfigData.FromFile(ApplicationPaths.ServiceConfigFile),
@@ -398,15 +479,14 @@ namespace MediaBrowser.Library {
              TrailerProviders = new List<ITrailerProvider>() { new LocalTrailerProvider()}
              };
 
-            //test
-            Kernel.UseNewSQLRepo = config.UseNewSQLRepo;
-            Logger.ReportInfo(Kernel.UseNewSQLRepo ? "==========Using new SQL Repo========" : "========Using OLD SQL Repo=====");
-            //
+            //Kernel.UseNewSQLRepo = config.UseNewSQLRepo;
 
             // kernel.StringData.Save(); //save this in case we made mods (no other routine saves this data)
-            kernel.PlaybackControllers.Add(new PlaybackController());
+            if (LoadContext == MBLoadContext.Core)
+            {
+                kernel.PlaybackControllers.Add(new PlaybackController());
+            }
        
-
             // set up assembly resolution hooks, so earlier versions of the plugins resolve properly 
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(OnAssemblyResolve);
 
@@ -457,6 +537,7 @@ namespace MediaBrowser.Library {
             List<BaseItem> virtualItems = new List<BaseItem>();
             virtualItems.AddRange(kernel.RootFolder.VirtualChildren);
 
+            //kernel.RootFolder = null;
             var root = kernel.GetLocation(ResolveInitialFolder(kernel.ConfigData.InitialFolder));
             kernel.RootFolder = (AggregateFolder)BaseItemFactory<AggregateFolder>.Instance.CreateInstance(root, null);
 
@@ -473,6 +554,9 @@ namespace MediaBrowser.Library {
                     kernel.RootFolder.AddVirtualChild(item);
                 }
             }
+
+            //clear image factory cache to free memory
+            LibraryImageFactory.Instance.ClearCache();
 
             //and re-load the repo
             ItemRepository = GetRepository(this.ConfigData);
@@ -491,6 +575,7 @@ namespace MediaBrowser.Library {
             {
                 case MBLoadContext.Core:
                 case MBLoadContext.Other:
+                case MBLoadContext.Configurator:
                     //tell the service to re-load the config
                     MBServiceController.SendCommandToService(IPCCommands.ReloadConfig);
                     break;
@@ -503,9 +588,20 @@ namespace MediaBrowser.Library {
 
 
         static System.Reflection.Assembly OnAssemblyResolve(object sender, ResolveEventArgs args) {
-            if (args.Name.StartsWith("MediaBrowser,")) {
-                Logger.ReportInfo("Plug-in reference to "+args.Name + " is being linked to version "+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            Logger.ReportVerbose("=========System looking for assembly: " + args.Name);
+            if (args.Name.StartsWith("MediaBrowser,"))
+            {
+                Logger.ReportInfo("Plug-in reference to " + args.Name + " is being linked to version " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
                 return typeof(Kernel).Assembly;
+            }
+            else
+            {
+                var assembly = PluginAssemblies.Find(a => a.FullName.StartsWith(args.Name+","));
+                if (assembly != null)
+                {
+                    Logger.ReportInfo("Resolving plug-in reference to: " + args.Name);
+                    return assembly;
+                }
             }
             return null;
         }
@@ -540,7 +636,7 @@ namespace MediaBrowser.Library {
         public List<ITrailerProvider> TrailerProviders{ get; set; }
         public AggregateFolder RootFolder { get; set; }
         public List<IPlugin> Plugins { get; set; }
-        public List<IPlaybackController> PlaybackControllers { get; set; }
+        public List<BasePlaybackController> PlaybackControllers { get; set; }
         public List<MetadataProviderFactory> MetadataProviderFactories { get; set; }
         public List<ImageResolver> ImageResolvers { get; set; }
         public ChainedEntityResolver EntityResolver { get; set; }
@@ -666,6 +762,8 @@ namespace MediaBrowser.Library {
         private List<MenuItem> menuOptions = new List<MenuItem>();
         private List<Type> externalPlayableItems = new List<Type>();
         private List<Type> externalPlayableFolders = new List<Type>();
+
+        public string ScreenSaverUI = "";
 
         public List<Type> ExternalPlayableItems { get { return externalPlayableItems; } }
         public List<Type> ExternalPlayableFolders { get { return externalPlayableFolders; } }
@@ -793,36 +891,22 @@ namespace MediaBrowser.Library {
 
         public void InstallPlugin(string path)
         {
-            //in case anyone is calling us with old interface
-            InstallPlugin(path, false);
+            InstallPlugin(path, Path.GetFileName(path), null, null, null);
         }
 
-        public void InstallPlugin(string path, bool globalTarget) {
-            InstallPlugin(path, Path.GetFileName(path), globalTarget, null, null, null);
-        }
-
-        public void InstallPlugin(string path, bool globalTarget,
+        public void InstallPlugin(string path,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB)
         {
-            InstallPlugin(path, Path.GetFileName(path), globalTarget, updateCB, doneCB, errorCB);
+            InstallPlugin(path, Path.GetFileName(path), updateCB, doneCB, errorCB);
         }
 
-        public void InstallPlugin(string sourcePath, string targetName, bool globalTarget,
+        public void InstallPlugin(string sourcePath, string targetName,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallUpdateCB updateCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallFinishCB doneCB,
                 MediaBrowser.Library.Network.WebDownload.PluginInstallErrorCB errorCB) {
-            string target;
-            if (globalTarget) {
-                //install to ehome for now - can change this to GAC if figure out how...
-                target = Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", targetName));
-                //and put our pointer file in "plugins"
-                File.Create(Path.Combine(ApplicationPaths.AppPluginPath, Path.ChangeExtension(Path.GetFileName(targetName), ".pgn")));
-            }
-            else {
-                target = Path.Combine(ApplicationPaths.AppPluginPath, targetName);
-            }
+            string target = Path.Combine(ApplicationPaths.AppPluginPath, targetName);
 
             if (sourcePath.ToLower().StartsWith("http")) {
                 // Initialise Async Web Request
@@ -943,7 +1027,14 @@ namespace MediaBrowser.Library {
                     requestState.downloadDest.Close();
 
                     // Initialise the Plugin
-                    InitialisePlugin(requestState.downloadDest.Name);
+                    try
+                    {
+                        InitialisePlugin(requestState.downloadDest.Name);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.ReportException("Failed to initialize plugin.", e);
+                    }
 
                     //Callback to GUI to report download has completed
                     if (requestState.doneCB != null) {
@@ -960,6 +1051,24 @@ namespace MediaBrowser.Library {
                     requestState.errorCB(ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Persists a PlaybackStatus object
+        /// </summary>
+        public void SavePlayState(PlaybackStatus playstate)
+        {
+            SavePlayState(null, playstate);
+        }
+
+        /// <summary>
+        /// Persists a PlaybackStatus object
+        /// </summary>
+        /// <param name="media">The item it belongs to. This can be null, but it's used to notify listeners of PlayStateSaved which item it belongs to.</param>
+        public void SavePlayState(BaseItem media, PlaybackStatus playstate)
+        {
+            Kernel.Instance.ItemRepository.SavePlayState(playstate);
+            OnPlayStateSaved(media, playstate);
         }
 
     }

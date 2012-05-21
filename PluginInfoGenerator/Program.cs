@@ -61,6 +61,8 @@ namespace PluginInfoGenerator {
                         writer.WriteElementString("InstallGlobally", plugin.InstallGlobally.ToString().ToLower());
                     }
                     writer.WriteElementString("PluginClass", plugin.PluginClass);
+                    writer.WriteElementString("UpgradeInfo", plugin.UpgradeInfo);
+                    writer.WriteElementString("IsPremium", plugin.IsPremium.ToString().ToLower());
                     writer.WriteEndElement();
 
                 } catch (Exception e) {

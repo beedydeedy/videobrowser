@@ -26,16 +26,19 @@ namespace MediaBrowser.Library.Plugins {
         /// Context in which this plugin should be intialized
         /// </summary>
         MBLoadContext InitDirective { get; }
+        string UpgradeInfo { get; }
         string PluginClass { get; }
         bool UpdateAvail { get; set; }
         bool Installed { get; set; }
         bool IsLatestVersion { get; set; }
         string ListDisplayString { get; }
+        bool IsPremium { get; }
     }
 
     public static class PluginClasses
     {
         public const string Themes = "Themes";
+        public const string ScreenSavers = "ScreenSavers";
         public const string Other = "Other";
     }
 }

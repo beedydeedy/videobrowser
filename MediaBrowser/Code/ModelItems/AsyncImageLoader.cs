@@ -17,7 +17,6 @@ using MediaBrowser.Library.Filesystem;
 namespace MediaBrowser.Code.ModelItems {
     class AsyncImageLoader {
 
-        static MethodInfo ImageFromStream = typeof(Image).GetMethod("FromStream", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic, null, new Type[] { typeof(string), typeof(Stream) }, null);
         static BackgroundProcessor<Action> ImageLoadingProcessors = new BackgroundProcessor<Action>(2, action => action(), "Image loader");
         static BackgroundProcessor<Action> NetImageLoadingProcessors = new BackgroundProcessor<Action>(2, action => action(), "Net Image loader");
 
@@ -157,7 +156,7 @@ namespace MediaBrowser.Code.ModelItems {
           
 
             Image newImage = null;
-            if (Kernel.Instance.ConfigData.CacheAllImagesInMemory && !Kernel.Instance.ConfigData.UseSQLImageCache )
+            if (Kernel.Instance.ConfigData.CacheAllImagesInMemory)
             {
                 //defunct code..
                 //if (Kernel.Instance.ConfigData.UseSQLImageCache)
@@ -180,7 +179,7 @@ namespace MediaBrowser.Code.ModelItems {
 
                     MemoryStream imageStream = new MemoryStream(bytes);
                     imageStream.Position = 0;
-                    newImage = (Image)ImageFromStream.Invoke(null, new object[] { null, imageStream });
+                    newImage = Image.FromStream(imageStream, null);
                 }
             }
 
@@ -190,7 +189,7 @@ namespace MediaBrowser.Code.ModelItems {
 
                 if (newImage == null) {
                     //Logger.ReportVerbose("Loading image : " + localPath);
-                    string imageRef = Kernel.Instance.ConfigData.UseSQLImageCache ? localPath : "file://" + localPath;
+                    string imageRef = "file://" + localPath;
                     newImage = new Image(imageRef);
                 }
 

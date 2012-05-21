@@ -8,6 +8,7 @@ using MediaBrowser.Library.Persistance;
 using System.Xml;
 using System.Diagnostics;
 using MediaBrowser.Library.Logging;
+using System.IO;
 
 namespace MediaBrowser.Library.Providers.TVDB {
 
@@ -25,6 +26,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
         [Persist]
         DateTime downloadDate = DateTime.MinValue;
 
+        protected const string LOCAL_META_FOLDER_NAME = "metadata";
+
         Episode Episode { get { return (Episode)Item; } } 
 
         public override bool NeedsRefresh() {
@@ -33,22 +36,33 @@ namespace MediaBrowser.Library.Providers.TVDB {
             if (Config.Instance.MetadataCheckForUpdateAge == -1 && downloadDate != DateTime.MinValue)
                 Logger.ReportInfo("MetadataCheckForUpdateAge = -1 wont clear and check for updated metadata");
 
-            fetch = seriesId != GetSeriesId(); 
-            fetch |= (
-                Config.Instance.MetadataCheckForUpdateAge != -1 &&
-                seriesId != null &&
-                DateTime.Today.Subtract(downloadDate).TotalDays > Config.Instance.MetadataCheckForUpdateAge &&
-                DateTime.Today.Subtract(Item.DateCreated).TotalDays < 180
-                );
+            if (!HasLocalMeta())
+            {
+                fetch = seriesId != GetSeriesId();
+                fetch |= (
+                    Config.Instance.MetadataCheckForUpdateAge != -1 &&
+                    seriesId != null &&
+                    DateTime.Today.Subtract(downloadDate).TotalDays > Config.Instance.MetadataCheckForUpdateAge &&
+                    DateTime.Today.Subtract(Item.DateCreated).TotalDays < 180
+                    );
+            }
             
             return fetch;
         }
 
         public override void Fetch() {
-            seriesId = GetSeriesId();
+            if (!HasLocalMeta())
+            {
+                seriesId = GetSeriesId();
 
-            if (seriesId != null) {
-                if (FetchEpisodeData()) downloadDate = DateTime.Today;
+                if (seriesId != null)
+                {
+                    if (FetchEpisodeData()) downloadDate = DateTime.Today;
+                }
+            }
+            else
+            {
+                Logger.ReportInfo("Episode provider not fetching because local meta exists: " + Item.Name);
             }
         }
 
@@ -97,8 +111,18 @@ namespace MediaBrowser.Library.Providers.TVDB {
 
                     var p = doc.SafeGetString("//filename");
                     if (p != null)
-                        Item.PrimaryImagePath = TVUtils.BannerUrl + p;
-
+                    {
+                        if (Kernel.Instance.ConfigData.SaveLocalMeta)
+                        {
+                            Kernel.IgnoreFileSystemMods = true;
+                            Item.PrimaryImagePath = TVUtils.FetchAndSaveImage(TVUtils.BannerUrl + p, Path.Combine(MetaFolderName, Path.GetFileNameWithoutExtension(p)));
+                            Kernel.IgnoreFileSystemMods = false;
+                        }
+                        else
+                        {
+                            Item.PrimaryImagePath = TVUtils.BannerUrl + p;
+                        }
+                    }
 
                     Item.Overview = doc.SafeGetString("//Overview");
                     if (UsingAbsoluteData)
@@ -110,9 +134,12 @@ namespace MediaBrowser.Library.Providers.TVDB {
                     episode.SeasonNumber = doc.SafeGetString("//SeasonNumber");
                     episode.ImdbRating = doc.SafeGetSingle("//Rating", (float)-1, 10);
                     episode.FirstAired = doc.SafeGetString("//FirstAired");
-                    DateTime airDate = DateTime.MinValue;
-                    DateTime.TryParse(episode.FirstAired, out airDate);
-                    episode.ProductionYear = airDate.Year;
+                    DateTime airDate;
+                    int y = DateTime.TryParse(episode.FirstAired, out airDate) ? airDate.Year : -1;
+                    if (y > 1850) {
+                        episode.ProductionYear = y;
+                    }
+
 
                     string actors = doc.SafeGetString("//GuestStars");
                     if (actors != null) {
@@ -131,6 +158,21 @@ namespace MediaBrowser.Library.Providers.TVDB {
                     string writers = doc.SafeGetString("//Writer");
                     if (writers != null) {
                         episode.Writers = new List<string>(writers.Trim('|').Split('|'));
+                    }
+
+                    if (Kernel.Instance.ConfigData.SaveLocalMeta)
+                    {
+                        try
+                        {
+                            Kernel.IgnoreFileSystemMods = true;
+                            if (!Directory.Exists(MetaFolderName)) Directory.CreateDirectory(MetaFolderName);
+                            doc.Save(MetaFileName);
+                            Kernel.IgnoreFileSystemMods = false;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.ReportException("Error saving local series meta.", e);
+                        }
                     }
 
                     Logger.ReportVerbose("TvDbProvider: Success");
@@ -156,8 +198,27 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 seriesId = (parent as Series).TVDBSeriesId;
             }
             return seriesId;
-        }      
+        }
+        private bool HasLocalMeta()
+        {
+            return (File.Exists(MetaFileName));
+        }
 
+        private string MetaFileName
+        {
+            get
+            {
+                return Path.Combine(MetaFolderName, Path.GetFileNameWithoutExtension(Item.Path) + ".xml");
+            }
+        }
+
+        private string MetaFolderName
+        {
+            get
+            {
+                return Path.Combine(Path.GetDirectoryName(Item.Path), LOCAL_META_FOLDER_NAME);
+            }
+        }
 
     }
 }

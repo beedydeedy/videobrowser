@@ -104,6 +104,7 @@ namespace MediaBrowser.Library.Persistance {
         /// <returns></returns>
         public static T Deserialize<T>(BinaryReader reader) where T : class, new() { 
             Type type = GetCachedType(reader.ReadString());
+            if (type == null) return null; //probably an old type or from plugin that is no longer installed
 
             long startPos = reader.BaseStream.Position;
 
@@ -144,6 +145,7 @@ namespace MediaBrowser.Library.Persistance {
         /// <returns></returns>
         public static T Instantiate<T>(string aType) where T : class, new() { 
             Type type = GetCachedType(aType);
+            if (type == null) return null; //old type or from plugin that is not installed
 
             T instance;
 
@@ -227,16 +229,19 @@ namespace MediaBrowser.Library.Persistance {
  
 
         private object DeserializeInternal(BinaryReader br) {
+            int ndx = 0;
+            object obj = null;
             try {
-                object obj = constructor.DynamicInvoke();
+                obj = constructor.DynamicInvoke();
 
                 for (int i = 0; i < persistables.Length; i++) {
+                    ndx = i;
                     persistables[i].Deserialize(br, obj);
                 }
 
                 return obj;
             } catch (Exception exception) {
-                throw new SerializationException("Failed to deserialize object, corrupt stream.", exception);
+                throw new SerializationException("Failed to deserialize object, corrupt stream. ("+exception != null && obj != null ? exception.Message + " Type: "+obj.GetType().Name +" Attribute: "+persistables[ndx].MemberInfo.Name : "", exception);
             }
         }
 

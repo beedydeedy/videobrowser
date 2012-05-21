@@ -5,25 +5,35 @@ using System.Text;
 
 namespace MediaBrowser.Library.Entities {
     public abstract class Media : BaseItem{
-        PlaybackStatus PlayState {get; set; }
         protected PlaybackStatus playbackStatus;
         public virtual PlaybackStatus PlaybackStatus { get { return playbackStatus; } }
         public abstract IEnumerable<string> Files {get;}
 
         public override bool PlayAction(Item item)
         {
-            Application.CurrentInstance.Play(item, false, false); //play with no intros
+            Application.CurrentInstance.Play(item, false, false, PlayMethod.RemotePlayButton, false); //play with no intros
             return true;
         }
 
-        public bool IsPlaylistCapable()
+        public override bool IsPlayable
         {
-            Video us = this as Video;
-            if (us != null)
+            get
             {
-                return !us.ContainsRippedMedia;
+                return true;
             }
-            return true;
+        }
+
+        public virtual int RunTime
+        {
+            get { return 0; }
+        }
+
+        public override bool CanResume
+        {
+            get
+            {
+                return PlaybackStatus == null ? false : PlaybackStatus.CanResume;
+            }
         }
     }
 }

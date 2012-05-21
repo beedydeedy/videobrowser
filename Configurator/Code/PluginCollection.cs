@@ -88,10 +88,22 @@ namespace Configurator.Code {
             set;
         }
 
+        public virtual bool IsPremium
+        {
+            get;
+            set;
+        }
+
         public string ListDisplayString
         {
             get { return Name + " (v" + Version + ")"; }
         }
+
+        public virtual string UpgradeInfo
+        {
+            get { return ""; }
+        }
+
     }
 
     public class PluginCollection : ObservableCollection<IPlugin> {

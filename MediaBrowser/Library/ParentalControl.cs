@@ -1,18 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.MediaCenter.UI;
-using System.Xml;
-using System.IO;
-using MediaBrowser.Library;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.Code;
-using System.Diagnostics;
-using System.Collections;
+using MediaBrowser.Library.Playables;
 using Microsoft.MediaCenter;
-using MediaBrowser.Util;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser.Library
 {
@@ -34,8 +26,7 @@ namespace MediaBrowser.Library
 
         //item and properties to operate upon after pin entered
         private Item anItem;
-        protected bool resume;
-        protected bool queue;
+        private PlayableItem playable;
 
         public void Initialize()
         {
@@ -55,17 +46,17 @@ namespace MediaBrowser.Library
             Logger.ReportInfo("Parental Control Initialized");
 
             //check to see if this is run with clean or recently created cache
-            string itemCache = Path.Combine(ApplicationPaths.AppCachePath, "items");
-            DateTime recentTime = DateTime.Now.Subtract(DateTime.Now.Subtract(DateTime.Now.AddMinutes(-1)));  //if cache dir created less than a minute ago we must've just done it
-            if (!Directory.Exists(itemCache) || DateTime.Compare(Directory.GetCreationTime(itemCache), recentTime) > 0)
-            {
-                if (Config.Instance.ParentalBlockUnrated)
-                {
-                    //blocking unrated content - unlock the library temporarily to allow items to populate their metadata
-                    Logger.ReportInfo("Unlocking Library to allow initial cache population.");
-                    this.Unlocked = true; //can't invoke the timer yet - it may not even be initialized
-                }
-            }
+            //string itemCache = Path.Combine(ApplicationPaths.AppCachePath, "items");
+            //DateTime recentTime = DateTime.Now.Subtract(DateTime.Now.Subtract(DateTime.Now.AddMinutes(-1)));  //if cache dir created less than a minute ago we must've just done it
+            //if (!Directory.Exists(itemCache) || DateTime.Compare(Directory.GetCreationTime(itemCache), recentTime) > 0)
+            //{
+            //    if (Config.Instance.ParentalBlockUnrated)
+            //    {
+            //        //blocking unrated content - unlock the library temporarily to allow items to populate their metadata
+            //        Logger.ReportInfo("Unlocking Library to allow initial cache population.");
+            //        this.Unlocked = true; //can't invoke the timer yet - it may not even be initialized
+            //    }
+            //}
             return;
         }
 
@@ -107,7 +98,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return ratings.ToString(MaxAllowed) ?? "G"; //return something valid if not there
+                return Ratings.ToString(MaxAllowed) ?? "G"; //return something valid if not there
             }
         }
 
@@ -132,7 +123,7 @@ namespace MediaBrowser.Library
             if (this.Enabled && item != null)
             {
                 //Logger.ReportInfo("Checking parental status on " + item.Name + " "+item.ParentalRating+" "+this.MaxAllowed.ToString());
-                return (ratings.Level(item.ParentalRating) <= this.MaxAllowed);
+                return (Ratings.Level(item.ParentalRating) <= this.MaxAllowed);
             }
             else return true;
         }
@@ -142,7 +133,7 @@ namespace MediaBrowser.Library
             if (this.Enabled && item != null)
             {
                 //Logger.ReportInfo("Checking parental status on " + item.Name + " " + item.ParentalRating + " " + this.MaxAllowed.ToString());
-                return (ratings.Level(item.ParentalRating) <= this.MaxAllowed);
+                return (Ratings.Level(item.ParentalRating) <= this.MaxAllowed);
             }
             else return true;
         }
@@ -212,82 +203,15 @@ namespace MediaBrowser.Library
             }
         }
 
-        public void ShuffleProtected(Item folder)
+        public void PlayProtected(PlayableItem playable)
         {
             //save parameters where we can get at them after pin entry
-            this.anItem = folder;
-
-            //now present pin screen - it will call our callback after finished
-            pinCallback = ShufflePinEntered;
-            if (folder.BaseItem.CustomPIN != "" && folder.BaseItem.CustomPIN != null)
-                customPIN = folder.BaseItem.CustomPIN; // use custom pin for this item
-            else
-                customPIN = Config.Instance.ParentalPIN; // use global pin
-            Logger.ReportInfo("Request to shuffle protected content " + folder.Name);
-            PromptForPin(pinCallback, Application.CurrentInstance.StringData("EnterPINToPlayDial"));
-        }
-
-        public void ShufflePinEntered(bool pinCorrect)
-        {
-            Application.CurrentInstance.Back(); //clear the PIN page before playing
-            MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-            if (pinCorrect)
-            {
-                Logger.ReportInfo("Shuffling protected content " + anItem.Name);
-                //add to list of protected folders we've entered
-                addProtectedFolder(anItem as FolderModel);
-                Application.CurrentInstance.ShuffleSecure(anItem);
-            }
-            else
-            {
-                env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("PIN Incorrect attempting to shuffle play " + anItem.Name);
-            }
-        }
-
-        public void PlayUnwatchedProtected(Item folder)
-        {
-            //save parameters where we can get at them after pin entry
-            this.anItem = folder;
-
-            //now present pin screen - it will call our callback after finished
-            pinCallback = UnwatchedPinEntered;
-            if (folder.BaseItem.CustomPIN != "" && folder.BaseItem.CustomPIN != null)
-                customPIN = folder.BaseItem.CustomPIN; // use custom pin for this item
-            else
-                customPIN = Config.Instance.ParentalPIN; // use global pin
-            Logger.ReportInfo("Request to play protected content " + folder.Name);
-            PromptForPin(pinCallback, Application.CurrentInstance.StringData("EnterPINToPlayDial"));
-        }
-
-        public void UnwatchedPinEntered(bool pinCorrect)
-        {
-            Application.CurrentInstance.Back(); //clear the PIN page before playing
-            MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-            if (pinCorrect)
-            {
-                Logger.ReportInfo("Playing protected unwatched content " + anItem.Name);
-                //add to list of protected folders we've entered
-                addProtectedFolder(anItem as FolderModel);
-                Application.CurrentInstance.PlayUnwatchedSecure(anItem);
-            }
-            else
-            {
-                env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("PIN Incorrect attempting to play unwatched in " + anItem.Name);
-            }
-        }
-        public void PlayProtected(Item item, bool resume, bool queue)
-        {
-            //save parameters where we can get at them after pin entry
-            this.anItem = item;
-            this.resume = resume;
-            this.queue = queue;
+            this.playable = playable;
 
             //now present pin screen - it will call our callback after finished
             pinCallback = PlayPinEntered;
-            if (item.BaseItem.CustomPIN != "" && item.BaseItem.CustomPIN != null)
-                customPIN = item.BaseItem.CustomPIN; // use custom pin for this item
+            if (!string.IsNullOrEmpty(playable.ParentalControlPin))
+                customPIN = playable.ParentalControlPin; // use custom pin for this item
             else
                 customPIN = Config.Instance.ParentalPIN; // use global pin
             Logger.ReportInfo("Request to play protected content");
@@ -298,15 +222,18 @@ namespace MediaBrowser.Library
         {
             Application.CurrentInstance.Back(); //clear the PIN page before playing
             MediaCenterEnvironment env = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
+
+            string name = playable.DisplayName;
+
             if (pinCorrect)
             {
-                Logger.ReportInfo("Playing protected content " + anItem.Name);
-                this.anItem.PlaySecure(resume, queue);
+                Logger.ReportInfo("Playing protected content " + name);
+                Application.CurrentInstance.PlaySecure(playable);
             }
             else
             {
                 env.Dialog(Application.CurrentInstance.StringData("IncorrectPINDial"), Application.CurrentInstance.StringData("ContentProtected"), DialogButtons.Ok, 60, true);
-                Logger.ReportInfo("Pin Incorrect attempting to play " + anItem.Name);
+                Logger.ReportInfo("Pin Incorrect attempting to play " + name);
             }
         }
 
@@ -347,9 +274,13 @@ namespace MediaBrowser.Library
                 if (Config.Instance.HideParentalDisAllowed)
                 {
                     if (Application.CurrentInstance.CurrentFolder != null && Application.CurrentInstance.CurrentFolder != Application.CurrentInstance.RootFolderModel)
-                        Application.CurrentInstance.CurrentFolder.RefreshUI();
+                    {
+                        Application.CurrentInstance.CurrentFolder.RefreshChildren();
+                    }
                     if (Application.CurrentInstance.RootFolderModel != null)
-                        Application.CurrentInstance.RootFolderModel.RefreshUI();
+                    {
+                        Application.CurrentInstance.RootFolderModel.RefreshChildren();
+                    }
                 }
             }
             else
@@ -375,6 +306,10 @@ namespace MediaBrowser.Library
             this.unlockedTime = DateTime.UtcNow;
             this.unlockPeriod = Config.Instance.ParentalUnlockPeriod;
             _relockTimer.Start(); //start our re-lock timer
+            if (Config.Instance.HideParentalDisAllowed)
+            {
+                Application.CurrentInstance.RootFolderModel.RefreshChildren();
+            }
         }
 
         private void PromptForPin(ParentalPromptCompletedCallback pe)
@@ -425,9 +360,7 @@ namespace MediaBrowser.Library
             if (Config.Instance.HideParentalDisAllowed)
             {
                 Application.CurrentInstance.BackToRoot(); //back up to home screen
-                Application.CurrentInstance.RootFolderModel.RefreshUI();
-                //if (Application.CurrentInstance.RootFolderModel != null)
-                //    Application.CurrentInstance.RootFolderModel.RefreshUI();
+                Application.CurrentInstance.RootFolderModel.RefreshChildren();
             }
             Application.CurrentInstance.Information.AddInformationString(Application.CurrentInstance.StringData("LibraryReLockedProf")); //and display a message
             //env.Dialog("Library Has Been Re-Locked for Parental Control.", "Unlock Time Expired", DialogButtons.Ok, 60, true);

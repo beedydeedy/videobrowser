@@ -38,9 +38,11 @@ namespace MediaBrowser.Library.Entities {
         [Persist]
         public MediaInfoData MediaInfo { get; set; }
 
+        [Persist]
+        public string VideoFormat { get; set; }
+
         public override void Assign(IMediaLocation location, IEnumerable<InitializationParameter> parameters, Guid id) {
             base.Assign(location, parameters, id);
-
             if (parameters != null) {
                 foreach (var parameter in parameters) {
                     var mediaTypeParam = parameter as MediaTypeInitializationParameter; 
@@ -72,12 +74,19 @@ namespace MediaBrowser.Library.Entities {
                     playbackStatus = PlaybackStatusFactory.Instance.Create(Id); // initialise an empty version that items can bind to
                     if (DateCreated <= Config.Instance.AssumeWatchedBefore)
                         playbackStatus.PlayCount = 1;
-                    playbackStatus.Save();
+                    //Kernel.Instance.SavePlayState(this, playbackStatus);  //removed this so we don't create files until we actually play something -ebr
                 }
                 return playbackStatus;
             }
         }
 
+        public override int RunTime
+        {
+            get
+            {
+                return RunningTime ?? 0;
+            }
+        }
 
         public virtual IEnumerable<string> VideoFiles {
             get {
@@ -97,11 +106,29 @@ namespace MediaBrowser.Library.Entities {
         /// </summary>
         public bool ContainsRippedMedia {
             get {
-                return MediaType == MediaType.BluRay ||
-                    MediaType == MediaType.DVD ||
-                    MediaType == MediaType.ISO ||
-                    MediaType == MediaType.HDDVD;
+                return IsRippedMedia(MediaType);
             }
+        }
+
+        public IEnumerable<string> IsoFiles
+        {
+            get
+            {
+                if (MediaLocation is IFolderMediaLocation)
+                {
+                    return Helper.GetIsoFiles(Path);
+                }
+
+                return new string[] { Path };
+            }
+        }
+
+        public static bool IsRippedMedia(MediaType type)
+        {
+            return type == MediaType.BluRay ||
+               type == MediaType.DVD ||
+               type == MediaType.ISO ||
+               type == MediaType.HDDVD;
         }
 
        public static IEnumerable<string> GetChildVideos(IFolderMediaLocation location, string[] ignore) {

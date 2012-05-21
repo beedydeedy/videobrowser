@@ -1,293 +1,439 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Microsoft.MediaCenter.UI;
-using System.Threading;
-using Microsoft.MediaCenter.Hosting;
-using System.Diagnostics;
-using Microsoft.MediaCenter;
 using MediaBrowser.Code.ModelItems;
-using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Util;
+using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Threading;
-using System.Reflection;
-
+using MediaBrowser.Library.Playables;
+using MediaBrowser.Library.RemoteControl;
+using Microsoft.MediaCenter;
+using Microsoft.MediaCenter.Hosting;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser
 {
-
-    public class PlaybackController : BaseModelItem, IPlaybackController
+    /// <summary>
+    /// Plays content using the internal WMC video player.
+    /// Don't inherit from this unless you're playing using the internal WMC player
+    /// </summary>
+    public class PlaybackController : BasePlaybackController
     {
+        // After calling MediaCenterEnvironment.PlayMedia, playback will begin with a state of Stopped and position 0
+        // We'll record it when we see it so we don't get tripped up into thinking playback has actually stopped
+        private bool _HasStartedPlaying = false;
+        private MediaCollection _CurrentMediaCollection;
+        private DateTime _LastTransportUpdateTime = DateTime.Now;
+        private Microsoft.MediaCenter.PlayState _CurrentPlayState;
 
-        volatile EventHandler<PlaybackStateEventArgs> progressHandler;
-        Thread governatorThread;
-        object sync = new object();
-        bool terminate = false;
-
-        // dont allow multicast events 
-        public event EventHandler<PlaybackStateEventArgs> OnProgress
+        public override string ControllerName
         {
-            add
+            get { return "Internal Player"; }
+        }
+
+        protected override void ResetPlaybackProperties()
+        {
+            base.ResetPlaybackProperties();
+
+            _CurrentMediaCollection = null;
+            _HasStartedPlaying = false;
+            _CurrentPlayState = Microsoft.MediaCenter.PlayState.Undefined;
+            _LastTransportUpdateTime = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Plays Media
+        /// </summary>
+        protected override void PlayMediaInternal(PlayableItem playable)
+        {
+            if (playable.QueueItem)
             {
-                progressHandler = value;
+                Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => QueuePlayableItem(playable));
             }
-            remove
+            else
             {
-                if (progressHandler == value)
-                {
-                    progressHandler = null;
-                }
+                Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayPlayableItem(playable));
             }
         }
 
-        public virtual bool RequiresExternalPage
+        /// <summary>
+        /// Plays or queues Media
+        /// </summary>
+        protected virtual void PlayPlayableItem(PlayableItem playable)
         {
-            get
+            _HasStartedPlaying = false;
+
+            // Get this now since we'll be using it frequently
+            MediaCenterEnvironment mediaCenterEnvironment = AddInHost.Current.MediaCenterEnvironment;
+
+            try
+            {
+                if (!CallPlayMediaForPlayableItem(mediaCenterEnvironment, playable))
+                {
+                    OnErrorPlayingItem(playable, "PlayMedia returned false");
+                    return;
+                }
+
+                MediaExperience mediaExperience;
+
+                if (playable.GoFullScreen)
+                {
+                    mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
+
+                    if (!mediaExperience.IsFullScreen)
+                    {
+                        mediaExperience.GoToFullScreen();
+                    }
+                }
+
+                // Attach event handler to MediaCenterEnvironment
+                // We need this because if you press stop on a dvd menu without ever playing, Transport property changed will never fire
+                mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+                mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
+
+                // Get this again as I've seen issues where it gets reset after the above call
+                mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
+
+                // Attach event handler to MediaTransport
+                MediaTransport transport = mediaExperience.Transport;
+                transport.PropertyChanged -= MediaTransport_PropertyChanged;
+                transport.PropertyChanged += MediaTransport_PropertyChanged;
+            }
+            catch (Exception ex)
+            {
+                OnErrorPlayingItem(playable, ex);
+            }
+        }
+
+        /// <summary>
+        /// Calls PlayMedia using either a MediaCollection or a single file
+        /// </summary>
+        private bool CallPlayMediaForPlayableItem(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        {
+            if (PlaybackControllerHelper.UseLegacyApi(playable))
+            {
+
+                bool success = CallPlayMediaLegacy(mediaCenterEnvironment, playable);
+                _CurrentMediaCollection = null;
+                return success;
+            }
+            else
+            {
+                return CallPlayMediaUsingMediaCollection(mediaCenterEnvironment, playable);
+            }
+        }
+
+        private bool CallPlayMediaUsingMediaCollection(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        {
+            MediaCollection coll = new MediaCollection();
+
+            // Create a MediaCollectionItem for each file to play
+            if (playable.HasMediaItems)
+            {
+                PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, coll, playable);
+            }
+            else
+            {
+                PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(coll, playable);
+            }
+
+            // Set starting position if we're resuming
+            if (playable.Resume)
+            {
+                var playstate = playable.MediaItems.First().PlaybackStatus;
+
+                coll.CurrentIndex = playstate.PlaylistPosition;
+                coll[playstate.PlaylistPosition].Start = new TimeSpan(playstate.PositionTicks);
+            }
+
+            _CurrentMediaCollection = coll;
+
+            bool success = PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, MediaType.MediaCollection, _CurrentMediaCollection, false);
+
+            if (!success)
+            {
+                _CurrentMediaCollection = null;
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Calls PlayMedia
+        /// </summary>
+        private bool CallPlayMediaLegacy(MediaCenterEnvironment mediaCenterEnvironment, PlayableItem playable)
+        {
+            Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
+
+            string file;
+
+            // Need to create a playlist
+            if (PlaybackControllerHelper.RequiresWPL(playable))
+            {
+                IEnumerable<string> files = playable.FilesFormattedForPlayer;
+
+                file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playable.StartPlaylistPosition);
+            }
+            else
+            {
+                // Play single file
+                file = playable.FilesFormattedForPlayer.First();
+            }
+
+            if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false))
             {
                 return false;
             }
-        }
 
-        // Default controller can play everything
-        public virtual bool CanPlay(string filename)
-        {
+            long position = playable.StartPositionTicks;
+
+            if (position > 0)
+            {
+                mediaCenterEnvironment.MediaExperience.Transport.Position = new TimeSpan(position);
+            }
+
             return true;
         }
 
-        // Default controller can play everything
-        public virtual bool CanPlay(IEnumerable<string> files)
+        protected virtual void QueuePlayableItem(PlayableItem playable)
         {
-            return true;
-        }
-
-        // commands are not routed in this way ... 
-        public virtual void ProcessCommand(RemoteCommand command)
-        {
-            // dont do anything (only plugins need to handle this)
-        }
-
-        public PlaybackController()
-        {
-            PlayState = PlayState.Undefined;
-            governatorThread = new Thread(GovernatorThreadProc);
-            governatorThread.IsBackground = true;
-            governatorThread.Start();
-        }
-
-
-        bool lastWasDVD = true;
-        public virtual void PlayDVD(string path)
-        {
-            PlayPath(path);
-            lastWasDVD = true;
-            returnedToApp = false;
-        }
-
-
-        public virtual void PlayMedia(string path)
-        {
-            if (lastWasDVD) mediaTransport = null;
-            PlayPath(path, MediaType.Video, false);
-            lastWasDVD = false;
-
-            // vista bug - stop play stop required so we automate it ...
-            var version = System.Environment.OSVersion.Version;
-            if (version.Major == 6 && version.Minor == 0 && MediaBrowser.Library.Kernel.Instance.ConfigData.EnableVistaStopPlayStopHack)
+            if (_CurrentMediaCollection == null)
             {
-                var mce = AddInHost.Current.MediaCenterEnvironment;
-                WaitForStream(mce);
-                //pause
-
-                Async.Queue("Playback Pauser", () =>
-                {
-                    Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
-                    {
-                        mce.MediaExperience.Transport.PlayRate = 1;
-                        mce.MediaExperience.Transport.PlayRate = 2;
-
-                    });
-                }, 2000);
-
-
+                QueuePlayableItemLegacy(playable);
+            }
+            else
+            {
+                QueuePlayableItemIntoMediaCollection(playable);
             }
         }
 
-        public virtual void QueueMedia(IEnumerable<string> paths)
-        {
-            foreach (string path in paths)
-                PlayPath(path, MediaType.Video, true);
-        }
-
-        public virtual void PlayMedia(IEnumerable<string> paths)
-        {
-            foreach (string path in paths)
-                PlayPath(path, MediaType.Video, false);
-        }
-
-        public virtual void QueueMedia(string path)
-        {
-            PlayPath(path, MediaType.Video, true);
-        }
-
-        public virtual void Seek(long position)
-        {
-            var mce = AddInHost.Current.MediaCenterEnvironment;
-            Logger.ReportVerbose("Trying to seek position :" + new TimeSpan(position).ToString());
-            WaitForStream(mce);
-            mce.MediaExperience.Transport.Position = new TimeSpan(position);
-        }
-
-        private static void WaitForStream(MediaCenterEnvironment mce)
-        {
-            int i = 0;
-            while ((i++ < 15) && (mce.MediaExperience.Transport.PlayState != Microsoft.MediaCenter.PlayState.Playing))
-            {
-                // settng the position only works once it is playing and on fast multicore machines we can get here too quick!
-                Thread.Sleep(100);
-            }
-        }
-
-
-        private void PlayPath(string path)
-        {
-            PlayPath(path, Microsoft.MediaCenter.MediaType.Video, false);
-        }
-
-        public void PlayPath(string path, Microsoft.MediaCenter.MediaType asType, bool addToQueue)
+        private void QueuePlayableItemIntoMediaCollection(PlayableItem playable)
         {
             try
             {
-                if (!AddInHost.Current.MediaCenterEnvironment.PlayMedia(asType, path, addToQueue))
+                // Create a MediaCollectionItem for each file to play
+                if (playable.HasMediaItems)
                 {
-                    Logger.ReportInfo("PlayMedia returned false");
+                    PlaybackControllerHelper.PopulateMediaCollectionUsingMediaItems(this, _CurrentMediaCollection, playable);
+                }
+                else
+                {
+                    PlaybackControllerHelper.PopulateMediaCollectionUsingFiles(_CurrentMediaCollection, playable);
                 }
             }
             catch (Exception ex)
             {
-                Logger.ReportException("Playing media failed.", ex);
-                Application.ReportBrokenEnvironment();
-                return;
+                OnErrorPlayingItem(playable, ex);
             }
         }
 
-        public virtual void GoToFullScreen()
+        private void QueuePlayableItemLegacy(PlayableItem playable)
         {
-            var mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+            Microsoft.MediaCenter.MediaType type = MediaType.Audio;
 
-            // great window 7 has bugs, lets see if we can work around them 
-            if (mce == null)
+            bool success = true;
+
+            foreach (string file in playable.FilesFormattedForPlayer)
             {
-                System.Threading.Thread.Sleep(200);
-                mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
-                if (mce == null)
+                if (!PlaybackControllerHelper.CallPlayMedia(AddInHost.Current.MediaCenterEnvironment, type, file, true))
                 {
-                    try
-                    {
-                        var fi = AddInHost.Current.MediaCenterEnvironment.GetType()
-                            .GetField("_checkedMediaExperience", BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (fi != null)
-                        {
-                            fi.SetValue(AddInHost.Current.MediaCenterEnvironment, false);
-                            mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
-                        }
-
-                    }
-                    catch (Exception e)
-                    {
-                        // give up ... I do not know what to do 
-                        Logger.ReportException("AddInHost.Current.MediaCenterEnvironment.MediaExperience is null", e);
-                    }
-
+                    success = false;
+                    break;
                 }
             }
 
+            if (!success)
+            {
+                OnErrorPlayingItem(playable, "PlayMedia returned false");
+            }
+        }
+
+        /// <summary>
+        /// Handles the MediaCenterEnvironment.PropertyChanged event
+        /// </summary>
+        protected void mediaCenterEnvironment_PropertyChanged(IPropertyObject sender, string property)
+        {
+            MediaCenterEnvironment env = sender as MediaCenterEnvironment;
+
+            MediaExperience mce = env.MediaExperience;
+
+            MediaTransport transport = mce.Transport;
+
+            HandlePropertyChange(env, mce, transport, property);
+        }
+
+        /// <summary>
+        /// Handles the MediaTransport.PropertyChanged event, which most of the time will be due to Position
+        /// </summary>
+        protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
+        {
+            MediaTransport transport = sender as MediaTransport;
+
+            MediaCenterEnvironment env = AddInHost.Current.MediaCenterEnvironment;
+
+            MediaExperience mce = env.MediaExperience;
+
+            HandlePropertyChange(env, mce, transport, property);
+        }
+
+        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, string property)
+        {
+            PlayState state;
+            long positionTicks = 0;
+
+            // If another application is playing the content, such as the WMC autoplay handler, we will
+            // not have permission to access Transport properties
+            // But we can look at MediaExperience.MediaType to determine if something is playing
+            try
+            {
+                state = transport.PlayState;
+                positionTicks = transport.Position.Ticks;
+            }
+            catch (InvalidOperationException)
+            {
+                state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
+            }
+
+            _CurrentPlayState = state;
+
+            // Don't get tripped up at the initial state of Stopped with position 0
+            if (!_HasStartedPlaying)
+            {
+                if (state == Microsoft.MediaCenter.PlayState.Playing)
+                {
+                    _HasStartedPlaying = true;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            // protect against really agressive calls
+            if (property == "Position")
+            {
+                var diff = (DateTime.Now - _LastTransportUpdateTime).TotalMilliseconds;
+
+                // Only cancel out Position reports
+                if (diff < 1000 && diff >= 0)
+                {
+                    return;
+                }
+            }
+
+            _LastTransportUpdateTime = DateTime.Now;
+
+            // Determine if playback has stopped. Per MSDN documentation, Finished is no longer used with Windows 7
+            bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined;
+
+            // Get metadata from player
+            MediaMetadata metadata = mce.MediaMetadata;
+
+            string metadataTitle = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata);
+            long metadataDuration = PlaybackControllerHelper.GetDurationOfCurrentlyPlayingMedia(metadata);
+
+            PlaybackStateEventArgs eventArgs = GetCurrentPlaybackState(metadataTitle, metadataDuration, positionTicks);
+
+            // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
+            OnProgress(eventArgs);
+
+            Application.CurrentInstance.ShowNowPlaying = true;
+
+            if (property == "PlayState")
+            {
+                // Get the title from the PlayableItem, if it's available. Otherwise use MediaMetadata
+                string title = eventArgs.Item == null ? metadataTitle : (eventArgs.Item.HasMediaItems ? eventArgs.Item.MediaItems.ElementAt(eventArgs.CurrentMediaIndex).Name : eventArgs.Item.Files.ElementAt(eventArgs.CurrentFileIndex));
+
+                Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
+
+                PlayStateChanged();
+            }
+
+            if (isStopped)
+            {
+                HandleStoppedState(env, mce, transport, eventArgs);
+            }
+        }
+
+        /// <summary>
+        /// Handles a change of Playstate by firing various events and post play processes
+        /// </summary>
+        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, PlaybackStateEventArgs e)
+        {
+            // Stop listening to the events
+            env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+            transport.PropertyChanged -= MediaTransport_PropertyChanged;
+
+            // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
+            _HasStartedPlaying = false;
+
+            _CurrentMediaCollection = null;
+
+            var mediaType = mce.MediaType;
+
+            // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
+            if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
+            {
+                Application.CurrentInstance.ShowNowPlaying = false;
+
+                bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
+
+                PlaybackControllerHelper.ReturnToApplication(forceReturn);
+            }
+
+            // Fire the OnFinished event for each item
+            OnPlaybackFinished(e);
+        }
+
+        /// <summary>
+        /// Retrieves the current playback item using properties from MediaExperience and Transport
+        /// </summary>
+        private PlaybackStateEventArgs GetCurrentPlaybackState(string metadataTitle, long metadataDuration, long positionTicks)
+        {
+            int filePlaylistPosition;
+            int currentMediaIndex;
+            PlayableItem currentPlayableItem;
+
+            if (_CurrentMediaCollection == null)
+            {
+                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemUsingMetadataTitle(this, CurrentPlayableItems, metadataTitle, out filePlaylistPosition, out currentMediaIndex);
+            }
+            else
+            {
+                currentPlayableItem = PlaybackControllerHelper.GetCurrentPlaybackItemFromMediaCollection(CurrentPlayableItems, _CurrentMediaCollection, out filePlaylistPosition, out currentMediaIndex);
+
+                // When playing multiple files with MediaCollections, if you allow playback to finish, CurrentIndex will be reset to 0, but transport.Position will be equal to the duration of the last item played
+                if (filePlaylistPosition == 0 && positionTicks >= metadataDuration)
+                {
+                    positionTicks = 0;
+                }
+            }
+
+            return new PlaybackStateEventArgs()
+            {
+                Position = positionTicks,
+                CurrentFileIndex = filePlaylistPosition,
+                DurationFromPlayer = metadataDuration,
+                Item = currentPlayableItem,
+                CurrentMediaIndex = currentMediaIndex
+            };
+        }
+
+        /// <summary>
+        /// Puts the player into fullscreen mode
+        /// </summary>
+        public override void GoToFullScreen()
+        {
+            var mce = MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
+
             if (mce != null)
             {
+                Logger.ReportVerbose("Going fullscreen...");
                 mce.GoToFullScreen();
             }
             else
             {
                 Logger.ReportError("AddInHost.Current.MediaCenterEnvironment.MediaExperience is null, we have no way to go full screen!");
-
-
-
                 AddInHost.Current.MediaCenterEnvironment.Dialog(Application.CurrentInstance.StringData("CannotMaximizeDial"), "", Microsoft.MediaCenter.DialogButtons.Ok, 0, true);
-            }
-        }
-
-        #region Playback status
-
-
-        public virtual bool IsPlaying
-        {
-            get { return PlayState == PlayState.Playing; }
-        }
-
-        public virtual bool IsStopped
-        {
-            get { return PlayState == PlayState.Stopped; }
-        }
-
-        public virtual bool IsPaused
-        {
-            get { return PlayState == PlayState.Paused; }
-        }
-
-        public PlayState PlayState { get; private set; }
-
-        #endregion
-        const int ForceRefreshMillisecs = 5000;
-        private void GovernatorThreadProc()
-        {
-            try
-            {
-                while (!terminate)
-                {
-                    lock (sync)
-                    {
-                        Monitor.Wait(sync, ForceRefreshMillisecs);
-                        if (!MediaBrowser.Library.Kernel.Instance.ConfigData.EnableResumeSupport)
-                        {
-                            continue;
-                        }
-                        if (terminate)
-                        {
-                            break;
-                        }
-                        if (progressHandler != null)
-                        {
-                            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => AttachAndUpdateStatus());
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.ReportException("Governator thread proc died!", e);
-            }
-        }
-
-        private void AttachAndUpdateStatus()
-        {
-            try
-            {
-                var transport = MediaTransport;
-                if (transport != null)
-                {
-                    if (transport.PlayState != PlayState)
-                    {
-                        ReAttach();
-                    }
-                    UpdateStatus();
-                }
-            }
-            catch (Exception e)
-            {
-                // dont crash the background thread 
-                Logger.ReportException("FAIL: something is wrong with media experience!", e);
-                mediaTransport = null;
             }
         }
 
@@ -299,215 +445,128 @@ namespace MediaBrowser
             }
         }
 
-        private MediaTransport mediaTransport;
-        protected MediaTransport MediaTransport
+        /// <summary>
+        /// Pauses playback
+        /// </summary>
+        public override void Pause()
         {
-            get
-            {
-                if (mediaTransport != null) return mediaTransport;
-                try
-                {
-                    MediaExperience experience;
-
-                    experience = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
-
-                    if (experience != null)
-                    {
-                        mediaTransport = experience.Transport;
-                    }
-                }
-                catch (InvalidOperationException e)
-                {
-                    // well if we are inactive we are not allowed to get media experience ...
-                    Logger.ReportException("EXCEPTION : ", e);
-                }
-                return mediaTransport;
-            }
-        }
-
-        protected virtual void ReAttach()
-        {
-            var transport = MediaTransport;
-            if (transport != null)
-            {
-                transport.PropertyChanged -= new PropertyChangedEventHandler(TransportPropertyChanged);
-                transport.PropertyChanged += new PropertyChangedEventHandler(TransportPropertyChanged);
-            }
-        }
-
-        protected virtual void Detach()
-        {
-            var transport = MediaTransport;
-            if (transport != null)
-            {
-                transport.PropertyChanged -= new PropertyChangedEventHandler(TransportPropertyChanged);
-            }
-            progressHandler = null; //also detatch the playble item so we won't keep trying to track progress when stopped
-        }
-
-        DateTime lastCall = DateTime.Now;
-
-        void TransportPropertyChanged(IPropertyObject sender, string property)
-        {
-            // protect against really agressive calls
-            var diff = (DateTime.Now - lastCall).TotalMilliseconds;
-            // play state is critical otherwise stop hack for win 7 will not work.
-            if (diff < 1000 && diff >= 0 && property != "PlayState")
-            {
-                return;
-            }
-
-            //Logger.ReportVerbose("TransportPropertyChanged was called with property = " + property);
-
-            lastCall = DateTime.Now;
-            UpdateStatus();
-        }
-
-
-        long position;
-        string title;
-        private void UpdateStatus()
-        {
-            var transport = MediaTransport;
-            PlayState state = PlayState.Undefined;
-            if (transport != null)
-            {
-                state = transport.PlayState;
-                long position = transport.Position.Ticks;
-                long duration = 0;
-                try
-                {
-                    //only track position for a reasonable portion of the video
-                    duration = (TimeSpan.Parse((string)MediaExperience.MediaMetadata["Duration"])).Ticks;
-                    //Logger.ReportInfo("position "+position+ " Value "+duration);
-                    if (duration > 0)
-                    {
-                        decimal pctIn = Decimal.Divide(position,duration) * 100;
-                        //Logger.ReportInfo("pctIn: " + pctIn + " duration: " + duration);
-                        if (pctIn < Config.Instance.MinResumePct || pctIn > Config.Instance.MaxResumePct) position = 0; //don't track in very begginning or very end
-                    }
-                }
-                catch { } // couldn't get duration - no biggie just don't blow chow
-
-                string title = null;
-                try
-                {
-                    title = MediaExperience.MediaMetadata["Title"] as string;
-                }
-                catch (Exception e)
-                {
-                    Logger.ReportException("Failed to get title on current media item!", e);
-                }
-
-                if (title != null && progressHandler != null && (this.title != title || this.position != position) && (duration / TimeSpan.TicksPerMinute) >= Config.Instance.MinResumeDuration)
-                {
-
-                    //Logger.ReportVerbose("progressHandler was called with : position =" + position.ToString() + " title :" + title);
-                    
-                    progressHandler(this, new PlaybackStateEventArgs() { Position = position, Title = title });
-                    this.title = title;
-                    this.position = position;
-                }
-            }
-
-            if (state != PlayState)
-            {
-                Logger.ReportVerbose("Playstate changed to "+state+" for " + title);
-                PlayState = state;
-                Logger.ReportVerbose("Invoking Playstate changed events...");
-                Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => PlayStateChanged());
-                Logger.ReportVerbose("Setting now playing status...");
-                Application.CurrentInstance.ShowNowPlaying = (
-                    (state == Microsoft.MediaCenter.PlayState.Playing) ||
-                    (state == Microsoft.MediaCenter.PlayState.Paused));
-                Logger.ReportVerbose("Updating Resume status...");
-                Application.CurrentInstance.CurrentItem.UpdateResume();
-                if (state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined)
-                {
-                    Logger.ReportVerbose("Stopped so detaching...");
-                    Detach(); //we don't want to continue to get updates if play something outside MB
-                    //we're done - call post-processor
-                    Logger.ReportVerbose("Calling post play...");
-                    Application.CurrentInstance.RunPostPlayProcesses();
-                    Logger.ReportVerbose("Finished all playstate events");
-                }
-            }
-
-
-            if (IsWindows7)
-            {
-                if (lastWasDVD && !returnedToApp && state == PlayState.Stopped)
-                {
-                    Logger.ReportVerbose("Ensuring MB is front-most app");
-                    Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ =>
-                    {
-                        AddInHost.Current.ApplicationContext.ReturnToApplication();
-                    });
-                    returnedToApp = true;
-                }
-            }
-            Logger.ReportVerbose("Out of updatestatus");
-        }
-
-        static bool? isWindows7;
-        private static bool IsWindows7
-        {
-            get
-            {
-                if (!isWindows7.HasValue)
-                {
-                    var version = System.Environment.OSVersion.Version;
-                    isWindows7 = version.Major == 6 && version.Minor == 1;
-                }
-                return isWindows7.Value;
-            }
-        }
-
-        bool returnedToApp = true;
-
-        private void PlayStateChanged()
-        {
-            FirePropertyChanged("PlayState");
-            FirePropertyChanged("IsPlaying");
-            FirePropertyChanged("IsStopped");
-            FirePropertyChanged("IsPaused");
-        }
-
-        public virtual void Pause()
-        {
-            var transport = MediaTransport;
+            var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
             if (transport != null)
             {
                 transport.PlayRate = 1;
             }
         }
 
-
-        public virtual void Stop()
+        /// <summary>
+        /// Unpauses playback
+        /// </summary>
+        public override void UnPause()
         {
-            var transport = MediaTransport;
+            var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
             if (transport != null)
             {
-                transport.PlayRate = 0;
+                transport.PlayRate = 2;
+            }
+        }
+
+        /// <summary>
+        /// Stops playback
+        /// </summary>
+        protected override void StopInternal()
+        {
+            PlaybackControllerHelper.Stop();
+        }
+
+        /// <summary>
+        /// Takes a Media object and returns the list of files that will be sent to the player
+        /// </summary>
+        internal override IEnumerable<string> GetPlayableFiles(Media media)
+        {
+            IEnumerable<string> files = base.GetPlayableFiles(media);
+
+            Video video = media as Video;
+
+            if (video != null)
+            {
+                if (video.MediaType == Library.MediaType.BluRay)
+                {
+                    files = files.Select(i => PlaybackControllerHelper.GetBluRayPath(i));
+                }
+            }
+
+            return ShouldTranscode ? files.Select(f => PlaybackControllerHelper.GetTranscodedPath(f)) : files;
+        }
+
+        /// <summary>
+        /// When playback is based purely on files, this will take the files that were supplied to the PlayableItem,
+        /// and create the actual paths that will be sent to the player
+        /// </summary>
+        internal override IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
+        {
+            foreach (string file in files)
+            {
+                MediaBrowser.Library.MediaType mediaType = MediaBrowser.Library.MediaTypeResolver.DetermineType(file);
+
+                if (mediaType == Library.MediaType.BluRay)
+                {
+                    yield return PlaybackControllerHelper.GetBluRayPath(file);
+                }
+                else if (mediaType == Library.MediaType.HDDVD || mediaType == Library.MediaType.ISO)
+                {
+                    yield return file;
+                }
+
+                yield return ShouldTranscode ? PlaybackControllerHelper.GetTranscodedPath(file) : file;
             }
         }
 
         protected override void Dispose(bool isDisposing)
         {
+            MediaTransport transport = PlaybackControllerHelper.GetCurrentMediaTransport();
 
-            Logger.ReportVerbose("Playback controller is being disposed");
-
-            if (isDisposing)
+            if (transport != null)
             {
-                lock (sync)
-                {
-                    terminate = true;
-                    Monitor.Pulse(sync);
-                }
+                transport.PropertyChanged -= MediaTransport_PropertyChanged;
             }
 
             base.Dispose(isDisposing);
+        }
 
+        protected bool ShouldTranscode
+        {
+            get
+            {
+                return Config.Instance.EnableTranscode360 && Application.RunningOnExtender;
+            }
+        }
+
+        /// <summary>
+        /// Moves the player to a given position
+        /// </summary>
+        public override void Seek(long position)
+        {
+            var mce = AddInHost.Current.MediaCenterEnvironment;
+            Logger.ReportVerbose("Trying to seek position :" + new TimeSpan(position).ToString());
+            PlaybackControllerHelper.WaitForStream(mce);
+            mce.MediaExperience.Transport.Position = new TimeSpan(position);
+        }
+
+        public override bool IsPaused
+        {
+            get
+            {
+                return _CurrentPlayState == Microsoft.MediaCenter.PlayState.Paused;
+            }
+        }
+
+        public override bool CanPause
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return true; }
         }
     }
 }

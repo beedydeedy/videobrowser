@@ -1,23 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.MediaCenter.UI;
-using System.Diagnostics;
-using Microsoft.MediaCenter;
-using MediaBrowser.Code.ModelItems;
-using System.IO;
-using MediaBrowser.Library.Playables;
-using MediaBrowser.Library.Entities;
 using MediaBrowser.Code;
-using System.Threading;
-using MediaBrowser.Library.Factories;
-using MediaBrowser.Library.Threading;
+using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Interfaces;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
-using MediaBrowser.Library.Extensions;
-using System.Linq;
-
+using Microsoft.MediaCenter;
 
 namespace MediaBrowser.Library
 {
@@ -46,7 +38,6 @@ namespace MediaBrowser.Library
         object loadMetadatLock = new object();
         protected object watchLock = new object();
 
-        PlayableItem playable;
         private PlaybackStatus playstate;
         protected BaseItem baseItem;
 
@@ -70,7 +61,7 @@ namespace MediaBrowser.Library
 
         public FolderModel PhysicalParent { get; internal set; }
 
-        private FolderModel TopParent
+        internal FolderModel TopParent
         {
             get
             {
@@ -103,8 +94,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                bool isVideo = (baseItem is Video) || (baseItem is Movie);
-                return (baseItem is Folder) ? !((baseItem as Folder).HasVideoChildren) : !isVideo;
+                return (baseItem is Folder) ? !((baseItem as Folder).HasVideoChildren) : !(baseItem is Video);
             }
         }
 
@@ -218,6 +208,20 @@ namespace MediaBrowser.Library
             }
         }
 
+        public string VideoFormatString
+        {
+            get
+            {
+                    string videoFormat =  "";
+                    var video = baseItem as Video;
+                    if (video != null)
+                    {
+                        videoFormat = video.VideoFormat;
+                    }
+                    return videoFormat;
+            }
+        }
+
         public Microsoft.MediaCenter.UI.Image MediaTypeImage
         {
             get
@@ -226,12 +230,23 @@ namespace MediaBrowser.Library
             }
         }
 
+        public string HDTypeString
+        {
+            get
+            {
+                if (HDType != 0)
+                {
+                return HDType.ToString() + this.MediaInfo.ScanTypeChar;
+                }
+                else return "";
+            }
+        }
+
         public Microsoft.MediaCenter.UI.Image HDTypeImage
         {
             get
             {
-
-                return Helper.GetMediaInfoImage("HDType_" + this.HDType.ToString() + this.MediaInfo.ScanTypeChar);
+                return Helper.GetMediaInfoImage("HDType_" + this.HDTypeString);
             }
         }
 
@@ -244,6 +259,9 @@ namespace MediaBrowser.Library
                 switch (AspectRatioString)
                 {
                     //handle special cases
+                    case "5:4":
+                        aspectImageName = "125";
+                        break;
                     case "4:3":
                         aspectImageName = "133";
                         break;
@@ -329,44 +347,34 @@ namespace MediaBrowser.Library
             }
         }
 
-        private void Play(bool resume, bool queue)
+        public void Play(bool resume, bool queue)
         {
-            if (this.IsPlayable || this.IsFolder)
+            if (resume)
             {
-                if (Config.Instance.ParentalControlEnabled && !this.ParentalAllowed)
-                {
-                    Application.CurrentInstance.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.PlayProtected(this, resume, queue);
-                }
-                else PlaySecure(resume, queue);
+                Application.CurrentInstance.Resume(this);
+            }
+            else if (queue)
+            {
+                Application.CurrentInstance.AddToQueue(this);
+            }
+            else
+            {
+                Application.CurrentInstance.Play(this);
             }
         }
 
-        public void PlaySecure(bool resume, bool queue)
+        public void AddNewlyWatched()
         {
-            try
+            if (!this.IsFolder && this.TopParent != null)
             {
-                if (this.IsPlayable || this.IsFolder)
-                {
-
-                    if (PlayableItem.PlaybackController != Application.CurrentInstance.PlaybackController && PlayableItem.PlaybackController.RequiresExternalPage)
-                    {
-                        Application.CurrentInstance.OpenExternalPlaybackPage(this);
-                    }
-                    this.PlayableItem.QueueItem = queue;
-                    this.PlayableItem.Play(this.PlayState, resume);
-                    if (!this.IsFolder && this.TopParent != null) this.TopParent.AddNewlyWatched(this); //add to recent watched list if not a whole folder
-                }
-            }
-            catch (Exception)
-            {
-                MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-                ev.Dialog(Application.CurrentInstance.StringData("ContentErrorDial") + "\n" + baseItem.Path, Application.CurrentInstance.StringData("ContentErrorCapDial"), DialogButtons.Ok, 60, true);
+                //add to watched list if not a whole folder
+                this.TopParent.AddNewlyWatched(this);
             }
         }
 
         public void UpdateResume()
         {
+            Logger.ReportVerbose("Updating Resume status...");
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => FirePropertyChanged("CanResume")); //force UI to update
         }
 
@@ -394,7 +402,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return PlayState == null ? false : PlayState.CanResume;
+                return BaseItem.CanResume;
             }
         }
 
@@ -415,7 +423,8 @@ namespace MediaBrowser.Library
                     case "watched":
                         string runTimeStr = "";
                         string watchTimeStr = "";
-                        if (this.PlayState.PositionTicks > 0)
+                        string lastPlayedStr = LastPlayedString;
+                        if (this.PlayState != null && this.PlayState.PositionTicks > 0)
                         {
                             TimeSpan watchTime = new TimeSpan(this.PlayState.PositionTicks);
                             watchTimeStr = " " + watchTime.TotalMinutes.ToString("F0") + " ";
@@ -428,8 +437,12 @@ namespace MediaBrowser.Library
                                 runTimeStr = Kernel.Instance.StringData.GetString("MinutesStr"); //have watched time but not running time so tack on 'mins'
                             }
                         }
+                        else if (this is FolderModel)
+                        {
+                            lastPlayedStr = Kernel.Instance.StringData.GetString("VariousEHS");
+                        }
                         return Kernel.Instance.StringData.GetString("WatchedEHS") + watchTimeStr + runTimeStr + " " +
-                            Kernel.Instance.StringData.GetString("OnEHS") + " " + LastPlayedString;
+                            Kernel.Instance.StringData.GetString("OnEHS") + " " + lastPlayedStr;
                     default:
                         return Kernel.Instance.StringData.GetString("AddedOnEHS") + " " + CreatedDateString;
                 }
@@ -439,6 +452,22 @@ namespace MediaBrowser.Library
         {
             FirePropertiesChanged("QuickListItems", "RecentItems","RecentWatchedItems","RecentUnwatchedItems");
         }
+
+        public virtual DateTime LastPlayed
+        {
+            get
+            {
+                if (PlayState != null)
+                {
+                    return PlayState.LastPlayed;
+                }
+                else
+                {
+                    return DateTime.MinValue;
+                }
+            }
+        }
+
         public string LastPlayedString
         {
             get
@@ -455,28 +484,34 @@ namespace MediaBrowser.Library
             {
                 return new List<Item>();
             }
+            set { }
         }
 
 
-        private PlaybackStatus PlayState
+        public PlaybackStatus PlayState
         {
             get
             {
-                if (playstate == null)
-                {
-
-                    Media media = baseItem as Media;
-
-                    if (media != null)
-                    {
-                        playstate = media.PlaybackStatus;
-                        // if we want any chance to reclaim memory we are going to have to use 
-                        // weak event handlers
-                        playstate.WasPlayedChanged += new EventHandler<EventArgs>(PlaybackStatusPlayedChanged);
-                        PlaybackStatusPlayedChanged(this, null);
-                    }
-                }
+                EnsurePlayStateChangesBoundToUI();
                 return playstate;
+            }
+        }
+
+        internal void EnsurePlayStateChangesBoundToUI()
+        {
+            if (playstate == null)
+            {
+
+                Media media = baseItem as Media;
+
+                if (media != null)
+                {
+                    playstate = media.PlaybackStatus;
+                    // if we want any chance to reclaim memory we are going to have to use 
+                    // weak event handlers
+                    playstate.WasPlayedChanged += new EventHandler<EventArgs>(PlaybackStatusPlayedChanged);
+                    PlaybackStatusPlayedChanged(this, null);
+                }
             }
         }
 
@@ -484,11 +519,17 @@ namespace MediaBrowser.Library
         {
             lock (watchLock)
                 unwatchedCountCache = -1;
-            FirePropertyChanged("HaveWatched");
-            FirePropertyChanged("UnwatchedCount");
-            FirePropertyChanged("ShowUnwatched");
-            FirePropertyChanged("UnwatchedCountString");
-            FirePropertyChanged("PlayState");
+
+            //force UI to update
+            Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => 
+            {
+                FirePropertyChanged("HaveWatched");
+                FirePropertyChanged("UnwatchedCount");
+                FirePropertyChanged("ShowUnwatched");
+                FirePropertyChanged("UnwatchedCountString");
+                FirePropertyChanged("PlayState");
+                FirePropertyChanged("InProgress");
+            }); 
         }
 
         #endregion
@@ -500,6 +541,14 @@ namespace MediaBrowser.Library
             get
             {
                 return UnwatchedCount == 0;
+            }
+        }
+
+        public bool InProgress
+        {
+            get
+            {
+                return CanResume;
             }
         }
 
@@ -524,13 +573,11 @@ namespace MediaBrowser.Library
             get
             {
                 int count = 0;
-                if (baseItem is Video)
+
+                var media = baseItem as Media;
+                if (media != null && !media.PlaybackStatus.WasPlayed)
                 {
-                    var video = baseItem as Video;
-                    if (video != null && !video.PlaybackStatus.WasPlayed)
-                    {
-                        count = 1;
-                    }
+                    count = 1;
                 }
                 return count;
             }
@@ -545,13 +592,19 @@ namespace MediaBrowser.Library
             FirePropertyChanged("HaveWatched");
             FirePropertyChanged("UnwatchedCount");
             FirePropertyChanged("ShowUnwatched");
+            FirePropertyChanged("InProgress");
             FirePropertyChanged("UnwatchedCountString");
             Logger.ReportVerbose("  ToggleWatched() changed to: " + HaveWatched.ToString());
             //HACK: This sort causes errors in detail lists, further debug necessary
             //this.PhysicalParent.Children.Sort();
         }
 
-        internal virtual void SetWatched(bool value)
+        public virtual void SetWatched(bool value)
+        {
+            SetWatched(value, true);
+        }
+        
+        public virtual void SetWatched(bool value, bool displayMessage)
         {
             if (IsPlayable)
             {
@@ -566,19 +619,19 @@ namespace MediaBrowser.Library
                             this.PhysicalParent.RemoveRecentlyUnwatched(this); //thought about asynch'ing this but its a list of 20 items...
                         }
                         //don't add to watched list as we didn't really watch it (and it might just clutter up the list)
-                        Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("SetWatchedProf"), this.Name));
+                        if (displayMessage) Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("SetWatchedProf"), this.Name));
                     }
                     else
                     {
-                        PlayState.PlayCount = 0;
+                        PlayState.WasPlayed = false;
                         //remove ourselves from the watched list as well
                         if (this.PhysicalParent != null)
                         {
                             this.PhysicalParent.RemoveNewlyWatched(this); //thought about asynch'ing this but its a list of 20 items...
                         }
-                        Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("ClearWatchedProf"), this.Name));
+                        if (displayMessage) Application.CurrentInstance.Information.AddInformationString(string.Format(Application.CurrentInstance.StringData("ClearWatchedProf"), this.Name));
                     }
-                    PlayState.Save();
+                    Kernel.Instance.SavePlayState(BaseItem, PlayState);
                     lock (watchLock)
                         unwatchedCountCache = -1;
                 }
@@ -607,8 +660,7 @@ namespace MediaBrowser.Library
                 primaryImage = null;
                 bannerImage = null;
                 primaryImageSmall = null;
-                ThumbSize s = baseItem.Parent != null ? baseItem.Parent.ThumbDisplaySize : new ThumbSize(0, 0);
-                baseItem.ReCacheAllImages(s);
+                baseItem.ReCacheAllImages();
                 Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => this.FireAllPropertiesChanged());
             });
         }
@@ -628,7 +680,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return baseItem is Media;
+                return baseItem.IsPlayable;
             }
         }
 
@@ -640,15 +692,13 @@ namespace MediaBrowser.Library
             }
         }
 
+        protected FolderModel season;
         public FolderModel Season
         {
             get
             {
 
-                FolderModel season = null;
                 Episode episode = baseItem as Episode;
-                FolderModel parent = PhysicalParent;
-
                 if (episode != null)
                 {
                     season = ItemFactory.Instance.Create(episode.Season) as FolderModel;
@@ -658,12 +708,16 @@ namespace MediaBrowser.Library
             }
         }
 
-
+        protected FolderModel series;
         public FolderModel Series
         {
             get
             {
-                return new FolderModel() { baseItem = this.baseItem.OurSeries};
+                if (series == null)
+                {
+                    series = ItemFactory.Instance.Create(this.baseItem.OurSeries) as FolderModel;
+                }
+                return series;
             }
         }
 
@@ -704,85 +758,27 @@ namespace MediaBrowser.Library
         // this is a shortcut for MCML
         public void ProcessCommand(RemoteCommand command)
         {
-            PlayableItem.PlaybackController.ProcessCommand(command);
-        }
-
-        public IPlaybackController PlaybackController
-        {
-            get
-            {
-                return this.PlayableItem.PlaybackController;
-            }
-        }
-
-        internal PlayableItem PlayableItem
-        {
-            get
-            {
-                if (!IsPlayable && !IsFolder) return null;
-
-                Media media = baseItem as Media;
-
-                if (media != null && playable == null)
-                    lock (this)
-                        if (playable == null)
-                        {
-                            playable = PlayableItemFactory.Instance.Create(media);
-                        }
-
-                if (playable != null)
-                    return playable;
-
-                Folder folder = baseItem as Folder;
-                if (folder != null && playable == null)
-                    lock (this)
-                        if (playable == null)
-                        {
-                            playable = PlayableItemFactory.Instance.Create(folder);
-                        }
-
-                return playable;
-            }
+            Application.CurrentInstance.PlaybackController.ProcessCommand(command);
         }
 
         public bool ContainsTrailers
         {
             get
             {
-                var movie = BaseItem as Movie;
-                return (movie != null && movie.ContainsTrailers);
+                ISupportsTrailers entity = baseItem as ISupportsTrailers;
+
+                if (entity != null)
+                {
+                    return entity.ContainsTrailers;
+                }
+
+                return false;
             }
         }
 
         public void PlayTrailers()
         {
-            var movie = BaseItem as Movie;
-            if (movie.ContainsTrailers)
-            {
-                var trailerFiles = movie.TrailerFiles.ToArray();
-                string filename = null;
-                if (trailerFiles.Length == 1)
-                {
-                    filename = trailerFiles[0];
-                }
-                if (trailerFiles.Length > 1)
-                {
-                    filename = PlayableItem.CreateWPLPlaylist(BaseItem.Name, trailerFiles);
-                }
-
-                if (filename != null)
-                {
-                    foreach (var controller in Kernel.Instance.PlaybackControllers)
-                    {
-                        if (controller.CanPlay(filename))
-                        {
-                            controller.PlayMedia(filename);
-                            controller.GoToFullScreen();
-                            break;
-                        }
-                    }
-                }
-            }
+            Application.CurrentInstance.PlayLocalTrailer(this);
         }
 
         #region Dynamic Data Support
@@ -845,7 +841,8 @@ namespace MediaBrowser.Library
             {
                 get
                 {
-                    return item.GetType().GetProperty(key.ToString()).GetValue(item, null);
+                    var prop = item.GetType().GetProperty(key.ToString());
+                    return prop != null ? prop.GetValue(item, null) : null;
                 }
                 set
                 {

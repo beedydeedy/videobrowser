@@ -40,7 +40,7 @@ namespace MediaBrowser.Library {
         public ThumbSize() { } //for the serializer
     }
 
-    class ItemRepository : IItemRepository, IDisposable {
+    public class ItemRepository : IItemRepository, IDisposable {
         public ItemRepository() {
             playbackStatus = new FileBasedDictionary<PlaybackStatus>(GetPath("playstate", userSettingPath));
             thumbSizes = new FileBasedDictionary<ThumbSize>(GetPath("thumbsizes", userSettingPath));
@@ -63,6 +63,36 @@ namespace MediaBrowser.Library {
                 }
                 return ret;
             }
+        }
+
+        public List<Guid> AllItems
+        { //for migration
+            get
+            {
+                var ret = new List<Guid>();
+                string path = GetPath("items", rootPath);
+                foreach (var file in Directory.GetFiles(path))
+                {
+                    ret.Add(new Guid(Path.GetFileName(file)));
+                }
+                return ret;
+            }
+        }
+
+        public bool Backup(string type)
+        {
+            string root = type.ToLower() == "display" || type == "playstate" ? userSettingPath : rootPath;
+            string source = GetPath(type, root);
+            try
+            {
+                Directory.Move(source, source + ".bak");
+            }
+            catch (Exception e)
+            {
+                Logger.ReportException("Failed to backup " + type, e);
+                return false;
+            }
+            return true;
         }
 
         #region IItemCacheProvider Members
@@ -159,6 +189,25 @@ namespace MediaBrowser.Library {
         {
         }
 
+        public bool BackupDatabase()
+        {
+            return true;
+        }
+
+        public void MigratePlayState(ItemRepository repo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MigrateDisplayPrefs(ItemRepository repo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MigrateItems()
+        {
+            throw new NotImplementedException();
+        }
         public PlaybackStatus RetrievePlayState(Guid id) {
             return playbackStatus[id]; 
         }
@@ -300,6 +349,10 @@ namespace MediaBrowser.Library {
             return path;
         }
 
+        public int ClearCache(string objType)
+        {
+            throw new NotImplementedException();
+        }
 
         public bool ClearEntireCache() {
             bool success = true;
@@ -336,6 +389,8 @@ namespace MediaBrowser.Library {
         #region IDisposable Members
 
         public void Dispose() {
+            playbackStatus.Dispose();
+            thumbSizes.Dispose();
             GC.SuppressFinalize(this);
         }
 

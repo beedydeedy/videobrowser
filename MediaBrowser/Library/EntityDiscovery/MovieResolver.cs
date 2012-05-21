@@ -174,6 +174,8 @@ namespace MediaBrowser.Library.EntityDiscovery {
 
             if (location.ContainsChild("mymovies.xml")) yield return null;
 
+            if (location.ContainsChild("movie.xml")) yield return null;
+
             foreach (var child in location.Children) {
 
                 // nested DVD or BD

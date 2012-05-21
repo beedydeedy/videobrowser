@@ -18,6 +18,21 @@
     </UpgradeBackupLocation>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <AssemblyOriginatorKeyFile>MediaBrowser.snk</AssemblyOriginatorKeyFile>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,7 +43,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRules>-Microsoft.Design#CA1012;-Microsoft.Design#CA2210;-Microsoft.Design#CA1040;-Microsoft.Design#CA1005;-Microsoft.Design#CA1020;-Microsoft.Design#CA1021;-Microsoft.Design#CA1010;-Microsoft.Design#CA1011;-Microsoft.Design#CA1009;-Microsoft.Design#CA1050;-Microsoft.Design#CA1026;-Microsoft.Design#CA1019;-Microsoft.Design#CA1031;-Microsoft.Design#CA1047;-Microsoft.Design#CA1000;-Microsoft.Design#CA1048;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1061;-Microsoft.Design#CA1006;-Microsoft.Design#CA1046;-Microsoft.Design#CA1045;-Microsoft.Design#CA1065;-Microsoft.Design#CA1038;-Microsoft.Design#CA1008;-Microsoft.Design#CA1028;-Microsoft.Design#CA1064;-Microsoft.Design#CA1004;-Microsoft.Design#CA1035;-Microsoft.Design#CA1063;-Microsoft.Design#CA1032;-Microsoft.Design#CA1023;-Microsoft.Design#CA1033;-Microsoft.Design#CA1039;-Microsoft.Design#CA1016;-Microsoft.Design#CA1014;-Microsoft.Design#CA1017;-Microsoft.Design#CA1018;-Microsoft.Design#CA1027;-Microsoft.Design#CA1059;-Microsoft.Design#CA1060;-Microsoft.Design#CA1034;-Microsoft.Design#CA1013;-Microsoft.Design#CA1036;-Microsoft.Design#CA1044;-Microsoft.Design#CA1041;-Microsoft.Design#CA1025;-Microsoft.Design#CA1052;-Microsoft.Design#CA1053;-Microsoft.Design#CA1057;-Microsoft.Design#CA1058;-Microsoft.Design#CA1001;-Microsoft.Design#CA1049;-Microsoft.Design#CA1054;-Microsoft.Design#CA1056;-Microsoft.Design#CA1055;-Microsoft.Design#CA1030;-Microsoft.Design#CA1003;-Microsoft.Design#CA1007;-Microsoft.Design#CA1043;-Microsoft.Design#CA1024;-Microsoft.Globalization#CA1301;-Microsoft.Globalization#CA1302;-Microsoft.Globalization#CA1308;-Microsoft.Globalization#CA1306;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Globalization#CA2101;-Microsoft.Globalization#CA1300;-Microsoft.Globalization#CA1307;-Microsoft.Globalization#CA1309;-Microsoft.Interoperability#CA1403;-Microsoft.Interoperability#CA1406;-Microsoft.Interoperability#CA1413;-Microsoft.Interoperability#CA1402;-Microsoft.Interoperability#CA1407;-Microsoft.Interoperability#CA1404;-Microsoft.Interoperability#CA1410;-Microsoft.Interoperability#CA1411;-Microsoft.Interoperability#CA1405;-Microsoft.Interoperability#CA1409;-Microsoft.Interoperability#CA1415;-Microsoft.Interoperability#CA1408;-Microsoft.Interoperability#CA1414;-Microsoft.Interoperability#CA1412;-Microsoft.Interoperability#CA1400;-Microsoft.Interoperability#CA1401;-Microsoft.Maintainability#CA1506;-Microsoft.Maintainability#CA1502;-Microsoft.Maintainability#CA1501;-Microsoft.Maintainability#CA1505;-Microsoft.Maintainability#CA1504;-Microsoft.Maintainability#CA1500;-Microsoft.Mobility#CA1600;-Microsoft.Mobility#CA1601;-Microsoft.Naming#CA1702;-Microsoft.Naming#CA1700;-Microsoft.Naming#CA1712;-Microsoft.Naming#CA1713;-Microsoft.Naming#CA1714;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1704;-Microsoft.Naming#CA1708;-Microsoft.Naming#CA1715;-Microsoft.Naming#CA1710;-Microsoft.Naming#CA1720;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1722;-Microsoft.Naming#CA1711;-Microsoft.Naming#CA1716;-Microsoft.Naming#CA1717;-Microsoft.Naming#CA1725;-Microsoft.Naming#CA1719;-Microsoft.Naming#CA1721;-Microsoft.Naming#CA1701;-Microsoft.Naming#CA1703;-Microsoft.Naming#CA1724;-Microsoft.Naming#CA1726;-Microsoft.Performance#CA1809;-Microsoft.Performance#CA1811;-Microsoft.Performance#CA1812;-Microsoft.Performance#CA1813;-Microsoft.Performance#CA1823;-Microsoft.Performance#CA1800;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1810;-Microsoft.Performance#CA1824;-Microsoft.Performance#CA1822;-Microsoft.Performance#CA1815;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Performance#CA1821;-Microsoft.Performance#CA1804;-Microsoft.Performance#CA1820;-Microsoft.Performance#CA1802;-Microsoft.Reliability#CA2001;-Microsoft.Reliability#CA2002;-Microsoft.Reliability#CA2003;-Microsoft.Reliability#CA2004;-Microsoft.Reliability#CA2006;-Microsoft.Security#CA2116;-Microsoft.Security#CA2117;-Microsoft.Security#CA2105;-Microsoft.Security#CA2115;-Microsoft.Security#CA2102;-Microsoft.Security#CA2104;-Microsoft.Security#CA2122;-Microsoft.Security#CA2114;-Microsoft.Security#CA2123;-Microsoft.Security#CA2111;-Microsoft.Security#CA2108;-Microsoft.Security#CA2107;-Microsoft.Security#CA2103;-Microsoft.Security#CA2118;-Microsoft.Security#CA2109;-Microsoft.Security#CA2119;-Microsoft.Security#CA2106;-Microsoft.Security#CA2112;-Microsoft.Security#CA2120;-Microsoft.Security#CA2121;-Microsoft.Security#CA2126;-Microsoft.Security#CA2124;-Microsoft.Security#CA2127;-Microsoft.Security#CA2128;-Microsoft.Security#CA2129;-Microsoft.Usage#CA2243;-Microsoft.Usage#CA2236;-Microsoft.Usage#CA1816;-Microsoft.Usage#CA2227;-Microsoft.Usage#CA2213;-Microsoft.Usage#CA2216;-Microsoft.Usage#CA2214;-Microsoft.Usage#CA2222;-Microsoft.Usage#CA1806;-Microsoft.Usage#CA2217;-Microsoft.Usage#CA2212;-Microsoft.Usage#CA2219;-Microsoft.Usage#CA2201;-Microsoft.Usage#CA2228;-Microsoft.Usage#CA2221;-Microsoft.Usage#CA2220;-Microsoft.Usage#CA2240;-Microsoft.Usage#CA2229;-Microsoft.Usage#CA2238;-Microsoft.Usage#CA2207;-Microsoft.Usage#CA2208;-Microsoft.Usage#CA2235;-Microsoft.Usage#CA2237;-Microsoft.Usage#CA2232;-Microsoft.Usage#CA2223;-Microsoft.Usage#CA2211;-Microsoft.Usage#CA2233;-Microsoft.Usage#CA2225;-Microsoft.Usage#CA2226;-Microsoft.Usage#CA2231;-Microsoft.Usage#CA2224;-Microsoft.Usage#CA2218;-Microsoft.Usage#CA2234;-Microsoft.Usage#CA2239;-Microsoft.Usage#CA2200;-Microsoft.Usage#CA1801;-Microsoft.Usage#CA2242;-Microsoft.Usage#CA2205;-Microsoft.Usage#CA2230</CodeAnalysisRules>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <CodeAnalysisRuleSet>Migrated rules for MediaBrowser.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,6 +55,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <UseVSHostingProcess>true</UseVSHostingProcess>
@@ -47,13 +65,13 @@
     <StartProgram>C:\Windows\ehome\ehshell.exe</StartProgram>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.MediaCenter, Version=6.0.6000.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.MediaCenter, Version=6.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\VistaDlls\Microsoft.MediaCenter.dll</HintPath>
+      <HintPath>..\..\..\..\..\Windows\ehome\Microsoft.MediaCenter.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.MediaCenter.UI, Version=6.0.6000.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.MediaCenter.UI, Version=6.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\VistaDlls\Microsoft.MediaCenter.UI.dll</HintPath>
+      <HintPath>..\..\..\..\..\Windows\ehome\Microsoft.MediaCenter.UI.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
@@ -69,6 +87,7 @@
     <Reference Include="System.Data.SQLite, Version=1.0.65.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Sqlite\System.Data.SQLite.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
@@ -78,6 +97,7 @@
     </Reference>
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
@@ -88,12 +108,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
+    <Compile Include="Library\Events\GenericEventArgs.cs" />
+    <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
     <Compile Include="Library\Configuration\ApplicationPaths.cs" />
+    <Compile Include="Library\Entities\BoxSet.cs" />
+    <Compile Include="Library\Entities\GenericItem.cs" />
+    <Compile Include="Library\Entities\IContainer.cs" />
+    <Compile Include="Library\Entities\IGroupInIndex.cs" />
+    <Compile Include="Library\Entities\IMovie.cs" />
+    <Compile Include="Library\Entities\SearchResultFolder.cs" />
+    <Compile Include="Library\EntityDiscovery\BoxSetResolver.cs" />
     <Compile Include="Library\Extensions\DictionaryExtensions.cs" />
     <Compile Include="Library\Factories\Kernel.cs" />
     <Compile Include="Library\Filesystem\AttributedContents.cs" />
     <Compile Include="Library\Filesystem\VirtualFolder.cs" />
     <Compile Include="Library\Filesystem\VodcastContents.cs" />
+    <Compile Include="Library\ImageManagement\CustomImageCache.cs" />
+    <Compile Include="Library\Interfaces\ISupportsTrailers.cs" />
     <Compile Include="Library\Logging\FileLogger.cs" />
     <Compile Include="Library\Logging\ILogger.cs" />
     <Compile Include="Library\Logging\LoggerBase.cs" />
@@ -105,9 +137,30 @@
     <Compile Include="Library\Metadata\MetadataProviders.cs" />
     <Compile Include="Library\Network\DownloadPolicy.cs" />
     <Compile Include="Library\Network\RSSFeed.cs" />
+    <Compile Include="Library\Persistance\SQLiteDisplayRepository.cs" />
     <Compile Include="Library\Persistance\FileBasedDictionary.cs" />
     <Compile Include="Library\Persistance\IPersistableChangeNotifiable.cs" />
-    <Compile Include="Library\RemoteControl\IPlaybackController.cs" />
+    <Compile Include="Library\Playables\ExternalPlayer\ConfigurableExternalPlaybackController.cs" />
+    <Compile Include="Library\Playables\ExternalPlayer\ExternalPlaybackController.cs" />
+    <Compile Include="Library\Playables\ExternalPlayer\PlayableExternal.cs" />
+    <Compile Include="Library\Playables\ExternalPlayer\PlayableExternalConfigurator.cs" />
+    <Compile Include="Library\Playables\MpcHc\MpcHcConfigurator.cs" />
+    <Compile Include="Library\Playables\MpcHc\MpcHcPlaybackController.cs" />
+    <Compile Include="Library\Playables\MpcHc\PlayableMpcHc.cs" />
+    <Compile Include="Library\Playables\PlayableInternal.cs" />
+    <Compile Include="Library\Playables\PlaybackControllerHelper.cs" />
+    <Compile Include="Library\Playables\TMT5\PlayableTMT5.cs" />
+    <Compile Include="Library\Playables\TMT5\PlayableTMT5AddInForWMC.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5AddInForWMCConfigurator.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5Configurator.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5AddInPlaybackController.cs" />
+    <Compile Include="Library\Playables\TMT5\TMT5PlaybackController.cs" />
+    <Compile Include="Library\Playables\VLC2\PlayableVLC2.cs" />
+    <Compile Include="Library\Playables\VLC2\VLC2Configurator.cs" />
+    <Compile Include="Library\Playables\VLC2\VLC2PlaybackController.cs" />
+    <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
+    <Compile Include="Library\Providers\MBMovieProviderFromJson.cs" />
+    <Compile Include="Library\Providers\VideoFormatProvider.cs" />
     <Compile Include="Library\Entities\Actor.cs" />
     <Compile Include="Library\Entities\Attributes\NotSourcedFromProvider.cs" />
     <Compile Include="Library\Entities\IFolder.cs" />
@@ -174,10 +227,10 @@
     <Compile Include="Library\Plugins\Plugin.cs" />
     <Compile Include="Library\RemoteControl\PlaybackStateEventArgs.cs" />
     <Compile Include="Library\RemoteControl\RemoteCommand.cs" />
+    <Compile Include="Library\Sorting\BaseItemEqualityComparer.cs" />
     <Compile Include="Library\Sorting\SortHelper.cs" />
     <Compile Include="Library\Threading\Async.cs" />
     <Compile Include="Library\Threading\BackgroundProcessor.cs" />
-    <Compile Include="Library\Playables\PlayableCollection.cs" />
     <Compile Include="Library\Providers\Attributes\SupportedTypeAttribute.cs" />
     <Compile Include="Library\Providers\TVDB\RemoteEpisodeProvider.cs" />
     <Compile Include="Library\Providers\TVDB\LocalEpisodeProvider.cs" />
@@ -219,11 +272,6 @@
     <Compile Include="Library\Persistance\ItemRepository.cs" />
     <Compile Include="Library\Interfaces\IItemRepository.cs" />
     <Compile Include="Library\Playables\PlayableItem.cs" />
-    <Compile Include="Library\Playables\PlayableDvd.cs" />
-    <Compile Include="Library\Playables\PlayableExternal.cs" />
-    <Compile Include="Library\Playables\PlayableMultiFileVideo.cs" />
-    <Compile Include="Library\Playables\PlayableIso.cs" />
-    <Compile Include="Library\Playables\PlayableVideoFile.cs" />
     <Compile Include="Library\Factories\PlaybackStatusFactory.cs" />
     <Compile Include="Library\Providers\ImageFromMediaLocationProvider.cs" />
     <Compile Include="Library\Providers\ImageByNameProvider.cs" />
@@ -235,6 +283,7 @@
     <Compile Include="Library\Extensions\XmlExtensions.cs" />
     <Compile Include="Library\Util\Lazy.cs" />
     <Compile Include="Library\Util\MutexWrapper.cs" />
+    <Compile Include="Library\VideoFormat.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -244,10 +293,29 @@
     <Compile Include="Library\Util\Profiler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
+    <None Include="BaseItemClassDiagram.cd" />
     <None Include="DevInstall.cmd" />
     <None Include="MediaBrowser.snk" />
+    <None Include="Migrated rules for MediaBrowser.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\Background.png" />
@@ -276,85 +344,68 @@
     <Content Include="Images\Icons\IconRemote.png" />
     <Content Include="Images\Icons\IconWatched.png" />
     <Content Include="Images\Lock.png" />
-    <None Include="Images\MediaInfo\aspect_133.png" />
-    <None Include="Images\MediaInfo\aspect_137.png" />
-    <None Include="Images\MediaInfo\aspect_143.png" />
-    <None Include="Images\MediaInfo\aspect_144.png" />
-    <None Include="Images\MediaInfo\aspect_150.png" />
-    <None Include="Images\MediaInfo\aspect_156.png" />
-    <None Include="Images\MediaInfo\aspect_166.png" />
-    <None Include="Images\MediaInfo\aspect_177.png" />
-    <None Include="Images\MediaInfo\aspect_178.png" />
-    <None Include="Images\MediaInfo\aspect_181.png" />
-    <None Include="Images\MediaInfo\aspect_185.png" />
-    <None Include="Images\MediaInfo\aspect_200.png" />
-    <None Include="Images\MediaInfo\aspect_220.png" />
-    <None Include="Images\MediaInfo\aspect_235.png" />
-    <None Include="Images\MediaInfo\aspect_239.png" />
-    <None Include="Images\MediaInfo\aspect_240.png" />
-    <None Include="Images\MediaInfo\aspect_255.png" />
-    <None Include="Images\MediaInfo\aspect_259.png" />
-    <None Include="Images\MediaInfo\aspect_266.png" />
-    <None Include="Images\MediaInfo\aspect_276.png" />
-    <None Include="Images\MediaInfo\aspect_400.png" />
-    <None Include="Images\MediaInfo\codec_ac3.png" />
-    <None Include="Images\MediaInfo\codec_asf.png" />
-    <None Include="Images\MediaInfo\codec_dd_10.png" />
-    <None Include="Images\MediaInfo\codec_dd_20.png" />
-    <None Include="Images\MediaInfo\codec_dd_30.png" />
-    <None Include="Images\MediaInfo\codec_dd_51.png" />
-    <None Include="Images\MediaInfo\codec_ddplus.png" />
-    <None Include="Images\MediaInfo\codec_ddplus_50.png" />
-    <None Include="Images\MediaInfo\codec_ddplus_51.png" />
-    <None Include="Images\MediaInfo\codec_ddplus_61.png" />
-    <None Include="Images\MediaInfo\codec_ddplus_71.png" />
-    <None Include="Images\MediaInfo\codec_ddtruehd.png" />
-    <None Include="Images\MediaInfo\codec_ddtruehd_50.png" />
-    <None Include="Images\MediaInfo\codec_ddtruehd_51.png" />
-    <None Include="Images\MediaInfo\codec_ddtruehd_61.png" />
-    <None Include="Images\MediaInfo\codec_ddtruehd_71.png" />
-    <None Include="Images\MediaInfo\codec_divx.png" />
-    <None Include="Images\MediaInfo\codec_dts.png" />
-    <None Include="Images\MediaInfo\codec_dts_9624.png" />
-    <None Include="Images\MediaInfo\codec_dts_9624_51.png" />
-    <None Include="Images\MediaInfo\codec_dts_ds.png" />
-    <None Include="Images\MediaInfo\codec_dts_ds_10.png" />
-    <None Include="Images\MediaInfo\codec_dts_ds_20.png" />
-    <None Include="Images\MediaInfo\codec_dts_ds_51.png" />
-    <None Include="Images\MediaInfo\codec_dts_es.png" />
-    <None Include="Images\MediaInfo\codec_dts_es_51.png" />
-    <None Include="Images\MediaInfo\codec_dts_es_61.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_hra.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_hra_51.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_hra_61.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_hra_71.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_30.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_40.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_50.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_51.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_61.png" />
-    <None Include="Images\MediaInfo\codec_dts_hd_ma_71.png" />
-    <None Include="Images\MediaInfo\codec_flac.png" />
-    <None Include="Images\MediaInfo\codec_h262.png" />
-    <None Include="Images\MediaInfo\codec_h264.png" />
-    <None Include="Images\MediaInfo\codec_mp3.png" />
-    <None Include="Images\MediaInfo\codec_mpeg4visual.png" />
-    <None Include="Images\MediaInfo\codec_mpegaudio.png" />
-    <None Include="Images\MediaInfo\codec_mpegvideo.png" />
-    <None Include="Images\MediaInfo\codec_on2_vp6.png" />
-    <None Include="Images\MediaInfo\codec_pcm.png" />
-    <None Include="Images\MediaInfo\codec_sorenson_h263.png" />
-    <None Include="Images\MediaInfo\codec_theora.png" />
-    <None Include="Images\MediaInfo\codec_vc1.png" />
-    <None Include="Images\MediaInfo\codec_vorbis.png" />
-    <None Include="Images\MediaInfo\codec_wma.png" />
-    <None Include="Images\MediaInfo\codec_wmv.png" />
-    <None Include="Images\MediaInfo\codec_wmv_hd.png" />
-    <None Include="Images\MediaInfo\codec_xvid.png" />
-    <None Include="Images\MediaInfo\codec_aac.png" />
-    <None Include="Images\MediaInfo\codec_mpeg1video.png" />
+    <Content Include="Images\Locked.png" />
     <Content Include="Images\mblogo1000.png" />
+    <Content Include="Images\MediaInfo\aspect_125.png" />
+    <Content Include="Images\MediaInfo\aspect_133.png" />
+    <Content Include="Images\MediaInfo\aspect_137.png" />
+    <Content Include="Images\MediaInfo\aspect_143.png" />
+    <Content Include="Images\MediaInfo\aspect_144.png" />
+    <Content Include="Images\MediaInfo\aspect_150.png" />
+    <Content Include="Images\MediaInfo\aspect_156.png" />
+    <Content Include="Images\MediaInfo\aspect_166.png" />
+    <Content Include="Images\MediaInfo\aspect_177.png" />
+    <Content Include="Images\MediaInfo\aspect_178.png" />
+    <Content Include="Images\MediaInfo\aspect_181.png" />
+    <Content Include="Images\MediaInfo\aspect_185.png" />
+    <Content Include="Images\MediaInfo\aspect_200.png" />
+    <Content Include="Images\MediaInfo\aspect_220.png" />
+    <Content Include="Images\MediaInfo\aspect_235.png" />
+    <Content Include="Images\MediaInfo\aspect_239.png" />
+    <Content Include="Images\MediaInfo\aspect_240.png" />
+    <Content Include="Images\MediaInfo\aspect_255.png" />
+    <Content Include="Images\MediaInfo\aspect_259.png" />
+    <Content Include="Images\MediaInfo\aspect_266.png" />
+    <Content Include="Images\MediaInfo\aspect_276.png" />
+    <Content Include="Images\MediaInfo\aspect_400.png" />
+    <Content Include="Images\MediaInfo\channels_1.png" />
+    <Content Include="Images\MediaInfo\channels_2.png" />
+    <Content Include="Images\MediaInfo\channels_3.png" />
+    <Content Include="Images\MediaInfo\channels_4.png" />
+    <Content Include="Images\MediaInfo\channels_5.png" />
+    <Content Include="Images\MediaInfo\channels_6.png" />
+    <Content Include="Images\MediaInfo\channels_7.png" />
+    <Content Include="Images\MediaInfo\channels_8.png" />
+    <Content Include="Images\MediaInfo\codec_aac.png" />
+    <Content Include="Images\MediaInfo\codec_ac3.png" />
+    <Content Include="Images\MediaInfo\codec_asf.png" />
+    <Content Include="Images\MediaInfo\codec_ddplus.png" />
+    <Content Include="Images\MediaInfo\codec_ddtruehd.png" />
+    <Content Include="Images\MediaInfo\codec_divx.png" />
+    <Content Include="Images\MediaInfo\codec_dts.png" />
+    <Content Include="Images\MediaInfo\codec_dts_9624.png" />
+    <Content Include="Images\MediaInfo\codec_dts_ds.png" />
+    <Content Include="Images\MediaInfo\codec_dts_es.png" />
+    <Content Include="Images\MediaInfo\codec_dts_hd_hra.png" />
+    <Content Include="Images\MediaInfo\codec_dts_hd_ma.png" />
+    <Content Include="Images\MediaInfo\codec_flac.png" />
+    <Content Include="Images\MediaInfo\codec_h262.png" />
+    <Content Include="Images\MediaInfo\codec_h264.png" />
+    <Content Include="Images\MediaInfo\codec_mp3.png" />
+    <Content Include="Images\MediaInfo\codec_mpeg1video.png" />
+    <Content Include="Images\MediaInfo\codec_mpeg4visual.png" />
+    <Content Include="Images\MediaInfo\codec_mpegaudio.png" />
+    <Content Include="Images\MediaInfo\codec_mpegvideo.png" />
+    <Content Include="Images\MediaInfo\codec_on2_vp6.png" />
+    <Content Include="Images\MediaInfo\codec_pcm.png" />
+    <Content Include="Images\MediaInfo\codec_sorenson_h263.png" />
+    <Content Include="Images\MediaInfo\codec_theora.png" />
+    <Content Include="Images\MediaInfo\codec_vc1.png" />
+    <Content Include="Images\MediaInfo\codec_vorbis.png" />
+    <Content Include="Images\MediaInfo\codec_wma.png" />
+    <Content Include="Images\MediaInfo\codec_wmv.png" />
+    <Content Include="Images\MediaInfo\codec_wmv_hd.png" />
+    <Content Include="Images\MediaInfo\codec_xvid.png" />
     <Content Include="Images\MediaInfo\Diamond\d_aspect_169.png" />
     <Content Include="Images\MediaInfo\Diamond\d_aspect_1851.png" />
     <Content Include="Images\MediaInfo\Diamond\d_aspect_2391.png" />
@@ -378,34 +429,87 @@
     <Content Include="Images\MediaInfo\Diamond\d_media_dvd.png" />
     <Content Include="Images\MediaInfo\Diamond\d_media_hddvd.png" />
     <Content Include="Images\MediaInfo\Diamond\d_media_mkv.png" />
-    <None Include="Images\MediaInfo\hdtype_720.png" />
-    <None Include="Images\MediaInfo\hdtype_1080.png" />
-    <None Include="Images\MediaInfo\media_3gp.png" />
-    <None Include="Images\MediaInfo\media_asf.png" />
-    <None Include="Images\MediaInfo\media_avi.png" />
-    <None Include="Images\MediaInfo\media_bluray.png" />
-    <None Include="Images\MediaInfo\media_dvd.png" />
-    <None Include="Images\MediaInfo\media_dvrms.png" />
-    <None Include="Images\MediaInfo\media_flv.png" />
-    <None Include="Images\MediaInfo\media_hddvd.png" />
-    <None Include="Images\MediaInfo\media_iso.png" />
-    <None Include="Images\MediaInfo\media_m2ts.png" />
-    <None Include="Images\MediaInfo\media_mkv.png" />
-    <None Include="Images\MediaInfo\media_mov.png" />
-    <None Include="Images\MediaInfo\media_mp4.png" />
-    <None Include="Images\MediaInfo\media_mpeg.png" />
-    <None Include="Images\MediaInfo\media_ogg.png" />
-    <None Include="Images\MediaInfo\media_ts.png" />
-    <None Include="Images\MediaInfo\media_wmv.png" />
-    <None Include="Images\MediaInfo\media_wtv.png" />
+    <Content Include="Images\MediaInfo\hdtype_1080.png" />
+    <Content Include="Images\MediaInfo\hdtype_1080i.png" />
+    <Content Include="Images\MediaInfo\hdtype_1080p.png" />
+    <Content Include="Images\MediaInfo\hdtype_720.png" />
+    <Content Include="Images\MediaInfo\hdtype_720i.png" />
+    <Content Include="Images\MediaInfo\hdtype_720p.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddplus_50.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddplus_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddplus_61.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddplus_71.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddtruehd_50.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddtruehd_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddtruehd_61.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_ddtruehd_71.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dd_10.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dd_20.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dd_30.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dd_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_9624_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_ds_10.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_ds_20.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_ds_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_es_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_es_61.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_hra_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_hra_61.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_hra_71.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_30.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_40.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_50.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_51.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_61.png" />
+    <Content Include="Images\MediaInfo\Legacy Channels\codec_dts_hd_ma_71.png" />
+    <Content Include="Images\MediaInfo\media_3d.png" />
+    <Content Include="Images\MediaInfo\media_3gp.png" />
+    <Content Include="Images\MediaInfo\media_asf.png" />
+    <Content Include="Images\MediaInfo\media_avi.png" />
+    <Content Include="Images\MediaInfo\media_bluray.png" />
+    <Content Include="Images\MediaInfo\media_dvd.png" />
+    <Content Include="Images\MediaInfo\media_dvrms.png" />
+    <Content Include="Images\MediaInfo\media_flv.png" />
+    <Content Include="Images\MediaInfo\media_hd.png" />
+    <Content Include="Images\MediaInfo\media_hddvd.png" />
+    <Content Include="Images\MediaInfo\media_iso.png" />
+    <Content Include="Images\MediaInfo\media_m2ts.png" />
+    <Content Include="Images\MediaInfo\media_mkv.png" />
+    <Content Include="Images\MediaInfo\media_mov.png" />
+    <Content Include="Images\MediaInfo\media_mp4.png" />
+    <Content Include="Images\MediaInfo\media_mpeg.png" />
+    <Content Include="Images\MediaInfo\media_ogg.png" />
+    <Content Include="Images\MediaInfo\media_ts.png" />
+    <Content Include="Images\MediaInfo\media_wmv.png" />
+    <Content Include="Images\MediaInfo\media_wtv.png" />
     <Content Include="Images\plainborder.png" />
+    <None Include="Images\Ratings\rated-12.png" />
+    <None Include="Images\Ratings\rated-18.png" />
+    <None Include="Images\Ratings\rated-12a.png" />
+    <None Include="Images\Ratings\rated-15.png" />
     <Content Include="Images\Ratings\Rated-Custom.png" />
+    <Content Include="Images\Ratings\Rated-G.png" />
+    <Content Include="Images\Ratings\Rated-NC-17.png" />
+    <Content Include="Images\Ratings\Rated-NR.png" />
+    <Content Include="Images\Ratings\Rated-PG.png" />
+    <Content Include="Images\Ratings\Rated-PG-13.png" />
+    <Content Include="Images\Ratings\Rated-R.png" />
+    <None Include="Images\Ratings\rated-r18.png" />
+    <None Include="Images\Ratings\rated-u.png" />
     <Content Include="Images\Ratings\Rated-Unrated.png" />
     <Content Include="Images\Icons\IconFloral.png" />
+    <Content Include="Images\Ratings\Rated-TV-14.png" />
+    <Content Include="Images\Ratings\Rated-TV-G.png" />
+    <Content Include="Images\Ratings\Rated-TV-MA.png" />
+    <Content Include="Images\Ratings\Rated-TV-PG.png" />
+    <Content Include="Images\Ratings\Rated-TV-Y.png" />
+    <Content Include="Images\Ratings\Rated-TV-Y7-FV.png" />
+    <Content Include="Images\Ratings\Rated-TV-Y7.png" />
     <Content Include="Images\Root\flashHorB.png" />
     <Content Include="Images\Root\flashHorT.png" />
     <Content Include="Images\Root\poster-frame.png" />
     <Content Include="Images\Root\rootscrollhilitefocus.png" />
+    <Content Include="Images\Special\Gears.png" />
     <Content Include="Images\Special\GreenBallDark.png" />
     <Content Include="Images\Special\GreenBallGlow.png" />
     <Content Include="Images\Special\GreenBallLight.png" />
@@ -470,26 +574,12 @@
     <Content Include="Images\RadioButton\RadioNoFocus.png" />
     <Content Include="Images\RadioButton\RadioSelectFocus.png" />
     <Content Include="Images\RadioButton\RadioSelectNoFocus.png" />
-    <Content Include="Images\Ratings\Rated-G.gif" />
     <Content Include="Images\Ratings\Rated-G_full.png" />
-    <Content Include="Images\Ratings\Rated-NC-17.gif" />
     <Content Include="Images\Ratings\Rated-NC-17_full.png" />
-    <Content Include="Images\Ratings\Rated-NR.gif" />
     <Content Include="Images\Ratings\Rated-NR_full.png" />
-    <Content Include="Images\Ratings\Rated-PG-13.gif" />
     <Content Include="Images\Ratings\Rated-PG-13_full.png" />
-    <Content Include="Images\Ratings\Rated-PG.gif" />
     <Content Include="Images\Ratings\Rated-PG_full.png" />
-    <Content Include="Images\Ratings\Rated-R.gif" />
     <Content Include="Images\Ratings\Rated-R_full.png" />
-    <Content Include="Images\Ratings\Rated-Unrated.gif" />
-    <Content Include="Images\Ratings\TV-14.png" />
-    <Content Include="Images\Ratings\TV-G.png" />
-    <Content Include="Images\Ratings\TV-MA.png" />
-    <Content Include="Images\Ratings\TV-PG.png" />
-    <Content Include="Images\Ratings\TV-Y.png" />
-    <Content Include="Images\Ratings\TV-Y7-FV.png" />
-    <Content Include="Images\Ratings\TV-Y7.png" />
     <Content Include="Images\Sort.png" />
     <Content Include="Images\spacer.png" />
     <Content Include="Images\Special\FilmScreen.png" />
@@ -505,6 +595,7 @@
     <Content Include="Images\Star\Star_Empty.png" />
     <Content Include="Images\Star\Star_Half.png" />
     <Content Include="Images\UnLock1.png" />
+    <Content Include="Images\UnLocked.png" />
     <Content Include="Images\Unwatched\Tick.png" />
     <Content Include="Images\Unwatched\TickPoster.png" />
     <Content Include="Images\Unwatched\TickPosterBase.png" />
@@ -753,7 +844,6 @@
     <Compile Include="Library\Localization\LocalizedStringData.cs" />
     <Compile Include="Library\Logging\Logger.cs" />
     <Compile Include="Library\ParentalControl.cs" />
-    <Compile Include="Library\Playables\PlayableMediaCollection.cs" />
     <Compile Include="Library\Plugins\BasePlugin.cs" />
     <Compile Include="Library\Plugins\IPluginConfiguration.cs" />
     <Compile Include="Library\Plugins\PluginConfigurationOptions.cs" />
@@ -774,10 +864,18 @@
     <Compile Include="Library\UI\ViewTheme.cs" />
     <Compile Include="Library\Util\BreadCrumbs.cs" />
     <Compile Include="Library\Util\CustomResourceManager.cs" />
-    <Content Include="Markup\Base\Animations.mcml" />
-    <Content Include="Markup\Base\Images.mcml" />
+    <Content Include="Markup\Base\Animations.mcml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Markup\Base\Images.mcml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Markup\Controls\ActivityIndicator.mcml" />
+    <Content Include="Markup\Controls\ArtistList.mcml" />
     <Content Include="Markup\Controls\Backdrop.mcml" />
-    <Content Include="Markup\Controls\Buttons\PCIndicatorButton.mcml" />
+    <Content Include="Markup\Controls\Buttons\PCIndicatorButton.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\Buttons\DirectorButton.mcml" />
     <Content Include="Markup\Controls\Buttons\GenreButton.mcml" />
     <Content Include="Markup\Controls\Buttons\ImageButton.mcml" />
@@ -787,13 +885,17 @@
     <Content Include="Markup\Controls\Buttons\PersonButton.mcml" />
     <Content Include="Markup\Controls\Buttons\PluginUpdateButton.mcml" />
     <Content Include="Markup\Controls\Buttons\SimpleButton.mcml" />
-    <Content Include="Markup\Controls\CheckBox.mcml" />
+    <Content Include="Markup\Controls\Buttons\SpinImageButton.mcml" />
+    <Content Include="Markup\Controls\CheckBox.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\Buttons\HeaderButton.mcml" />
     <Content Include="Markup\Controls\DiamondPagination.mcml" />
     <None Include="Markup\Controls\EdgeDetection.mcml" />
+    <Content Include="Markup\Controls\ExtendedPagination.mcml" />
+    <Content Include="Markup\Controls\InfoStrip.mcml" />
     <Content Include="Markup\Controls\Popups\ContextMenu.mcml" />
     <Content Include="Markup\Controls\Popups\NumberPad.mcml" />
-    <Content Include="Markup\Controls\Scrollers\DiamondPagination.mcml" />
     <Content Include="Markup\Controls\Scrollers\FancyText.mcml" />
     <Content Include="Markup\Controls\InfoMarquee.mcml" />
     <Content Include="Markup\Controls\Directors.mcml" />
@@ -804,17 +906,23 @@
     <Content Include="Markup\Controls\ListView.mcml" />
     <Content Include="Markup\Controls\MediaInfoPanel.mcml" />
     <Content Include="Markup\Controls\MovieInfo.mcml" />
-    <Content Include="Markup\Controls\MPAARating.mcml" />
+    <Content Include="Markup\Controls\MPAARating.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\NowPlayingViewport.mcml" />
     <Content Include="Markup\Controls\PINEdit.mcml" />
     <Content Include="Markup\Controls\Pivots\Pivot.mcml" />
     <Content Include="Markup\Controls\Pivots\PivotItem.mcml" />
     <Content Include="Markup\Controls\Popups\PopupPlay.mcml" />
     <Content Include="Markup\Controls\PosterItemTitle.mcml" />
-    <Content Include="Markup\Controls\PosterViewItem.mcml" />
+    <Content Include="Markup\Controls\PosterViewItem.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\RadioGroup.mcml" />
     <Content Include="Markup\Controls\Scrollers\AutoScroller.mcml" />
-    <Content Include="Markup\Controls\Scrollers\PosterScroller.mcml" />
+    <Content Include="Markup\Controls\Scrollers\PosterScroller.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\Scrollers\ScrollableText.mcml" />
     <Content Include="Markup\Controls\Spinners\ColorSpinner.mcml" />
     <Content Include="Markup\Controls\Spinners\SimpleSpinner.mcml" />
@@ -828,13 +936,18 @@
     <Content Include="Markup\Controls\ViewMenu.mcml" />
     <Content Include="Markup\Controls\Weather.mcml" />
     <Content Include="Markup\Controls\Writers.mcml" />
+    <Content Include="Markup\DefaultSS.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\ConfigPage.mcml">
       <SubType>Designer</SubType>
     </Content>
     <Content Include="Images\Application.png" />
     <Content Include="Markup\Themes\Default\ExternalPlayback.mcml" />
     <Content Include="Markup\Themes\Default\LayoutCoverflow.mcml" />
-    <Content Include="Markup\Themes\Default\LayoutRoot.mcml" />
+    <Content Include="Markup\Themes\Default\LayoutRoot.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\LayoutThumb.mcml" />
     <Content Include="Markup\Themes\Default\LayoutThumbStrip.mcml" />
     <Content Include="Markup\StylesBlackExtender.mcml" />
@@ -842,19 +955,29 @@
     <Content Include="Markup\FontsSmall.mcml" />
     <Content Include="Markup\FontsDefault.mcml" />
     <Content Include="Markup\StylesBlack.mcml" />
+    <Content Include="Markup\Themes\Default\SearchPane.mcml" />
     <Content Include="Markup\Themes\Default\Splash.mcml" />
     <Content Include="Markup\Themes\Default\ParentalPINEntry.mcml" />
-    <Content Include="Markup\Themes\Default\Selectors\PageDefault.mcml" />
+    <Content Include="Markup\Themes\Default\Selectors\PageDefault.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\ViewMovieDefault.mcml" />
-    <Content Include="Markup\Themes\Default\ViewMovieMinimal.mcml" />
-    <Content Include="Markup\Themes\Default\Selectors\PageDetailArea.mcml" />
+    <Content Include="Markup\Themes\Default\ViewMovieMinimal.mcml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Markup\Themes\Default\Selectors\PageDetailArea.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\LayoutDetails.mcml" />
-    <Content Include="Markup\Page.mcml" />
+    <Content Include="Markup\Page.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\MovieDetailsPage.mcml" />
     <Content Include="Markup\Themes\Default\LayoutPoster.mcml" />
     <Content Include="Markup\StylesDefault.mcml" />
-    <Content Include="Registration7.xml" />
-    <Content Include="RegistrationVista.xml" />
+    <Content Include="Registration7.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
@@ -863,6 +986,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>%25windir%25\eHome\McmlVerifier.exe -verbose -assemblyredirect:"$(FullyQualifiedOutputPath)" -directory:"$(ProjectDir)Markup"

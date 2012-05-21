@@ -42,7 +42,8 @@ namespace MediaBrowser.Library.Configuration {
                     { "AppLogPath",          "AppConfigPath",    "Logs"},
                     { "DefaultPodcastPath", "AppConfigPath", "Podcasts"    },
                     { "AppLocalizationPath","AppConfigPath", "Localization" },
-                    { "PluginConfigPath", "AppPluginPath", "Configurations"}
+                    { "PluginConfigPath", "AppPluginPath", "Configurations"},
+                    { "CustomImagePath", "AppImagePath", "Custom"}
             };
 
 
@@ -134,6 +135,12 @@ namespace MediaBrowser.Library.Configuration {
             }
         }
 
+        public static string CustomImagePath {
+            get {
+                return pathMap["CustomImagePath"];
+            }
+        }
+
 
         public static string ConfigFile {
             get {
@@ -159,8 +166,9 @@ namespace MediaBrowser.Library.Configuration {
         {
             get
             {
-                string serviceEXE = GetComponentPath(INSTALL_PRODUCT_CODE, SERVICE_COMPONENT_ID);
-                return serviceEXE.Length > 0 ? serviceEXE : Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\MediaBrowserService.exe");
+                return !string.IsNullOrEmpty(Kernel.Instance.ConfigData.MBInstallDir) ? 
+                Path.Combine(Kernel.Instance.ConfigData.MBInstallDir,"MediaBrowserService.exe") : 
+                Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\MediaBrowserService.exe");
             }
         }
 
@@ -168,8 +176,9 @@ namespace MediaBrowser.Library.Configuration {
         {
             get
             {
-                string configEXE = GetComponentPath(INSTALL_PRODUCT_CODE, CONFIGURATOR_COMPONENT_ID);
-                return configEXE.Length > 0 ? configEXE : Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\configurator.exe");
+                return !string.IsNullOrEmpty(Kernel.Instance.ConfigData.MBInstallDir) ? 
+                Path.Combine(Kernel.Instance.ConfigData.MBInstallDir,"Configurator.exe") : 
+                Path.Combine(Environment.GetEnvironmentVariable("PROGRAMFILES(X86)") ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "MediaBrowser\\MediaBrowser\\configurator.exe");
             }
         }
 
@@ -184,6 +193,20 @@ namespace MediaBrowser.Library.Configuration {
             get
             {
                 return pathMap["AppLocalizationPath"];
+            }
+        }
+
+        private static string _ibnPath;
+        public static string AppIBNPath
+        {
+            get {
+                if (_ibnPath == null)
+                {
+                    _ibnPath = Config.Instance.ImageByNameLocation;
+                    if (string.IsNullOrEmpty(_ibnPath))
+                        _ibnPath = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
+                }
+                return _ibnPath;
             }
         }
 

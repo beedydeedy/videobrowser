@@ -46,11 +46,34 @@ namespace Configurator.Code {
 
         //any of these plugins with older versions than defined here are incompatable with this version
         public static Dictionary<string, System.Version> RequiredVersions = new Dictionary<string, System.Version>() {
-                {"coverart",new System.Version(2,3,1,2)},
+                {"coverart",new System.Version(3,0,0,0)},
                 {"mediainfo provider", new System.Version(1,3,0)},
                 {"gametime", new System.Version(6,0,0)},
                 {"high quality thumbnails", new System.Version(1,2,0)},
-                {"media browser trailers", new System.Version(1,3,0,6)}
+                {"media browser trailers", new System.Version(1,3,3)},
+                {"diamond theme", new System.Version(0,3,6,0)},
+                {"dvr-ms and wtv metadata", new System.Version(1,0,5,0)},
+                {"ascendancy theme", new System.Version(2,0,0,0)},
+                {"centrality theme", new System.Version(2,0,0,0)},
+                {"harmony theme", new System.Version(2,0,0,0)},
+                {"imperium theme", new System.Version(2,0,0,0)},
+                {"kismet theme", new System.Version(2,0,0,0)},
+                {"maelstrom theme", new System.Version(2,0,0,0)},
+                {"regency theme", new System.Version(1,0,0,0)},
+                {"supremacy theme", new System.Version(1,0,0,0)},
+                {"vanilla theme", new System.Version(3,0,0,0)},
+                {"pearl theme", new System.Version(1,0,7,1)},
+                {"sapphire theme", new System.Version(1,0,6,2)},
+                {"lotus theme", new System.Version(1,0,6,2)},
+                {"jade theme", new System.Version(1,0,6,2)},
+                {"neo theme", new System.Version(1,0,7,0)},
+                {"follw.it", new System.Version(1,0,2,0)},
+                {"traktmb", new System.Version(0,9,6,17)},
+                {"storageviewer", new System.Version(0,0,4,10)},
+                {"gamebrowser", new System.Version(1,9,0,0)},
+                {"subdued theme", new System.Version(2,8,8,1)},
+                {"music support", new System.Version(2,1)},
+                {"mbtv", new System.Version(1,1)},
             };
 
         public PluginManager()
@@ -152,7 +175,7 @@ namespace Configurator.Code {
 
             if (plugin is RemotePlugin) {
                 try {
-                    Kernel.Instance.InstallPlugin((plugin as RemotePlugin).BaseUrl + "\\" + (plugin as RemotePlugin).SourceFilename, plugin.Filename, plugin.InstallGlobally, updateCB, doneCB, errorCB);
+                    Kernel.Instance.InstallPlugin((plugin as RemotePlugin).BaseUrl + "\\" + (plugin as RemotePlugin).SourceFilename, plugin.Filename, updateCB, doneCB, errorCB);
                 }
                 catch (Exception ex) {
                     MessageBox.Show("Cannot Install Plugin.  If MediaBrowser is running, please close it and try again.\n" + ex.Message, "Install Error");
@@ -163,7 +186,7 @@ namespace Configurator.Code {
                 var local = plugin as Plugin;
                 Debug.Assert(plugin != null);
                 try {
-                    Kernel.Instance.InstallPlugin(local.Filename, plugin.InstallGlobally, null, null, null);
+                    Kernel.Instance.InstallPlugin(local.Filename, null, null, null);
                 }
                 catch (Exception ex) {
                     MessageBox.Show("Cannot Install Plugin.  If MediaBrowser is running, please close it and try again.\n" + ex.Message, "Install Error");
@@ -182,9 +205,7 @@ namespace Configurator.Code {
                 if (ip != null && ip.Version != plugin.Version)
                 {
                     if (!Directory.Exists(backupDir)) Directory.CreateDirectory(backupDir);
-                    string oldPluginPath = plugin.InstallGlobally ?
-                        Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", plugin.Filename)) :
-                        Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
+                    string oldPluginPath = Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
                     string bpPath = Path.Combine(backupDir, plugin.Filename);
                     File.Copy(oldPluginPath,bpPath ,true);
                     IPlugin bp = backedUpPlugins.Find(plugin);
@@ -207,10 +228,8 @@ namespace Configurator.Code {
                 string source = Path.Combine(backupDir, plugin.Filename);
                 if (File.Exists(source))
                 {
-                    string target = plugin.InstallGlobally ?
-                            Path.Combine(System.Environment.GetEnvironmentVariable("windir"), Path.Combine("ehome", plugin.Filename)) :
-                            Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
-                    Kernel.Instance.InstallPlugin(source, plugin.InstallGlobally, null, null, null);
+                    string target = Path.Combine(ApplicationPaths.AppPluginPath, plugin.Filename);
+                    Kernel.Instance.InstallPlugin(source, null, null, null);
                     MainWindow.Instance.KernelModified = true;
                     UpdateAvailableAttributes(plugin, true);
                     return true;

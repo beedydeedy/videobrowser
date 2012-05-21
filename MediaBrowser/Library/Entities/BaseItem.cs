@@ -27,7 +27,7 @@ namespace MediaBrowser.Library.Entities {
 
         public Folder Parent { get; set; }
 
-        public Guid TopParent
+        public Folder TopParent
         {
             get
             {
@@ -36,7 +36,14 @@ namespace MediaBrowser.Library.Entities {
                 {
                     parent = parent.Parent;
                 }
-                return parent != null ? parent.Id : Guid.Empty;
+                return parent;
+            }
+        }
+        public Guid TopParentID
+        {
+            get
+            {
+                return TopParent.Id;
             }
         }
 
@@ -46,6 +53,12 @@ namespace MediaBrowser.Library.Entities {
         public virtual string PrimaryImagePath { get; set; }
         [Persist]
         public virtual string SecondaryImagePath { get; set; }
+        [Persist]
+        public virtual string LogoImagePath { get; set; }
+        [Persist]
+        public virtual string ArtImagePath { get; set; }
+        [Persist]
+        public virtual string ThumbnailImagePath { get; set; }
         [Persist]
         public virtual string BannerImagePath { get; set; }
 
@@ -74,7 +87,7 @@ namespace MediaBrowser.Library.Entities {
 
         public LibraryImage PrimaryImage {
             get {
-                if (this is Media || this is Folder || this is Person )
+                if (IsPlayable || this is Folder || this is Person )
                     return GetImage(PrimaryImagePath, true);
                 else
                     return GetImage(PrimaryImagePath);
@@ -87,10 +100,30 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public LibraryImage ThumbnailImage {
+            get {
+                return GetImage(ThumbnailImagePath) ?? PrimaryImage;
+            }
+        }
+
         // banner images will fall back to parent
         public LibraryImage BannerImage {
             get {
                 return SearchParents<LibraryImage>(this, item => item.GetImage(item.BannerImagePath, Kernel.Instance.ConfigData.ProcessBanners));
+            }
+        }
+
+        // logo images will fall back to parent
+        public LibraryImage LogoImage {
+            get {
+                return SearchParents<LibraryImage>(this, item => item.GetImage(item.LogoImagePath));
+            }
+        }
+
+        // art images will fall back to parent
+        public LibraryImage ArtImage {
+            get {
+                return SearchParents<LibraryImage>(this, item => item.GetImage(item.ArtImagePath));
             }
         }
 
@@ -107,6 +140,19 @@ namespace MediaBrowser.Library.Entities {
                 return GetImage(BackdropImagePath, Kernel.Instance.ConfigData.ProcessBackdrops);
             }
         }
+
+        public LibraryImage PrimaryBackdropImage
+        {
+            get
+            {
+                if (BackdropImagePaths != null && BackdropImagePaths.Count != 0)
+                {
+                    return GetImage(BackdropImagePaths[0], Kernel.Instance.ConfigData.ProcessBackdrops);
+                }
+                else return null;
+            }
+        }
+
 
         public List<LibraryImage> BackdropImages {
             get {
@@ -155,7 +201,7 @@ namespace MediaBrowser.Library.Entities {
 
         [NotSourcedFromProvider]
         [Persist]
-        string defaultName;
+        protected string defaultName;
 
         [NotSourcedFromProvider]
         [Persist]
@@ -194,13 +240,13 @@ namespace MediaBrowser.Library.Entities {
 
 
         [Persist]
-        public string Overview { get; set; }
+        public virtual string Overview { get; set; }
 
         [Persist]
-        public string SubTitle { get; set; }
+        public virtual string SubTitle { get; set; }
 
         [Persist]
-        public string DisplayMediaType { get; set; }
+        public virtual string DisplayMediaType { get; set; }
 
         [Persist]
         public string CustomRating { get; set; }
@@ -232,6 +278,14 @@ namespace MediaBrowser.Library.Entities {
                 return ""; //will be implemented by sub-classes
             }
             set { }
+        }
+
+        public virtual bool CanResume
+        {
+            get
+            {
+                return false;
+            }
         }
 
         public bool ParentalAllowed { get { return Kernel.Instance.ParentalControls.Allowed(this); } }
@@ -269,6 +323,8 @@ namespace MediaBrowser.Library.Entities {
             return true;
         }
 
+        public virtual string CustomUI { get; set; }
+
         bool? isRemoteContent = null;
         public bool IsRemoteContent
         {
@@ -287,6 +343,14 @@ namespace MediaBrowser.Library.Entities {
             {
                 //default baseItem has no series - return a valid blank item so MCML won't blow chow
                 return Series.BlankSeries;
+            }
+        }
+
+        public virtual bool IsPlayable
+        {
+            get
+            {
+                return false;
             }
         }
 
@@ -324,9 +388,19 @@ namespace MediaBrowser.Library.Entities {
             if (item.Path != null)
                 Debug.Assert(item.Path.ToLower() == this.Path.ToLower());
             Debug.Assert(item.GetType() == this.GetType());
-
-            bool changed = this.DateModified != item.DateModified;
-            changed |= this.DateCreated != item.DateCreated;
+            bool changed = false;
+            //the following is to get around an anomoly with how directory creation dates seem to be returned from the actual item vs a shortcut to it
+            //  I will attempt to re-write the date generations in a future release -ebr
+            if (Kernel.Instance.ConfigData.EnableShortcutDateHack) 
+            {
+                changed = this.DateModified.ToShortDateString() != item.DateModified.ToShortDateString();
+                changed |= this.DateCreated.ToShortDateString() != item.DateCreated.ToShortDateString();
+            }
+            else
+            {
+                changed = this.DateModified != item.DateModified;
+                changed |= this.DateCreated != item.DateCreated;
+            }
             changed |= this.defaultName != item.defaultName;
             //if (changed && Debugger.IsAttached) Debugger.Break();
 
@@ -388,17 +462,13 @@ namespace MediaBrowser.Library.Entities {
             return changed;
         }
 
-        public void ReCacheAllImages(ThumbSize s)
+        public void ReCacheAllImages()
         {
             string ignore;
             if (this.PrimaryImage != null)
             {
-                //Logger.ReportInfo("Caching image for " + Name + " at " + s.Width + "x" + s.Height);
-                this.PrimaryImage.ClearLocalImages(); //be sure these are gone and we are sure to re-load
-                if (s != null && s.Width > 0 && s.Height > 0)
-                    ignore = this.PrimaryImage.GetLocalImagePath(s.Width, s.Height); //force to re-cache at display size
-                else
-                    ignore = this.PrimaryImage.GetLocalImagePath(); //no size - cache at original size
+                PrimaryImage.ClearLocalImages();
+                ignore = this.PrimaryImage.GetLocalImagePath(); //no size - cache at original size
             }
 
             foreach (MediaBrowser.Library.ImageManagement.LibraryImage image in this.BackdropImages)
@@ -409,9 +479,25 @@ namespace MediaBrowser.Library.Entities {
             if (this.BannerImage != null)
             {
                 this.BannerImage.ClearLocalImages();
-                ignore = this.BannerImage.GetLocalImagePath(); //and, finally, banner
+                ignore = this.BannerImage.GetLocalImagePath(); //and banner
+            }
+            if (this.LogoImage != null)
+            {
+                this.LogoImage.ClearLocalImages();
+                ignore = this.LogoImage.GetLocalImagePath(); //and logo
+            }
+            if (this.ArtImage != null)
+            {
+                this.ArtImage.ClearLocalImages();
+                ignore = this.ArtImage.GetLocalImagePath(); //and art
+            }
+            if (this.ThumbnailImage != null)
+            {
+                this.ThumbnailImage.ClearLocalImages();
+                ignore = this.ThumbnailImage.GetLocalImagePath(); //and, finally, thumb
             }
         }
+
         public void MigrateAllImages()
         {
             if (this.PrimaryImage != null)
@@ -429,5 +515,16 @@ namespace MediaBrowser.Library.Entities {
                 this.BannerImage.MigrateFromOldID(); 
             }
         }
+
+    }
+
+    /// <summary>
+    /// Describes ways an entity can be played
+    /// </summary>
+    public enum PlayMethod
+    {
+        UIMenu = 0,
+
+        RemotePlayButton = 1
     }
 }

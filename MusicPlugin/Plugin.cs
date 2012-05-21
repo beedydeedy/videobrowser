@@ -125,8 +125,8 @@ namespace MusicPlugin
             kernel.EntityResolver.Insert(kernel.EntityResolver.Count - 2, new ArtistAlbumResolver());
             //kernel.EntityResolver.Insert(kernel.EntityResolver.Count - 2, new AlbumResolver());
             //kernel.EntityResolver.Insert(kernel.EntityResolver.Count - 2, new ArtistResolver());
-            PlayableItemFactory.Instance.PlayableItems.Add(PlayableMusicFile.CanPlay, typeof(PlayableMusicFile));
-            PlayableItemFactory.Instance.PlayableItems.Add(PlayableMultiFileMusic.CanPlay, typeof(PlayableMultiFileMusic));
+            PlayableItemFactory.Instance.RegisterType<PlayableMusicFile>();
+            PlayableItemFactory.Instance.RegisterType<PlayableMultiFileMusic>();
             //kernel.MetadataProviderFactories.Add(new MetadataProviderFactory(typeof(ArtistAlbumProvider)));
             kernel.PlaybackControllers.Insert(0, new PlaybackControllerMusic());
             MediaBrowser.Library.ItemFactory.Instance.AddFactory(MusicFolderModel.IsOne, typeof(MusicFolderModel));

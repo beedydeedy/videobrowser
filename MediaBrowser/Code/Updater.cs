@@ -13,6 +13,7 @@ using System.Reflection;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Plugins;
 using MediaBrowser.Library;
+using MediaBrowser.LibraryManagement;
 
 
 // XML File structure
@@ -56,7 +57,7 @@ namespace MediaBrowser.Util
         const int UPDATE_CHECK_INTERVAL_DAYS = 2;
 
         // This should be replaced with the real location of the version info XML.
-        private const string infoURL = "http://www.mediabrowser.tv/version-info.xml?key={0}";
+        private const string infoURL = "http://www.mediabrowser.tv/version-info.xml?key={0}&os={1}&mem={2}&mac={3}&mbver={4}";
 
         // Blocking call to check the XML file up in the cloud to see if we need an update.
         // This is really meant to be called as its own thread.
@@ -76,8 +77,11 @@ namespace MediaBrowser.Util
             try
             {
                 XmlDocument doc = new XmlDocument();
-                doc.Load(new XmlTextReader(string.Format(infoURL, Config.Instance.SupporterKey)));
+                string url = Kernel.Instance.ConfigData.SendStats ?
+                    string.Format(infoURL, Config.Instance.SupporterKey,Kernel.isVista ? "Vista" : "Win7",Helper.GetPhysicalMemory(), Helper.GetMACAddress(),Kernel.Instance.VersionStr) :
+                    string.Format(infoURL, Config.Instance.SupporterKey,null,null,null,null);
 
+                doc.Load(new XmlTextReader(url));
                 XmlNode node;
 
                 if (appRef.Config.EnableBetas)
@@ -198,6 +202,9 @@ namespace MediaBrowser.Util
             // Let them know we will be closing VB then restarting it.
             DialogResult reply = Application.DisplayDialog(Application.CurrentInstance.StringData("UpdateSuccessDial"),
                 Application.CurrentInstance.StringData("UpdateSuccessCapDial"), DialogButtons.Ok, 10);
+
+            //shut down the service
+            MBServiceController.SendCommandToService(IPCCommands.Shutdown);
 
             // put together a batch file to execute the installer in silent mode and restart VB.
             string updateBat = "msiexec.exe /qb /i \"" + localFile + "\"\n";

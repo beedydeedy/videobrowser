@@ -1,29 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Resources;
-using System.Runtime.InteropServices;
+using System.Collections.Specialized;
 using System.IO;
-using System.Security.Cryptography;
-using Microsoft.Win32;
-using System.Reflection;
-using System.Management;
-//using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.Library;
-using Microsoft.MediaCenter.UI;
+using System.Management;
+using System.Runtime.InteropServices;
+using System.Text;
 using MediaBrowser.Interop;
-
+using MediaBrowser.Library;
+using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Extensions;
+using MediaBrowser.Library.ImageManagement;
+using Microsoft.MediaCenter.UI;
+using Microsoft.Win32;
 
 namespace MediaBrowser.LibraryManagement
 {
-    using System.Drawing.Drawing2D;
-    using System.Diagnostics;
-    using System.Text.RegularExpressions;
-    using MediaBrowser.Util;
     using System.Net;
+    using System.Text.RegularExpressions;
     using System.Xml;
     using MediaBrowser.Library.Logging;
 
@@ -326,14 +320,14 @@ namespace MediaBrowser.LibraryManagement
             return (Config.Instance.InitialFolder==path) || (Config.Instance.InitialFolder == Helper.MY_VIDEOS && path == Helper.MyVideosPath);
         }
 
-        private static readonly Regex alphaNumeric = new Regex("[^a-zA-Z0-9]");
         public static bool IsAlphaNumeric(string str)
         {
-            return (!alphaNumeric.IsMatch(str));
+            return (str.ToCharArray().All(c => Char.IsLetter(c) || Char.IsNumber(c)));
         }
 
         public static string RemoveInvalidFileChars(string filename) {
 
+            if (filename == null) return "";
             var cleanName = new StringBuilder();
             foreach (var letter in filename) {
                 if (!System.IO.Path.GetInvalidFileNameChars().Contains(letter)) {
@@ -398,6 +392,52 @@ namespace MediaBrowser.LibraryManagement
             return null;
         }
 
+        /// <summary>
+        /// Fetch json from an url
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns>json string on success, null on failure</returns>
+        public static string FetchJson(string url) {
+            try
+            {
+
+                int attempt = 0;
+                while (attempt < 2)
+                {
+                    attempt++;
+                    try
+                    {
+                        using (WebClient client = new WebClient())
+                        {
+                            client.Headers.Add("Accept", "application/json");
+                            client.Headers.Add("AcceptEncoding", "gzip,deflate");
+                            
+                            client.Encoding = Encoding.UTF8;
+
+                            string payload = client.DownloadString(url);
+                            return payload;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error getting json response from "+url, ex);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.ReportWarning("Failed to fetch url: " + url + "\n" + ex.ToString());
+            }
+
+            return null;
+        }
+
+        public static Dictionary<string, object> ToJsonDict(string json)
+        {
+            return json != null ? new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json) : null;
+        }
+
         public static string GetNameFromFile(string filename)
         {
             string temp;
@@ -416,6 +456,19 @@ namespace MediaBrowser.LibraryManagement
                 temp = GetStringInBetween("[", "]", fn, true, true)[0];
             }
             return fn;
+        }
+
+        public static string GetAttributeFromPath(string path, string attrib)
+        {
+            string ret = null;
+            if (path.ToLower().Contains(attrib.ToLower()))
+            {
+                string search = "[" + attrib.ToLower() + "=";
+                int start = path.ToLower().IndexOf(search) + search.Length;
+                int end = path.IndexOf("]", start);
+                ret = path.Substring(start, end - start).ToLower();
+            }
+            return ret;
         }
 
         public static string[] GetStringInBetween(string strBegin,
@@ -452,11 +505,17 @@ namespace MediaBrowser.LibraryManagement
 
         public static Microsoft.MediaCenter.UI.Image GetMediaInfoImage(string name)
         {
-            name = name.ToLower().Replace('/','-');
-            string baseLocation = Config.Instance.ImageByNameLocation;
-            if ((baseLocation == null) || (baseLocation.Length == 0))
-                baseLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
-            baseLocation += "\\MediaInfo";
+            if (name.EndsWith("_")) return null; //blank codec or other type
+            name = name.ToLower().Replace("-", "_");
+            name = name.Replace('/', '-');
+            Guid id = ("MiImage" + Config.Instance.ViewTheme + name).GetMD5();
+
+            //try to load from image cache first
+            string path = CustomImageCache.Instance.GetImagePath(id);
+            if (path != null) return new Image(path); //was already cached
+
+            //not cached - look in IBN - this is inefficient but only the first time as we will pull from cache next
+            string baseLocation = ApplicationPaths.AppIBNPath + "\\MediaInfo";
 
             //we'll look first in a theme-specific folder if it exists
             string ibnLocation = Path.Combine(baseLocation, Config.Instance.ViewTheme);
@@ -466,7 +525,9 @@ namespace MediaBrowser.LibraryManagement
             string fileName = Path.Combine(ibnLocation, RemoveInvalidFileChars(name) + ".png");
             if (File.Exists(fileName))
             {
-                return new Image("file://" + fileName);
+                Logger.ReportVerbose("===CustomImage " + fileName + " being cached on first access.  Shouldn't have to do this again...");
+                //cache it and return resulting cached image
+                return new Image("file://" + CustomImageCache.Instance.CacheImage(id, System.Drawing.Image.FromFile(fileName)));
             }
             else
             {
@@ -480,7 +541,10 @@ namespace MediaBrowser.LibraryManagement
                 else
                 {
                     resourceRef = "resx://MediaBrowser/MediaBrowser.Resources/";
-                }                    
+                }
+                //cache it
+                Logger.ReportVerbose("===CustomImage " + resourceRef + name + " being cached on first access.  Should only have to do this once per session...");
+                CustomImageCache.Instance.CacheResource(id, resourceRef + name);
                 return new Image(resourceRef + name);
             }
         }
@@ -520,6 +584,27 @@ namespace MediaBrowser.LibraryManagement
             MACAddress = MACAddress.Replace(":", "");
             return MACAddress;
         }
+
+        /// <summary>
+        /// Get the machine's physical memory in GB
+        /// </summary>
+        /// <returns></returns>
+        public static double GetPhysicalMemory()
+        {
+            double totalCapacity = 0;
+            ObjectQuery objectQuery = new ObjectQuery("select * from Win32_PhysicalMemory");
+            ManagementObjectSearcher searcher = new
+            ManagementObjectSearcher(objectQuery);
+            ManagementObjectCollection vals = searcher.Get();
+
+            foreach (ManagementObject val in vals)
+            {
+                totalCapacity += System.Convert.ToDouble(val.GetPropertyValue("Capacity"));
+            }
+            return totalCapacity / 1073741824;
+        }
+    
+
 
         public static int SystemIdleTime
         {
@@ -562,7 +647,7 @@ namespace MediaBrowser.LibraryManagement
         /// </summary>
         /// <param name="location">the location to check (assumed to be a network location)</param>
         /// <param name="timeout">milliseconds to wait if not avail</param>
-        internal static bool WaitForLocation(string location, int timeout)
+        public static bool WaitForLocation(string location, int timeout)
         {
             double elapsed = 0;
             string dir = Path.HasExtension(location) ? Path.GetDirectoryName(location) : location; //try and be sure it is a directory (will give parent if already directory)
@@ -576,6 +661,63 @@ namespace MediaBrowser.LibraryManagement
             }
             if (elapsed >= timeout) Logger.ReportWarning("Timed out attempting to access " + dir);
             return elapsed < timeout;
+        }
+
+        /// <summary>
+        /// Quick and dirty method to parse an INI file into a NameValueCollection
+        /// </summary>
+        public static NameValueCollection ParseIniFile(string path)
+        {
+            NameValueCollection values = new NameValueCollection();
+
+            foreach (string line in File.ReadAllLines(path))
+            {
+                string[] data = line.Split('=');
+
+                if (data.Length < 2) continue;
+
+                string key = data[0];
+                string value;
+
+                if (data.Length == 2)
+                {
+                    value = data[1];
+                }
+                else
+                {
+                    value = string.Join(string.Empty, data, 1, data.Length - 1);
+                }
+
+                values[key] = value;
+            }
+
+            return values;
+        }
+
+        /// <summary>
+        /// Sets values into an ini file. The value names are expected to already be there
+        /// </summary>
+        public static void SetIniFileValues(string path, Dictionary<string, object> values)
+        {
+            File.WriteAllLines(path, File.ReadAllLines(path).Select(line =>
+            {
+                string[] data = line.Split('=');
+
+                if (data.Length < 2)
+                {
+                    return line;
+                }
+
+                string key = data[0];
+
+                if (!values.ContainsKey(key))
+                {
+                    return line;
+                }
+
+                return key + "=" + values[key];
+
+            }).ToArray());
         }
     }
 }

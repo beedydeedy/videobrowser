@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 using System.Text;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library
 {
     public class Ratings
     {
-        private Dictionary<string, int> ratings = new Dictionary<string, int>();
-        private Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
+        private static Dictionary<string, int> ratings = new Dictionary<string, int>();
+        private static Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
 
         public Ratings(bool blockUnrated)
         {
@@ -23,6 +24,8 @@ namespace MediaBrowser.Library
 
         public void Initialize(bool blockUnrated)
         {
+            ratings.Clear();
+            ratingsStrings.Clear();
             // construct ratings dict
             if (blockUnrated)
             {
@@ -39,6 +42,7 @@ namespace MediaBrowser.Library
             ratings.Add("TV-G", 1);
             ratings.Add("TV-Y", 1);
             ratings.Add("TV-Y7", 1);
+            ratings.Add("TV-Y7-FV", 1);
             ratings.Add("PG", 2);
             ratings.Add("10+", 2);
             ratings.Add("TV-PG", 2);
@@ -80,14 +84,14 @@ namespace MediaBrowser.Library
                 ratings.Add("", 0);
             }
         }
-        public int Level(string ratingStr)
+        public static int Level(string ratingStr)
         {
-            if (ratings.ContainsKey(ratingStr))
+            if (ratingStr != null && ratings.ContainsKey(ratingStr))
                 return ratings[ratingStr];
             else 
                 return ratings[""]; //return "unknown" level
         }
-        public string ToString(int level)
+        public static string ToString(int level)
         {
             if (ratingsStrings.ContainsKey(level))
                 return ratingsStrings[level];
@@ -98,6 +102,12 @@ namespace MediaBrowser.Library
             //return the whole list of ratings strings
             return ratingsStrings.Values;
         }
+
+        public Microsoft.MediaCenter.UI.Image RatingImage(string rating)
+        {
+            return Helper.GetMediaInfoImage("Rated_" + rating);
+        }
+
 
     }
 }

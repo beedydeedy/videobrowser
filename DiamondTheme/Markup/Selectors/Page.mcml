@@ -134,8 +134,7 @@
         <Conditions >
           <Equality Source="[Folder.IsRoot]" Value="false"/>
           <Equality Source="[DisplayMenuButtons.Value]" Value="true" />
-          <Equality Source="[Folder.ItemTypeString]" ConditionOp="NotEquals" Value="ArtistAlbum" />
-        </Conditions>
+          <Equality Source="[Folder.ItemTypeString]" ConditionOp="NotEquals" Value="MusicAlbum" />        </Conditions>
         <Actions>
           <Set Target="[FolderButton.Visible]" Value="true" />
         </Actions>
@@ -148,6 +147,7 @@
         <Actions>
           <Set Target="[TypingHandler.EditableText.Value]" Value="" />
           <Set Target="[FindAsYouTypePanel.Visible]" Value="false" />
+          <Invoke Target="[Application.ResetContextMenu]" />
           <Set Target="[ContextMenu.Visible]" Value="true"/>
           <Invoke Target="[ContextMenu.NavigateInto]" />
         </Actions>
@@ -157,6 +157,7 @@
         <Actions>
           <Invoke Target="[ViewPanel.NavigateInto]" />
           <Set Target="[ContextMenu.Visible]" Value="false" />
+          <Invoke Target="[Application.ResetContextMenu]" />
           <Set Target="[FindAsYouTypePanel.Visible]" Value="true" />
         </Actions>
       </Changed>

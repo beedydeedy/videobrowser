@@ -27,6 +27,8 @@ namespace MediaBrowser.Library
         private bool saveEnabled = true;
         SizeRef thumbConstraint = new SizeRef(Config.Instance.DefaultPosterSize);
         private Dictionary<string, IComparer<BaseItem>> sortDict;
+        private Dictionary<string, string> indexDict;
+        private Dictionary<string, string> customParms;
 
         public Guid Id { get; set; }
 
@@ -44,7 +46,8 @@ namespace MediaBrowser.Library
             //set our dynamic choice options
             this.sortDict = folder.SortOrderOptions;
             this.sortOrders.Options = sortDict.Keys.ToArray();
-            this.indexBy.Options = folder.IndexByDisplayOptions;
+            this.indexDict = folder.IndexByOptions;
+            this.indexBy.Options = folder.IndexByOptions.Keys.ToArray();
  
             showLabels = new BooleanChoice();
             showLabels.Value = Config.Instance.DefaultShowLabels;
@@ -61,6 +64,12 @@ namespace MediaBrowser.Library
             useBackdrop = new BooleanChoice();
             useBackdrop.Value = Config.Instance.ShowBackdrop;
 
+            customParms = new Dictionary<string, string>();
+            ListenForChanges();
+        }
+
+        public void ListenForChanges()
+        {
             sortOrders.ChosenChanged += new EventHandler(sortOrders_ChosenChanged);
             indexBy.ChosenChanged += new EventHandler(indexBy_ChosenChanged);
             viewType.ChosenChanged += new EventHandler(viewType_ChosenChanged);
@@ -72,6 +81,19 @@ namespace MediaBrowser.Library
             thumbConstraint.PropertyChanged += new PropertyChangedEventHandler(thumbConstraint_PropertyChanged);
         }
 
+
+        public void StopListeningForChanges()
+        {
+            sortOrders.ChosenChanged -= new EventHandler(sortOrders_ChosenChanged);
+            indexBy.ChosenChanged -= new EventHandler(indexBy_ChosenChanged);
+            viewType.ChosenChanged -= new EventHandler(viewType_ChosenChanged);
+            showLabels.ChosenChanged -= new EventHandler(showLabels_ChosenChanged);
+            verticalScroll.ChosenChanged -= new EventHandler(verticalScroll_ChosenChanged);
+            useBanner.ChosenChanged -= new EventHandler(useBanner_ChosenChanged);
+            useCoverflow.ChosenChanged -= new EventHandler(useCoverflow_ChosenChanged);
+            useBackdrop.ChosenChanged -= new EventHandler(useBackdrop_ChosenChanged);
+            thumbConstraint.PropertyChanged -= new PropertyChangedEventHandler(thumbConstraint_PropertyChanged);
+        }
 
         void useCoverflow_ChosenChanged(object sender, EventArgs e)
         {
@@ -130,7 +152,7 @@ namespace MediaBrowser.Library
             bw.Write(this.showLabels.Value);
             bw.Write(this.verticalScroll.Value);
             bw.SafeWriteString((string)this.SortOrder.ToString());
-            bw.SafeWriteString((string)this.IndexBy.ToString());
+            bw.SafeWriteString((string)this.IndexByString);
             bw.Write(this.useBanner.Value);
             bw.Write(this.thumbConstraint.Value.Width);
             bw.Write(this.thumbConstraint.Value.Height);
@@ -157,9 +179,13 @@ namespace MediaBrowser.Library
                 this.SortOrder = br.SafeReadString();
             }
             catch { }
-            this.IndexBy = (IndexType)Enum.Parse(typeof(IndexType), br.SafeReadString());
+            try
+            {
+                this.IndexBy = br.SafeReadString();
+            }
+            catch { }
             if (!Config.Instance.RememberIndexing)
-                this.IndexBy = IndexType.None;
+                this.IndexBy = Localization.LocalizedStrings.Instance.GetString("NoneDispPref");
             this.useBanner.Value = br.ReadBoolean();
             this.thumbConstraint.Value = new Size(br.ReadInt32(), br.ReadInt32());
 
@@ -196,9 +222,9 @@ namespace MediaBrowser.Library
             }
         }
 
-        public IndexType IndexBy
+        public string IndexBy
         {
-            get { return IndexTypeNames.GetEnum(indexBy.Chosen.ToString()); }
+            get { return indexDict[indexBy.Chosen.ToString()]; }
             set
             {
                 this.IndexByChoice.Chosen = value.ToString();
@@ -285,12 +311,20 @@ namespace MediaBrowser.Library
             get { return this.useBackdrop; }
         }
 
+        public Dictionary<string, string> CustomParms
+        {
+            get
+            {
+                return customParms;
+            }
+        }
+
         internal void LoadDefaults()
         {
 
         }
 
-        private void Save()
+        public void Save()
         {
             if ((!saveEnabled) || (this.Id == Guid.Empty))
                 return;

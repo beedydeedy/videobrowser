@@ -35,8 +35,11 @@ namespace MediaBrowser.Library.Metadata {
             return new Type[] { 
                 typeof(VirtualFolderProvider),
                 typeof(ImageFromMediaLocationProvider),
-                typeof(ImageByNameProvider), 
+                typeof(ImageByNameProvider),
+                typeof(VideoFormatProvider),
+                typeof(MBMovieProviderFromJson),
                 typeof(MovieProviderFromXml),
+                typeof(LegacyMovieProviderFromXml),
                 typeof(FolderProviderFromXml),
                 typeof(LocalEpisodeProvider), 
                 typeof(LocalSeriesProvider),
@@ -173,7 +176,7 @@ namespace MediaBrowser.Library.Metadata {
                 if ((provider.IsSlow || provider.RequiresInternet) && fastOnly) continue;
 
                 try {
-                    if (provider.NeedsRefresh() | force) {
+                    if (force || provider.NeedsRefresh()) {
                         //I HATE this but I guess we're already tied to MIP by having a specific property for it...
                         if (provider.GetType().FullName.ToLower() == "mediainfoprovider.mediainfoprovider" && item is Show && (item as Show).MediaInfo != null)
                         {

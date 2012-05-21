@@ -191,9 +191,12 @@ namespace MediaBrowser.Library.Persistance {
         {
             get
             {
-                foreach (var obj in dictionary.Values)
+                lock (dictionary)
                 {
-                    yield return obj.Data;
+                    foreach (var obj in dictionary.Values)
+                    {
+                        yield return obj.Data;
+                    }
                 }
             }
         }
@@ -285,6 +288,8 @@ namespace MediaBrowser.Library.Persistance {
         public void Dispose() {
             
             if (enableAsyncValidation) asyncValidationDone.WaitOne();
+            watcher.EnableRaisingEvents = false;
+            watcher.Changed -= new FileSystemEventHandler(DirectoryChanged);
             watcher.Dispose();
         }
 

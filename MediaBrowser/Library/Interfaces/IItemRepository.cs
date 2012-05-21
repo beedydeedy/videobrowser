@@ -17,14 +17,21 @@ namespace MediaBrowser.Library
         IEnumerable<BaseItem> RetrieveChildren(Guid id);
         List<BaseItem> RetrieveIndex(Folder folder, string property, Func<string, BaseItem> constructor);
         void FillSubIndexes(Folder folder, IList<BaseItem> children, string property);
+        bool BackupDatabase();
 
         PlaybackStatus RetrievePlayState(Guid id);
         DisplayPreferences RetrieveDisplayPreferences(DisplayPreferences dp);
         ThumbSize RetrieveThumbSize(Guid id);
+
+        void MigratePlayState(ItemRepository repo);
+        void MigrateDisplayPrefs(ItemRepository repo);
+        void MigrateItems();
         
         void SavePlayState( PlaybackStatus playState);
         void SaveDisplayPreferences(DisplayPreferences prefs);
         void ShutdownDatabase();
+
+        int ClearCache(string objType);
 
         bool ClearEntireCache();
         

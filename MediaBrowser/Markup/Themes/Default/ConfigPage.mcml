@@ -98,7 +98,6 @@
       <BooleanChoice Name="ShowWatchTickInPosterView" Value="[Application.Config.ShowWatchTickInPosterView]" />
       <BooleanChoice Name="DimUnselectedPosters" Value="[Application.Config.DimUnselectedPosters]" />
       <BooleanChoice Name="AllowInternetMetadataProviders" Value="[Application.Config.AllowInternetMetadataProviders]" />
-      <BooleanChoice Name="EnableFileWatching" Value="[Application.Config.EnableFileWatching]" />
       <BooleanChoice Name="RememberIndexing" Value="[Application.Config.RememberIndexing]" />
       <BooleanChoice Name="InheritDefaultView" Value="[Application.Config.InheritDefaultView]" />
       <BooleanChoice Name="ShowClock" Value="[Application.Config.ShowClock]" />
@@ -121,7 +120,7 @@
       <BooleanChoice Name="DefaultVerticalScroll" Value="[Application.Config.DefaultVerticalScroll]" />
       <BooleanChoice Name="UseAutoPlayForIso" Value="[Application.Config.UseAutoPlayForIso]" />
       <BooleanChoice Name="YearSortAsc" Value="[Application.Config.YearSortAsc]" />
-      <!--<BooleanChoice Name="AutoValidate" Value="[Application.Config.AutoValidate]" />-->
+      <BooleanChoice Name="SaveLocalMeta" Value="[Application.Config.SaveLocalMeta]" />
       <EditableText Name="InitialFolder" Value="[Application.Config.InitialFolder]" />
       <EditableText Name="ImageByNameLocation" Value="[Application.Config.ImageByNameLocation]" />
       <EditableText Name="ExtenderNativeTypes" Value="[Application.Config.ExtenderNativeTypes]" />
@@ -370,7 +369,6 @@
       <Binding Source="[DimUnselectedPosters.Value]" Target="[Config.DimUnselectedPosters]" />
       <Binding Source="[AllowInternetMetadataProviders.Value]" Target="[Config.AllowInternetMetadataProviders]" />
       <Binding Source="[UseAutoPlayForIso.Value]" Target="[Config.UseAutoPlayForIso]" />
-      <Binding Source="[EnableFileWatching.Value]" Target="[Config.EnableFileWatching]" />
       <Binding Source="[RememberIndexing.Value]" Target="[Config.RememberIndexing]" />
       <Binding Source="[InheritDefaultView.Value]" Target="[Config.InheritDefaultView]" />
       <Binding Source="[ShowClock.Value]" Target="[Config.ShowClock]" />
@@ -405,7 +403,7 @@
       <Binding Source="[SortReplaceCharacters.Value]" Target="[Config.SortReplaceCharacters]" />
       <Binding Source="[SortReplaceWords.Value]" Target="[Config.SortReplaceWords]" />
       <Binding Source="[YearSortAsc.Value]" Target="[Config.YearSortAsc]" />
-      <!--<Binding Source="[AutoValidate.Value]" Target="[Config.AutoValidate]" />-->
+      <Binding Source="[SaveLocalMeta.Value]" Target="[Config.SaveLocalMeta]" />
 
       <Binding Source="[PlaylistLimit.Value]" Target="[Config.PlaylistLimit]" />
       <Binding Source="[BreadcrumbCount.Value]" Target="[Config.BreadcrumbCountLimit]" />
@@ -583,6 +581,7 @@
 									-->
                       <me:TextHeader Text="[Application.LocalStrings.#MetadataConfig!cor:String]" />
                       <cb:CheckBox Label="[Application.LocalStrings.#EnableInternetProvidersConfig!cor:String]" Checked="[AllowInternetMetadataProviders]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
+                      <cb:CheckBox Visible="false" Label="[Application.LocalStrings.#SaveLocalMetaConfig!cor:String]" Padding="40,0,0,0" Checked="[SaveLocalMeta]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
                       <me:TextHeader Text="[Application.LocalStrings.#UpdatesConfig!cor:String]" />
                       <cb:CheckBox Label="[Application.LocalStrings.#AutomaticUpdatesConfig!cor:String]" Checked="[EnableUpdates]" Margins="[CMargin]" FocusItem="[FocusItem]"   Font="font://f:CP_ConfigItemFont"/>
                       <!--<cb:CheckBox Label="[Application.LocalStrings.#BetaUpdatesConfig!cor:String]" Checked="[EnableBetas]" Margins="[CMargin]"  FocusItem="[FocusItem]"  Font="font://f:CP_ConfigItemFont"/>-->
@@ -625,7 +624,7 @@
                   <Panel Layout="VerticalFlow" >
                     <Children>
                       <me:TextHeader Text="[Application.LocalStrings.#GeneralBehaviorConfig!cor:String]" />
-                      <cb:CheckBox Label="[Application.LocalStrings.#AllowNestedMovieFoldersConfig!cor:String]" Checked="[EnableNestedMovieFolders]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
+                      <!--<cb:CheckBox Label="[Application.LocalStrings.#AllowNestedMovieFoldersConfig!cor:String]" Checked="[EnableNestedMovieFolders]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>-->
                       <cb:CheckBox Label="[Application.LocalStrings.#AutoEnterSingleFolderItemsConfig!cor:String]" Checked="[AutoEnterSingleDirs]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
                       <cb:CheckBox Label="[Application.LocalStrings.#SortYearsAscConfig!cor:String]" Checked="[YearSortAsc]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
                       <me:TextHeader Text="[Application.LocalStrings.#MultipleFileBehaviorConfig!cor:String]" />

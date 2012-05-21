@@ -27,6 +27,7 @@ namespace MediaBrowser.Library {
         Threegp,
         Ts,
         Wmv,
-        Wtv
+        Wtv,
+        Mk3d
     }
 }

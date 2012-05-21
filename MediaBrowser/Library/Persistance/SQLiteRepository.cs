@@ -78,9 +78,9 @@ namespace MediaBrowser.Library.Persistance
         protected static System.Reflection.Assembly sqliteAssembly;
         protected static System.Reflection.Assembly SqliteResolver(object sender, ResolveEventArgs args)
         {
-            Logger.ReportInfo(args.Name + " is being resolved!");
             if (args.Name.StartsWith("System.Data.SQLite,"))
             {
+                Logger.ReportInfo(args.Name + " is being resolved to "+sqliteAssembly.FullName);
                 return sqliteAssembly;
             }
             return null;
@@ -88,23 +88,54 @@ namespace MediaBrowser.Library.Persistance
 
         protected SQLiteConnection connection;
         protected List<SQLiteCommand> delayedCommands = new List<SQLiteCommand>();
+        protected const int MAX_RETRIES = 5;
 
-        public void ShutdownDatabase()
+        protected virtual bool ConnectToDB(string dbPath)
         {
+            SQLiteConnectionStringBuilder connectionstr = new SQLiteConnectionStringBuilder();
+            connectionstr.PageSize = 4096;
+            connectionstr.CacheSize = 4096;
+            connectionstr.SyncMode = SynchronizationModes.Normal;
+            connectionstr.DataSource = dbPath;
+            connectionstr.JournalMode = SQLiteJournalModeEnum.Delete;
+            connection = new SQLiteConnection(connectionstr.ConnectionString);
+            int retries = 0;
+            bool connected = false;
+            while (!connected && retries < MAX_RETRIES)
+            {
+                try
+                {
+                    connection.Open();
+                    connected = true;
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Error connecting to database "+dbPath+"! Will retry " + MAX_RETRIES + " times.", e);
+                    retries++;
+                    Thread.Sleep(250);
+                }
+            }
+
+            return connected;
+        }
+
+        public virtual void ShutdownDatabase()
+        {
+            alive = false;
+            Thread.Sleep(1000); //wait for it to shutdown
             try
             {
+                FlushWriter();
                 connection.Close();
             }
             catch { }
-            alive = false;
-            Thread.Sleep(1000); //wait for it to shutdown
         }
 
         protected void QueueCommand(SQLiteCommand cmd)
         {
             lock (delayedCommands)
             {
-                delayedCommands.Add(cmd);
+                delayedCommands.Add((cmd.Clone() as SQLiteCommand));
             }
         }
 
@@ -129,24 +160,54 @@ namespace MediaBrowser.Library.Persistance
             try
             {
 
+                if (delayedCommands.Count == 0)
+                {
+                    // Logger.ReportInfo("Delayed writer idle");
+                    return;  //no reason to go through this if no cmds...
+                }
                 List<SQLiteCommand> copy;
                 lock (delayedCommands)
                 {
-                    if (delayedCommands.Count == 0) return;  //no reason to go through this if no cmds...
                     copy = delayedCommands.ToList();
                     delayedCommands.Clear();
                 }
 
                 lock (connection)
                 {
-                    var tran = connection.BeginTransaction();
-                    foreach (var command in copy)
+                    //Logger.ReportInfo("Executing " + copy.Count + " commands");
+                    //using (new MediaBrowser.Util.Profiler("SQL Stmts"))
                     {
-                        command.Transaction = tran;
-                        //Logger.ReportVerbose("About to execute " + command.CommandText);
-                        command.ExecuteNonQuery();
+                        using (var tran = connection.BeginTransaction())
+                        {
+                            foreach (var command in copy)
+                            {
+                                //command.Transaction = tran;
+                                //Logger.ReportInfo("About to execute for:  "+ command.Parameters[1].Value+"  "+command.Parameters[14].Value + command.CommandText);
+                                try
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+                                catch (Exception e)
+                                {
+                                    string parameters = "";
+                                    foreach (SQLiteParameter parm in command.Parameters)
+                                        parameters += " " + parm.Value;
+                                    Logger.ReportException("Failed to execute SQL Stmt: " + command.CommandText + " Parms: "+parameters, e);
+                                }
+                            }
+                            try
+                            {
+                                //Logger.ReportInfo("Committing " + copy.Count + " statements...");
+                                tran.Commit();
+                                //Logger.ReportInfo("Done.");
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.ReportException("Failed to commit transaction.", e);
+                                tran.Rollback();
+                            }
+                        }
                     }
-                    tran.Commit();
                 }
 
             }
@@ -158,8 +219,9 @@ namespace MediaBrowser.Library.Persistance
 
         public void FlushWriter()
         {
+            flushing.Reset();
             InternalFlush();
-            flushing.WaitOne();
+            flushing.Set();
         }
 
 

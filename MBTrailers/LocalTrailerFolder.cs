@@ -107,6 +107,7 @@ namespace MBTrailers
                                 trailer.Genres = movie.Genres;
                                 trailer.MpaaRating = movie.MpaaRating;
                                 trailer.Path = movie.TrailerFiles.First();
+                                trailer.MediaType = MediaTypeResolver.DetermineType(trailer.Path);
                                 trailer.Parent = this;
                                 //and add to our children
                                 validChildren.Add(trailer);

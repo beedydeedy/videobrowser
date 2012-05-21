@@ -12,7 +12,7 @@ using MediaBrowser.Library.Providers.Attributes;
 namespace MediaBrowser.Library.Providers
 {
     [SupportedType(typeof(Movie))]
-    class MovieProviderFromXml : BaseMetadataProvider
+    public class MovieProviderFromXml : BaseMetadataProvider
     {
 
         [Persist]
@@ -46,10 +46,10 @@ namespace MediaBrowser.Library.Providers
             return true;
         }
 
-        private string XmlLocation()
+        protected virtual string XmlLocation()
         {
             string location = Item.Path;
-            return Path.Combine(location, "mymovies.xml");
+            return Path.Combine(location, "movie.xml");
         }
 
         public override void Fetch()
@@ -96,13 +96,14 @@ namespace MediaBrowser.Library.Providers
                 }
 
 
-                string back = doc.SafeGetString("Title/Covers/Back");
-                if ((back != null) && (back.Length > 0))
-                {
-                    back = Path.Combine(location, back);
-                    if (File.Exists(back))
-                        Item.SecondaryImagePath = back;
-                }
+                //using this for logos now
+                //string back = doc.SafeGetString("Title/Covers/Back");
+                //if ((back != null) && (back.Length > 0))
+                //{
+                //    back = Path.Combine(location, back);
+                //    if (File.Exists(back))
+                //        Item.SecondaryImagePath = back;
+                //}
 
 
                 if (string.IsNullOrEmpty(movie.DisplayMediaType))
@@ -138,7 +139,14 @@ namespace MediaBrowser.Library.Providers
                 }
                 if (movie.ImdbID == null)
                 {
-                    movie.ImdbID = doc.SafeGetString("Title/IMDbId");
+                    if (!string.IsNullOrEmpty(doc.SafeGetString("Title/IMDB")))
+                    {
+                        movie.ImdbID = doc.SafeGetString("Title/IMDB");
+                    }
+                    else
+                    {
+                        movie.ImdbID = doc.SafeGetString("Title/IMDbId");
+                    }
                 }
 
 
@@ -301,7 +309,7 @@ namespace MediaBrowser.Library.Providers
                             break;
                     }
                 }
-                movie.MediaInfo.OverrideData.AudioStreamCount = doc.SelectNodes("Title/MediaInfo/Audio").Count;
+                movie.MediaInfo.OverrideData.AudioStreamCount = doc.SelectNodes("Title/MediaInfo/Audio/Codec[text() != '']").Count;
                 movie.MediaInfo.OverrideData.AudioChannelCount = doc.SafeGetString("Title/MediaInfo/Audio/Channels", "");
                 movie.MediaInfo.OverrideData.AudioBitRate = doc.SafeGetInt32("Title/MediaInfo/Audio/BitRate");
                 string video = doc.SafeGetString("Title/MediaInfo/Video/Codec", "");

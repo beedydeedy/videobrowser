@@ -115,7 +115,7 @@ namespace MediaBrowser.Library.ImageManagement {
         static Dictionary<Guid, object> FileLocks = new Dictionary<Guid, object>();
 
         class Instansiator {
-            public static IImageCache Instance = Kernel.Instance.ConfigData.UseSQLImageCache ? (IImageCache)new SQLiteImageCache(System.IO.Path.Combine(ApplicationPaths.AppCachePath,"imagecache.db")) : (IImageCache)new ImageCache(ApplicationPaths.AppImagePath);
+            public static IImageCache Instance = (IImageCache)new ImageCache(ApplicationPaths.AppImagePath);
         }
        
 
@@ -127,7 +127,10 @@ namespace MediaBrowser.Library.ImageManagement {
 
         Dictionary<Guid, ImageSet> imageInfoCache = new Dictionary<Guid, ImageSet>();
 
-        public string Path { get; private set; }
+        public string Path { get; protected set; }
+        public ImageCache()
+        { }
+
         public ImageCache(string path) {
             this.Path = path;
             LoadInfo(); 
@@ -137,7 +140,7 @@ namespace MediaBrowser.Library.ImageManagement {
 
         static Regex infoRegex = new Regex(@"(z)?([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.?([0-9]*)x?([0-9]*)", RegexOptions.Compiled);
 
-        private void LoadInfo() {
+        protected void LoadInfo() {
             
           
             foreach (var item in Kernel.Instance.GetLocation<IFolderMediaLocation>(Path).Children) {
@@ -153,30 +156,32 @@ namespace MediaBrowser.Library.ImageManagement {
                 }
             }
 
+        }
+
+        public void DeleteResizedImages()
+        {
             // Shrink the lib, get rid of old resized images
-            foreach (var item in imageInfoCache.Values) {
+            foreach (var item in imageInfoCache.Values)
+            {
 
-                if (item.PrimaryImage == null) {
-                    DeleteImageSet(item);
+                if (item.PrimaryImage == null)
+                {
+                    DeleteImageSet(item, true);
                     continue;
-                } 
+                }
 
-                item.ResizedImages = item.ResizedImages.OrderBy(_ => _.Date.Ticks).ToList();
-                for (int i = item.ResizedImages.Count - 1; i >= 0; i--) {
-                    var current = item.ResizedImages[i];
-                    // only keep 4 resizes. 
-                    if (current.Date < DateTime.UtcNow.AddDays(-60) || item.ResizedImages.Count > 4) {
-                        try {
-                            File.Delete(current.Path);
-                            item.ResizedImages.RemoveAt(i);
-                        } catch (Exception ex) {
-                            Logger.ReportException("Failed to delete stale image: " + current.Path + "  you will have to delete it manually", ex);
-                        }
+                foreach (var image in item.ResizedImages)
+                {
+                    try
+                    {
+                        File.Delete(image.Path);
                     }
-
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Failed to delete stale image: " + image.Path + "  you will have to delete it manually", ex);
+                    }
                 }
             }
-
         }
 
         private void AddToCache(IMediaLocation item) {
@@ -236,7 +241,7 @@ namespace MediaBrowser.Library.ImageManagement {
 
             var info = new ImageInfo(imageSet);
             info.ImageFormat = imageFormat;
-            info.Date = item.DateCreated;
+            info.Date = item.DateModified > item.DateCreated ? item.DateModified : item.DateCreated;
 
             //upgrade logic
             if (width == -1 || height == -1) {
@@ -260,7 +265,7 @@ namespace MediaBrowser.Library.ImageManagement {
            
         }
 
-        public string GetImagePath(Guid id) {
+        public virtual string GetImagePath(Guid id) {
             ImageSet set = GetImageSet(id);
             return set != null && set.PrimaryImage != null ? set.PrimaryImage.Path : null;
         }
@@ -315,13 +320,13 @@ namespace MediaBrowser.Library.ImageManagement {
 
             lock (imageSet) {
                 if (imageSet != null) {
-                    DeleteImageSet(imageSet);
+                    ClearImageSet(imageSet);
                 }
 
                 ImageInfo info = new ImageInfo(imageSet);
                 info.Width = image.Width;
                 info.Height = image.Height;
-                info.ImageFormat = (Kernel.Instance.ConfigData.UseBMPsInCache && image.Width > 1000) ? ImageFormat.Bmp : image.RawFormat;
+                info.ImageFormat = image.RawFormat.Equals(ImageFormat.MemoryBmp) ? ImageFormat.Png : image.RawFormat; //image was processed - may have transparency
                 info.Date = DateTime.UtcNow;
                 imageSet.PrimaryImage = info;
                 try {
@@ -337,6 +342,7 @@ namespace MediaBrowser.Library.ImageManagement {
 
                     // weird bug, some images on tvdb will not save as jpegs 
                     try {
+                        //Logger.ReportVerbose("Saving as png..");
                         info.ImageFormat = ImageFormat.Png;
                         image.Save(info.Path, ImageFormat.Png);
                     } 
@@ -357,13 +363,52 @@ namespace MediaBrowser.Library.ImageManagement {
             
         }
 
-        private static void DeleteImageSet(ImageSet imageSet) {
+        private static void ClearImageSet(ImageSet imageSet)
+        {
+            imageSet.PrimaryImage = null;
+            imageSet.ResizedImages = new List<ImageInfo>();
+        }
+
+        private static void DeleteImageSet(ImageSet imageSet, bool includeResized) {
             try {
                 if (imageSet.PrimaryImage != null) {
-                    File.Delete(imageSet.PrimaryImage.Path);
+                    int retries = 0;
+                    bool successful = false;
+                    while (retries < 3 && !successful)
+                    {
+                        try
+                        {
+                            File.Delete(imageSet.PrimaryImage.Path);
+                            successful = true;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.ReportException("Error attempting to delete image: " + imageSet.PrimaryImage.Path + ". Will retry...", e);
+                            retries++;
+                        }
+                    }
                 }
-                foreach (var resized in imageSet.ResizedImages) {
-                    File.Delete(resized.Path);
+                if (includeResized)
+                {
+                    foreach (var resized in imageSet.ResizedImages)
+                    {
+                        int retries = 0;
+                        bool successful = false;
+                        while (retries < 3 && !successful)
+                        {
+                            try
+                            {
+                                File.Delete(resized.Path);
+                                successful = true;
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.ReportException("Error attempting to delete image: " + resized.Path + ". Will retry...", e);
+                                retries++;
+                            }
+                        }
+
+                    }
                 }
             } finally {
                 imageSet.ResizedImages = new List<ImageInfo>();
@@ -437,7 +482,8 @@ namespace MediaBrowser.Library.ImageManagement {
             var set = GetImageSet(id); 
             if (set != null) {
                 lock (set) {
-                    DeleteImageSet(set);
+                    //only delete primary image because already loaded items may be pointing to the others
+                    DeleteImageSet(set, false);
                 }
             }
         }

@@ -20,13 +20,15 @@ namespace MediaBrowser.Library.Entities {
                     PlayCount = 1;
                 } else if (!value && WasPlayed) {
                     PlayCount = 0;
+                    //PositionTicks = 0;
+                    //PlaylistPosition = 0;
                 } 
 
             }
         }
 
         public bool CanResume {
-            get { return this.PositionTicks > 0; }
+            get { return this.PositionTicks > 0 || PlaylistPosition > 0; }
         }
 
         [Persist]
@@ -63,11 +65,6 @@ namespace MediaBrowser.Library.Entities {
                 WasPlayedChanged(this, null);
             }
             wasPlayedCache = WasPlayed;
-        }
-
-
-        public void Save() {
-            Kernel.Instance.ItemRepository.SavePlayState(this);
         }
     }
 }

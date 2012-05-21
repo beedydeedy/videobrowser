@@ -97,6 +97,7 @@ namespace MediaBrowser.Library.Entities {
 
                 Overview = feed.Description;
 
+                this.FolderChildrenChanged = true;
                 this.OnChildrenChanged(null);
                 Kernel.Instance.ItemRepository.SaveItem(this);
             } catch (Exception e) {

@@ -17,6 +17,13 @@ namespace MBTrailers
         public Guid RealMovieID;
         private Movie RealMovie;
 
+        public override bool CanResume
+        {
+            get
+            {
+                return false;
+            }
+        }
 
         public override bool RefreshMetadata(MediaBrowser.Library.Metadata.MetadataRefreshOptions options)
         {
@@ -65,6 +72,7 @@ namespace MBTrailers
             this.SortName = RealMovie.SortName;
             this.Studios = RealMovie.Studios;
             this.Path = RealMovie.TrailerFiles.First();
+            this.MediaType = MediaTypeResolver.DetermineType(Path);
             this.MediaInfo = RealMovie.MediaInfo;
             this.DateCreated = System.IO.File.GetCreationTime(this.Path);
             this.DisplayMediaType = "Trailer";

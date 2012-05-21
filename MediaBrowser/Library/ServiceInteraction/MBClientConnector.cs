@@ -9,6 +9,7 @@ using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Threading;
 using System.IO.Pipes;
 using System.IO;
+using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library
 {
@@ -122,6 +123,9 @@ namespace MediaBrowser.Library
                                     //just need to back up to the root
                                     Application.CurrentInstance.BackToRoot();
                                 }
+
+                                // set npv visibility according to current state
+                                Application.CurrentInstance.ShowNowPlaying = Application.CurrentInstance.IsPlaying || Application.CurrentInstance.IsExternalWmcApplicationPlaying;
 
                                 //tell MC to navigate to us
                                 Microsoft.MediaCenter.Hosting.AddInHost.Current.ApplicationContext.ReturnToApplication();

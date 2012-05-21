@@ -1,32 +1,28 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Microsoft.MediaCenter;
-using Microsoft.MediaCenter.UI;
-using MediaBrowser.Util;
-using System;
-using System.Reflection;
 using System.IO;
-using System.Resources;
-using Microsoft.MediaCenter.AddIn;
-using MediaBrowser.Library;
-using MediaBrowser.LibraryManagement;
-using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Factories;
-using MediaBrowser.Library.Filesystem;
-using MediaBrowser.Code;
-using MediaBrowser.Library.Playables;
 using System.Linq;
-using MediaBrowser.Library.Threading;
-using MediaBrowser.Library.Metadata;
-using MediaBrowser.Library.Plugins;
-using MediaBrowser.Library.EntityDiscovery;
-using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.Library.Logging;
+using System.Reflection;
+using MediaBrowser.Code.ModelItems;
+using MediaBrowser.Library;
 using MediaBrowser.Library.Configuration;
-using MediaBrowser.Library.UI;
+using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
+using MediaBrowser.Library.Factories;
 using MediaBrowser.Library.Input;
+using MediaBrowser.Library.Interfaces;
 using MediaBrowser.Library.Localization;
-
+using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Metadata;
+using MediaBrowser.Library.Playables;
+using MediaBrowser.Library.Threading;
+using MediaBrowser.Library.UI;
+using MediaBrowser.LibraryManagement;
+using MediaBrowser.Util;
+using Microsoft.MediaCenter;
+using Microsoft.MediaCenter.AddIn;
+using Microsoft.MediaCenter.UI;
 
 namespace MediaBrowser
 {
@@ -63,12 +59,138 @@ namespace MediaBrowser
         private MyHistoryOrientedPageSession session;
         private static object syncObj = new object();
         private bool navigatingForward;
-        private IPlaybackController currentPlaybackController = null;
-        private static string _background;
+        private BasePlaybackController currentPlaybackController = null;
         private static Timer ScreenSaverTimer;
         //tracks whether to show recently added or watched items
-        public string RecentItemOption { get { return Config.Instance.RecentItemOption; } set { Config.Instance.RecentItemOption = value; } }
+        public string RecentItemOption { get { return Config.Instance.RecentItemOption; } set { Config.Instance.RecentItemOption = value; Kernel.Instance.ConfigData.RecentItemOption = value; } }
         private bool pluginUpdatesAvailable = false;
+        public System.Drawing.Bitmap ExtSplashBmp;
+        private Item lastPlayed;
+
+        #region CurrentItemChanged EventHandler
+        volatile EventHandler<GenericEventArgs<Item>> _CurrentItemChanged;
+        /// <summary>
+        /// Fires whenever CurrentItem changes
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Item>> CurrentItemChanged
+        {
+            add
+            {
+                _CurrentItemChanged += value;
+            }
+            remove
+            {
+                _CurrentItemChanged -= value;
+            }
+        }
+
+        internal void OnCurrentItemChanged()
+        {
+            FirePropertyChanged("CurrentItem"); 
+            
+            if (_CurrentItemChanged != null)
+            {
+                Async.Queue("OnCurrentItemChanged", () =>
+                {
+                    _CurrentItemChanged(this, new GenericEventArgs<Item>() { Item = CurrentItem });
+                }); 
+            }
+        }
+        #endregion
+
+        #region NavigatedInto EventHandler
+        volatile EventHandler<GenericEventArgs<Item>> _NavigationInto;
+        /// <summary>
+        /// Fires whenever an Item is navigated into
+        /// </summary>
+        public event EventHandler<GenericEventArgs<Item>> NavigationInto
+        {
+            add
+            {
+                _NavigationInto += value;
+            }
+            remove
+            {
+                _NavigationInto -= value;
+            }
+        }
+
+        internal void OnNavigationInto(Item item)
+        {
+            if (_NavigationInto != null)
+            {
+                Async.Queue("OnNavigationInto", () =>
+                {
+                    _NavigationInto(this, new GenericEventArgs<Item>() { Item = item });
+                });
+            }
+        }
+        #endregion
+
+        #region PrePlayback EventHandler
+        volatile EventHandler<GenericEventArgs<PlayableItem>> _PrePlayback;
+        /// <summary>
+        /// Fires whenever a PlayableItem is about to be played
+        /// </summary>
+        public event EventHandler<GenericEventArgs<PlayableItem>> PrePlayback
+        {
+            add
+            {
+                _PrePlayback += value;
+            }
+            remove
+            {
+                _PrePlayback -= value;
+            }
+        }
+
+        private void OnPrePlayback(PlayableItem playableItem)
+        {
+            if (_PrePlayback != null)
+            {
+                try
+                {
+                    _PrePlayback(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("Application.PrePlayback event listener had an error: ", ex);
+                }
+            }
+            Async.Queue("IsPlayingVideo delay", () => { FirePropertyChanged("IsPlayingVideo"); FirePropertyChanged("IsPlaying"); }, 1500);
+        }
+        #endregion
+
+        #region PlaybackFinished EventHandler
+        volatile EventHandler<GenericEventArgs<PlayableItem>> _PlaybackFinished;
+        /// <summary>
+        /// Fires whenever a PlayableItem finishes playback
+        /// </summary>
+        public event EventHandler<GenericEventArgs<PlayableItem>> PlaybackFinished
+        {
+            add
+            {
+                _PlaybackFinished += value;
+            }
+            remove
+            {
+                _PlaybackFinished -= value;
+            }
+        }
+
+        private void OnPlaybackFinished(PlayableItem playableItem)
+        {
+            if (_PlaybackFinished != null)
+            {
+                Async.Queue("OnPlaybackFinished", () =>
+                {
+                    _PlaybackFinished(this, new GenericEventArgs<PlayableItem>() { Item = playableItem });
+                }); 
+            }
+            FirePropertyChanged("IsPlayingVideo");
+            FirePropertyChanged("IsPlaying");
+        }
+        #endregion
 
         public bool PluginUpdatesAvailable
         {
@@ -89,6 +211,11 @@ namespace MediaBrowser
         {
             get { return _ScreenSaverActive; }
             set { if (_ScreenSaverActive != value) { _ScreenSaverActive = value; FirePropertyChanged("ScreenSaverActive"); } }
+        }
+
+        public string CurrentScreenSaver
+        {
+            get { return Kernel.Instance.ScreenSaverUI; }
         }
 
         public List<string> ConfigPanelNames
@@ -206,14 +333,9 @@ namespace MediaBrowser
                 if (currentItem != value)
                 {
                     currentItem = value;
-                    CurrentItemChanged();
+                    OnCurrentItemChanged();
                 }
             }
-        }
-
-        public void CurrentItemChanged()
-        {
-            FirePropertyChanged("CurrentItem");
         }
 
         private List<MenuItem> currentContextMenu;
@@ -228,7 +350,7 @@ namespace MediaBrowser
             set
             {
                 currentContextMenu = value;
-                Logger.ReportVerbose("Context Menu Changed.  Items: " + currentContextMenu.Count);
+                //Logger.ReportVerbose("Context Menu Changed.  Items: " + currentContextMenu.Count);
                 FirePropertyChanged("ContextMenu");
             }
         }
@@ -283,6 +405,14 @@ namespace MediaBrowser
             }
         }
 
+        public Item LastPlayedItem
+        {
+            get
+            {
+                return lastPlayed ?? Item.BlankItem;
+            }
+        }
+
         static Application()
         {
 
@@ -318,23 +448,33 @@ namespace MediaBrowser
             //initialize screen saver
             ScreenSaverTimer = new Timer() { AutoRepeat = true, Enabled = true, Interval = 60000 };
             ScreenSaverTimer.Tick += new EventHandler(ScreenSaverTimer_Tick);
-
         }
 
         void ScreenSaverTimer_Tick(object sender, EventArgs e)
         {
-            if (Config.EnableScreenSaver && !this.PlaybackController.IsPlaying)
+            if (Config.EnableScreenSaver) 
             {
-                if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
+                if (!IsPlayingVideo && !IsExternalWmcApplicationPlaying)
                 {
-                    this.ScreenSaverActive = true;
-                    //increase the frequency of this tick so we will turn off quickly
-                    ScreenSaverTimer.Interval = 500;
+                    if (Helper.SystemIdleTime > Config.ScreenSaverTimeOut * 60000)
+                    {
+                        this.ScreenSaverActive = true;
+                        //increase the frequency of this tick so we will turn off quickly
+                        ScreenSaverTimer.Interval = 500;
+                    }
+                    else
+                    {
+                        this.ScreenSaverActive = false;
+                        ScreenSaverTimer.Interval = 60000; //move back to every minute
+                    }
                 }
                 else
                 {
-                    this.ScreenSaverActive = false;
-                    ScreenSaverTimer.Interval = 60000; //move back to every minute
+                    if (!this.ScreenSaverActive)
+                    {
+                        //something playing - be sure we don't kick off right after it ends
+                        ScreenSaverTimer.Interval = Config.ScreenSaverTimeOut * 60000;
+                    }
                 }
             }
         }
@@ -367,24 +507,34 @@ namespace MediaBrowser
             }
         }
 
+        private static bool? _RunningOnExtender;
         public static bool RunningOnExtender
         {
             get
             {
-                try
+                if (!_RunningOnExtender.HasValue)
                 {
-                    bool isLocal = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities.ContainsKey("Console") &&
-                             (bool)Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities["Console"];
-                    return !isLocal;
+                    try
+                    {
+                        Dictionary<string, object> capabilities = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment.Capabilities;
+
+                        bool isLocal = capabilities.ContainsKey("Console") && (bool)capabilities["Console"];
+
+                        _RunningOnExtender = !isLocal;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("Error in RunningOnExtender. If you're on a PC this is not a problem.", ex);
+                        //don't crash - just assume we are on a regular install and something went wrong momentarily - it'll have a problem later if it is real
+                        return false;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error in RunningOnExtender.", ex);
-                    Application.ReportBrokenEnvironment();
-                    throw;
-                }
+
+                return _RunningOnExtender.Value;
+
             }
         }
+
 
         /// <summary>
         /// Unfortunately TVPack has some issues at the moment where the MedaCenterEnvironment stops working, we catch these errors and rport them then close.
@@ -426,7 +576,7 @@ namespace MediaBrowser
             }
         }
 
-        public IPlaybackController PlaybackController
+        public BasePlaybackController PlaybackController
         {
             get
             {
@@ -436,6 +586,42 @@ namespace MediaBrowser
             }
         }
 
+        /// <summary>
+        /// Determines whether or not a PlaybackController is currently playing
+        /// </summary>
+        public bool IsPlaying
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlaying);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether or not a PlaybackController is currently playing video
+        /// </summary>
+        public bool IsPlayingVideo
+        {
+            get
+            {
+                return Kernel.Instance.PlaybackControllers.Any(p => p.IsPlayingVideo);
+            }
+        }
+
+        public bool IsExternalWmcApplicationPlaying
+        {
+            get
+            {
+                if (IsPlaying)
+                {
+                    return false;
+                }
+
+                var playstate = PlaybackControllerHelper.GetCurrentPlayState();
+
+                return playstate == Microsoft.MediaCenter.PlayState.Playing || playstate == Microsoft.MediaCenter.PlayState.Paused || playstate == Microsoft.MediaCenter.PlayState.Buffering;
+            }
+        }
 
         public AggregateFolder RootFolder
         {
@@ -500,7 +686,13 @@ namespace MediaBrowser
 
                     // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
                     // us to delete the file we are trying to delete
-                    PlaybackController.PlayMedia(DingFile);
+                    PlayableItem playable = PlayableItemFactory.Instance.CreateForInternalPlayer(new string[] { DingFile });
+
+                    playable.GoFullScreen = false;
+                    playable.RaiseGlobalPlaybackEvents = false;
+
+                    Play(playable);
+
                     if (Directory.Exists(path))
                     {
                         Directory.Delete(path, true);
@@ -542,6 +734,12 @@ namespace MediaBrowser
         public void GoToMenu()
         {
             Logger.ReportInfo("Media Browser (version " + AppVersion + ") Starting up.");
+            //let's put some useful info in here for diagnostics
+            if (!Config.AutoValidate)
+                Logger.ReportWarning("*** AutoValidate is OFF.");
+            if (Config.ParentalControlEnabled)
+                Logger.ReportInfo("*** Parental Controls are ON with a max rating of "+Config.ParentalMaxAllowedString+".  Block Unrated is "+Config.ParentalBlockUnrated+" and Hide Content is "+Config.HideParentalDisAllowed);
+            Logger.ReportInfo("*** Internet Providers are "+(Config.AllowInternetMetadataProviders ? "ON." : "OFF."));
             try
             {
                 if (Config.IsFirstRun)
@@ -557,7 +755,7 @@ namespace MediaBrowser
                     {
                         MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
                         ev.Dialog(CurrentInstance.StringData("ForcedRebuildDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 15, true);
-                        
+                        session.Close();
                     }
                     //Check to see if this is the first time this version is run
                     string currentVersion = Kernel.Instance.Version.ToString();
@@ -565,9 +763,14 @@ namespace MediaBrowser
                     {
                         //first time with this version - run routine
                         Logger.ReportInfo("First run for version " + currentVersion);
-                        FirstRunForVersion(currentVersion);
+                        bool okToRun = FirstRunForVersion(currentVersion);
                         //and update
                         Config.MBVersion = currentVersion;
+                        if (!okToRun)
+                        {
+                            Logger.ReportInfo("Closing MB to allow new version migration...");
+                            this.Close();
+                        }
                     }
                     //if the service refresh failed - notify them
                     if (Kernel.Instance.ServiceConfigData.RefreshFailed)
@@ -592,6 +795,30 @@ namespace MediaBrowser
                         }, 60000);
                     }
 
+                    ShowNowPlaying = IsPlaying || IsExternalWmcApplicationPlaying;
+
+                    // setup image to use in external splash screen
+                    string splashFilename = Path.Combine(Path.Combine(ApplicationPaths.AppIBNPath,"General"),"splash.png");
+                    if (File.Exists(splashFilename))
+                    {
+                        ExtSplashBmp = new System.Drawing.Bitmap(splashFilename);
+                    }
+                    else
+                    {
+                        ExtSplashBmp = new System.Drawing.Bitmap(Resources.mblogo1000);
+                    }
+
+                    //validate that everything at the root level is actually a folder - the UI will blow chow with items
+                    foreach (var item in RootFolder.Children)
+                    {
+                        if (!(item is Folder))
+                        {
+                            string msg = "W A R N I N G: Item " + item.Name + " is resolving to a " + item.GetType().Name + ". All root level items must be folders.\n  Check that this item isn't being mistaken because it is a folder with only a couple items and you have the playlist functionality enabled.";
+                            Logger.ReportError(msg);
+                            DisplayDialog(msg, "Invalid Root Item");
+                        }
+                    }
+
                     // we need to validate the library so that changes in the RAL will get picked up without having to navigate
                     if (Config.AutoValidate)
                     {
@@ -600,13 +827,25 @@ namespace MediaBrowser
                             using (new Profiler("Startup Validation"))
                             {
                                 Kernel.Instance.MajorActivity = true;
-                                foreach (BaseItem item in RootFolder.Children)
-                                {
-                                    if (item is Folder)
-                                    {
-                                        (item as Folder).ValidateChildren();
-                                    }
-                                }
+                                RootFolder.RefreshMetadata();
+
+                                //These validations have been moved to the recent list builds since they are needed there anyway
+
+                                //foreach (Folder folder in RootFolder.RecursiveFolders)
+                                //{
+                                //    folder.ValidateChildren();
+                                //}
+                                //foreach (BaseItem item in RootFolder.RecursiveChildren)
+                                //{
+                                //    //refresh new items
+                                //    if ((DateTime.Now - item.DateModified).TotalDays < 2)
+                                //        item.RefreshMetadata();
+                                //}
+                                ////finally - we need to invalidate the recent lists to pick up any new items we just found
+                                //foreach (Item item in RootFolderModel.Children)
+                                //{
+                                //    (item as FolderModel).QuickListItems = null; //force to re-load
+                                //}
                                 Kernel.Instance.MajorActivity = false;
                             }
                         });
@@ -634,7 +873,6 @@ namespace MediaBrowser
 
             if (this.EntryPointPath.ToLower() == ConfigEntryPointVal) //specialized case for config page
             {
-                //OpenFolderPage((MediaBrowser.Library.FolderModel)ItemFactory.Instance.Create(this.RootFolder));
                 OpenConfiguration(true);
             }
             else
@@ -665,14 +903,23 @@ namespace MediaBrowser
             }
         }
 
-        void FirstRunForVersion(string thisVersion)
+        bool FirstRunForVersion(string thisVersion)
         {
-            var oldVerion = new System.Version(Config.MBVersion);
-            if (oldVerion < new System.Version(2, 0, 0, 0))
+            var oldVersion = new System.Version(Config.MBVersion);
+            if (oldVersion < new System.Version(2, 0, 0, 0))
             {
-                Logger.ReportInfo("First run of Media Browser.  Initiating a full refresh of the library.");
-                Async.Queue("First run full refresh", () => FullRefresh(RootFolder, MetadataRefreshOptions.Force));
-                return;
+                Logger.ReportInfo("First run of Media Browser.  Initiating a full refresh of the library in service.");
+                if (MBServiceController.SendCommandToService(IPCCommands.ForceRebuild))
+                {
+                    MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
+                    ev.Dialog(CurrentInstance.StringData("RebuildNecDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 30, true);
+                }
+                else
+                {
+                    MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
+                    ev.Dialog(CurrentInstance.StringData("RebuildFailedDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 30, true);
+                }
+                return true;
             }
             switch (thisVersion)
             {
@@ -686,7 +933,7 @@ namespace MediaBrowser
                 case "2.2.8.0":
                 case "2.2.9.0":
                     //set validationDelay to "0" - user can change it back if they wish or are directed to
-                    Config.ValidationDelay = 0;
+                    //Config.ValidationDelay = 0; removed in future version
                     break;
                 case "2.3.0.0":
                     //re-set plugin source if not already done by configurator...
@@ -694,11 +941,20 @@ namespace MediaBrowser
                     break;
                 case "2.3.1.0":
                 case "2.3.2.0":
-                    if (oldVerion < new System.Version(2, 3, 0, 0))
+                case "2.5.0.0":
+                case "2.5.1.0":
+                case "2.5.2.0":
+                case "2.5.3.0":
+                case "2.6.0.0":
+                    Config.EnableNestedMovieFolders = false;  //turn this off - it is what causes all the "small library" issues
+                    Kernel.Instance.ConfigData.FetchedPosterSize = "w500"; //reset to new api
+                    Kernel.Instance.ConfigData.FetchedBackdropSize = "w1280"; //reset to new api
+                    Kernel.Instance.ConfigData.Save();
+                    if (oldVersion <= new System.Version(2, 3, 0, 0))
                     {
                         MigratePluginSource(); //still may need to do this (if we came from earlier version than 2.3
                     }
-                    if (oldVerion < new System.Version(2, 3, 1, 0))
+                    if (oldVersion <= new System.Version(2, 3, 1, 0))
                     {
                         Config.EnableTraceLogging = true; //turn this on by default since we now have levels and retention/clearing
                         if (Config.MetadataCheckForUpdateAge < 30) Config.MetadataCheckForUpdateAge = 30; //bump this up
@@ -714,8 +970,18 @@ namespace MediaBrowser
                             ev.Dialog(CurrentInstance.StringData("RebuildFailedDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 30, true);
                         }
                     }
+                    else
+                        if (oldVersion < new System.Version(2,5,0,0))
+                    {
+                        //upgrading from 2.3.2 - item migration should have already occurred...
+                        Config.EnableTraceLogging = true; //turn this on by default since we now have levels and retention/clearing
+                        var oldRepo = new ItemRepository();
+                        Kernel.Instance.ItemRepository.MigrateDisplayPrefs(oldRepo);
+                        //Async.Queue("Playstate Migration",() => Kernel.Instance.ItemRepository.MigratePlayState(oldRepo),15000); //delay to allow repo to load
+                    }
                     break;
             }
+            return true;
         }
 
         private void MigratePluginSource()
@@ -746,7 +1012,7 @@ namespace MediaBrowser
         public void ReLoad()
         {
             //force a re-load of all our data
-            this.RootFolderModel.RefreshUI();
+            this.RootFolderModel.RefreshChildren();
         }
            
 
@@ -826,65 +1092,47 @@ namespace MediaBrowser
         private bool showNowPlaying = false;
         public bool ShowNowPlaying
         {
-            get { return this.showNowPlaying && (MediaCenterEnvironment.MediaExperience != null); }
-            set { if (showNowPlaying != value) { showNowPlaying = value; FirePropertyChanged("ShowNowPlaying"); } }
+            get { return this.showNowPlaying; }
+            set
+            {
+                if (showNowPlaying != value)
+                {
+                    Logger.ReportVerbose("Setting now playing status to " + value.ToString());
+                    
+                    showNowPlaying = value; 
+                    
+                    FirePropertyChanged("ShowNowPlaying");
+                }
+            }
         }
-
 
         public string NowPlayingText
         {
             get
             {
-                string showName = "";
                 try
                 {
-
-                    string name = null;
-
-                    // the API works in win7 and is borked on Vista.
-                    if (MediaCenterEnvironment.MediaExperience.MediaMetadata.ContainsKey("Name"))
+                    foreach (var controller in Kernel.Instance.PlaybackControllers)
                     {
-                        name = MediaCenterEnvironment.MediaExperience.MediaMetadata["Name"] as string;
-                        if (name != null && name.Contains(".wpl"))
+                        if (controller.IsPlaying)
                         {
-                            int start = name.LastIndexOf('/') + 1;
-                            if (start < 0) start = 0;
-                            int finish = name.LastIndexOf(".wpl");
-                            name = name.Substring(start, finish - start);
-                        }
-                        else
-                        {
-                            if (name.StartsWith("dvd"))
-                            {
-                                int start = name.LastIndexOf('/') + 1;
-                                if (start < 0) start = 0;
-                                name = name.Substring(start);
-                            }
-                            else
-                            {
-                                name = null;
-                            }
+                            return controller.NowPlayingTitle;
                         }
                     }
 
-                    showName = name ?? MediaCenterEnvironment.MediaExperience.MediaMetadata["Title"] as string;
-
-                    // playlist fix {filename without extension)({playlist name})
-                    int lastParan = showName.LastIndexOf('(');
-                    if (lastParan > 0)
+                    if (IsExternalWmcApplicationPlaying)
                     {
-                        showName = showName.Substring(lastParan + 1, showName.Length - (lastParan + 2)).Trim();
+                        return PlaybackControllerHelper.GetNowPlayingTextForExternalWmcApplication();
                     }
 
                 }
                 catch (Exception e)
                 {
-                    showName = "Unknown";
-                    Logger.ReportException("Something strange happend while getting media name, please report to community.mediabrowser.tv", e);
                     // never crash here
+                    Logger.ReportException("Something strange happend while getting media name, please report to community.mediabrowser.tv", e);                    
 
                 }
-                return showName;
+                return "Unknown";
             }
         }
 
@@ -983,6 +1231,19 @@ namespace MediaBrowser
         public FolderModel CurrentFolder; //used to keep track of the current folder so we can update the UI if needed
         public FolderModel RootFolderModel; //used to keep track of root folder as foldermodel for same reason
 
+        public FolderModel CurrentFolderModel
+        {
+            get { return CurrentFolder; }
+            set
+            {
+                if (CurrentFolder != value)
+                {
+                    CurrentFolder = value;
+                    FirePropertyChanged("CurrentFolderModel");
+                }
+            }
+        }
+
         private void OpenFolderPage(FolderModel folder)
         {
             Dictionary<string, object> properties = new Dictionary<string, object>();
@@ -991,20 +1252,21 @@ namespace MediaBrowser
             properties["ThemeConfig"] = CurrentTheme.Config;
             CurrentFolder = folder; //store our current folder
             CurrentItem = null; //blank this out in case it was messed with in the last screen
+
             if (folder.IsRoot)
                 RootFolderModel = folder; //store the root as well
 
             if (session != null)
             {
                 folder.NavigatingInto();
-                session.GoToPage(CurrentTheme.FolderPage, properties);
+
+                session.GoToPage(folder.Folder.CustomUI ?? CurrentTheme.FolderPage, properties);
             }
             else
             {
                 Logger.ReportError("Session is null in OpenPage");
             }
         }
-
 
         private Folder GetStartingFolder(BaseItem item)
         {
@@ -1065,6 +1327,8 @@ namespace MediaBrowser
 
         public void Navigate(Item item)
         {
+            currentContextMenu = null; //any sort of navigation should reset our context menu so it will properly re-evaluate on next ref
+            
             if (item.BaseItem is Person)
             {
                 NavigateToActor(item);
@@ -1081,7 +1345,9 @@ namespace MediaBrowser
                     properties["Application"] = this;
                     properties["Item"] = item;
                     properties["ThemeConfig"] = CurrentTheme.Config;
-                    session.GoToPage(CurrentTheme.DetailPage, properties);
+                    
+                    session.GoToPage(item.BaseItem.CustomUI ?? CurrentTheme.DetailPage, properties);
+
                     return;
                 }
             }
@@ -1092,7 +1358,7 @@ namespace MediaBrowser
             {
                 if (!Config.Instance.RememberIndexing)
                 {
-                    folder.DisplayPrefs.IndexBy = IndexType.None;
+                    folder.DisplayPrefs.IndexBy = MediaBrowser.Library.Localization.LocalizedStrings.Instance.GetString("NoneDispPref");
                 }
                 if (Config.Instance.AutoEnterSingleDirs && (folder.Folder.Children.Count == 1))
                 {
@@ -1100,6 +1366,7 @@ namespace MediaBrowser
                         session.AddBreadcrumb("DIRECTENTRY");
                     else
                         session.AddBreadcrumb(folder.Name);
+                    folder.NavigatingInto(); //make sure we validate
                     Navigate(folder.Children[0]);
                 }
                 else
@@ -1113,11 +1380,9 @@ namespace MediaBrowser
             }
             else
             {
-                currentPlaybackController = item.PlaybackController;
-                item.Resume();
+                Resume(item);
             }
         }
-
 
         public void NavigateSecure(FolderModel folder)
         {
@@ -1142,169 +1407,249 @@ namespace MediaBrowser
 
         public void OpenMCMLPage(string page, Dictionary<string, object> properties)
         {
+            currentContextMenu = null; //good chance this has happened as a result of a menu item selection so be sure this is reset
             Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => session.GoToPage(page, properties));
         }
 
+        /// <summary>
+        /// Themes can use this to disable playback in expired mode.
+        /// </summary>
+        /// <param name="themeName"></param>
+        /// <param name="value"></param>
+        /// <returns>True if the theme was found false if not</returns>
+        public bool SetPlaybackEnabled(string themeName, bool value)
+        {
+            if (AvailableThemes.ContainsKey(themeName))
+            {
+                AvailableThemes[themeName].PlaybackEnabled = value;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// This will return the playback capability of the current theme.  Themes should use SetPlaybackEnabled(themename) to set.
+        /// </summary>
+        public bool PlaybackEnabled
+        {
+            get
+            {
+                return CurrentTheme.PlaybackEnabled;
+            }
+        }
+
+        /// <summary>
+        /// Takes an item and plays all items within the same folder, starting with the supplied Item
+        /// </summary>
+        public void PlayFolderBeginningWithItem(Item item)
+        {
+            Folder folder = item.PhysicalParent.BaseItem as Folder;
+
+            IEnumerable<Media> items = folder.RecursiveMedia.SkipWhile(v => v.Id != item.Id);
+
+            PlayableItem playable = PlayableItemFactory.Instance.Create(items);
+            Play(playable);
+
+        }
+
+        /// <summary>
+        /// Plays an item while shuffling it's contents
+        /// </summary>
         public void Shuffle(Item item)
         {
-            Folder folder = item.BaseItem as Folder;
-            if (folder != null)
-            {
-                if (folder.ParentalAllowed)
-                {
-                    ShuffleSecure(item);
-                }
-                else // need to prompt for a PIN - this routine will call back if pin is correct
-                {
-                    this.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.ShuffleProtected(item);
-                }
-            }
+            Play(item, false, false, PlayMethod.UIMenu, true);
         }
 
-        public void ShuffleSecure(Item item)
-        {
-            Folder folder = item.BaseItem as Folder;
-            if (folder != null)
-            {
-                Random rnd = new Random();
-                PlayableItem playable;
-
-                var playableChildren = folder.RecursiveChildren.Select(i => i as Media).Where(v => v != null && v.IsPlaylistCapable() && v.ParentalAllowed).OrderBy(i => rnd.Next());
-                //if (playableChildren.Count() > 0) //be sure we found something to play
-                {
-                    playable = new PlayableMediaCollection<Media>(item.Name, playableChildren, folder.HasVideoChildren);
-                    playable.QueueItem = false;
-                    playable.PlayableItems = playableChildren.Select(i => i.Path);
-                    foreach (var controller in Kernel.Instance.PlaybackControllers)
-                    {
-                        if (controller.CanPlay(playable.PlayableItems))
-                        {
-                            playable.PlaybackController = controller;
-                            break;
-                        }
-                    }
-                    playable.Play(null, false);
-                }
-
-            }
-        }
-
+        /// <summary>
+        /// Plays the first unwatched item within a Folder
+        /// </summary>
         public void Unwatched(Item item)
         {
             Folder folder = item.BaseItem as Folder;
-            if (folder != null)
+
+            Media firstUnwatched = folder.RecursiveMedia.Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path).FirstOrDefault();
+
+            if (firstUnwatched != null)
             {
-                if (folder.ParentalAllowed)
-                {
-                    PlayUnwatchedSecure(item);
-                }
-                else // need to prompt for a PIN - this routine will call back if pin is correct
-                {
-                    this.DisplayPopupPlay = false; //PIN screen mucks with turning this off
-                    Kernel.Instance.ParentalControls.PlayUnwatchedProtected(item);
-                }
+                PlayableItem playable = PlayableItemFactory.Instance.Create(firstUnwatched);
+                Play(playable);
             }
         }
 
-        public void PlayUnwatchedSecure(Item item)
-        {
-            Folder folder = item.BaseItem as Folder;
-
-            if (folder != null)
-            {
-                PlayableItem playable;
-
-                var playableChildren = folder.RecursiveChildren.Select(i => i as Media).Where(v => v != null && v.ParentalAllowed && !v.PlaybackStatus.WasPlayed).OrderBy(v => v.Path);
-                if (playableChildren.Count() > 0) //be sure we have something to play
-                {
-                    playable = new PlayableMediaCollection<Media>(item.Name, playableChildren);
-                    playable.Play(null, false);
-                }
-            }
-        }
-
+        /// <summary>
+        /// Queues an item for playback
+        /// </summary>
         public void AddToQueue(Item item)
         {
-            Play(item, true);
+            Play(item, false, true, PlayMethod.UIMenu, false);
         }
+
+        /// <summary>
+        /// Plays an Item
+        /// </summary>
         public void Play(Item item)
         {
-            Play(item, false);
+            Play(item, false, false, PlayMethod.UIMenu, false);
         }
 
+        /// <summary>
+        /// Plays all trailers for an Item
+        /// </summary>
         public void PlayLocalTrailer(Item item)
         {
-            PlayLocalTrailer(item, false);
-        }
-
-        public void PlayLocalTrailer(Item item, bool fullScreen)
-        {
-            if (!String.IsNullOrEmpty(item.TrailerPath))
+            var movie = item.BaseItem as ISupportsTrailers;
+            if (movie.ContainsTrailers)
             {
-                currentPlaybackController = item.PlaybackController;
-                currentPlaybackController.PlayMedia(item.TrailerPath);
-                if (fullScreen) currentPlaybackController.GoToFullScreen();
+                PlayableItem playable = PlayableItemFactory.Instance.Create(movie.TrailerFiles);
+                Play(playable);
             }
         }
 
-        public void Play(Item item, bool queue)
+        public void Play(Item item, bool resume, bool queue, PlayMethod playMethod, bool shuffle)
         {
-            Play(item, queue, true);
+            //if playback is disabled display a message
+            if (!PlaybackEnabled)
+            {
+                DisplayDialog("Playback is disabled.  You may need to register your current theme.", "Cannot Play");
+                return;
+            }
+
+            PlayableItem playable = PlayableItemFactory.Instance.Create(item);
+
+            // This could happen if both item.IsFolder and item.IsPlayable are false
+            if (playable == null)
+            {
+                return;
+            }
+
+            playable.Resume = resume;
+            playable.QueueItem = queue;
+            playable.PlayMethod = playMethod;
+            playable.Shuffle = shuffle;
+
+            Play(playable);
         }
 
-        public void Play(Item item, bool queue, bool intros)
+        /// <summary>
+        /// Resumes an Item
+        /// </summary>
+        public void Resume(Item item)
         {
-            if (item.IsPlayable || item.IsFolder)
-            {
-                currentPlaybackController = item.PlaybackController;
+            Play(item, true, false, PlayMethod.UIMenu, false);
+        }
 
-                if (queue)
-                    item.Queue();
-                else
+        public void Play(PlayableItem playable)
+        {
+            if (Config.Instance.ParentalControlEnabled && !playable.ParentalAllowed)
+            {
+                //PIN screen mucks with turning this off
+                Application.CurrentInstance.DisplayPopupPlay = false; 
+                
+                Kernel.Instance.ParentalControls.PlayProtected(playable);
+            }
+            else
+            {
+                PlaySecure(playable);
+            }
+        }
+
+        internal void PlaySecure(PlayableItem playable)
+        {
+            Async.Queue("Play Action", () =>
+            {
+                currentPlaybackController = playable.PlaybackController;
+
+                playable.Play();
+
+                if (!playable.QueueItem)
                 {
                     //async this so it doesn't slow us down if the service isn't responding for some reason
-                    MediaBrowser.Library.Threading.Async.Queue("Cancel Svc Refresh", () =>
+                    Async.Queue("Cancel Svc Refresh", () =>
                     {
                         MBServiceController.SendCommandToService(IPCCommands.CancelRefresh); //tell service to stop
                     });
-                    //put this on a thread so that we can run it sychronously, but not tie up the UI
-                    MediaBrowser.Library.Threading.Async.Queue("Play Action", () =>
-                    {
-                        if (Application.CurrentInstance.RunPrePlayProcesses(item, intros))
-                        {
-                            item.Play();
-                        }
-                    });
+                }
+            });
+        }
+
+        /// <summary>
+        /// Runs all preplay processes
+        /// </summary>
+        /// <param name="originalBaseItem">The original item that was played in the UI</param>
+        internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
+        {
+            if (originalBaseItem != null)
+            {
+                Item item = ItemFactory.Instance.Create(originalBaseItem);
+
+                bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+
+                Logger.ReportInfo("Running pre-play processes for: " + item.Name);
+
+                foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
+                {
+                    if (!process(item, playIntros)) return false;
                 }
             }
-        }
 
-        public void Resume(Item item)
-        {
-            if (item.IsPlayable)
-            {
-                currentPlaybackController = item.PlaybackController;
-                item.Resume();
-            }
-        }
+            OnPrePlayback(playableItem);
 
-        public bool RunPrePlayProcesses(Item item, bool intros)
-        {
-            //Logger.ReportInfo("Running pre-play processes");
-            foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
-            {
-                if (!process(item, intros)) return false;
-            }
             return true;
         }
 
+        /// <summary>
+        /// Used this to notify the core that playback has ceased.
+        /// Ideally, only PlayableItem should need to call this.
+        /// </summary>
+        public void RunPostPlayProcesses(PlayableItem playableItem)
+        {
+            Async.Queue("AddNewlyWatched", () =>
+            {
+                AddNewlyWatched(playableItem);
+            });
+
+            Logger.ReportVerbose("Firing Application.PlaybackFinished for: " + playableItem.DisplayName);
+
+            OnPlaybackFinished(playableItem);
+        }
+
+        /// <summary>
+        /// Resets last played item for the top level parents of the played media 
+        /// </summary>
+        private void AddNewlyWatched(PlayableItem playableItem)
+        {
+            var playedMediaItems = playableItem.PlayedMediaItems;
+
+            if (playedMediaItems.Any())
+            {
+                // get the top parents of all items that were played
+                var topParents = playedMediaItems.Select(i => i.TopParentID).Distinct();
+                // and reset the watched list for each of them
+                foreach (FolderModel folderModel in RootFolderModel.Children.Where(f => topParents.Contains(f.Id)))
+                {
+                    folderModel.AddNewlyWatched(ItemFactory.Instance.Create(playedMediaItems.Where(i => i.TopParentID == folderModel.Id).LastOrDefault()));
+                }
+                //I don't think anyone actually uses this but just in case...
+                this.lastPlayed = ItemFactory.Instance.Create(playedMediaItems.LastOrDefault());
+            }
+        }
+
+        /// <summary>
+        /// Runs the kernel's post play processes
+        /// </summary>
         public void RunPostPlayProcesses()
         {
-            //Logger.ReportInfo("Running post-play processes");
-            foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+            if (Kernel.Instance.PostPlayProcesses.Any())
             {
-                process();
+                Logger.ReportVerbose("Running Kernel post-play processes");
+
+                Async.Queue("RunPostPlayProcesses", () =>
+                {
+                    foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
+                    {
+                        process();
+                    }
+                });
             }
         }
 
@@ -1397,33 +1742,243 @@ namespace MediaBrowser
         }
 
 
+        private static string _background = null;
+
         public string MainBackdrop
         {
             get
             {
-                string pngImage = this.Config.InitialFolder + "\\backdrop.png";
-                string jpgImage = this.Config.InitialFolder + "\\backdrop.jpg";
+                if (_background == null)
+                {
+                    string pngImage = this.Config.InitialFolder + "\\backdrop.png";
+                    string jpgImage = this.Config.InitialFolder + "\\backdrop.jpg";
 
-                if (!string.IsNullOrEmpty(_background))
-                {
-                    return _background;
-                }
-                else
-                {
                     if (File.Exists(pngImage))
                     {
                         _background = "file://" + pngImage;
-                        return _background;
                     }
                     else if (File.Exists(jpgImage))
                     {
                         _background = "file://" + jpgImage;
-                        return _background;
                     }
                     else
-                        return null;
+                    {
+                        _background = string.Empty;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(_background))
+                {
+                    return null;
+                }
+
+                return _background;
+            }
+        }
+
+        /// <summary>
+        /// Mounts an iso and returns a string containing the mounted path
+        /// </summary>
+        public string MountISO(string path)
+        {
+            try
+            {
+                Logger.ReportVerbose("Mounting ISO: " + path);
+                string command = Config.Instance.DaemonToolsLocation;
+
+                // Create the process start information.
+                Process process = new Process();
+                //virtualclonedrive
+                if (command.ToLower().EndsWith("vcdmount.exe"))
+                    process.StartInfo.Arguments = "-mount \"" + path + "\"";
+                //alcohol120 or alcohol52
+                else if (command.ToLower().EndsWith("axcmd.exe"))
+                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /M:\"" + path + "\"";
+                //deamontools
+                else
+                    process.StartInfo.Arguments = "-mount 0,\"" + path + "\"";
+                process.StartInfo.FileName = command;
+                process.StartInfo.ErrorDialog = false;
+                process.StartInfo.CreateNoWindow = true;
+
+                // We wait for exit to ensure the iso is completely loaded.
+                process.Start();
+                process.WaitForExit();
+
+                // Play the DVD video that was mounted.
+                string mountedPath = Config.Instance.DaemonToolsDrive + ":\\";
+
+                while (!Directory.Exists(mountedPath))
+                {
+                    System.Threading.Thread.Sleep(1000);
+                }
+
+                return mountedPath;
+            }
+            catch (Exception)
+            {
+                // Display the error in this case, they might wonder why it didn't work.
+                Application.DisplayDialog("ISO Mounter is not correctly configured.", "Could not mount ISO");
+                throw (new Exception("ISO Mounter is not configured correctly"));
+            }
+        }
+
+        public void UnmountIso()
+        {
+            try
+            {
+                Logger.ReportVerbose("Unmounting ISO");
+                string command = Config.Instance.DaemonToolsLocation;
+
+                // Create the process start information.
+                Process process = new Process();
+                //virtualclonedrive
+                if (command.ToLower().EndsWith("vcdmount.exe"))
+                    process.StartInfo.Arguments = "/u";
+                //alcohol120 or alcohol52
+                else if (command.ToLower().EndsWith("axcmd.exe"))
+                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
+                //deamontools
+                else
+                    process.StartInfo.Arguments = "-unmount 0";
+                process.StartInfo.FileName = command;
+                process.StartInfo.ErrorDialog = false;
+                process.StartInfo.CreateNoWindow = true;
+
+                // We wait for exit to ensure the iso is completely loaded.
+                process.Start();
+                process.WaitForExit();
+            }
+            catch (Exception)
+            {
+                // Display the error in this case, they might wonder why it didn't work.
+                Application.DisplayDialog("ISO Mounter is not correctly configured.", "Could not unmount ISO");
+                throw (new Exception("ISO Mounter is not configured correctly"));
+            }
+        }
+
+        /// <summary>
+        /// Tells all registered PlayBackControllers to stop playback
+        /// </summary>
+        public void StopAllPlayback(bool waitForStop)
+        {
+            foreach (var controller in Kernel.Instance.PlaybackControllers)
+            {
+                if (controller.IsPlaying)
+                {
+                    Logger.ReportVerbose("Stopping playback on " + controller.ControllerName); 
+                    controller.Stop();
                 }
             }
+
+            if (IsExternalWmcApplicationPlaying)
+            {
+                Logger.ReportVerbose("Stopping playback from another wmc application, such as live tv");
+                StopExternalWmcApplication();
+            }
+
+            if (waitForStop)
+            {
+                int i = 0;
+
+                // Try to wait for playback to completely stop, but don't get hung up too long
+                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 5)
+                {
+                    System.Threading.Thread.Sleep(500);
+                    i++;
+                }
+            }
+        }
+
+        public void StopExternalWmcApplication()
+        {
+            PlaybackControllerHelper.Stop();
+        }
+
+        /// <summary>
+        /// This is a helper to update Playstate for an item.
+        /// It honors all of the various resume options within configuration.
+        /// Play count will be incremented if the last played date doesn't match what's currently in the object
+        /// </summary>
+        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, DateTime datePlayed)
+        {
+            // Increment play count if dates don't match
+            bool incrementPlayCount = !playstate.LastPlayed.Equals(datePlayed);
+
+            // The player didn't report the duration, see if we have it in metadata
+            if ((!duration.HasValue || duration == 0) && media.Files.Count() == 1)
+            {
+                // We need duration to pertain only to one file
+                // So if there are multiple files don't bother with this
+                // since we have no way of breaking it down
+
+                duration = TimeSpan.FromMinutes(media.RunTime).Ticks;
+            }
+
+            // If we know the duration then enforce MinResumePct, MaxResumePct and MinResumeDuration
+            if (duration.HasValue && duration > 0)
+            {
+                // Enforce MinResumePct/MaxResumePct
+                if (positionTicks > 0)
+                {
+                    decimal pctIn = Decimal.Divide(positionTicks, duration.Value) * 100;
+
+                    // Don't track in very beginning
+                    if (pctIn < Config.Instance.MinResumePct)
+                    {
+                        positionTicks = 0;
+
+                        if (playlistPosition == 0)
+                        {
+                            // Assume we're at the very beginning so don't even mark it watched.
+                            incrementPlayCount = false;
+                        }
+                    }
+
+                    // If we're at the end, assume completed
+                    if (pctIn > Config.Instance.MaxResumePct || positionTicks >= duration)
+                    {
+                        positionTicks = 0;
+
+                        // Either advance to the next playlist position, or reset it back to 0
+                        if (playlistPosition < (media.Files.Count() - 1))
+                        {
+                            playlistPosition++;
+                        }
+                        else
+                        {
+                            playlistPosition = 0;
+                        }
+                    }
+                }
+
+                // Enforce MinResumeDuration
+                if ((duration / TimeSpan.TicksPerMinute) < Config.Instance.MinResumeDuration)
+                {
+                    positionTicks = 0;
+                }
+            }
+
+            // If resume is disabled reset positions to 0
+            if (!MediaBrowser.Library.Kernel.Instance.ConfigData.EnableResumeSupport)
+            {
+                positionTicks = 0;
+                playlistPosition = 0;
+            }
+            
+            playstate.PositionTicks = positionTicks;
+            playstate.PlaylistPosition = playlistPosition;
+
+            if (incrementPlayCount)
+            {
+                playstate.LastPlayed = datePlayed;
+                playstate.PlayCount++;
+            }
+
+            string sDuration = duration.HasValue ? (TimeSpan.FromTicks(duration.Value).ToString()) : "0";
+
+            Logger.ReportVerbose("Playstate saved for {0} at {1}, duration: {2}, playlist position: {3}", media.Name, TimeSpan.FromTicks(positionTicks), sDuration, playlistPosition);
+            Kernel.Instance.SavePlayState(media, playstate);
         }
     }
 }

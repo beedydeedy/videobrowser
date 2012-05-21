@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using MediaBrowser.Library;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
 using MediaBrowser.Library.Persistance;
 
@@ -12,6 +12,14 @@ namespace MBTrailers {
         [Persist]
         public string RealPath { get; set; }
 
+        public override bool CanResume
+        {
+            get
+            {
+                return false;
+            }
+        }
+        
         public override bool RefreshMetadata(MetadataRefreshOptions options) {
             bool changed = false;
             string path = Plugin.proxy == null ? this.Path : Plugin.proxy.ProxyUrl(this);
@@ -20,6 +28,9 @@ namespace MBTrailers {
                 this.Path = path;
                 changed = true;
             }
+
+            MediaType = MediaTypeResolver.DetermineType(Path);
+            
             if ((options & MetadataRefreshOptions.FastOnly) != MetadataRefreshOptions.FastOnly &&
                 Plugin.PluginOptions.Instance.FetchBackdrops && string.IsNullOrEmpty(this.BackdropImagePath))
             {

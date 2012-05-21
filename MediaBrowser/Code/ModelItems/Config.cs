@@ -121,6 +121,18 @@ namespace MediaBrowser
             set { if (this.data.ProcessBackdrops != value) { this.data.ProcessBackdrops = value; Save(); FirePropertyChanged("ProcessBackdrops"); } }
         }
 
+        public bool AskIncludeChildrenRefresh
+        {
+            get { return this.data.AskIncludeChildrenRefresh; }
+            set { if (this.data.AskIncludeChildrenRefresh != value) { this.data.AskIncludeChildrenRefresh = value; Save(); FirePropertyChanged("AskIncludeChildrenRefresh"); } }
+        }
+
+        public bool DefaultIncludeChildrenRefresh
+        {
+            get { return this.data.DefaultIncludeChildrenRefresh; }
+            set { if (this.data.DefaultIncludeChildrenRefresh != value) { this.data.DefaultIncludeChildrenRefresh = value; Save(); FirePropertyChanged("DefaultIncludeChildrenRefresh"); } }
+        }
+
         public bool IsFirstRun
         {
             get { return this.data.IsFirstRun; }
@@ -500,12 +512,6 @@ namespace MediaBrowser
             set { if (this.data.AllowInternetMetadataProviders != value) { this.data.AllowInternetMetadataProviders = value; Save(); FirePropertyChanged("AllowInternetMetadataProviders"); } }
         }
 
-        public bool EnableFileWatching
-        {
-            get { return this.data.EnableFileWatching; }
-            set { if (this.data.EnableFileWatching != value) { this.data.EnableFileWatching = value; Save(); FirePropertyChanged("EnableFileWatching"); } }
-        }
-
         internal List<ConfigData.ExternalPlayer> ExternalPlayers
         {
             get { return this.data.ExternalPlayers; }
@@ -688,6 +694,12 @@ namespace MediaBrowser
             set { if (this.data.RecentItemDays != value) { this.data.RecentItemDays = value; Save(); FirePropertyChanged("RecentItemDays"); } }
         }
 
+        public int RecentItemCollapseThresh
+        {
+            get { return this.data.RecentItemCollapseThresh; }
+            set { if (this.data.RecentItemCollapseThresh != value) { this.data.RecentItemCollapseThresh = value; Save(); FirePropertyChanged("RecentItemCollapseThresh"); } }
+        }
+
         public string RecentItemOption
         {
             get { return this.data.RecentItemOption; }
@@ -748,12 +760,6 @@ namespace MediaBrowser
             //set { if (this.data.FullRefreshInterval != value) { this.data.FullRefreshInterval = value; Save(); FirePropertyChanged("FullRefreshInterval"); } }
         }
 
-        public int ValidationDelay
-        {
-            get { return this.data.ValidationDelay; }
-            set { if (this.data.ValidationDelay != value) { this.data.ValidationDelay = value; Save(); FirePropertyChanged("ValidationDelay"); } }
-        }
-
         public DateTime LastFullRefresh
         {
             get { return Kernel.Instance.ServiceConfigData.LastFullRefresh;  }
@@ -804,6 +810,12 @@ namespace MediaBrowser
         {
             get { return this.data.AutoValidate; }
             set { if (this.data.AutoValidate != value) { this.data.AutoValidate = value; Save(); FirePropertyChanged("AutoValidate"); } }
+        }
+
+        public bool SaveLocalMeta
+        {
+            get { return this.data.SaveLocalMeta; }
+            set { if (this.data.SaveLocalMeta != value) { this.data.SaveLocalMeta = value; Save(); FirePropertyChanged("SaveLocalMeta"); } }
         }
 
         public LogSeverity MinLoggingSeverity

@@ -13,8 +13,7 @@ namespace MediaBrowser.Library.Persistance {
         Dictionary<Guid, IEnumerable<IMetadataProvider>> providers = new Dictionary<Guid, IEnumerable<IMetadataProvider>>();
         Dictionary<Guid, BaseItem> items = new Dictionary<Guid, BaseItem>();
         Dictionary<Guid, IEnumerable<Guid>> children = new Dictionary<Guid, IEnumerable<Guid>>();
-        Dictionary<Guid, IEnumerable<BaseItem>> fullChildren = new Dictionary<Guid, IEnumerable<BaseItem>>();
-        Dictionary<Guid, PlaybackStatus> playState = new Dictionary<Guid, PlaybackStatus>();
+        Dictionary<Guid, IEnumerable<BaseItem>> fullChildren = new Dictionary<Guid, IEnumerable<BaseItem>>();        Dictionary<Guid, PlaybackStatus> playState = new Dictionary<Guid, PlaybackStatus>();
         Dictionary<Guid, DisplayPreferences> displayPrefs = new Dictionary<Guid, DisplayPreferences>();
 
         public MemoizingRepository(IItemRepository repository)
@@ -35,6 +34,11 @@ namespace MediaBrowser.Library.Persistance {
                 dict[guid] = rval;
             }
             return rval;
+        }
+
+        public bool BackupDatabase()
+        {
+            return repository.BackupDatabase();
         }
 
         public IEnumerable<IMetadataProvider> RetrieveProviders(Guid guid) {
@@ -66,7 +70,8 @@ namespace MediaBrowser.Library.Persistance {
             }
         }
 
-        public IEnumerable<BaseItem> RetrieveChildren(Guid id) {
+        public IEnumerable<BaseItem> RetrieveChildren(Guid id)
+        {
             return Memoize(id, fullChildren, repository.RetrieveChildren);
         }
 
@@ -109,8 +114,28 @@ namespace MediaBrowser.Library.Persistance {
             repository.ShutdownDatabase();
         }
 
+        public int ClearCache(string objType)
+        {
+            return repository.ClearCache(objType);
+        }
+
         public bool ClearEntireCache() {
             return repository.ClearEntireCache();
+        }
+
+        public void MigratePlayState(ItemRepository repo)
+        {
+            repository.MigratePlayState(repo);
+        }
+
+        public void MigrateDisplayPrefs(ItemRepository repo)
+        {
+            repository.MigrateDisplayPrefs(repo);
+        }
+
+        public void MigrateItems()
+        {
+            repository.MigrateItems();
         }
 
     }

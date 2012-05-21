@@ -14,18 +14,13 @@ namespace MediaBrowser.Library
     {
         private delegate void VoidDelegate();
         static Form theForm;
-        private static Bitmap _backgroundImage = new Bitmap(Resources.mblogo1000);
-
-        public static void Display()
-        {
-            Display(_backgroundImage);
-        }
 
         public static void Display(Bitmap bgImage)
         {
             var us = new ExternalSplashForm();
             Async.Queue("Ext Splash Show", () =>
             {
+                Logger.ReportVerbose("Displaying Splash Screen");
                 us.Show(bgImage);
             });
         }

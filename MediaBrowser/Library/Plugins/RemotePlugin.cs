@@ -71,17 +71,25 @@ namespace MediaBrowser.Library.Plugins {
         {
         }
 
+        public virtual string UpgradeInfo
+        {
+            get;
+            set;
+        }
+
         public virtual bool InstallGlobally
         {
             get;
             set;
         }
 
+
         public virtual MBLoadContext InitDirective { get; set; }
         public virtual string PluginClass { get; set; }
 		public virtual bool Installed { get; set; }
         public virtual bool UpdateAvail { get; set; }
         public virtual bool IsLatestVersion { get; set; }
-        public string ListDisplayString { get { return Name + " (v" + Version + ")"; } }
+        public virtual bool IsPremium { get; set; }
+        public string ListDisplayString { get { return Name + " (v" + Version + ")"+(IsPremium ? " (premium)" : ""); } }
     }
 }

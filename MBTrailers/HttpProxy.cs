@@ -11,6 +11,8 @@ using System.ServiceModel;
 using System.Runtime.Serialization;
 using WebProxy.WCFInterfaces;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Extensions;
+using MediaBrowser.Library;
 
 namespace WebProxy {
 
@@ -31,8 +33,6 @@ namespace WebProxy {
         Dictionary<string, ProxyInfo> proxiedFiles = new Dictionary<string, ProxyInfo>();
         Dictionary<string, TrailerInfo> myTrailers = new Dictionary<string, TrailerInfo>();
         Dictionary<string, TrailerInfo> mbTrailers = new Dictionary<string, TrailerInfo>();
-
-        MediaBrowser.Library.Ratings ratings = new MediaBrowser.Library.Ratings();
 
         string cacheDir = "";
         int port = 8752;
@@ -105,7 +105,7 @@ namespace WebProxy {
                         Logger.ReportWarning("MBTrailers - Null item in trailer list...");
                         continue;
                     }
-                    if (!string.IsNullOrEmpty(searchInfo.Rating) && ratings.Level(info.Rating) <= ratings.Level(searchInfo.Rating) && GenreMatches(searchInfo, info, threshhold) && !info.Path.StartsWith(searchInfo.Path))
+                    if (!string.IsNullOrEmpty(searchInfo.Rating) && Ratings.Level(info.Rating) <= Ratings.Level(searchInfo.Rating) && GenreMatches(searchInfo, info, threshhold) && !info.Path.StartsWith(searchInfo.Path))
                     {
                         Logger.ReportVerbose("MATCH FOUND: "+info.Path + " Rating: " + info.Rating);
                         foundTrailers.Add(info.Path);
@@ -736,19 +736,15 @@ namespace WebProxy {
             byte[] buffer = new byte[8000];
             FileStream fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-            int retries = 100;
+            int retries = 500;
             int totalRead, bytesRead;
             totalRead = bytesRead = fs.Read(buffer, 0, buffer.Length);
             while (true) {
                 if (bytesRead == 0) {
-                    bool waitLonger = false;
-                    lock (info) {
-                        waitLonger = info.BytesRead > totalRead;
-                    }
-
-                    if (waitLonger && retries-- > 0) {
+                    if (retries-- > 0) {
                         Thread.Sleep(100);
                     } else {
+                        Logger.ReportVerbose("Returning from ServeCachedFile due to max number of retries");
                         break;
                     }
 

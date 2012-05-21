@@ -20,27 +20,6 @@ namespace MusicPlugin
 
         #region IPlaybackController Members
 
-        public override void PlayDVD(string path)
-        {
-            throw new Exception("This is a music playbackcontroller and cannot play a DVD.");
-        }
-
-        public override void PlayMedia(string path)
-        {
-            PlayPath(path, MediaType.Audio,false);
-        }
-
-        public override void QueueMedia(IEnumerable<string> paths)
-        {
-            foreach (string path in paths)
-                PlayPath(path, MediaType.Audio, true);
-        }
-
-        public override void QueueMedia(string path)
-        {
-            PlayPath(path, MediaType.Audio, true);
-        }
-       
         public override bool CanPlay(string filename)
         {
             if (filename == null)
@@ -60,5 +39,13 @@ namespace MusicPlugin
             return false;
         }
         #endregion
+
+        protected override bool MonitorMediaTransportPropertyChanged
+        {
+            get
+            {
+                return false;
+            }
+        }
     }
 }

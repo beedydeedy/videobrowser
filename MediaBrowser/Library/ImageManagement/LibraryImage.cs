@@ -115,7 +115,7 @@ namespace MediaBrowser.Library.ImageManagement {
                             var image = OriginalImage;
                             if (image == null) {
                                 Corrupt = true;
-                                if (Debugger.IsAttached) Debugger.Break();
+                                //if (Debugger.IsAttached) Debugger.Break();
                                 return;
                             }
                             ImageCache.Instance.CacheImage(Id, ProcessImage(image));
@@ -133,9 +133,11 @@ namespace MediaBrowser.Library.ImageManagement {
                         {
                             if (info != null)
                             {
-                                if (ImageOutOfDate(info.Date))
+                                if (ImageOutOfDate(info.Date + TimeSpan.FromMinutes(2)))  //fudge this to account for descrepancies between systems
                                 {
+                                    Logger.ReportVerbose("Image out of date for " + item.Name + " mod date: " + info.Date);
                                     ClearLocalImages();
+                                    EnsureLoaded(); //and cause to re-cache
                                 }
                             }
                         });
@@ -225,7 +227,8 @@ namespace MediaBrowser.Library.ImageManagement {
        
         System.Drawing.Image ProcessImage(System.Drawing.Image image)
         {
-            if (canBeProcessed && Kernel.Instance.ImageProcessor != null) {
+            if (canBeProcessed && Kernel.Instance.ImageProcessor != null && System.Threading.Thread.CurrentThread.Name != "Application") //never allow processor on app thread - just have to catch it next time
+            {
                 return Kernel.Instance.ImageProcessor(image, item);
             } else {
                 return image;

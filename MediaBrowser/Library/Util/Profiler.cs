@@ -36,8 +36,17 @@ namespace MediaBrowser.Util
         public void Dispose()
         {
             stopwatch.Stop();
-            string message = string.Format("{1} took {2} seconds.",
-                caller, name, ((float)stopwatch.ElapsedMilliseconds / 1000).ToString("0.0000"));
+            string message;
+            if (stopwatch.ElapsedMilliseconds > 300000)
+            {
+                message = string.Format("{1} took {2} minutes.",
+                    caller, name, ((float)stopwatch.ElapsedMilliseconds / 60000).ToString("F"));
+            }
+            else
+            {
+                message = string.Format("{1} took {2} seconds.",
+                    caller, name, ((float)stopwatch.ElapsedMilliseconds / 1000).ToString("F"));
+            }
             Logger.ReportInfo(message);
 
             // DO NOT hook this into the UI, we use this for internal diagnostics

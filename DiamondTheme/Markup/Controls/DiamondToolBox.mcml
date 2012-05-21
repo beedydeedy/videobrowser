@@ -96,6 +96,7 @@
     </Properties>
     <Locals>
       <Size Name="MinSize" Size="155,0"/>
+      <a:Clock Name="Clock"/>
     </Locals>
     <Rules>
       <Default Target="[Input.Enabled]" Value="false">
@@ -108,10 +109,17 @@
       <Binding Source="[Item.ImdbRating]" Target="[StarRating.Value]" />
       <Binding Source="[Item.MpaaRating]" Target="[MPAARating.Value]" />
       <Binding Source="[Item.Directors]" Target="[DirectorRepeater.Source]"/>
-      <Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />
+      <!--<Binding Source="[Item.RunningTimeString]" Target="[Runtime.Content]" />-->
       <Binding Source="[Item.Genres]" Target="[GenreRepeater.Source]" />
       <Binding Source="[Item.StudioItems]" Target="[StudioRepeater.Source]" />
       <Binding Target="[FirstAired.Content]" Source="[Item.FirstAired]" />
+
+      <Binding Source="[Item.DynamicProperties.#PreciseRuntimeStr!cor:String]" Target="[Runtime.Content]">
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+        </Conditions>
+      </Binding>
+      <Binding Target="[Runtime.Content]" Source="[Item.RunningTimeString]"/>
 
       <Condition  Source="[Item.ItemTypeString]" ConditionOp="Equals" SourceValue="Season">
         <Actions>
@@ -151,20 +159,46 @@
 
       <Rule>
         <Conditions>
-          <Modified Source="[Item.RunningTimeString]" InitialEvaluate="true" />
           <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Item.RunningTime]" ConditionOp="GreaterThan" Value="0" />
         </Conditions>
         <Actions>
-          <Invoke Target="[Utility.CalculateEndTime]" runTime="[Item.RunningTimeString]"
-                  ResultTarget="[EstimateEndTime.Content]" InvokePolicy="AsynchronousLowPri" >
+          <Set Target="[EstimateEndTime.Content]" Value="[Item.EndTime]" InvokePolicy="AsynchronousLowPri" >
             <Transformer>
-              <FormatTransformer Format="{0}"/>
+              <FormatTransformer Format="{0:h:mm tt}"/>
             </Transformer>
-          </Invoke>
+          </Set>
+        </Actions>
+      </Rule>      
+      <Rule>
+        <Conditions>
+          <Equality Source="[ThemeConfig.DisplayEndTime]" ConditionOp="Equals" Value="true" />
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="NotEquals" Value="Song" />
+          <Equality Source="[Item.RunningTime]" ConditionOp="GreaterThan" Value="0" />
+          <Modified Source="[Clock.Time]" InitialEvaluate="true" />
+        </Conditions>
+        <Actions>
+          <Set Target="[EstimateEndTime.Content]" Value="[Item.EndTime]" InvokePolicy="AsynchronousLowPri" >
+            <Transformer>
+              <FormatTransformer Format="{0:h:mm tt}"/>
+            </Transformer>
+          </Set>
+        </Actions>
+      </Rule>      
+      <Binding Source="[ThemeConfig.DisplayEndTime]" Target="[EstimateEndTime.Visible]" />
+      
+      <!--Use "Composer" for music items-->
+      <Rule ConditionLogicalOp ="Or">
+        <Conditions>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="Song"/>
+          <Equality Source="[Item.ItemTypeString]" ConditionOp="Equals" Value="MusicAlbum"/>
+        </Conditions>
+        <Actions>
+          <Set Target="[DirectorTxt.Content]" Value="[Application.LocalStrings.#ComposerDetail!cor:String.ToUpper]"/>
         </Actions>
       </Rule>
-      <Binding Source="[ThemeConfig.DisplayEndTime]" Target="[EstimateEndTime.Visible]" />
-
+      
     </Rules>
     <Content>
       <Graphic Name="CommonInfoPanel" Content="image://di:BlankImage" Layout="VerticalFlow" Margins="0,0,0,0"
@@ -233,7 +267,7 @@
 
                   <Panel Name="DirectedByPanel" Layout="HorizontalFlow" Visible="false">
                     <Children>
-                      <Text Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#DirectorDetail!cor:String.ToUpper]" Visible="[FullMode]" MinimumSize="[MinSize]"/>
+                      <Text Name="DirectorTxt" Font="[TitleFont]" Color="[AttributeColor]" Content="[Application.LocalStrings.#DirectorDetail!cor:String.ToUpper]" Visible="[FullMode]" MinimumSize="[MinSize]"/>
                       <!--<Text Name="Director" Font="font://f:MM_ItemFont" WordWrap="true" MaximumLines="3" Color="[ValueColor]" Content="[Item.DirectorString]"/>-->
                       <Repeater Name="DirectorRepeater" Source="[Item.Directors]" Margins="0,0,0,0" MaximumSize="0,150" >
                         <Layout>
@@ -401,7 +435,7 @@
     <Properties>
       <ICommand Name="Command" ICommand="$Required" />
       <Font Name="Font" Font="$Required" />
-
+      <cor:Boolean Name="Rotate" Boolean="true" />
       <cor:Boolean Name="IsNavigatingCommand" Boolean="false" />
       <cor:Boolean Name="LeftAlign" Boolean="true" />
       <cor:Boolean Name="MaxMode" Boolean="false" />
@@ -462,10 +496,22 @@
         <Conditions>
           <Modified Source="[Clicker.Invoked]"/>
           <Equality Source="[IsNavigatingCommand]" Value="true" />
+          <Equality Source="[Rotate]" Value="true"/>
         </Conditions>
         <Actions>
           <PlaySound Sound="sound://sounds:Select" />
           <PlayAnimation Animation="animation://an:RotateRound" Target="[graphicBullet]"  />
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Modified Source="[Clicker.Invoked]"/>
+          <Equality Source="[IsNavigatingCommand]" Value="true" />
+          <Equality Source="[Rotate]" Value="false"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Select" />
         </Actions>
       </Rule>
 
@@ -473,10 +519,22 @@
         <Conditions>
           <Modified Source="[Clicker.Invoked]"/>
           <Equality Source="[IsNavigatingCommand]" Value="false"/>
+          <Equality Source="[Rotate]" Value="true"/>
         </Conditions>
         <Actions>
           <PlaySound Sound="sound://sounds:Miniselect" />
           <PlayAnimation Animation="animation://an:RotateRound" Target="[graphicBullet]"  />
+        </Actions>
+      </Rule>
+      
+      <Rule>
+        <Conditions>
+          <Modified Source="[Clicker.Invoked]"/>
+          <Equality Source="[IsNavigatingCommand]" Value="false"/>
+          <Equality Source="[Rotate]" Value="false"/>
+        </Conditions>
+        <Actions>
+          <PlaySound Sound="sound://sounds:Miniselect" />
         </Actions>
       </Rule>
 
@@ -519,8 +577,8 @@
           <Equality Source="[MaxMode]" Value="false"/>
         </Conditions>
         <Actions>
-          <Set Target="[imgButton.MinimumSize]" Value="50,50"/>
-          <Set Target="[imgButton.MaximumSize]" Value="50,50"/>
+          <Set Target="[imgButton.MinimumSize]" Value="50,45"/>
+          <Set Target="[imgButton.MaximumSize]" Value="50,45"/>
         </Actions>
       </Rule>
       <!---->

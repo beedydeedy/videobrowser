@@ -38,6 +38,7 @@ namespace MBTrailers {
                 if (trailer != null && Plugin.proxy != null)
                 {
                     trailer.Path = Plugin.proxy.ProxyUrl(trailer);
+                    trailer.MediaType = MediaTypeResolver.DetermineType(trailer.Path);
                     Kernel.Instance.ItemRepository.SaveItem(trailer);
                 }
             }
@@ -193,7 +194,8 @@ namespace MBTrailers {
                                     break;
 
                                 case "releasedate":
-                                    //  trailer.ProductionYear = DateTime.Parse(ReadToValue(reader), dateFormat).Year;
+                                    try { trailer.ProductionYear = DateTime.Parse(ReadToValue(reader), dateFormat).Year; }
+                                    catch { }
                                     break;
 
                                 case "director":

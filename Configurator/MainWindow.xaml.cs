@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Text;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,22 +14,16 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.Xml.Serialization;
-using System.Management;
-using Microsoft.Win32;
-
-using MediaBrowser;
+using System.Globalization;
 using Configurator.Code;
-using MediaBrowser.Code.ShadowTypes;
+using MediaBrowser;
 using MediaBrowser.Library;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
-using MediaBrowser.Library.Factories;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Network;
+using MediaBrowser.Library.Persistance;
+using MediaBrowser.Library.Playables.ExternalPlayer;
 using MediaBrowser.Library.Plugins;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
@@ -43,12 +37,14 @@ namespace Configurator
     public partial class MainWindow : Window
     {
 
-        ConfigData config;
+        public ConfigData config;
         Ratings ratings = new Ratings();
         PermissionDialog waitWin;
         PopupMsg PopUpMsg;
         public bool KernelModified = false;
         public static MainWindow Instance;
+        private List<ConfigMember> configMembers;
+        private ConfigMember currentConfigMember;
 
         public MainWindow()
         { 
@@ -65,23 +61,22 @@ namespace Configurator
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
            
             InitializeComponent();
+            pluginList.MouseDoubleClick += pluginList_DoubleClicked;
             PopUpMsg = new PopupMsg(alertText);
             config = Kernel.Instance.ConfigData;
             //put this check here because it will run before the first run of MB and we need it now
-            if (Config.Instance.MBVersion != Kernel.Instance.Version.ToString() && Kernel.Instance.Version.ToString() == "2.3.0.0")
+            if (config.MBVersion != Kernel.Instance.Version.ToString() && Kernel.Instance.Version.ToString() == "2.3.0.0")
             {
                 try
                 {
-                    Config.Instance.PluginSources.RemoveAt(config.PluginSources.FindIndex(s => s.ToLower() == "http://www.mediabrowser.tv/plugins/plugin_info.xml"));
                     config.PluginSources.RemoveAt(config.PluginSources.FindIndex(s => s.ToLower() == "http://www.mediabrowser.tv/plugins/plugin_info.xml"));
                 }
                 catch
                 {
                     //wasn't there - no biggie
                 }
-                if (Config.Instance.PluginSources.Find(s => s == "http://www.mediabrowser.tv/plugins/multi/plugin_info.xml") == null)
+                if (config.PluginSources.Find(s => s == "http://www.mediabrowser.tv/plugins/multi/plugin_info.xml") == null)
                 {
-                    Config.Instance.PluginSources.Add("http://www.mediabrowser.tv/plugins/multi/plugin_info.xml");
                     config.PluginSources.Add("http://www.mediabrowser.tv/plugins/multi/plugin_info.xml");
                     Logger.ReportInfo("Plug-in Source migrated to multi-version source");
                 }
@@ -90,9 +85,6 @@ namespace Configurator
 
             LoadComboBoxes();
             lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
-
-            //we're hiding the podcast and plugin detail panels until the user selects one
-            infoPlayerPanel.Visibility = pluginPanel.Visibility = Visibility.Hidden;
 
             //we're showing, but disabling the media collection detail panel until the user selects one
             infoPanel.IsEnabled = false;
@@ -153,12 +145,22 @@ namespace Configurator
                     }));
             });
 
+            SupportImprovementNag();
 
             Async.Queue("Startup Validations", () =>
             {
                 RefreshEntryPoints(false);
                 ValidateMBAppDataFolderPermissions();
             });
+        }
+
+        private void SupportImprovementNag()
+        {
+            if (!config.SuppressStatsNag && !config.SendStats)
+            {
+                config.SuppressStatsNag = SuppImproveDialog.Show("Please consider participating in our User Support Enhancement Program.  Only OS version and memory size are collected and only used to help target our future efforts.  Thank you for your support.");
+                config.Save();
+            }
         }
 
         private void ForceUpgradeCheck()
@@ -300,7 +302,7 @@ namespace Configurator
         {
             tvwLibraryFolders.BeginInit();
             tvwLibraryFolders.Items.Clear();
-            tabControl1.Cursor = Cursors.Wait;
+            tabMain.Cursor = Cursors.Wait;
             string[] vfs = Directory.GetFiles(ApplicationPaths.AppInitialDirPath,"*.vf");
             foreach (string vfName in vfs)
             {
@@ -315,7 +317,7 @@ namespace Configurator
                 tvwLibraryFolders.Items.Add(aNode);
             }
             tvwLibraryFolders.EndInit();
-            tabControl1.Cursor = Cursors.Arrow;
+            tabMain.Cursor = Cursors.Arrow;
         }
 
         private void getLibrarySubDirectories(string dir, TreeViewItem parent)
@@ -414,12 +416,32 @@ namespace Configurator
             }
         }
 
+        private void InitExpertMode()
+        {
+            if (configMembers == null)
+            {
+                configMembers = new List<ConfigMember>();
+                foreach (var member in typeof(ConfigData).GetMembers(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (XmlSettings<ConfigData>.IsSetting(member) && !XmlSettings<ConfigData>.IsHidden(member))
+                        configMembers.Add(new ConfigMember(member, config));
+                }
+
+                CollectionViewSource src = new CollectionViewSource();
+                src.Source = configMembers;
+                src.GroupDescriptions.Add(new PropertyGroupDescription("Group"));
+                configMemberList.ItemsSource = src.View;
+                configMemberList.SelectedIndex = -1;
+            }
+        }
+            
+
         #region Config Loading / Saving        
         private void LoadConfigurationSettings()
         {
             enableTranscode360.IsChecked = config.EnableTranscode360;
             useAutoPlay.IsChecked = config.UseAutoPlayForIso;
-
+            
             cbxOptionClock.IsChecked = config.ShowClock;            
             cbxOptionTransparent.IsChecked = config.ShowThemeBackground;
             cbxOptionIndexing.IsChecked = config.RememberIndexing;
@@ -427,7 +449,8 @@ namespace Configurator
             cbxOptionHideFrame.IsChecked = config.HideFocusFrame;
             cbxOptionAutoEnter.IsChecked = config.AutoEnterSingleDirs;
             cbxScreenSaver.IsChecked = config.EnableScreenSaver;
-            tbxSSTimeout.Text = config.ScreenSaverTimeOut.ToString();
+            lblSSTimeout.Content = config.ScreenSaverTimeOut.ToString()+" Mins";
+            cbxSendStats.IsChecked = config.SendStats;
 
             cbxOptionUnwatchedCount.IsChecked      = config.ShowUnwatchedCount;
             cbxOptionUnwatchedOnFolder.IsChecked   = config.ShowWatchedTickOnFolders;
@@ -452,6 +475,7 @@ namespace Configurator
                 ddlWeatherUnits.SelectedItem = "Celsius";
 
             tbxMinResumeDuration.Text = config.MinResumeDuration.ToString();
+            lblRecentItemCollapse.Content = config.RecentItemCollapseThresh;
             sldrMinResumePct.Value = config.MinResumePct;
             sldrMaxResumePct.Value = config.MaxResumePct;
 
@@ -463,7 +487,7 @@ namespace Configurator
             cbxOptionHideProtected.IsChecked = config.HideParentalDisAllowed;
             cbxOptionAutoUnlock.IsChecked = config.UnlockOnPinEntry;
             gbPCGeneral.IsEnabled = gbPCPIN.IsEnabled = gbPCFolderSecurity.IsEnabled = config.ParentalControlEnabled;
-            ddlOptionMaxAllowedRating.SelectedItem = ratings.ToString(config.MaxParentalLevel);
+            ddlOptionMaxAllowedRating.SelectedItem = Ratings.ToString(config.MaxParentalLevel);
             slUnlockPeriod.Value = config.ParentalUnlockPeriod;
             txtPCPIN.Password = config.ParentalPIN;
 
@@ -476,6 +500,13 @@ namespace Configurator
             //library validation
             cbxAutoValidate.IsChecked = config.AutoValidate;
 
+            //metadata
+            cbxInetProviders.IsChecked = config.AllowInternetMetadataProviders;
+            cbxSaveMetaLocally.IsChecked = config.SaveLocalMeta;
+            cbxDownloadPeople.IsChecked = config.DownloadPeopleImages;
+            cbxSaveSeasonBD.IsChecked = config.SaveSeasonBackdrops;
+            tbxMaxBackdrops.Text = config.MaxBackdrops.ToString();
+            tbxMetadataUpdateAge.Text = config.MetadataCheckForUpdateAge.ToString();
         }
 
         private void SaveConfig()
@@ -498,6 +529,19 @@ namespace Configurator
             }
         }
 
+        private IEnumerable<CultureInfo> AllCultures = CultureInfo.GetCultures(CultureTypes.AllCultures & ~CultureTypes.NeutralCultures).OrderBy(c => c.Name);
+        private List<RegionInfo> AllRegions;
+        private List<Language> AllLanguages;
+        class Language
+        {
+            public string Name;
+            public string LanguageCode;
+
+            public override string ToString()
+            {
+                return Name;
+            }
+        }
         private void LoadComboBoxes()
         {
             // Themes
@@ -516,9 +560,54 @@ namespace Configurator
             // Parental Ratings
             ddlOptionMaxAllowedRating.ItemsSource = ratings.ToString();
             ddlFolderRating.ItemsSource = ratings.ToString();
+            //meta
+            AllLanguages = GetLanguages(CultureInfo.GetCultures(CultureTypes.NeutralCultures));
+            ddlMetadataLanguage.ItemsSource = AllLanguages;
+            AllRegions = GetRegions(AllCultures);
+            ddlMetadataCountry.ItemsSource = AllRegions;
+            ddlMetadataLanguage.SelectedItem = AllLanguages.FirstOrDefault(c => c.LanguageCode == config.PreferredMetaDataLanguage);
+            ddlMetadataCountry.SelectedItem = AllRegions.FirstOrDefault(r => r.TwoLetterISORegionName == config.MetadataCountryCode);
+            ddlPosterSize.ItemsSource = new List<string>() { "w500", "w342", "w185", "original" };
+            ddlPosterSize.SelectedItem = config.FetchedPosterSize;
+            ddlBackdropSize.ItemsSource = new List<string>() { "w1280", "w780", "original" };
+            ddlBackdropSize.SelectedItem = config.FetchedBackdropSize;
+            ddlPersonImageSize.ItemsSource = new List<string>() { "w185", "w45", "h632", "original" };
+            ddlPersonImageSize.SelectedItem = config.FetchedProfileSize;
+
 
             ddlLoglevel.ItemsSource = Enum.GetValues(typeof(LogSeverity));
 
+        }
+
+        private List<RegionInfo> GetRegions(IEnumerable<CultureInfo> cultures)
+        {
+            List<RegionInfo> regions = new List<RegionInfo>();
+            foreach (var culture in cultures)
+            {
+                try
+                {
+                    RegionInfo region = new RegionInfo(culture.LCID);
+                    if (!regions.Contains(region))
+                    {
+                        regions.Add(region);
+                    }
+                }
+                catch { } //some don't have regions
+            }
+            return regions.OrderBy(i => i.Name).ToList();
+        }
+
+        private List<Language> GetLanguages(IEnumerable<CultureInfo> cultures)
+        {
+            List<Language> languages = new List<Language>();
+            foreach (var culture in cultures)
+            {
+                
+                {
+                    languages.Add(new Language() {Name = culture.DisplayName, LanguageCode = culture.TwoLetterISOLanguageName});
+                }
+            }
+            return languages;
         }
         #endregion
 
@@ -708,68 +797,72 @@ sortorder: {2}
 
         private void RefreshEntryPoints(bool RefreshPlugins)
         {
-            EntryPointManager epm = null;
-
-            try
+            Async.Queue("Configurator ep refresh", () =>
             {
-                epm = new EntryPointManager();
-            }
-            catch (Exception ex)
-            {
-                //Write to error log, don't prompt user.
-                Logger.ReportError("Error starting Entry Point Manager in RefreshEntryPoints(). " + ex.Message);
-                return;
-            }
-
-            try
-            {
-                List<EntryPointItem> entryPoints = new List<EntryPointItem>();
+                EntryPointManager epm = null;
 
                 try
                 {
-                    Logger.ReportInfo("Reloading Virtual children");
-                    if (RefreshPlugins)
-                    {
-                        Kernel.Init(KernelLoadDirective.ShadowPlugins);
-                    }
-
-                    Kernel.Instance.RootFolder.ValidateChildren();
+                    epm = new EntryPointManager();
                 }
                 catch (Exception ex)
                 {
-                    Logger.ReportError("Error validating children. " + ex.Message, ex);
-                    throw new Exception("Error validating children. " + ex.Message);
+                    //Write to error log, don't prompt user.
+                    Logger.ReportError("Error starting Entry Point Manager in RefreshEntryPoints(). " + ex.Message);
+                    return;
                 }
 
-                foreach (var folder in Kernel.Instance.RootFolder.Children)                
+                try
                 {
-                    String displayName = folder.Name;
-                    if (displayName == null || displayName.Length <= 0)
-                        continue;
+                    List<EntryPointItem> entryPoints = new List<EntryPointItem>();
 
-                    String path = string.Empty;
-
-                    if (folder.GetType() == typeof(Folder) && folder.Path != null && folder.Path.Length > 1)
+                    try
                     {
-                        path = folder.Path;
+                        Logger.ReportInfo("Reloading Virtual children");
+                        if (RefreshPlugins)
+                        {
+                            //Kernel.Init(KernelLoadDirective.ShadowPlugins);
+                            Kernel.Instance.ReLoadRoot();
+                        }
+
+                        Kernel.Instance.RootFolder.ValidateChildren();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        path = folder.Id.ToString();
+                        Logger.ReportError("Error validating children. " + ex.Message, ex);
+                        throw new Exception("Error validating children. " + ex.Message);
                     }
 
-                    EntryPointItem ep = new EntryPointItem(displayName, path);
-                    entryPoints.Add(ep);                    
+                    foreach (var folder in Kernel.Instance.RootFolder.Children)
+                    {
+                        String displayName = folder.Name;
+                        if (displayName == null || displayName.Length <= 0)
+                            continue;
+
+                        String path = string.Empty;
+
+                        if (folder.GetType() == typeof(Folder) && folder.Path != null && folder.Path.Length > 1)
+                        {
+                            path = folder.Path;
+                        }
+                        else
+                        {
+                            path = folder.Id.ToString();
+                        }
+
+                        EntryPointItem ep = new EntryPointItem(displayName, path);
+                        entryPoints.Add(ep);
+                    }
+
+                    epm.ValidateEntryPoints(entryPoints);
                 }
-
-                epm.ValidateEntryPoints(entryPoints);
-            }
-            catch (Exception ex)
-            {
-                String msg = "Error Refreshing Entry Points. " + ex.Message;
-                Logger.ReportError(msg, ex);
-                MessageBox.Show(msg);
-            }
+                catch (Exception ex)
+                {
+                    String msg = "Error Refreshing Entry Points. " + ex.Message;
+                    Logger.ReportError(msg, ex);
+                    //MessageBox.Show(msg);
+                }
+            });
         }
 
         private void btnRename_Click(object sender, RoutedEventArgs e)
@@ -950,6 +1043,11 @@ sortorder: {2}
             }
         }
 
+        private void pluginList_DoubleClicked(object sender, RoutedEventArgs e)
+        {
+            configurePlugin_Click(sender, e);
+        }
+
         private void pluginList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (pluginList.SelectedItem != null)
@@ -1008,6 +1106,15 @@ sortorder: {2}
                 IPlugin newPlugin = PluginManager.Instance.AvailablePlugins.Find(plugin, PluginManager.Instance.GetLatestVersion(plugin));
                 if (newPlugin != null)
                 {
+                    if (!string.IsNullOrEmpty(newPlugin.UpgradeInfo))
+                    {
+                        //confirm upgrade
+                        if (MessageBox.Show("This upgrade has the following information:\n\n" + newPlugin.UpgradeInfo + "\n\nDo you still wish to upgrade?", "Upgrade " + plugin.Name, MessageBoxButton.YesNo) == MessageBoxResult.No)
+                        {
+                            PopUpMsg.DisplayMessage("Upgrade Cancelled");
+                            return;
+                        }
+                    }
                     PluginInstaller p = new PluginInstaller();
                     callBack done = new callBack(UpgradeFinished);
                     this.IsEnabled = false;
@@ -1061,7 +1168,14 @@ sortorder: {2}
             //called when the upgrade process finishes - we just hide progress bar and re-enable
             this.IsEnabled = true;
             IPlugin plugin = pluginList.SelectedItem as IPlugin;
-            PluginManager.Instance.RefreshInstalledPlugins(); //refresh list
+            try
+            {
+                PluginManager.Instance.RefreshInstalledPlugins(); //refresh list
+            }
+            catch (Exception e)
+            {
+                Logger.ReportException("Error refreshing plugins after upgrade", e);
+            }
             if (plugin != null)
             {
                 Logger.ReportInfo(plugin.Name + " Upgraded to v" + PluginManager.Instance.GetLatestVersion(plugin));
@@ -1127,123 +1241,119 @@ sortorder: {2}
             SaveConfig();
         }
 
-        private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
-        {
-            List<MediaType> list = new List<MediaType>();
-            // Provide a list of media types that haven't been used. This is to filter out the selection available to the end user.
-            // Don't display media types for players that we already have. 
-            //
-            // This also makes this scalable, we shouldn't have to adjust this code for new media types.
-            Boolean found;
-            foreach (MediaType item in Enum.GetValues(typeof(MediaType)))
-            {
-                // See if an external player has been configured for this media type.
-                found = false;
-                foreach (ConfigData.ExternalPlayer player in lstExternalPlayers.Items)
-                    if (player.MediaType == item) {
-                        found = true;
-                        break;
-                    }
-                // If a player hasn't been configured then make it an available option to be added
-                if (!found)
-                {
-                    if (item == MediaType.ISO)
-                    {
-                        // do nothing
-                    } else {
-                        list.Add(item);
-                    }
-                }
-            }
-
-            var form = new SelectMediaTypeForm(list);
-            form.Owner = this;
-            form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            if (form.ShowDialog() == true)
-            {
-                ConfigData.ExternalPlayer player = new ConfigData.ExternalPlayer();
-                player.MediaType = (MediaType)form.cbMediaType.SelectedItem;
-                player.Args = "\"{0}\""; // Assign a default parameter
-                config.ExternalPlayers.Add(player);
-                lstExternalPlayers.Items.Add(player);
-                lstExternalPlayers.SelectedItem = player;
-                SaveConfig();
-            }
-        }
-
         private void btnRemovePlayer_Click(object sender, RoutedEventArgs e)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
+            string message;
+            string title = "Remove External Player Confirmation";
+
+            if (lstExternalPlayers.SelectedItems.Count > 1)
             {
-                var message = "About to remove the media type \"" + lstExternalPlayers.SelectedItem.ToString() + "\" from the external players.\nAre you sure?";
-                if (MessageBox.Show(message, "Remove Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                {
-                    config.ExternalPlayers.Remove(mediaPlayer);
-                    lstExternalPlayers.Items.Remove(mediaPlayer);
-                    SaveConfig();
-                    infoPlayerPanel.Visibility = Visibility.Hidden;
-                }
+                message = "About to remove the selected external players. Are you sure?";
+            }
+            else
+            {
+                var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
+
+                message = "About to remove " + mediaPlayer.ExternalPlayerName + ". Are you sure?";                             
+            }
+
+            if (MessageBox.Show(message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            foreach (ConfigData.ExternalPlayer player in lstExternalPlayers.SelectedItems)
+            {
+                config.ExternalPlayers.Remove(player);               
+            }
+
+            SaveConfig();
+            RefreshPlayers();
+        }
+
+        private void btnAddPlayer_Click(object sender, RoutedEventArgs e)
+        {
+            EditExternalPlayer(new PlayableExternalConfigurator().GetDefaultConfiguration(), true);
+        }
+
+        private void lstExternalPlayers_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (lstExternalPlayers.SelectedItem != null)
+            {
+                btnEditPlayer_Click(sender, e);
             }
         }
 
-        private void btnPlayerCommand_Click(object sender, RoutedEventArgs e)
+        private void btnEditPlayer_Click(object sender, RoutedEventArgs e)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
-            {
-                var dialog = new System.Windows.Forms.OpenFileDialog();
-                dialog.Filter = "*.exe|*.exe";
-                if (mediaPlayer.Command != string.Empty)
-                    dialog.FileName = mediaPlayer.Command;
-
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    mediaPlayer.Command = dialog.FileName;
-                    txtPlayerCommand.Text = mediaPlayer.Command;
-                    SaveConfig();
-                }
-            }
+            var externalPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
+            
+            EditExternalPlayer(externalPlayer, false);
         }
 
-        private void btnPlayerArgs_Click(object sender, RoutedEventArgs e)
+        private void EditExternalPlayer(ConfigData.ExternalPlayer externalPlayer, bool isNew)
         {
-            var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (mediaPlayer != null)
+            var form = new ExternalPlayerForm(isNew);
+            form.Owner = this;
+
+            form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            form.FillControlsFromObject(externalPlayer);
+
+            if (form.ShowDialog() == true)
             {
-                var form = new PlayerArgsForm(mediaPlayer.Args);
-                form.Owner = this;
-                form.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                if (form.ShowDialog() == true)
+                form.UpdateObjectFromControls(externalPlayer);
+
+                if (isNew)
                 {
-                    mediaPlayer.Args = form.txtArgs.Text;
-                    lblPlayerArgs.Text = mediaPlayer.Args;
-                    SaveConfig();
+                    config.ExternalPlayers.Add(externalPlayer);
                 }
+
+                SaveConfig();
+
+                RefreshPlayers();
+
+                lstExternalPlayers.SelectedItem = externalPlayer;
             }
         }
 
         private void lstExternalPlayers_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (lstExternalPlayers.SelectedIndex >= 0)
-            {
-                var mediaPlayer = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-                if (mediaPlayer != null)
-                {
-                    txtPlayerCommand.Text = mediaPlayer.Command;
-                    lblPlayerArgs.Text = mediaPlayer.Args;
-                    cbxMinMCE.IsChecked = mediaPlayer.MinimizeMCE;
-                    infoPlayerPanel.Visibility = Visibility.Visible;
-                    btnRemovePlayer.IsEnabled = true;
-                }
-                else
-                {
-                    txtPlayerCommand.Text = string.Empty;
-                    lblPlayerArgs.Text = string.Empty;
-                    infoPlayerPanel.Visibility = Visibility.Hidden;
-                    btnRemovePlayer.IsEnabled = false;
-                }
-            }
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+            bool hasSelection = selectedIndex >= 0;
+            bool hasMultiSelection = lstExternalPlayers.SelectedItems.Count > 1;
+
+            btnRemovePlayer.IsEnabled = hasSelection;
+            btnEditPlayer.IsEnabled = hasSelection && !hasMultiSelection;
+            btnMoveExternalPlayerUp.IsEnabled = hasSelection && !hasMultiSelection && selectedIndex > 0;
+            btnMoveExternalPlayerDown.IsEnabled = hasSelection && !hasMultiSelection && selectedIndex < (lstExternalPlayers.Items.Count - 1);
+        }
+
+        void btnMoveExternalPlayerUp_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+
+            MoveExternalPlayer(selectedIndex, selectedIndex - 1);
+        }
+
+        void btnMoveExternalPlayerDown_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedIndex = lstExternalPlayers.SelectedIndex;
+
+            MoveExternalPlayer(selectedIndex, selectedIndex + 1);
+        }
+        private void MoveExternalPlayer(int oldIndex, int newIndex)
+        {
+            var externalPlayer = config.ExternalPlayers[oldIndex];
+
+            //remove from current location
+            config.ExternalPlayers.RemoveAt(oldIndex);
+            //add back above item above us
+            config.ExternalPlayers.Insert(newIndex, externalPlayer);
+            SaveConfig();
+            RefreshPlayers();
+            //finally, re-select this item
+            lstExternalPlayers.SelectedItem = externalPlayer;
         }
         #endregion
 
@@ -1320,6 +1430,13 @@ sortorder: {2}
             SaveConfig();
         }
 
+        private void cbxScreenSaver_Click(object sender, RoutedEventArgs e)
+        {
+            config.EnableScreenSaver = (bool)cbxScreenSaver.IsChecked;
+            SaveConfig();
+
+        }
+
         private void cbxOptionAspectRatio_Click(object sender, RoutedEventArgs e)
         {
             if ((bool)cbxOptionAspectRatio.IsChecked)
@@ -1371,22 +1488,45 @@ sortorder: {2}
             SaveConfig();
         }
 
-        private void cbxMinMCE_Click(object sender, RoutedEventArgs e)
-        {
-            ConfigData.ExternalPlayer player = lstExternalPlayers.SelectedItem as ConfigData.ExternalPlayer;
-            if (player != null)
-            {
-                player.MinimizeMCE = (bool)cbxMinMCE.IsChecked;
-                SaveConfig();
-            }
-        }
-
         private void cbxAutoValidate_Click(object sender, RoutedEventArgs e)
         {
             config.AutoValidate = (bool)cbxAutoValidate.IsChecked;
             if (!config.AutoValidate) PopUpMsg.DisplayMessage("Warning! Media Changes May Not Be Reflected in Library.");
             SaveConfig();
         }
+
+        private void cbxSendStats_Click(object sender, RoutedEventArgs e)
+        {
+            config.SendStats = (bool)cbxSendStats.IsChecked;
+            if (config.SendStats) config.EnableUpdates = true; //need this on too
+            SaveConfig();
+        }
+
+        private void cbxInetProviders_Checked(object sender, RoutedEventArgs e)
+        {
+            config.AllowInternetMetadataProviders = gbTmdb.IsEnabled = cbxInetProviders.IsChecked.Value;
+            config.Save();
+
+        }
+
+        private void cbxSaveMetaLocally_Checked(object sender, RoutedEventArgs e)
+        {
+            config.SaveLocalMeta = gbSaveMeta.IsEnabled = cbxSaveMetaLocally.IsChecked.Value;
+            config.Save();
+        }
+
+        private void cbxDownloadPeople_Checked(object sender, RoutedEventArgs e)
+        {
+            config.DownloadPeopleImages = cbxDownloadPeople.IsChecked.Value;
+            config.Save();
+        }
+
+        private void cbxSaveSeasonBD_Checked(object sender, RoutedEventArgs e)
+        {
+            config.SaveSeasonBackdrops = cbxSaveSeasonBD.IsChecked.Value;
+            config.Save();
+        }
+
 
 
         #endregion
@@ -1465,17 +1605,28 @@ sortorder: {2}
         #endregion
 
         #region Header Selection Methods
+        private void eggExpert_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (System.Windows.Forms.Control.ModifierKeys == (System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift))
+            {
+                InitExpertMode();
+                expertTab.Visibility = Visibility.Visible;
+                helpTab.Visibility = Visibility.Collapsed;
+                tabMain.SelectedItem = expertTab;
+            }
+        }
+
         private void hdrBasic_MouseDown(object sender, MouseButtonEventArgs e)
         {
             SetHeader(hdrBasic);
             cacheTab.Visibility = externalPlayersTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = helpTab.Visibility = Visibility.Collapsed;
-            mediacollectionTab.Visibility = podcastsTab.Visibility = displayTab.Visibility = plugins.Visibility = Visibility.Visible;
+            mediacollectionTab.Visibility = podcastsTab.Visibility = displayTab.Visibility = plugins.Visibility = metadataTab.Visibility = Visibility.Visible;
         }
 
         private void hdrAdvanced_MouseDown(object sender, MouseButtonEventArgs e)
         {
             SetHeader(hdrAdvanced);
-            externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = Visibility.Visible;
+            externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = metadataTab.Visibility = parentalControlTab.Visibility = Visibility.Visible;
             mediacollectionTab.Visibility = podcastsTab.Visibility = plugins.Visibility = Visibility.Visible;
             helpTab.Visibility = Visibility.Collapsed;
         }
@@ -1484,7 +1635,7 @@ sortorder: {2}
         {
             SetHeader(hdrHelpAbout);
             cacheTab.Visibility = externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = Visibility.Collapsed;
-            mediacollectionTab.Visibility = podcastsTab.Visibility = plugins.Visibility = Visibility.Collapsed;
+            mediacollectionTab.Visibility = podcastsTab.Visibility = plugins.Visibility = metadataTab.Visibility = Visibility.Collapsed;
             helpTab.Visibility = Visibility.Visible;
             helpTab.IsSelected = true;
         }
@@ -1493,7 +1644,7 @@ sortorder: {2}
         {
             hdrAdvanced.Foreground = hdrBasic.Foreground = hdrHelpAbout.Foreground = new SolidColorBrush(System.Windows.Media.Colors.Gray);
             hdrAdvanced.FontWeight = hdrBasic.FontWeight = hdrHelpAbout.FontWeight = FontWeights.Normal;
-            tabControl1.SelectedIndex = 0;
+            tabMain.SelectedIndex = 0;
         }
         private void SetHeader(System.Windows.Controls.Label label)
         {
@@ -1577,13 +1728,17 @@ sortorder: {2}
 
         private void removePlugin_Click(object sender, RoutedEventArgs e) {
             var plugin = pluginList.SelectedItem as IPlugin;
-            var message = "Would you like to remove the plugin " + plugin.Name + "?";
-            if (
-                  MessageBox.Show(message, "Remove plugin", MessageBoxButton.YesNoCancel) == MessageBoxResult.Yes) {
-                PluginManager.Instance.RemovePlugin(plugin);
-                PluginManager.Instance.UpdateAvailableAttributes(plugin, false);
-                RefreshEntryPoints(true);
-                RefreshThemes();
+            if (plugin != null)
+            {
+                var message = "Would you like to remove the plugin " + plugin.Name + "?";
+                if (
+                      MessageBox.Show(message, "Remove plugin", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    PluginManager.Instance.RemovePlugin(plugin);
+                    PluginManager.Instance.UpdateAvailableAttributes(plugin, false);
+                    RefreshEntryPoints(true);
+                    RefreshThemes();
+                }
             }
         }
 
@@ -1609,11 +1764,13 @@ sortorder: {2}
 
         private void configurePlugin_Click(object sender, RoutedEventArgs e)
         {
-            if (pluginList.SelectedItem != null)            
+            if (pluginList.SelectedItem != null && (pluginList.SelectedItem as Plugin).IsConfigurable)
+            {
                 ((Plugin)pluginList.SelectedItem).Configure();
-            
-            this.RefreshEntryPoints(true);
-            KernelModified = true;
+
+                this.RefreshEntryPoints(true);
+                KernelModified = true;
+            }
         }
 
         private void podcastDetails(bool display)
@@ -1896,6 +2053,7 @@ sortorder: {2}
             SaveConfig();
         }
 
+
         private void openLogsFolder_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1960,22 +2118,46 @@ sortorder: {2}
             SaveConfig();
         }
 
-        private void tbxMinResumeDuration_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void tbxNumericOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = !Char.IsDigit(e.Text[0]);
             base.OnPreviewTextInput(e);
-        }
-
-        private void tbxSSTimeout_LostFocus(object sender, RoutedEventArgs e)
-        {
-            Int32.TryParse(tbxSSTimeout.Text, out config.ScreenSaverTimeOut);
-            SaveConfig();
         }
 
         private void tbxSSTimeout_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             e.Handled = !Char.IsDigit(e.Text[0]);
             base.OnPreviewTextInput(e);
+        }
+
+        private void btnSSTimeUp_Click(object sender, RoutedEventArgs e)
+        {
+            config.ScreenSaverTimeOut++;
+            config.Save();
+            lblSSTimeout.Content = config.ScreenSaverTimeOut.ToString() + " Mins";
+        }
+
+        private void btnSSTimeDn_Click(object sender, RoutedEventArgs e)
+        {
+            config.ScreenSaverTimeOut--;
+            if (config.ScreenSaverTimeOut < 1) config.ScreenSaverTimeOut = 1;
+            config.Save();
+            lblSSTimeout.Content = config.ScreenSaverTimeOut.ToString() + " Mins";
+        }
+
+        private void btnRICUp_Click(object sender, RoutedEventArgs e)
+        {
+            config.RecentItemCollapseThresh++;
+            config.Save();
+            lblRecentItemCollapse.Content = config.RecentItemCollapseThresh;
+        }
+
+        private void btnRICDn_Click(object sender, RoutedEventArgs e)
+        {
+            config.RecentItemCollapseThresh--;
+            if (config.RecentItemCollapseThresh < 1) config.RecentItemCollapseThresh = 1;
+            config.Save();
+            lblRecentItemCollapse.Content = config.RecentItemCollapseThresh;
         }
 
 
@@ -2018,6 +2200,155 @@ sortorder: {2}
                 config.Save();
             }
         }
+
+        private void configMemberList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            currentConfigMember = configMemberList.SelectedItem as ConfigMember;
+            if (currentConfigMember != null)
+            {
+                txtMemberComment.Text = currentConfigMember.Comment;
+                lblDangerous.Visibility = currentConfigMember.IsDangerous ? Visibility.Visible : Visibility.Hidden;
+                switch (currentConfigMember.Type.Name)
+                {
+                    case "Boolean":
+                        stringGrid.Visibility = numGrid.Visibility = Visibility.Hidden;
+                        cbxBoolMember.Visibility = System.Windows.Visibility.Visible;
+                        cbxBoolMember.Content = currentConfigMember.Name;
+                        cbxBoolMember.IsChecked = (bool)currentConfigMember.Value;
+                        break;
+
+                    case "String":
+                        if (currentConfigMember.PresentationStyle == "BrowseFolder")
+                            btnFolderBrowse.Visibility = Visibility.Visible;
+                        else
+                            btnFolderBrowse.Visibility = Visibility.Hidden;
+                        lblString.Content = currentConfigMember.Name;
+                        tbxString.Text = currentConfigMember.Value.ToString();
+                        stringGrid.Visibility = Visibility.Visible;
+                        cbxBoolMember.Visibility = numGrid.Visibility = Visibility.Hidden;
+                        break;
+
+                    case "Int":
+                    case "Int32":
+                    case "Int16":
+                    case "Double":
+                    case "Single":
+                        lblNum.Content = currentConfigMember.Name;
+                        tbxNum.Text = currentConfigMember.Value.ToString();
+                        numGrid.Visibility = Visibility.Visible;
+                        cbxBoolMember.Visibility = stringGrid.Visibility = Visibility.Hidden;
+                        break;
+
+                    default:
+                        cbxBoolMember.Visibility = stringGrid.Visibility = numGrid.Visibility = System.Windows.Visibility.Hidden;
+                        break;
+                }
+
+            }
+            else
+            {
+                txtMemberComment.Text = "";
+                lblDangerous.Visibility = cbxBoolMember.Visibility = stringGrid.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void memberList_Collapse(object sender, RoutedEventArgs e)
+        {
+            //un-select in case current item was collapsed from view
+            configMemberList.SelectedIndex = -1;
+
+        }
+
+        private void cbxBoolMember_Checked(object sender, RoutedEventArgs e)
+        {
+            if (currentConfigMember != null)
+            {
+                currentConfigMember.Value = cbxBoolMember.IsChecked;
+                config.Save();
+            }
+        }
+
+        private void tbxNum_PreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            //called when one of our dynamic member items loses focus - save current member
+            if (currentConfigMember != null)
+            {
+                currentConfigMember.Value = Convert.ToInt32(tbxNum.Text);
+                config.Save();
+            }
+        }
+
+        private void tbxString_PreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            //called when one of our dynamic member items loses focus - save current member
+            if (currentConfigMember != null)
+            {
+                currentConfigMember.Value = tbxString.Text;
+                config.Save();
+            }
+        }
+
+        private void btnFolderBrowse_Click(object sender, RoutedEventArgs e)
+        {
+            BrowseForFolderDialog dlg = new BrowseForFolderDialog();
+
+            if (true == dlg.ShowDialog(this))
+            {
+                currentConfigMember.Value = tbxString.Text =  dlg.SelectedFolder;
+            }
+
+        }
+
+        private void tbxMaxBackdrops_LostFocus(object sender, RoutedEventArgs e)
+        {
+            config.MaxBackdrops = Convert.ToInt32(tbxMaxBackdrops.Text);
+            config.Save();
+        }
+
+        private void tbxMetadataUpdateAge_LostFocus(object sender, RoutedEventArgs e)
+        {
+            config.MetadataCheckForUpdateAge = Convert.ToInt32(tbxMetadataUpdateAge.Text);
+            config.Save();
+        }
+
+        private void ddlMetadataLanguage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var language = ddlMetadataLanguage.SelectedItem as Language;
+            if (language != null)
+            {
+                config.PreferredMetaDataLanguage = language.LanguageCode;
+                config.Save();
+            }
+        }
+
+        private void ddlMetadataCountry_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var country = ddlMetadataCountry.SelectedItem as RegionInfo;
+            if (country != null)
+            {
+                config.MetadataCountryCode = country.TwoLetterISORegionName;
+                config.Save();
+            }
+        }
+
+        private void ddlPosterSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedPosterSize = ddlPosterSize.SelectedItem.ToString();
+            config.Save();
+        }
+
+        private void ddlBackdropSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedBackdropSize = ddlBackdropSize.SelectedItem.ToString();
+            config.Save();
+        }
+
+        private void ddlPersonImageSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            config.FetchedProfileSize = ddlPersonImageSize.SelectedItem.ToString();
+            config.Save();
+        }
+
 
     }
 

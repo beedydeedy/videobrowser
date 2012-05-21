@@ -6,14 +6,33 @@ using MediaBrowser.Library.Entities;
 namespace MediaBrowser.Library {
     internal class BaseItemComparer : IComparer<BaseItem> {
         private SortOrder order;
+        private string propertyName;
+        private StringComparison compareCulture = StringComparison.CurrentCultureIgnoreCase;
+
         public BaseItemComparer(SortOrder order) {
             this.order = order;
+        }
+
+        public BaseItemComparer(SortOrder order, StringComparison compare) {
+            this.order = order;
+            this.compareCulture = compare;
+        }
+
+        public BaseItemComparer(string property) {
+            this.order = SortOrder.Custom;
+            this.propertyName = property;
+        }
+
+        public BaseItemComparer(string property, StringComparison compare) {
+            this.order = SortOrder.Custom;
+            this.propertyName = property;
+            this.compareCulture = compare;
         }
 
         #region IComparer<BaseItem> Members
 
         public int Compare(BaseItem x, BaseItem y) {
-            int compare;
+            int compare = 0;
 
             switch (order) {
 
@@ -59,6 +78,21 @@ namespace MediaBrowser.Library {
                     compare = ExtractUnwatchedCount(y).CompareTo(ExtractUnwatchedCount(x));
                     break;
 
+                case SortOrder.Custom:
+
+                    Logging.Logger.ReportVerbose("Sorting on custom field " + propertyName);
+                    var yProp = y.GetType().GetProperty(propertyName);
+                    var xProp = x.GetType().GetProperty(propertyName);
+                    if (yProp == null || xProp == null) break;
+                    var yVal = yProp.GetValue(y, null);
+                    var xVal = xProp.GetValue(x,null);
+                    if (yVal == null && xVal == null) break;
+                    if (yVal == null) return 1;
+                    if (xVal == null) return -1;
+                    Logging.Logger.ReportVerbose("Value x: " + xVal + " Value y: " + yVal);
+                    compare = String.Compare(xVal.ToString(), yVal.ToString(),compareCulture);
+                    break;
+
                 default:
                     compare = 0;
                     break;
@@ -70,9 +104,9 @@ namespace MediaBrowser.Library {
                 var name2 = y.SortName ?? y.Name ?? "";
 
                 if (Config.Instance.EnableAlphanumericSorting)
-                    compare = AlphaNumericCompare(name1, name2);
+                    compare = AlphaNumericCompare(name1, name2,compareCulture);
                 else
-                    compare = name1.CompareTo(name2);
+                    compare = String.Compare(name1,name2,compareCulture);
             }
 
             return compare;
@@ -114,7 +148,7 @@ namespace MediaBrowser.Library {
             return false;
         }
 
-        public static int AlphaNumericCompare(string s1, string s2) {
+        public static int AlphaNumericCompare(string s1, string s2, StringComparison compareCulture) {
             // http://dotnetperls.com/Content/Alphanumeric-Sorting.aspx
 
             int len1 = s1.Length;
@@ -166,14 +200,24 @@ namespace MediaBrowser.Library {
                 int result;
 
                 //biggest int - 2147483647
-                if (char.IsDigit(space1[0]) && char.IsDigit(space2[0]) && str1.Length < 10 && str2.Length < 10)
+                if (char.IsDigit(space1[0]) && char.IsDigit(space2[0]) /*&& str1.Length < 10 && str2.Length < 10*/) //this assumed the entire string was a number...
                 {
-                    int thisNumericChunk = int.Parse(str1);
-                    int thatNumericChunk = int.Parse(str2);
+                    try
+                    {
+                        int thisNumericChunk = int.Parse(str1.Substring(0,str1.Length > 9 ? 10 : str1.Length));
+                        int thatNumericChunk = int.Parse(str2.Substring(0,str2.Length > 9 ? 10 : str2.Length));
+                        //Logging.Logger.ReportVerbose("Comparing Numbers... " + str1 + "(" + thisNumericChunk + ")/" + str2 + "(" + thatNumericChunk + ")");
+                        result = thisNumericChunk.CompareTo(thatNumericChunk);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logger.ReportException("Error comparing numeric strings: "+str1+"/"+str2,e);
+                        result = String.Compare(str1, str2, compareCulture);
+                    }
                     
-                    result = thisNumericChunk.CompareTo(thatNumericChunk);
                 } else {
-                    result = str1.CompareTo(str2);
+                    //Logging.Logger.ReportVerbose("Comparing Strings... " + str1 + "/" + str2);
+                    result = String.Compare(str1,str2,compareCulture);
                 }
 
                 if (result != 0) {

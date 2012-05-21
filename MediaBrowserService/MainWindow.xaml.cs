@@ -46,12 +46,15 @@ namespace MediaBrowserService
         private bool _hasHandle;
         private bool _shutdown;
         private bool _refreshCanceled = false;
-        private bool _refreshFailed = false;
         private bool _firstIteration = true;
         private bool _refreshRunning;
         private DateTime _refreshStartTime;
         private TimeSpan _lastRefreshElapsedTime;
         private DateTime _refreshCanceledTime = DateTime.MinValue;
+
+        private System.Drawing.Icon[] RefreshIcons = new System.Drawing.Icon[2];
+        private int currentRefreshIcon = 0;
+        private Timer refreshElapsed;
 
         private readonly DateTime _startTime = DateTime.Now;
         private readonly ServiceRefreshOptions _serviceOptions;
@@ -106,7 +109,7 @@ namespace MediaBrowserService
             var configureOption = new System.Windows.Forms.MenuItem
             {
                 Name = "configure",
-                Text = "Configure..."
+                Text = "Configure Media Browser..."
             };
             configureOption.Click += new EventHandler(configure_Click);
             main.MenuItems.Add(configureOption);
@@ -139,6 +142,12 @@ namespace MediaBrowserService
             notifyIcon.DoubleClick += notifyIcon_Click;
             notifyIcon.BalloonTipClicked += new EventHandler(notifyIcon_BalloonTipClicked);
             if (_config.ShowBalloonTip) notifyIcon.ShowBalloonTip(2000);
+
+            //create our refresh icons
+            iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/MediaBrowserService;component/MBServiceRefresh.ico")).Stream;
+            RefreshIcons[0] = new System.Drawing.Icon(iconStream);
+            iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/MediaBrowserService;component/MBServiceRefresh2.ico")).Stream;
+            RefreshIcons[1] = new System.Drawing.Icon(iconStream);
         }
 
         void notifyIcon_BalloonTipClicked(object sender, EventArgs e)
@@ -157,6 +166,7 @@ namespace MediaBrowserService
         void restore_Click(object sender, EventArgs e)
         {
             Show();
+            Activate();
             WindowState = storedWindowState;
         }
 
@@ -287,6 +297,7 @@ namespace MediaBrowserService
         void notifyIcon_Click(object sender, EventArgs e)
         {
             Show();
+            Activate();
             WindowState = storedWindowState;
         }
 
@@ -336,6 +347,29 @@ namespace MediaBrowserService
 
         #region Interface Handlers
 
+        private void UpdateRefreshElapsed()
+        {
+            //this is called in a timer loop while refresh running
+            if (_refreshRunning &&  !_config.RefreshFailed)
+            {
+                Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
+                {
+                    if (this.Visibility == Visibility.Visible)
+                    {
+                        //we only care about this part if the interface is actually visible
+                        double pctDone = refreshProgress.Value;
+                        var elapsed = DateTime.Now - _refreshStartTime;
+                        var estCompl = pctDone > .75 ? TimeSpan.FromMilliseconds((elapsed.TotalMilliseconds * (1 / pctDone)) - elapsed.TotalMilliseconds) : TimeSpan.MaxValue;
+                        string estString = pctDone > .75 ? " Est. Remaining Time: " + String.Format("{0:00}:{1:00}:{2:00}", estCompl.Hours, estCompl.Minutes, estCompl.Seconds) : "";
+                        lblSvcActivity.Content = "Refresh Running... Elapsed Time: " + String.Format("{0:00}:{1:00}:{2:00}", elapsed.Hours, elapsed.Minutes, elapsed.Seconds) + estString;
+                    }
+                    currentRefreshIcon = currentRefreshIcon == 0 ? 1 : 0;
+                    notifyIcon.Icon = RefreshIcons[currentRefreshIcon];
+                }));
+            }
+        }
+
+
         private void UpdateProgress(string step, double pctDone)
         {
             if (this.Visibility == Visibility.Visible)
@@ -343,13 +377,8 @@ namespace MediaBrowserService
                 //we only care about this if the interface is actually visible
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
                 {
-                    refreshProgress.Value = pctDone;
                     lblNextSvcRefresh.Content = step;
-                    var elapsed = DateTime.Now - _refreshStartTime;
-                    var estCompl = pctDone > .75 ? TimeSpan.FromMilliseconds((elapsed.TotalMilliseconds * (1 / pctDone)) - elapsed.TotalMilliseconds) : TimeSpan.MaxValue;
-                    string estString = pctDone > .75 ? " Est. Remaining Time: " + String.Format("{0:00}:{1:00}:{2:00}", estCompl.Hours, estCompl.Minutes, estCompl.Seconds) : "";
-                    lblSvcActivity.Content = "Refresh Running... Elapsed Time: " + String.Format("{0:00}:{1:00}:{2:00}",elapsed.Hours,elapsed.Minutes,elapsed.Seconds)+estString
-                        ;
+                    refreshProgress.Value = pctDone;
                 }));
             }
         }
@@ -522,6 +551,7 @@ namespace MediaBrowserService
                         _hasHandle = _mutex.WaitOne(5000, false);
                         if (_hasHandle == false)
                         {
+                            if (App.Args.Length > 0 && App.Args[0].ToLower() == "/refresh") MBServiceController.SendCommandToService(IPCCommands.Refresh); //send on command
                             _forceClose = true;
                             this.Close(); //another instance exists
                             return;
@@ -544,24 +574,34 @@ namespace MediaBrowserService
                     RefreshInterface();
                     lblSinceDate.Content = "Since: "+_startTime;
                     CoreCommunications.StartListening(); //start listening for commands from core/configurator
-                    if (Kernel.Instance.ConfigData.UseSQLImageCache)
-                    {
-                        //start the image server
-                        Logger.ReportInfo("Starting SQL Image server on port: " + imagePort);
-                        imageServer = new ImageCacheProxy(imagePort, 10);
-                        imageServer.Start();
-                    }
+                    //if (Kernel.Instance.ConfigData.UseSQLImageCache)
+                    //{
+                    //    //start the image server
+                    //    Logger.ReportInfo("Starting SQL Image server on port: " + imagePort);
+                    //    imageServer = new ImageCacheProxy(imagePort, 10);
+                    //    imageServer.Start();
+                    //}
                     Logger.ReportInfo("Service Started");
                     _mainLoop = Async.Every(60 * 1000, () => MainIteration()); //repeat every minute
+
+                    if (App.Args.Length > 0 && App.Args[0].ToLower() == "/refresh") RefreshNow(); //kick off refresh if requested
                 }
-                catch  //some sort of error - release
+                catch (Exception e) //some sort of error - release
                 {
                     if (_hasHandle)
                     {
                         _mutex.ReleaseMutex();
                     }
+                    Logger.ReportException("Error initializing service.", e);
+                    _forceClose = true;
+                    this.Close();
                 }
             }
+        }
+
+        public void RefreshNow()
+        {
+            btnRefresh_Click(this, null);
         }
 
         public void ForceRebuild()
@@ -580,6 +620,7 @@ namespace MediaBrowserService
                 AllowSlowProviderOption = true,
                 AllowCancel = false
             };
+
 
             //kick off a manual refresh on a high-priority thread
             Thread manual = new Thread(new ThreadStart(() =>
@@ -605,7 +646,7 @@ namespace MediaBrowserService
                 return; //get out of here fast
             }
 
-            var verylate = (_config.LastFullRefresh.Date <= DateTime.Now.Date.AddDays(-(_config.FullRefreshInterval * 3)) && _firstIteration);
+            var verylate = false; // taking this out because starting a refresh on an MB start can cause a lot of conflicts (_config.LastFullRefresh.Date <= DateTime.Now.Date.AddDays(-(_config.FullRefreshInterval * 3)) && _firstIteration);
             var overdue = _config.LastFullRefresh.Date <= DateTime.Now.Date.AddDays(-(_config.FullRefreshInterval));
 
             _firstIteration = false; //re set this so an interval of 0 doesn't keep firing us off
@@ -648,14 +689,16 @@ namespace MediaBrowserService
                 notifyIcon.ContextMenu.MenuItems["refresh"].Enabled = false;
                 notifyIcon.ContextMenu.MenuItems["exit"].Enabled = false;
                 notifyIcon.ContextMenu.MenuItems["refresh"].Text = "Refresh Running...";
-                Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/MediaBrowserService;component/MBServiceRefresh.ico")).Stream;
-                notifyIcon.Icon = new System.Drawing.Icon(iconStream);
+                //Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/MediaBrowserService;component/MBServiceRefresh.ico")).Stream;
+                notifyIcon.Icon = RefreshIcons[0];
                 lblNextSvcRefresh.Content = "";
             }));
 
             bool onSchedule = (!force && (DateTime.Now.Hour == _config.FullRefreshPreferredHour));
 
             Logger.ReportInfo("Full Refresh Started");
+
+            refreshElapsed = Async.Every(1000, UpdateRefreshElapsed);
 
             using (new Profiler(Kernel.Instance.GetString("FullRefreshProf")))
             {
@@ -705,7 +748,6 @@ namespace MediaBrowserService
                     }
 
                     MBServiceController.SendCommandToCore(IPCCommands.ReloadItems);
-                    Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(UpdateStatus));
 
                 }
                 catch (Exception ex)
@@ -715,6 +757,9 @@ namespace MediaBrowserService
                 }
                 finally
                 {
+                    Kernel.Instance.ReLoadRoot(); // re-dump this to stay clean
+                    refreshElapsed.Change(-1,0); //kill the progress timer
+                    _refreshRunning = false;
                     Logger.ReportInfo("Full Refresh Finished");
                     Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
                     {
@@ -722,22 +767,25 @@ namespace MediaBrowserService
                         refreshProgress.Visibility = Visibility.Hidden;
                         btnCancelRefresh.Visibility = Visibility.Hidden;
                         gbManual.IsEnabled = true;
+                        refreshElapsed = null;
                         notifyIcon.ContextMenu.MenuItems["exit"].Enabled = true;
                         notifyIcon.ContextMenu.MenuItems["refresh"].Enabled = true;
                         notifyIcon.ContextMenu.MenuItems["refresh"].Text = "Refresh Now";
                         Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/MediaBrowserService;component/MBService.ico")).Stream;
                         notifyIcon.Icon = new System.Drawing.Icon(iconStream);
+                        UpdateStatus();
                     }));
-                    Kernel.Instance.ReLoadRoot(); // re-dump this to stay clean
-                    _refreshRunning = false;
 
                     if (onSchedule)
                     {
                         ClearLogFiles(Kernel.Instance.ConfigData.LogFileRetentionDays);
                         if (_config.SleepAfterScheduledRefresh)
                         {
-                            Logger.ReportInfo("Putting computer to sleep...");
-                            System.Windows.Forms.Application.SetSuspendState(System.Windows.Forms.PowerState.Suspend, true, false);
+                            Async.Queue("Sleep After Refresh", () =>
+                            {
+                                Logger.ReportInfo("Putting computer to sleep...");
+                                System.Windows.Forms.Application.SetSuspendState(System.Windows.Forms.PowerState.Suspend, true, false);
+                            }, 10000);
                         }
                     }
                 }
@@ -747,10 +795,26 @@ namespace MediaBrowserService
         bool FullRefresh(AggregateFolder folder, MetadataRefreshOptions options, ServiceRefreshOptions manualOptions)
         {
             int phases = manualOptions.AnyImageOptionsSelected || manualOptions.MigrateOption ? 3 : 2;
-            double totalIterations = folder.AllRecursiveChildren.Count() * phases;
+            double totalIterations = 0;
+            UpdateProgress("Determining Library Size", 0);
+            //this will trap any circular references in the library tree
+            try
+            {
+                Async.RunWithTimeout(() => { totalIterations = folder.AllRecursiveChildren.Count() * phases; }, 600000);
+            }
+            catch (TimeoutException)
+            {
+                Logger.ReportError("ERROR DURING REFRESH.  Timed out attempting to retrieve count of all items.  Most likely there is a circular reference in your library.  Look for *.lnk files that might be pointing back to a parent of the folder that contatians that link.");
+                _config.RefreshFailed = true;
+                _config.Save();
+                return false;
+            }
+            
             if (totalIterations == 0) return true; //nothing to do
 
             int currentIteration = 0;
+
+            UpdateProgress("Validating Root", 0);
 
             folder.RefreshMetadata(options);
 
@@ -792,7 +856,6 @@ namespace MediaBrowserService
                         //test
                         //throw new InvalidOperationException("Test Error...");
                     }
-                    else Logger.ReportVerbose("Not refreshing " + item.Name + " again.");
                 })) return false;
             }
 
@@ -814,9 +877,8 @@ namespace MediaBrowserService
                         {
                             if (manualOptions.IncludeImagesOption) //main images
                             {
-                                ThumbSize s = item.Parent != null ? item.Parent.ThumbDisplaySize : new ThumbSize(0, 0);
-                                Logger.ReportInfo("Caching all images for " + item.Name + ". Stored primary image size: " + s.Width + "x" + s.Height);
-                                item.ReCacheAllImages(s);
+                                Logger.ReportInfo("Caching all images for " + item.Name );
+                                item.ReCacheAllImages();
                             }
                             if (manualOptions.MigrateOption) //migrate main images
                             {
@@ -1027,7 +1089,7 @@ namespace MediaBrowserService
             {
                 Logger.ReportInfo("Migrating playstate for: " + item.Name);
                 status.Id = item.Id;
-                status.Save();
+                Kernel.Instance.SavePlayState(item, status);
             }
         }
 

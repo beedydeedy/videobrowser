@@ -150,7 +150,7 @@ namespace MBTrailers {
         {
             get
             {
-                return new Version("2.3.2.0");
+                return new Version("2.6.0.0");
             }
         }
 
@@ -158,7 +158,7 @@ namespace MBTrailers {
         {
             get
             {
-                return new Version("2.3.2.0");
+                return new Version("2.6.0.0");
             }
         }
 

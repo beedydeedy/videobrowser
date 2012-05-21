@@ -120,14 +120,128 @@ namespace MediaBrowser.Library {
             }
         }
 
+        public void ResetRunTime()
+        {
+            this.runtime = null;
+            this.runtimestr = null;
+            FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
+        }
+
+        protected int? runtime;
+        public int RunningTime
+        {
+            get
+            {
+                if (runtime == null)
+                {
+                    runtime = 0;
+                    var episode = baseItem as Episode;
+                    if (episode != null)
+                    {
+                        runtime = episode.RunTime > 0 ? episode.RunTime : this.MediaInfo.RunTime;
+                    }
+                    else
+                    {
+                        var show = baseItem as IShow;
+                        if (show != null)
+                        {
+                            runtime = show.RunningTime == null ? this.MediaInfo.RunTime : show.RunningTime.Value;
+                        }
+                        else
+                        {
+                            var folder = baseItem as Folder;
+                            if (folder != null)
+                            {
+                                //this might take a bit...
+                                Async.Queue("runtime calc", () =>
+                                {
+                                    runtime = folder.RunTime;
+                                    FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
+                                });
+                            }
+                        }
+                    }
+                }
+                return runtime == null ? 0 : runtime.Value;
+            }
+        }
+
+        protected string runtimestr;
         public string RunningTimeString {
             get {
-                string runtime = "";
-                var show = baseItem as IShow;
-                if (show != null) {
-                    runtime = show.RunningTime==null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                if (runtimestr == null)
+                {
+                    var episode = baseItem as Episode;
+                    if (episode != null)
+                    {
+                        runtimestr = episode.RunTime > 0 ? episode.RunTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr") : this.MediaInfo.RuntimeString;
+                    }
+                    else
+                    {
+                        var show = baseItem as IShow;
+                        if (show != null)
+                        {
+                            runtimestr = show.RunningTime == null ? this.MediaInfo.RuntimeString : show.RunningTime.ToString() + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                        }
+                        else
+                        {
+                            var folder = baseItem as Folder;
+                            if (folder != null)
+                            {
+                                //this might take a bit...
+                                Async.Queue("runningtimestr calc", () =>
+                                {
+                                    int totalMinutes = folder.RunTime;
+                                    if (totalMinutes > 0)
+                                    {
+                                        if (totalMinutes <= 60)
+                                        {
+                                            runtimestr = totalMinutes + " " + Kernel.Instance.StringData.GetString("MinutesStr");
+                                        }
+                                        else
+                                        {
+                                            TimeSpan ts = TimeSpan.FromMinutes(totalMinutes);
+                                            runtimestr = string.Format("{0} {2} {1} {3}", (int)ts.TotalHours, ts.Minutes, Kernel.Instance.StringData.GetString("HoursStr"), Kernel.Instance.StringData.GetString("MinutesStr"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        runtimestr = "";
+                                    }
+
+                                    FirePropertiesChanged("RunningTime", "RunningTimeString", "EndTime", "EndTimeString");
+                                });
+                            }
+                        }
+                    }
                 }
-                return runtime;
+                return runtimestr == null ? "" : runtimestr;
+            }
+        }
+
+        public string EndTimeString
+        {
+            get
+            {
+                var endtime = "";
+                if (this.RunningTime > 0)
+                {
+                    endtime = Localization.LocalizedStrings.Instance.GetString("EndsStr") + " " + this.EndTime.ToShortTimeString();
+                }
+                return endtime;
+            }
+        }
+
+        public DateTime EndTime
+        {
+            get
+            {
+                DateTime endtime = DateTime.MinValue;
+                if (this.RunningTime > 0)
+                {
+                    endtime = (DateTime.Now + TimeSpan.FromMinutes(this.RunningTime));
+                }
+                return endtime;
             }
         }
 
@@ -213,7 +327,7 @@ namespace MediaBrowser.Library {
 
                     List<Actor> actors = new List<Actor>();
 
-                    var show = baseItem as Show;
+                    var show = baseItem as IShow;
                     if (show != null)
                     {
 
@@ -316,9 +430,16 @@ namespace MediaBrowser.Library {
             {
                 List<string> studios = null;
                 var show = baseItem as IShow;
-                if (show != null && show.Studios != null)
+                if (show != null) 
                 {
-                    studios = show.Studios;
+                    if (show.Studios != null)
+                        studios = show.Studios;
+                    else
+                        if (baseItem is Episode)
+                            studios = (baseItem as Episode).OurSeries.Studios;
+                        else
+                            if (baseItem is Season)
+                                studios = (baseItem as Season).OurSeries.Studios;
                 }
 
                 return studios ?? new List<string>();
