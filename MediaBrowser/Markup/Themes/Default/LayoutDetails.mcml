@@ -256,7 +256,7 @@
                   <FlowLayout Orientation="Horizontal" AllowWrap="false" Spacing="25,0"/>
                 </Layout>
                 <Divider>
-                  <Text Content="â—" Font="font://f:MM_GenreFont" Color="color://s:FontColorMedium" Alpha="0.6"  />
+                  <Text Content="●" Font="font://f:MM_GenreFont" Color="color://s:FontColorMedium" Alpha="0.6"  />
                 </Divider>
                 <Content>
                   <gb:GenreButton Text="[RepeatedItem!cor:String]"
