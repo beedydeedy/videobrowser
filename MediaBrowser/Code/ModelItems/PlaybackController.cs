@@ -307,7 +307,7 @@ namespace MediaBrowser
                     return;
                 }
             }
-            Logger.ReportVerbose("Property: " + property);
+            
             // protect against really agressive calls
             if (property == "Position")
             {
