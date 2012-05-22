@@ -38,12 +38,12 @@ namespace MediaBrowser.Library.Playables
             CurrentFileIndex = args.CurrentFileIndex;
             CurrentMediaIndex = args.CurrentMediaIndex;
 
+            PlayState = PlayableItemPlayState.Playing;
+
             if (EnablePlayStateSaving)
             {
                 SaveProgressIntoPlaystates(controller, args);
             }
-
-            PlayState = PlayableItemPlayState.Playing;
 
             if (_Progress != null)
             {
@@ -55,7 +55,7 @@ namespace MediaBrowser.Library.Playables
                 {
                     Logger.ReportException("PlayableItem Progress event listener had an error: ", ex);
                 }
-            }
+            } 
         }
         #endregion
 
@@ -720,6 +720,7 @@ namespace MediaBrowser.Library.Playables
         {
             while (PlayState != state)
             {
+                Logger.ReportVerbose("Waiting for {0} to reach {1} state", DisplayName, state.ToString());
                 Thread.Sleep(1000);
             }
         }
