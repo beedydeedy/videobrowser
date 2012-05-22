@@ -45,7 +45,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             _StatusRequestClient.DownloadStringCompleted -= statusRequestCompleted;
             _StatusRequestClient.DownloadStringCompleted += statusRequestCompleted;
-
+            
             _MonitorPlayback = true;
         }
 
@@ -83,7 +83,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
                     catch (Exception ex)
                     {
                         _ConsecutiveFailedHttpRequests++;
-                        Logger.ReportException("Error connecting to MPC status url", ex);
+                        Logger.ReportException("Error connecting to MPC-HC web interface at: " + StatusUrl, ex);
 
                         // Try to detect MPC hanging after closing
                         // If there are several failed consecutive requests then kill the process
@@ -110,7 +110,9 @@ namespace MediaBrowser.Library.Playables.MpcHc
             _ConsecutiveFailedHttpRequests = 0;
 
             string result = e.Result;
-            
+
+            Logger.ReportVerbose("Response received from MPC-HC web interface: " + result);
+
             // Sample result
             // OnStatus('test.avi', 'Playing', 5292, '00:00:05', 1203090, '00:20:03', 0, 100, 'C:\test.avi')
             // 5292 = position in ms
