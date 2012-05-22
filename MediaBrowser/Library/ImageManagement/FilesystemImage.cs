@@ -27,7 +27,7 @@ namespace MediaBrowser.Library.ImageManagement {
         protected override bool ImageOutOfDate(DateTime date) {
             var info = new System.IO.FileInfo(Path);
             //make sure we have valid date info because some systems seem to have troubles with this
-            DateTime now = DateTime.UtcNow;
+            DateTime now = DateTime.UtcNow + TimeSpan.FromHours(1);  //fudge to account for different system times
             if (info.CreationTimeUtc > now || info.LastWriteTimeUtc > now )
             {
                 //something goofy with these dates...
