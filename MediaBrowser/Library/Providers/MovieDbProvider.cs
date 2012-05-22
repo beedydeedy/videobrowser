@@ -261,7 +261,7 @@ namespace MediaBrowser.Library.Providers
                             var response = Helper.ToJsonDict(Helper.FetchJson(url3));
                             if (response != null)
                             {
-                                Dictionary<string, object> altTitles = (Dictionary<string, object>)response["Titles"];
+                                Dictionary<string, object> altTitles = (Dictionary<string, object>)response["titles"];
                                 foreach (var title in altTitles)
                                 {
                                     string t = GetComparableName(((Dictionary<string, string>)title.Value)["title"]);
