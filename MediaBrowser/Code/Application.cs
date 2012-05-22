@@ -693,8 +693,6 @@ namespace MediaBrowser
 
                     Play(playable);
 
-                    playable.WaitForPlayState(PlayableItemPlayState.Stopped);
-
                     if (Directory.Exists(path))
                     {
                         Directory.Delete(path, true);
@@ -1876,7 +1874,7 @@ namespace MediaBrowser
             if (IsExternalWmcApplicationPlaying)
             {
                 Logger.ReportVerbose("Stopping playback from another wmc application, such as live tv");
-                StopExternalWmcApplication();
+                StopExternalWmcApplication(false);
             }
 
             if (waitForStop)
@@ -1892,9 +1890,27 @@ namespace MediaBrowser
             }
         }
 
-        public void StopExternalWmcApplication()
+        /// <summary>
+        /// Stops video playing from other applications, such as live tv
+        /// </summary>
+        public void StopExternalWmcApplication(bool waitForStop)
         {
-            PlaybackControllerHelper.Stop();
+            if (IsExternalWmcApplicationPlaying)
+            {
+                PlaybackControllerHelper.Stop();
+            }
+
+            if (waitForStop)
+            {
+                int i = 0;
+
+                // Try to wait for playback to completely stop, but don't get hung up too long
+                while (IsExternalWmcApplicationPlaying && i < 10)
+                {
+                    System.Threading.Thread.Sleep(250);
+                    i++;
+                }
+            }
         }
 
         /// <summary>
