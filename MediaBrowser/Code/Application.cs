@@ -693,6 +693,9 @@ namespace MediaBrowser
 
                     Play(playable);
 
+                    // The play method runs asynchronously, so give it a second to ensure it's at least started.
+                    System.Threading.Thread.Sleep(1000);
+
                     if (Directory.Exists(path))
                     {
                         Directory.Delete(path, true);
@@ -1578,11 +1581,11 @@ namespace MediaBrowser
         /// <param name="originalBaseItem">The original item that was played in the UI</param>
         internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
         {
-            if (originalBaseItem != null)
+            if (originalBaseItem != null && Kernel.Instance.PrePlayProcesses.Any())
             {
                 Item item = ItemFactory.Instance.Create(originalBaseItem);
 
-                bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+                bool playIntros = playableItem.PlayMethod == PlayMethod.UIMenu && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
 
                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
 
