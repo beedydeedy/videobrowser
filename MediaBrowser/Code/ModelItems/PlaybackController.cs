@@ -98,6 +98,10 @@ namespace MediaBrowser
                         exp.GoToFullScreen();
                     }
                 }
+                else
+                {
+                    Logger.ReportWarning("PlayPlayableItem: MediaExperience is null");
+                }
             }
             catch (Exception ex)
             {
@@ -281,10 +285,17 @@ namespace MediaBrowser
             {
                 MediaTransport transport = exp.Transport;
 
-                transport.PropertyChanged -= MediaTransport_PropertyChanged;
-                transport.PropertyChanged += MediaTransport_PropertyChanged;
+                if (transport != null)
+                {
+                    transport.PropertyChanged -= MediaTransport_PropertyChanged;
+                    transport.PropertyChanged += MediaTransport_PropertyChanged;
 
-                HandlePropertyChange(env, exp, transport, property);
+                    HandlePropertyChange(env, exp, transport, property);
+                }
+                else
+                {
+                    Logger.ReportWarning("MediaCenterEnvironment_PropertyChanged: MediaTransport is null");
+                }
             }
             else
             {
