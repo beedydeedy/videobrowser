@@ -6,7 +6,7 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Threading;
 
 namespace MediaBrowser.Code.ModelItems
 {
@@ -79,31 +79,34 @@ namespace MediaBrowser.Code.ModelItems
             // Set the current PlayableItem based on the incoming args
             CurrentPlayableItemId = args.Item == null ? Guid.Empty : args.Item.Id;
 
-            NormalizeEventProperties(args);
-
-            PlayableItem playable = args.Item;
-
-            // Update PlayableItem progress event
-            // Only report progress to the PlayableItem if the position is 0, because the player may start with an initial position of 0, or reset to 0 when stopping
-            // This could end up blowing away resume data
-            if (playable != null && args.Position > 0)
+            Async.Queue("BasePlaybackController OnProgress", () =>
             {
-                // Fire it's progress event handler
-                playable.OnProgress(this, args);
-            }
+                NormalizeEventProperties(args);
 
-            // Fire PlaybackController progress event
-            if (_Progress != null)
-            {
-                try
+                PlayableItem playable = args.Item;
+
+                // Update PlayableItem progress event
+                // Only report progress to the PlayableItem if the position is 0, because the player may start with an initial position of 0, or reset to 0 when stopping
+                // This could end up blowing away resume data
+                if (playable != null && args.Position > 0)
                 {
-                    _Progress(this, args);
+                    // Fire it's progress event handler
+                    playable.OnProgress(this, args);
                 }
-                catch (Exception ex)
+
+                // Fire PlaybackController progress event
+                if (_Progress != null)
                 {
-                    Logger.ReportException("PlaybackController.Progress event listener had an error: ", ex);
+                    try
+                    {
+                        _Progress(this, args);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.ReportException("PlaybackController.Progress event listener had an error: ", ex);
+                    }
                 }
-            }
+            }); 
         }
 
         /// <summary>

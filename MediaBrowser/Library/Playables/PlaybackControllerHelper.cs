@@ -247,6 +247,7 @@ namespace MediaBrowser.Library.Playables
 
         public static bool CallPlayMedia(MediaCenterEnvironment mediaCenterEnvironment, Microsoft.MediaCenter.MediaType type, object media, bool queue)
         {
+            Logger.ReportVerbose("Calling MediaCenterEnvironment.PlayMedia");
             return mediaCenterEnvironment.PlayMedia(type, media, queue);
         }
 
@@ -398,27 +399,29 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         public static MediaExperience GetMediaExperienceUsingReflection()
         {
-            var mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+            MediaCenterEnvironment env = AddInHost.Current.MediaCenterEnvironment;
+
+            var mce = env.MediaExperience;
 
             // great window 7 has bugs, lets see if we can work around them 
             // http://mediacentersandbox.com/forums/thread/9287.aspx
             if (mce == null)
             {
                 System.Threading.Thread.Sleep(200);
-                mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+                mce = env.MediaExperience;
                 if (mce == null)
                 {
                     try
                     {
                         if (_CheckedMediaExperienceFIeldInfo == null)
                         {
-                            _CheckedMediaExperienceFIeldInfo = AddInHost.Current.MediaCenterEnvironment.GetType().GetField("_checkedMediaExperience", BindingFlags.NonPublic | BindingFlags.Instance);
+                            _CheckedMediaExperienceFIeldInfo = env.GetType().GetField("_checkedMediaExperience", BindingFlags.NonPublic | BindingFlags.Instance);
                         }
 
                         if (_CheckedMediaExperienceFIeldInfo != null)
                         {
-                            _CheckedMediaExperienceFIeldInfo.SetValue(AddInHost.Current.MediaCenterEnvironment, false);
-                            mce = AddInHost.Current.MediaCenterEnvironment.MediaExperience;
+                            _CheckedMediaExperienceFIeldInfo.SetValue(env, false);
+                            mce = env.MediaExperience;
                         }
 
                     }

@@ -658,63 +658,73 @@ namespace MediaBrowser
 
         public void DeleteMediaItem(Item Item)
         {
-            // Setup variables
-            MediaCenterEnvironment mce = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-            var msg = CurrentInstance.StringData("DeleteMediaDial");
-            var caption = CurrentInstance.StringData("DeleteMediaCapDial");
-
-            // Present dialog
-            DialogResult dr = mce.Dialog(msg, caption, DialogButtons.No | DialogButtons.Yes, 0, true);
-
-            if (dr == DialogResult.No)
+            // Need to put delete on a thread because the play process is asynchronous and
+            // we don't want to tie up the ui when we call sleep
+            Async.Queue("DeleteMediaItem", () =>
             {
-                mce.Dialog(CurrentInstance.StringData("NotDeletedDial"), CurrentInstance.StringData("NotDeletedCapDial"), DialogButtons.Ok, 0, true);
-                return;
-            }
+                // Setup variables
+                MediaCenterEnvironment mce = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
+                var msg = CurrentInstance.StringData("DeleteMediaDial");
+                var caption = CurrentInstance.StringData("DeleteMediaCapDial");
 
-            if (dr == DialogResult.Yes && this.Config.Advanced_EnableDelete == true
-                && this.Config.EnableAdvancedCmds == true)
-            {
-                Item parent = Item.PhysicalParent;
-                string path = Item.Path;
-                string name = Item.Name;
+                // Present dialog
+                DialogResult dr = mce.Dialog(msg, caption, DialogButtons.No | DialogButtons.Yes, 0, true);
 
-                try
+                if (dr == DialogResult.No)
                 {
-                    //play something innocuous to be sure the file we are trying to delete is not in the now playing window
-                    string DingFile = System.Environment.ExpandEnvironmentVariables("%WinDir%") + "\\Media\\Windows Recycle.wav";
+                    mce.Dialog(CurrentInstance.StringData("NotDeletedDial"), CurrentInstance.StringData("NotDeletedCapDial"), DialogButtons.Ok, 0, true);
+                    return;
+                }
 
-                    // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
-                    // us to delete the file we are trying to delete
-                    PlayableItem playable = PlayableItemFactory.Instance.CreateForInternalPlayer(new string[] { DingFile });
+                if (dr == DialogResult.Yes && this.Config.Advanced_EnableDelete == true
+                    && this.Config.EnableAdvancedCmds == true)
+                {
+                    Item parent = Item.PhysicalParent;
+                    string path = Item.Path;
+                    string name = Item.Name;
 
-                    playable.GoFullScreen = false;
-                    playable.RaiseGlobalPlaybackEvents = false;
-
-                    Play(playable);
-
-                    if (Directory.Exists(path))
+                    try
                     {
-                        Directory.Delete(path, true);
+                        //play something innocuous to be sure the file we are trying to delete is not in the now playing window
+                        string DingFile = System.Environment.ExpandEnvironmentVariables("%WinDir%") + "\\Media\\Windows Recycle.wav";
+
+                        // try and run the file regardless whether it exists or not.  Ideally we want it to play but if we can't find it, it will still put MC in a state that allows
+                        // us to delete the file we are trying to delete
+                        PlayableItem playable = PlayableItemFactory.Instance.CreateForInternalPlayer(new string[] { DingFile });
+
+                        playable.GoFullScreen = false;
+                        playable.RaiseGlobalPlaybackEvents = false;
+                        playable.ShowNowPlayingView = false;
+
+                        Play(playable);
+
+                        // The play method runs asynchronously, so give it a second to ensure it's at least started.
+                        System.Threading.Thread.Sleep(1000);
+
+                        if (Directory.Exists(path))
+                        {
+                            Directory.Delete(path, true);
+                        }
+                        else if (File.Exists(path))
+                        {
+                            File.Delete(path);
+                        }
                     }
-                    else if (File.Exists(path))
+                    catch (IOException)
                     {
-                        File.Delete(path);
+                        mce.Dialog(CurrentInstance.StringData("NotDelInvalidPathDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
                     }
+                    catch (Exception)
+                    {
+                        mce.Dialog(CurrentInstance.StringData("NotDelUnknownDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
+                    }
+                    DeleteNavigationHelper(parent);
+                    this.Information.AddInformation(new InfomationItem("Deleted media item: " + name, 2));
                 }
-                catch (IOException)
-                {
-                    mce.Dialog(CurrentInstance.StringData("NotDelInvalidPathDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
-                }
-                catch (Exception)
-                {
-                    mce.Dialog(CurrentInstance.StringData("NotDelUnknownDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
-                }
-                DeleteNavigationHelper(parent);
-                this.Information.AddInformation(new InfomationItem("Deleted media item: " + name, 2));
-            }
-            else
-                mce.Dialog(CurrentInstance.StringData("NotDelTypeDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
+                else
+                    mce.Dialog(CurrentInstance.StringData("NotDelTypeDial"), CurrentInstance.StringData("DelFailedDial"), DialogButtons.Ok, 0, true);
+            
+            });
         }
 
 
@@ -1578,11 +1588,11 @@ namespace MediaBrowser
         /// <param name="originalBaseItem">The original item that was played in the UI</param>
         internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
         {
-            if (originalBaseItem != null)
+            if (originalBaseItem != null && Kernel.Instance.PrePlayProcesses.Any())
             {
                 Item item = ItemFactory.Instance.Create(originalBaseItem);
 
-                bool playIntros = playableItem.PlayMethod != PlayMethod.RemotePlayButton && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+                bool playIntros = playableItem.PlayMethod == PlayMethod.UIMenu && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
 
                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
 
@@ -1874,7 +1884,7 @@ namespace MediaBrowser
             if (IsExternalWmcApplicationPlaying)
             {
                 Logger.ReportVerbose("Stopping playback from another wmc application, such as live tv");
-                StopExternalWmcApplication();
+                StopExternalWmcApplication(false);
             }
 
             if (waitForStop)
@@ -1882,17 +1892,35 @@ namespace MediaBrowser
                 int i = 0;
 
                 // Try to wait for playback to completely stop, but don't get hung up too long
-                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 5)
+                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 10)
                 {
-                    System.Threading.Thread.Sleep(500);
+                    System.Threading.Thread.Sleep(250);
                     i++;
                 }
             }
         }
 
-        public void StopExternalWmcApplication()
+        /// <summary>
+        /// Stops video playing from other applications, such as live tv
+        /// </summary>
+        public void StopExternalWmcApplication(bool waitForStop)
         {
-            PlaybackControllerHelper.Stop();
+            if (IsExternalWmcApplicationPlaying)
+            {
+                PlaybackControllerHelper.Stop();
+            }
+
+            if (waitForStop)
+            {
+                int i = 0;
+
+                // Try to wait for playback to completely stop, but don't get hung up too long
+                while (IsExternalWmcApplicationPlaying && i < 10)
+                {
+                    System.Threading.Thread.Sleep(250);
+                    i++;
+                }
+            }
         }
 
         /// <summary>

@@ -38,12 +38,12 @@ namespace MediaBrowser.Library.Playables
             CurrentFileIndex = args.CurrentFileIndex;
             CurrentMediaIndex = args.CurrentMediaIndex;
 
+            PlayState = PlayableItemPlayState.Playing;
+
             if (EnablePlayStateSaving)
             {
                 SaveProgressIntoPlaystates(controller, args);
             }
-
-            PlayState = PlayableItemPlayState.Playing;
 
             if (_Progress != null)
             {
@@ -55,7 +55,7 @@ namespace MediaBrowser.Library.Playables
                 {
                     Logger.ReportException("PlayableItem Progress event listener had an error: ", ex);
                 }
-            }
+            } 
         }
         #endregion
 
@@ -250,6 +250,13 @@ namespace MediaBrowser.Library.Playables
         /// Determines if global pre/post play events should fire
         /// </summary>
         public bool RaiseGlobalPlaybackEvents { get { return _RaiseGlobalPlaybackEvents; } set { _RaiseGlobalPlaybackEvents = value; } }
+
+        private bool _ShowNowPlayingView = true;
+        /// <summary>
+        /// Determines whether or not the PlaybackController should show the now playing view during playback
+        /// Note that this depends on PlaybackController implementation and support
+        /// </summary>
+        public bool ShowNowPlayingView { get { return _ShowNowPlayingView; } set { _ShowNowPlayingView = value; } }
 
         private bool _GoFullScreen = true;
         /// <summary>
@@ -530,7 +537,7 @@ namespace MediaBrowser.Library.Playables
                 while (PlaybackController.IsPlaying)
                 {
                     Logger.ReportVerbose("Still waiting for {0} to stop", PlaybackController.ControllerName); 
-                    System.Threading.Thread.Sleep(500);
+                    System.Threading.Thread.Sleep(250);
                 }
             }
 
@@ -720,6 +727,7 @@ namespace MediaBrowser.Library.Playables
         {
             while (PlayState != state)
             {
+                Logger.ReportVerbose("Waiting for {0} to reach {1} state", DisplayName, state.ToString());
                 Thread.Sleep(1000);
             }
         }

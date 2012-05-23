@@ -67,36 +67,37 @@ namespace MediaBrowser
 
             try
             {
+                // Attach event handler to MediaCenterEnvironment
+                // We need this because if you press stop on a dvd menu without ever playing, Transport.PropertyChanged will never fire
+                mediaCenterEnvironment.PropertyChanged -= MediaCenterEnvironment_PropertyChanged;
+                mediaCenterEnvironment.PropertyChanged += MediaCenterEnvironment_PropertyChanged;
+
                 if (!CallPlayMediaForPlayableItem(mediaCenterEnvironment, playable))
                 {
+                    mediaCenterEnvironment.PropertyChanged -= MediaCenterEnvironment_PropertyChanged;
+
                     OnErrorPlayingItem(playable, "PlayMedia returned false");
                     return;
                 }
 
-                MediaExperience mediaExperience;
+                MediaExperience exp = mediaCenterEnvironment.MediaExperience;
 
-                if (playable.GoFullScreen)
+                if (exp != null)
                 {
-                    mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
+                    MediaTransport transport = exp.Transport;
 
-                    if (!mediaExperience.IsFullScreen)
+                    if (transport != null)
                     {
-                        mediaExperience.GoToFullScreen();
+                        transport.PropertyChanged -= MediaTransport_PropertyChanged;
+                        transport.PropertyChanged += MediaTransport_PropertyChanged;
+                    }
+
+                    if (playable.GoFullScreen)
+                    {
+                        Logger.ReportVerbose("Going fullscreen");
+                        exp.GoToFullScreen();
                     }
                 }
-
-                // Attach event handler to MediaCenterEnvironment
-                // We need this because if you press stop on a dvd menu without ever playing, Transport property changed will never fire
-                mediaCenterEnvironment.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
-                mediaCenterEnvironment.PropertyChanged += mediaCenterEnvironment_PropertyChanged;
-
-                // Get this again as I've seen issues where it gets reset after the above call
-                mediaExperience = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
-
-                // Attach event handler to MediaTransport
-                MediaTransport transport = mediaExperience.Transport;
-                transport.PropertyChanged -= MediaTransport_PropertyChanged;
-                transport.PropertyChanged += MediaTransport_PropertyChanged;
             }
             catch (Exception ex)
             {
@@ -111,7 +112,6 @@ namespace MediaBrowser
         {
             if (PlaybackControllerHelper.UseLegacyApi(playable))
             {
-
                 bool success = CallPlayMediaLegacy(mediaCenterEnvironment, playable);
                 _CurrentMediaCollection = null;
                 return success;
@@ -179,16 +179,35 @@ namespace MediaBrowser
                 file = playable.FilesFormattedForPlayer.First();
             }
 
+            Logger.ReportVerbose("PlaybackControllerHelper.GetCurrentMediaType: " + PlaybackControllerHelper.GetCurrentMediaType().ToString());
+
+            // If we're playing a dvd and the last item played was a MediaCollection, we need to make sure the MediaCollection has
+            // fully cleared out of the player or there will be quirks such as ff/rew remote buttons not working
+            if (playable.HasMediaItems)
+            {
+                Video video = playable.MediaItems.First() as Video;
+
+                Microsoft.MediaCenter.Extensibility.MediaType lastMediaType = PlaybackControllerHelper.GetCurrentMediaType();
+
+                if (video != null && video.MediaType == Library.MediaType.DVD && (lastMediaType == Microsoft.MediaCenter.Extensibility.MediaType.MediaCollection || lastMediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown))
+                {
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
+
             if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false))
             {
                 return false;
             }
 
-            long position = playable.StartPositionTicks;
+            long startPosition = playable.StartPositionTicks;
 
-            if (position > 0)
+            if (startPosition > 0)
             {
-                mediaCenterEnvironment.MediaExperience.Transport.Position = new TimeSpan(position);
+                TimeSpan startPos = TimeSpan.FromTicks(startPosition);
+
+                Logger.ReportVerbose("Seeking to " + startPos.ToString());
+                mediaCenterEnvironment.MediaExperience.Transport.Position = startPos;
             }
 
             return true;
@@ -250,15 +269,20 @@ namespace MediaBrowser
         /// <summary>
         /// Handles the MediaCenterEnvironment.PropertyChanged event
         /// </summary>
-        protected void mediaCenterEnvironment_PropertyChanged(IPropertyObject sender, string property)
+        protected void MediaCenterEnvironment_PropertyChanged(IPropertyObject sender, string property)
         {
+            Logger.ReportVerbose("MediaCenterEnvironment_PropertyChanged: " + property);
+
             MediaCenterEnvironment env = sender as MediaCenterEnvironment;
 
-            MediaExperience mce = env.MediaExperience;
+            MediaExperience exp = env.MediaExperience;
 
-            MediaTransport transport = mce.Transport;
+            MediaTransport transport = exp.Transport;
 
-            HandlePropertyChange(env, mce, transport, property);
+            transport.PropertyChanged -= MediaTransport_PropertyChanged;
+            transport.PropertyChanged += MediaTransport_PropertyChanged;
+
+            HandlePropertyChange(env, exp, transport, property);
         }
 
         /// <summary>
@@ -266,16 +290,18 @@ namespace MediaBrowser
         /// </summary>
         protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
+            Logger.ReportVerbose("MediaTransport_PropertyChanged: " + property);
+
             MediaTransport transport = sender as MediaTransport;
 
             MediaCenterEnvironment env = AddInHost.Current.MediaCenterEnvironment;
 
-            MediaExperience mce = env.MediaExperience;
+            MediaExperience exp = env.MediaExperience;
 
-            HandlePropertyChange(env, mce, transport, property);
+            HandlePropertyChange(env, exp, transport, property);
         }
 
-        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, string property)
+        private void HandlePropertyChange(MediaCenterEnvironment env, MediaExperience exp, MediaTransport transport, string property)
         {
             PlayState state;
             long positionTicks = 0;
@@ -290,16 +316,23 @@ namespace MediaBrowser
             }
             catch (InvalidOperationException)
             {
-                state = mce.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
+                Logger.ReportVerbose("HandlePropertyChange was not able to access MediaTransport. Defaulting values.");
+                state = exp.MediaType == Microsoft.MediaCenter.Extensibility.MediaType.Unknown ? Microsoft.MediaCenter.PlayState.Undefined : Microsoft.MediaCenter.PlayState.Playing;
             }
 
+            bool playstateChanged = state != _CurrentPlayState;
+
             _CurrentPlayState = state;
+
+            // Determine if playback has stopped. Per MSDN documentation, Finished is no longer used with Windows 7
+            bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined;
 
             // Don't get tripped up at the initial state of Stopped with position 0
             if (!_HasStartedPlaying)
             {
-                if (state == Microsoft.MediaCenter.PlayState.Playing)
+                if (!isStopped)
                 {
+                    Logger.ReportVerbose("HandlePropertyChange has recognized that playback has started");
                     _HasStartedPlaying = true;
                 }
                 else
@@ -322,11 +355,8 @@ namespace MediaBrowser
 
             _LastTransportUpdateTime = DateTime.Now;
 
-            // Determine if playback has stopped. Per MSDN documentation, Finished is no longer used with Windows 7
-            bool isStopped = state == Microsoft.MediaCenter.PlayState.Finished || state == Microsoft.MediaCenter.PlayState.Stopped || state == Microsoft.MediaCenter.PlayState.Undefined;
-
             // Get metadata from player
-            MediaMetadata metadata = mce.MediaMetadata;
+            MediaMetadata metadata = exp.MediaMetadata;
 
             string metadataTitle = PlaybackControllerHelper.GetTitleOfCurrentlyPlayingMedia(metadata);
             long metadataDuration = PlaybackControllerHelper.GetDurationOfCurrentlyPlayingMedia(metadata);
@@ -336,9 +366,9 @@ namespace MediaBrowser
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
             OnProgress(eventArgs);
 
-            Application.CurrentInstance.ShowNowPlaying = true;
+            Application.CurrentInstance.ShowNowPlaying = eventArgs.Item == null ? true : eventArgs.Item.ShowNowPlayingView;
 
-            if (property == "PlayState")
+            if (playstateChanged)
             {
                 // Get the title from the PlayableItem, if it's available. Otherwise use MediaMetadata
                 string title = eventArgs.Item == null ? metadataTitle : (eventArgs.Item.HasMediaItems ? eventArgs.Item.MediaItems.ElementAt(eventArgs.CurrentMediaIndex).Name : eventArgs.Item.Files.ElementAt(eventArgs.CurrentFileIndex));
@@ -350,17 +380,17 @@ namespace MediaBrowser
 
             if (isStopped)
             {
-                HandleStoppedState(env, mce, transport, eventArgs);
+                HandleStoppedState(env, exp, transport, eventArgs);
             }
         }
 
         /// <summary>
         /// Handles a change of Playstate by firing various events and post play processes
         /// </summary>
-        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience mce, MediaTransport transport, PlaybackStateEventArgs e)
+        private void HandleStoppedState(MediaCenterEnvironment env, MediaExperience exp, MediaTransport transport, PlaybackStateEventArgs e)
         {
             // Stop listening to the events
-            env.PropertyChanged -= mediaCenterEnvironment_PropertyChanged;
+            env.PropertyChanged -= MediaCenterEnvironment_PropertyChanged;
             transport.PropertyChanged -= MediaTransport_PropertyChanged;
 
             // This will prevent us from getting in here twice after playback stops and calling post-play processes more than once.
@@ -368,7 +398,7 @@ namespace MediaBrowser
 
             _CurrentMediaCollection = null;
 
-            var mediaType = mce.MediaType;
+            var mediaType = exp.MediaType;
 
             // Check if internal wmc player is still playing, which could happen if the user launches live tv while playing something
             if (mediaType != Microsoft.MediaCenter.Extensibility.MediaType.TV)
@@ -510,10 +540,6 @@ namespace MediaBrowser
                 if (mediaType == Library.MediaType.BluRay)
                 {
                     yield return PlaybackControllerHelper.GetBluRayPath(file);
-                }
-                else if (mediaType == Library.MediaType.HDDVD || mediaType == Library.MediaType.ISO)
-                {
-                    yield return file;
                 }
 
                 yield return ShouldTranscode ? PlaybackControllerHelper.GetTranscodedPath(file) : file;
