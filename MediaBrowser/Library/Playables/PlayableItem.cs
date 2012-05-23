@@ -8,6 +8,7 @@ using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Playables
 {
@@ -430,6 +431,25 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
+        /// <summary>
+        /// Determines whether or not the PlayableItem has any video files
+        /// </summary>
+        public bool HasVideo
+        {
+            get
+            {
+                if (HasMediaItems)
+                {
+                    return MediaItems.Any(m => IsVideo(m));
+                }
+                else
+                {
+                    // File-based playback - use new api if there are any videos found
+                    return Files.Any(m => IsVideo(m));
+                }
+            }
+        }
+
         #region AddMedia
         public void AddMedia(string file)
         {
@@ -731,6 +751,45 @@ namespace MediaBrowser.Library.Playables
                 Thread.Sleep(1000);
             }
         }
+
+        public static bool IsVideo(Media media)
+        {
+            Video video = media as Video;
+
+            if (video != null)
+            {
+                // See if it has a known video type 
+                if (video.MediaType != MediaType.Unknown)
+                {
+                    return true;
+                }
+
+                // See if we can detect the first file as a video
+                if (IsVideo(video.Files.First(), video.MediaType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsVideo(string path)
+        {
+            return IsVideo(path, MediaTypeResolver.DetermineType(path));
+        }
+
+        public static bool IsVideo(string path, MediaType type)
+        {
+            // Assume video if type is not unknown
+            if (type != MediaType.Unknown || Helper.IsVideo(path))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
     }
 
     /// <summary>

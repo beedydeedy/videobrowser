@@ -392,7 +392,7 @@ namespace MediaBrowser.Code.ModelItems
                     // If we can pinpoint the current Media object, test that
                     if (media != null)
                     {
-                        return PlaybackControllerHelper.IsVideo(media);
+                        return PlayableItem.IsVideo(media);
                     }
                 }
                 else
@@ -402,11 +402,11 @@ namespace MediaBrowser.Code.ModelItems
                     // See if the current file is a video
                     if (!string.IsNullOrEmpty(currentFile))
                     {
-                        return PlaybackControllerHelper.IsVideo(currentFile);
+                        return PlayableItem.IsVideo(currentFile);
                     }
                 }
 
-                return PlaybackControllerHelper.HasVideo(playable);
+                return playable.HasVideo;
 
             }
         }

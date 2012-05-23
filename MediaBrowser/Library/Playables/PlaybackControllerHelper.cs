@@ -8,7 +8,6 @@ using System.Xml;
 using MediaBrowser.Library.Configuration;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter;
 using Microsoft.MediaCenter.Hosting;
@@ -44,64 +43,13 @@ namespace MediaBrowser.Library.Playables
                 return true;
             }
 
-            if (HasVideo(item))
+            if (item.HasVideo)
             {
                 return false;
             }
 
             // No videos found, use the legacy api
             return true;
-        }
-
-        public static bool HasVideo(PlayableItem item)
-        {
-            if (item.HasMediaItems)
-            {
-                return item.MediaItems.Any(m => IsVideo(m));
-            }
-            else
-            {
-                // File-based playback - use new api if there are any videos found
-                return item.Files.Any(m => IsVideo(m));
-            }
-        }
-
-        public static bool IsVideo(Media media)
-        {
-            Video video = media as Video;
-
-            if (video != null)
-            {
-                // See if it has a known video type 
-                if (video.MediaType != MediaType.Unknown)
-                {
-                    return true;
-                }
-
-                // See if we can detect the first file as a video
-                if (IsVideo(video.Files.First(), video.MediaType))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public static bool IsVideo(string path)
-        {
-            return IsVideo(path, MediaTypeResolver.DetermineType(path));
-        }
-
-        public static bool IsVideo(string path, MediaType type)
-        {
-            // Assume video if type is not unknown
-            if (type != MediaType.Unknown || Helper.IsVideo(path))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         /// <summary>
@@ -237,7 +185,7 @@ namespace MediaBrowser.Library.Playables
         
         public static Microsoft.MediaCenter.MediaType GetMediaType(PlayableItem playable)
         {
-            if (HasVideo(playable))
+            if (playable.HasVideo)
             {
                 return Microsoft.MediaCenter.MediaType.Video;
             }
