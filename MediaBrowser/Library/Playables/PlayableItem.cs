@@ -251,6 +251,13 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         public bool RaiseGlobalPlaybackEvents { get { return _RaiseGlobalPlaybackEvents; } set { _RaiseGlobalPlaybackEvents = value; } }
 
+        private bool _ShowNowPlayingView = true;
+        /// <summary>
+        /// Determines whether or not the PlaybackController should show the now playing view during playback
+        /// Note that this depends on PlaybackController implementation and support
+        /// </summary>
+        public bool ShowNowPlayingView { get { return _ShowNowPlayingView; } set { _ShowNowPlayingView = value; } }
+
         private bool _GoFullScreen = true;
         /// <summary>
         /// Determines whether or not the PlaybackController should go full screen upon beginning playback

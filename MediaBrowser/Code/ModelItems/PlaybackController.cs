@@ -366,7 +366,7 @@ namespace MediaBrowser
             // Only fire the progress handler while playback is still active, because once playback stops position will be reset to 0
             OnProgress(eventArgs);
 
-            Application.CurrentInstance.ShowNowPlaying = true;
+            Application.CurrentInstance.ShowNowPlaying = eventArgs.Item == null ? true : eventArgs.Item.ShowNowPlayingView;
 
             if (playstateChanged)
             {
