@@ -407,8 +407,8 @@ namespace MediaBrowser.Library.Playables
             // http://mediacentersandbox.com/forums/thread/9287.aspx
             if (mce == null)
             {
-                System.Threading.Thread.Sleep(200);
                 mce = env.MediaExperience;
+                
                 if (mce == null)
                 {
                     try

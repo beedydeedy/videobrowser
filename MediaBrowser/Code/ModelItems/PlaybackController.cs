@@ -80,7 +80,7 @@ namespace MediaBrowser
                     return;
                 }
 
-                MediaExperience exp = mediaCenterEnvironment.MediaExperience;
+                MediaExperience exp = mediaCenterEnvironment.MediaExperience ?? PlaybackControllerHelper.GetMediaExperienceUsingReflection();
 
                 if (exp != null)
                 {
@@ -90,6 +90,25 @@ namespace MediaBrowser
                     {
                         transport.PropertyChanged -= MediaTransport_PropertyChanged;
                         transport.PropertyChanged += MediaTransport_PropertyChanged;
+
+                        // If using the legacy api we have to resume manually
+                        if (_CurrentMediaCollection == null)
+                        {
+                            long startPosition = playable.StartPositionTicks;
+
+                            if (startPosition > 0)
+                            {
+                                TimeSpan startPos = TimeSpan.FromTicks(startPosition);
+
+                                Logger.ReportVerbose("Seeking to " + startPos.ToString());
+
+                                transport.Position = startPos;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Logger.ReportWarning("PlayPlayableItem: MediaTransport is null");
                     }
 
                     if (playable.GoFullScreen)
@@ -202,16 +221,6 @@ namespace MediaBrowser
             if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false))
             {
                 return false;
-            }
-
-            long startPosition = playable.StartPositionTicks;
-
-            if (startPosition > 0)
-            {
-                TimeSpan startPos = TimeSpan.FromTicks(startPosition);
-
-                Logger.ReportVerbose("Seeking to " + startPos.ToString());
-                mediaCenterEnvironment.MediaExperience.Transport.Position = startPos;
             }
 
             return true;
