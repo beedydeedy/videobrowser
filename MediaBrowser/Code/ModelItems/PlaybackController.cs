@@ -277,12 +277,19 @@ namespace MediaBrowser
 
             MediaExperience exp = env.MediaExperience;
 
-            MediaTransport transport = exp.Transport;
+            if (exp != null)
+            {
+                MediaTransport transport = exp.Transport;
 
-            transport.PropertyChanged -= MediaTransport_PropertyChanged;
-            transport.PropertyChanged += MediaTransport_PropertyChanged;
+                transport.PropertyChanged -= MediaTransport_PropertyChanged;
+                transport.PropertyChanged += MediaTransport_PropertyChanged;
 
-            HandlePropertyChange(env, exp, transport, property);
+                HandlePropertyChange(env, exp, transport, property);
+            }
+            else
+            {
+                Logger.ReportWarning("MediaCenterEnvironment_PropertyChanged: MediaExperience is null");
+            }
         }
 
         /// <summary>
