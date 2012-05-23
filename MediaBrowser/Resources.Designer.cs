@@ -2092,34 +2092,6 @@ namespace MediaBrowser {
             }
         }
         
-        internal static System.Drawing.Bitmap rated_12 {
-            get {
-                object obj = ResourceManager.GetObject("rated_12", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        internal static System.Drawing.Bitmap rated_12a {
-            get {
-                object obj = ResourceManager.GetObject("rated_12a", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        internal static System.Drawing.Bitmap rated_15 {
-            get {
-                object obj = ResourceManager.GetObject("rated_15", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        internal static System.Drawing.Bitmap rated_18 {
-            get {
-                object obj = ResourceManager.GetObject("rated_18", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
         internal static System.Drawing.Bitmap rated_g {
             get {
                 object obj = ResourceManager.GetObject("rated_g", resourceCulture);
@@ -2130,6 +2102,55 @@ namespace MediaBrowser {
         internal static System.Drawing.Bitmap Rated_G_full {
             get {
                 object obj = ResourceManager.GetObject("Rated_G_full", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_12 {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_12", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_12a {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_12a", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_15 {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_15", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_18 {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_18", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_pg {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_pg", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_pg1 {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_pg1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_gb_r18 {
+            get {
+                object obj = ResourceManager.GetObject("rated_gb_r18", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -2204,13 +2225,6 @@ namespace MediaBrowser {
             }
         }
         
-        internal static System.Drawing.Bitmap rated_r18 {
-            get {
-                object obj = ResourceManager.GetObject("rated_r18", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
         internal static System.Drawing.Bitmap rated_tv_14 {
             get {
                 object obj = ResourceManager.GetObject("rated_tv_14", resourceCulture);
@@ -2256,13 +2270,6 @@ namespace MediaBrowser {
         internal static System.Drawing.Bitmap rated_tv_y7 {
             get {
                 object obj = ResourceManager.GetObject("rated_tv_y7", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        internal static System.Drawing.Bitmap rated_u {
-            get {
-                object obj = ResourceManager.GetObject("rated_u", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

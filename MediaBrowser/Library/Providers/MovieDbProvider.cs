@@ -258,18 +258,27 @@ namespace MediaBrowser.Library.Providers
                         {
                             //that title didn't match - look for alternatives
                             url3 = string.Format(altTitleSearch, id, ApiKey);
-                            var response = Helper.ToJsonDict(Helper.FetchJson(url3));
+                            string resp = Helper.FetchJson(url3);
+                            var response = Helper.ToJsonDict(resp);
+                            Logger.ReportVerbose("Alt Title response: " + resp);
                             if (response != null)
                             {
-                                Dictionary<string, object> altTitles = (Dictionary<string, object>)response["titles"];
-                                foreach (var title in altTitles)
+                                try
                                 {
-                                    string t = GetComparableName(((Dictionary<string, string>)title.Value)["title"]);
-                                    if (t == compName)
+                                    Dictionary<string, object> altTitles = (Dictionary<string, object>)response["titles"];
+                                    foreach (var title in altTitles)
                                     {
-                                        matchedName = t;
-                                        break;
+                                        string t = GetComparableName(((Dictionary<string, string>)title.Value)["title"]);
+                                        if (t == compName)
+                                        {
+                                            matchedName = t;
+                                            break;
+                                        }
                                     }
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.ReportException("MovieDbProvider - Error in alternate title search.",e);
                                 }
                             }
                         }
@@ -430,7 +439,7 @@ namespace MediaBrowser.Library.Providers
                     if (!string.IsNullOrEmpty(ourRelease))
                     {
                         movie.ProductionYear = Int32.Parse(ourRelease.Substring(0, 4));
-                        movie.MpaaRating = ourCert;
+                        movie.MpaaRating = ourCountry+"-"+ourCert;
                     }
                     else
                     {
