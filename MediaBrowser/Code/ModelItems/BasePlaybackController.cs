@@ -7,6 +7,8 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables;
 using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
+using System.Windows.Forms;
+using MediaBrowser.Library.UserInput;
 
 namespace MediaBrowser.Code.ModelItems
 {
@@ -116,6 +118,8 @@ namespace MediaBrowser.Code.ModelItems
         {
             Logger.ReportVerbose("{0} playback finished", ControllerName);
 
+            KeyboardListener.Instance.KeyDown -= KeyboardListener_KeyDown; 
+            
             _IsStopping = true;
 
             NormalizeEventProperties(args);
@@ -234,6 +238,12 @@ namespace MediaBrowser.Code.ModelItems
                 playable.PlayState = playable.QueueItem ? PlayableItemPlayState.Queued : PlayableItemPlayState.Playing;
 
                 PlayStateChanged();
+
+                if (MonitorKeyboardDuringPlayback)
+                {
+                    KeyboardListener.Instance.KeyDown -= KeyboardListener_KeyDown;
+                    KeyboardListener.Instance.KeyDown += KeyboardListener_KeyDown;
+                }
             }
             catch (Exception ex)
             {
@@ -277,6 +287,18 @@ namespace MediaBrowser.Code.ModelItems
         public void Stop()
         {
             StopInternal();
+        }
+
+        /// <summary>
+        /// Determines whether or not the controller should monitor keyboard input during playback.
+        /// If true, then you'll also need to override OnKeyDown
+        /// </summary>
+        protected virtual bool MonitorKeyboardDuringPlayback
+        {
+            get
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -609,6 +631,19 @@ namespace MediaBrowser.Code.ModelItems
         internal virtual IEnumerable<string> GetPlayableFiles(IEnumerable<string> files)
         {
             return files;
+        }
+
+        void KeyboardListener_KeyDown(object sender, KeyEventArgs e)
+        {
+            OnKeyDown(e);
+        }
+
+        /// <summary>
+        /// This is called when the user presses a key during playback.
+        /// </summary>
+        protected virtual void OnKeyDown(KeyEventArgs e)
+        {
+            Logger.ReportVerbose("Key pressed during playback: " + e.KeyCode.ToString());
         }
 
         protected void PlayStateChanged()

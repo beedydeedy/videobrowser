@@ -263,6 +263,7 @@
     <Compile Include="Library\Sorting\IndexType.cs" />
     <Compile Include="Library\Sorting\SortOrder.cs" />
     <Compile Include="Library\TripleTapIndex.cs" />
+    <Compile Include="Library\UserInput\KeyboardListener.cs" />
     <Compile Include="Library\Util\Helper.cs">
       <SubType>Code</SubType>
     </Compile>
