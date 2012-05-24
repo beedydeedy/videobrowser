@@ -67,9 +67,20 @@ namespace MediaBrowser.Library.UserInput
 
         private void OnKeyDown(KeyEventArgs e)
         {
+            e.SuppressKeyPress = false;
+
             if (_KeyDown != null)
             {
-                _KeyDown(this, e);
+                // For now, don't async this
+                // This will give listeners a chance to modify SuppressKeyPress if they want
+                try
+                {
+                    _KeyDown(this, e);
+                }
+                catch (Exception ex)
+                {
+                    Logger.ReportException("KeyDown event listener had an error: ", ex);
+                }
             }
         }
         #endregion
