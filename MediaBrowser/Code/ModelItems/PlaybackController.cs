@@ -621,5 +621,10 @@ namespace MediaBrowser
         {
             get { return true; }
         }
+
+        public override void DisplayMessage(string header, string message, int timeout)
+        {
+            AddInHost.Current.MediaCenterEnvironment.Dialog(message, header, DialogButtons.Ok, timeout, false);
+        }
     }
 }

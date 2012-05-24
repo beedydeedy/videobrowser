@@ -133,5 +133,10 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         {
             get { return false; }
         }
+
+        public override void DisplayMessage(string header, string message, int timeout)
+        {
+            
+        }
     }
 }

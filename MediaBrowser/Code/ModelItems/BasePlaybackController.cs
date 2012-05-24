@@ -294,6 +294,13 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         public abstract bool CanSeek { get; }
 
+        /// <summary>
+        /// Displays a message to user that is visible on top or within the player.
+        /// This is dependant on PlaybackController implemention. Not all will be able to do this.
+        /// The timeout is in seconds.
+        /// </summary>
+        public abstract void DisplayMessage(string header, string message, int timeout);
+
         public abstract void Pause();
         public abstract void UnPause();
         protected abstract void PlayMediaInternal(PlayableItem playable);
