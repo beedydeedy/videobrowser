@@ -202,8 +202,6 @@ namespace MediaBrowser
                 file = playable.FilesFormattedForPlayer.First();
             }
 
-            Logger.ReportVerbose("PlaybackControllerHelper.GetCurrentMediaType: " + PlaybackControllerHelper.GetCurrentMediaType().ToString());
-
             // If we're playing a dvd and the last item played was a MediaCollection, we need to make sure the MediaCollection has
             // fully cleared out of the player or there will be quirks such as ff/rew remote buttons not working
             if (playable.HasMediaItems)
