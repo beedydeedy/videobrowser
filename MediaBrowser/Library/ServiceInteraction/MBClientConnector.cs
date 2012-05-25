@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Security.AccessControl;
-using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.Configuration;
-using MediaBrowser.Library.Threading;
-using System.IO.Pipes;
 using System.IO;
-using MediaBrowser.Library.RemoteControl;
+using System.IO.Pipes;
+using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Threading;
 
 namespace MediaBrowser.Library
 {

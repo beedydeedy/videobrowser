@@ -1,8 +1,7 @@
 ﻿using System;
-using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Playables;
 
-namespace MediaBrowser.Library.RemoteControl
+namespace MediaBrowser.Library.Events
 {
     public class PlaybackStateEventArgs : GenericEventArgs<PlayableItem>
     {

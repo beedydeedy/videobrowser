@@ -7,8 +7,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
 using Microsoft.MediaCenter.Hosting;
 

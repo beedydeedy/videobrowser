@@ -4,12 +4,15 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.MpcHc
 {
+    /// <summary>
+    /// http://www.autohotkey.com/community/viewtopic.php?f=13&t=78964&hilit=vlc
+    /// </summary>
     public class MpcHcPlaybackController : ConfigurableExternalPlaybackController
     {
         private const int ProgressInterval = 1000;

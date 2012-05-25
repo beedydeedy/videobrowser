@@ -6,7 +6,6 @@ using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
 using MediaBrowser.LibraryManagement;
 
