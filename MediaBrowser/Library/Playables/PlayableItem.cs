@@ -40,10 +40,7 @@ namespace MediaBrowser.Library.Playables
 
             PlayState = PlayableItemPlayState.Playing;
 
-            if (EnablePlayStateSaving)
-            {
-                SaveProgressIntoPlaystates(controller, args);
-            }
+            UpdatePlayStates(controller, args);
 
             if (_Progress != null)
             {
@@ -685,7 +682,7 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Goes through each Media object within PlayableMediaItems and updates Playstate for each individually
         /// </summary>
-        private void SaveProgressIntoPlaystates(BasePlaybackController controller, PlaybackStateEventArgs args)
+        private void UpdatePlayStates(BasePlaybackController controller, PlaybackStateEventArgs args)
         {
             string currentFile = CurrentFile;
 
@@ -705,7 +702,7 @@ namespace MediaBrowser.Library.Playables
                     currentPositionTicks = args.Position;
                 }
 
-                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, args.DurationFromPlayer, PlaybackStartTime);
+                Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, currentPlaylistPosition, currentPositionTicks, args.DurationFromPlayer, PlaybackStartTime, EnablePlayStateSaving);
 
                 if (isCurrentMedia)
                 {
@@ -721,12 +718,16 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         private void MarkWatchedIfNeeded()
         {
-            if (EnablePlayStateSaving && !HasUpdatedPlayState)
+            if (!HasUpdatedPlayState)
             {
                 foreach (Media media in MediaItems)
                 {
-                    Logger.ReportVerbose("Marking watched: " + media.Name);
-                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, PlaybackStartTime);
+                    if (EnablePlayStateSaving)
+                    {
+                        Logger.ReportVerbose("Marking watched: " + media.Name);
+                    }
+
+                    Application.CurrentInstance.UpdatePlayState(media, media.PlaybackStatus, 0, 0, null, PlaybackStartTime, EnablePlayStateSaving);
                 }
             }
         }
