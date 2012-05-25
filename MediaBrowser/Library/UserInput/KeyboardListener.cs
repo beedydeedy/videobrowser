@@ -119,6 +119,8 @@ namespace MediaBrowser.Library.UserInput
 
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            bool suppressKeyPress = false;
+
             if (nCode >= 0)
             {
                 if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
@@ -130,7 +132,14 @@ namespace MediaBrowser.Library.UserInput
                     KeyEventArgs e = new KeyEventArgs(keyData);
 
                     KeyboardListener.Instance.OnKeyDown(e);
+
+                    suppressKeyPress = e.SuppressKeyPress;
                 }
+            }
+
+            if (suppressKeyPress)
+            {
+                return IntPtr.Zero;
             }
 
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
