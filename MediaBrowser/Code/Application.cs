@@ -1800,23 +1800,25 @@ namespace MediaBrowser
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.
-                Process process = new Process();
-                //virtualclonedrive
-                if (command.ToLower().EndsWith("vcdmount.exe"))
-                    process.StartInfo.Arguments = "-mount \"" + path + "\"";
-                //alcohol120 or alcohol52
-                else if (command.ToLower().EndsWith("axcmd.exe"))
-                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /M:\"" + path + "\"";
-                //deamontools
-                else
-                    process.StartInfo.Arguments = "-mount 0,\"" + path + "\"";
-                process.StartInfo.FileName = command;
-                process.StartInfo.ErrorDialog = false;
-                process.StartInfo.CreateNoWindow = true;
+                using (Process process = new Process())
+                {
+                    //virtualclonedrive
+                    if (command.ToLower().EndsWith("vcdmount.exe"))
+                        process.StartInfo.Arguments = "-mount \"" + path + "\"";
+                    //alcohol120 or alcohol52
+                    else if (command.ToLower().EndsWith("axcmd.exe"))
+                        process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /M:\"" + path + "\"";
+                    //deamontools
+                    else
+                        process.StartInfo.Arguments = "-mount 0,\"" + path + "\"";
+                    process.StartInfo.FileName = command;
+                    process.StartInfo.ErrorDialog = false;
+                    process.StartInfo.CreateNoWindow = true;
 
-                // We wait for exit to ensure the iso is completely loaded.
-                process.Start();
-                process.WaitForExit();
+                    // We wait for exit to ensure the iso is completely loaded.
+                    process.Start();
+                    process.WaitForExit();
+                }
 
                 // Play the DVD video that was mounted.
                 string mountedPath = Config.Instance.DaemonToolsDrive + ":\\";
@@ -1844,23 +1846,25 @@ namespace MediaBrowser
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.
-                Process process = new Process();
-                //virtualclonedrive
-                if (command.ToLower().EndsWith("vcdmount.exe"))
-                    process.StartInfo.Arguments = "/u";
-                //alcohol120 or alcohol52
-                else if (command.ToLower().EndsWith("axcmd.exe"))
-                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
-                //deamontools
-                else
-                    process.StartInfo.Arguments = "-unmount 0";
-                process.StartInfo.FileName = command;
-                process.StartInfo.ErrorDialog = false;
-                process.StartInfo.CreateNoWindow = true;
+                using (Process process = new Process())
+                {
+                    //virtualclonedrive
+                    if (command.ToLower().EndsWith("vcdmount.exe"))
+                        process.StartInfo.Arguments = "/u";
+                    //alcohol120 or alcohol52
+                    else if (command.ToLower().EndsWith("axcmd.exe"))
+                        process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
+                    //deamontools
+                    else
+                        process.StartInfo.Arguments = "-unmount 0";
+                    process.StartInfo.FileName = command;
+                    process.StartInfo.ErrorDialog = false;
+                    process.StartInfo.CreateNoWindow = true;
 
-                // We wait for exit to ensure the iso is completely loaded.
-                process.Start();
-                process.WaitForExit();
+                    // We wait for exit to ensure the iso is completely loaded.
+                    process.Start();
+                    process.WaitForExit();
+                }
             }
             catch (Exception)
             {

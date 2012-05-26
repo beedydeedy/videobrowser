@@ -177,7 +177,9 @@ namespace MediaBrowser.Library.Playables.TMT5
             ProcessStartInfo processInfo = new ProcessStartInfo(exe, command);
             processInfo.CreateNoWindow = true;
 
-            Process.Start(processInfo);
+            using (Process process = Process.Start(processInfo))
+            {
+            }
         }
 
         private string PlayStateDirectory
