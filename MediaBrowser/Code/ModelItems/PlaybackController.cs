@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables;
-using MediaBrowser.Library.RemoteControl;
 using Microsoft.MediaCenter;
 using Microsoft.MediaCenter.Hosting;
 using Microsoft.MediaCenter.UI;
@@ -201,8 +201,6 @@ namespace MediaBrowser
                 // Play single file
                 file = playable.FilesFormattedForPlayer.First();
             }
-
-            Logger.ReportVerbose("PlaybackControllerHelper.GetCurrentMediaType: " + PlaybackControllerHelper.GetCurrentMediaType().ToString());
 
             // If we're playing a dvd and the last item played was a MediaCollection, we need to make sure the MediaCollection has
             // fully cleared out of the player or there will be quirks such as ff/rew remote buttons not working
@@ -620,6 +618,11 @@ namespace MediaBrowser
         public override bool CanSeek
         {
             get { return true; }
+        }
+
+        public override void DisplayMessage(string header, string message, int timeout)
+        {
+            AddInHost.Current.MediaCenterEnvironment.Dialog(message, header, DialogButtons.Ok, timeout, false);
         }
     }
 }

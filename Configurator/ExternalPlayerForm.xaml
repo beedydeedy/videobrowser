@@ -58,9 +58,9 @@
 
         <CheckBox Name="chkShowSplashScreen" Margin="355,190,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether or not Media Browser should display a splash screen before the external player loads, to avoid seeing the Windows desktop.">Show Media Browser Splash Screen</CheckBox>
 
-        <CheckBox Name="chkSupportsMultiFileCommand" Margin="355,215,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether supports launching a list of files, to be played in sequence.">Player Supports Multi-File Command</CheckBox>
+        <CheckBox Name="chkSupportsMultiFileCommand" Margin="355,240,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether supports launching a list of files, to be played in sequence.">Player Supports Multi-File Command</CheckBox>
 
-        <CheckBox Name="chkSupportsPLS" Margin="355,240,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Content="Player Supports PLS Playlists">
+        <CheckBox Name="chkSupportsPLS" Margin="355,265,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Content="Player Supports PLS Playlists">
             <CheckBox.ToolTip>
                 <TextBlock Width="250" TextWrapping="Wrap">Determines whether or not the external player supports PLS playlists. This is only used if the above option is not supported. If neither are supported then the player will not be able to play folders or multi-file movies. The next matching player, or the internal player will be used in such a case.</TextBlock>
             </CheckBox.ToolTip>

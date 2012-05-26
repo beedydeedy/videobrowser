@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
-using MediaBrowser.LibraryManagement;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.Library.Playables.ExternalPlayer;
+using MediaBrowser.LibraryManagement;
 
 namespace MediaBrowser.Library.Playables.TMT5
 {
@@ -177,7 +177,9 @@ namespace MediaBrowser.Library.Playables.TMT5
             ProcessStartInfo processInfo = new ProcessStartInfo(exe, command);
             processInfo.CreateNoWindow = true;
 
-            Process.Start(processInfo);
+            using (Process process = Process.Start(processInfo))
+            {
+            }
         }
 
         private string PlayStateDirectory

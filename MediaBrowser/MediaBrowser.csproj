@@ -110,6 +110,7 @@
   <ItemGroup>
     <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
     <Compile Include="Library\Events\GenericEventArgs.cs" />
+    <Compile Include="Library\Events\PlaybackStateEventArgs.cs" />
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
     <Compile Include="Library\Configuration\ApplicationPaths.cs" />
     <Compile Include="Library\Entities\BoxSet.cs" />
@@ -225,8 +226,6 @@
     <Compile Include="Library\Metadata\MetadataRefreshOptions.cs" />
     <Compile Include="Library\Plugins\IPlugin.cs" />
     <Compile Include="Library\Plugins\Plugin.cs" />
-    <Compile Include="Library\RemoteControl\PlaybackStateEventArgs.cs" />
-    <Compile Include="Library\RemoteControl\RemoteCommand.cs" />
     <Compile Include="Library\Sorting\BaseItemEqualityComparer.cs" />
     <Compile Include="Library\Sorting\SortHelper.cs" />
     <Compile Include="Library\Threading\Async.cs" />
@@ -263,6 +262,8 @@
     <Compile Include="Library\Sorting\IndexType.cs" />
     <Compile Include="Library\Sorting\SortOrder.cs" />
     <Compile Include="Library\TripleTapIndex.cs" />
+    <Compile Include="Library\UserInput\KeyboardListener.cs" />
+    <Compile Include="Library\UserInput\RemoteCommand.cs" />
     <Compile Include="Library\Util\Helper.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -283,6 +284,7 @@
     <Compile Include="Library\Extensions\XmlExtensions.cs" />
     <Compile Include="Library\Util\Lazy.cs" />
     <Compile Include="Library\Util\MutexWrapper.cs" />
+    <Compile Include="Library\Util\Taskbar.cs" />
     <Compile Include="Library\VideoFormat.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.Designer.cs">

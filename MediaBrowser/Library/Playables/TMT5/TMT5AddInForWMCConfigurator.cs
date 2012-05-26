@@ -44,21 +44,5 @@ namespace MediaBrowser.Library.Playables.TMT5
         {
             return GetProgramFilesPaths("ArcSoft\\TotalMedia Theatre 5\\PlayerLoader.htm");
         }
-
-        public override bool AllowShowSplashScreenEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public override bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return false;
-            }
-        }
     }
 }

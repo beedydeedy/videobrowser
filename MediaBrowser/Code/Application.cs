@@ -1596,7 +1596,7 @@ namespace MediaBrowser
             {
                 Item item = ItemFactory.Instance.Create(originalBaseItem);
 
-                bool playIntros = playableItem.PlayMethod == PlayMethod.UIMenu && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems;
+                bool playIntros = playableItem.PlayMethod == PlayMethod.UIMenu && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems && playableItem.StartPositionTicks == 0 && playableItem.StartPlaylistPosition == 0;
 
                 Logger.ReportInfo("Running pre-play processes for: " + item.Name);
 
@@ -1617,10 +1617,13 @@ namespace MediaBrowser
         /// </summary>
         public void RunPostPlayProcesses(PlayableItem playableItem)
         {
-            Async.Queue("AddNewlyWatched", () =>
+            if (playableItem.EnablePlayStateSaving)
             {
-                AddNewlyWatched(playableItem);
-            });
+                Async.Queue("AddNewlyWatched", () =>
+                {
+                    AddNewlyWatched(playableItem);
+                });
+            }
 
             Logger.ReportVerbose("Firing Application.PlaybackFinished for: " + playableItem.DisplayName);
 
@@ -1801,23 +1804,25 @@ namespace MediaBrowser
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.
-                Process process = new Process();
-                //virtualclonedrive
-                if (command.ToLower().EndsWith("vcdmount.exe"))
-                    process.StartInfo.Arguments = "-mount \"" + path + "\"";
-                //alcohol120 or alcohol52
-                else if (command.ToLower().EndsWith("axcmd.exe"))
-                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /M:\"" + path + "\"";
-                //deamontools
-                else
-                    process.StartInfo.Arguments = "-mount 0,\"" + path + "\"";
-                process.StartInfo.FileName = command;
-                process.StartInfo.ErrorDialog = false;
-                process.StartInfo.CreateNoWindow = true;
+                using (Process process = new Process())
+                {
+                    //virtualclonedrive
+                    if (command.ToLower().EndsWith("vcdmount.exe"))
+                        process.StartInfo.Arguments = "-mount \"" + path + "\"";
+                    //alcohol120 or alcohol52
+                    else if (command.ToLower().EndsWith("axcmd.exe"))
+                        process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /M:\"" + path + "\"";
+                    //deamontools
+                    else
+                        process.StartInfo.Arguments = "-mount 0,\"" + path + "\"";
+                    process.StartInfo.FileName = command;
+                    process.StartInfo.ErrorDialog = false;
+                    process.StartInfo.CreateNoWindow = true;
 
-                // We wait for exit to ensure the iso is completely loaded.
-                process.Start();
-                process.WaitForExit();
+                    // We wait for exit to ensure the iso is completely loaded.
+                    process.Start();
+                    process.WaitForExit();
+                }
 
                 // Play the DVD video that was mounted.
                 string mountedPath = Config.Instance.DaemonToolsDrive + ":\\";
@@ -1845,23 +1850,25 @@ namespace MediaBrowser
                 string command = Config.Instance.DaemonToolsLocation;
 
                 // Create the process start information.
-                Process process = new Process();
-                //virtualclonedrive
-                if (command.ToLower().EndsWith("vcdmount.exe"))
-                    process.StartInfo.Arguments = "/u";
-                //alcohol120 or alcohol52
-                else if (command.ToLower().EndsWith("axcmd.exe"))
-                    process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
-                //deamontools
-                else
-                    process.StartInfo.Arguments = "-unmount 0";
-                process.StartInfo.FileName = command;
-                process.StartInfo.ErrorDialog = false;
-                process.StartInfo.CreateNoWindow = true;
+                using (Process process = new Process())
+                {
+                    //virtualclonedrive
+                    if (command.ToLower().EndsWith("vcdmount.exe"))
+                        process.StartInfo.Arguments = "/u";
+                    //alcohol120 or alcohol52
+                    else if (command.ToLower().EndsWith("axcmd.exe"))
+                        process.StartInfo.Arguments = Config.Instance.DaemonToolsDrive + ":\\ /U";
+                    //deamontools
+                    else
+                        process.StartInfo.Arguments = "-unmount 0";
+                    process.StartInfo.FileName = command;
+                    process.StartInfo.ErrorDialog = false;
+                    process.StartInfo.CreateNoWindow = true;
 
-                // We wait for exit to ensure the iso is completely loaded.
-                process.Start();
-                process.WaitForExit();
+                    // We wait for exit to ensure the iso is completely loaded.
+                    process.Start();
+                    process.WaitForExit();
+                }
             }
             catch (Exception)
             {
@@ -1932,7 +1939,7 @@ namespace MediaBrowser
         /// It honors all of the various resume options within configuration.
         /// Play count will be incremented if the last played date doesn't match what's currently in the object
         /// </summary>
-        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, DateTime datePlayed)
+        public void UpdatePlayState(Media media, PlaybackStatus playstate, int playlistPosition, long positionTicks, long? duration, DateTime datePlayed, bool saveToDataStore)
         {
             // Increment play count if dates don't match
             bool incrementPlayCount = !playstate.LastPlayed.Equals(datePlayed);
@@ -2007,10 +2014,13 @@ namespace MediaBrowser
                 playstate.PlayCount++;
             }
 
-            string sDuration = duration.HasValue ? (TimeSpan.FromTicks(duration.Value).ToString()) : "0";
+            if (saveToDataStore)
+            {
+                string sDuration = duration.HasValue ? (TimeSpan.FromTicks(duration.Value).ToString()) : "0";
 
-            Logger.ReportVerbose("Playstate saved for {0} at {1}, duration: {2}, playlist position: {3}", media.Name, TimeSpan.FromTicks(positionTicks), sDuration, playlistPosition);
-            Kernel.Instance.SavePlayState(media, playstate);
+                Logger.ReportVerbose("Playstate saved for {0} at {1}, duration: {2}, playlist position: {3}", media.Name, TimeSpan.FromTicks(positionTicks), sDuration, playlistPosition);
+                Kernel.Instance.SavePlayState(media, playstate);
+            }
         }
     }
 }

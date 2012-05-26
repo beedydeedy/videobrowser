@@ -7,10 +7,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using MediaBrowser.Code.ModelItems;
 using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
-using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
+using MediaBrowser.Library.Util;
 using Microsoft.MediaCenter.Hosting;
+using System.Windows.Forms;
 
 namespace MediaBrowser.Library.Playables.ExternalPlayer
 {
@@ -132,6 +134,13 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             WINDOWPLACEMENT wp = new WINDOWPLACEMENT();
             GetWindowPlacement(mceWnd, ref wp);
 
+            Cursor.Hide();
+
+            if (HideTaskbar)
+            {
+                Taskbar.Hide();
+            }
+
             if (ShowSplashScreen)
             {
                 //throw up a form to cover the desktop if we minimize and we are in the primary monitor
@@ -159,6 +168,8 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             //and wait for it to exit
             player.WaitForExit();
 
+            player.Dispose();
+
             //now restore MCE 
             wp.showCmd = 1; // 1 - Normal; 2 - Minimize; 3 - Maximize;
             SetWindowPlacement(mceWnd, ref wp);
@@ -167,6 +178,13 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             {
                 ExternalSplashForm.Hide();
             }
+
+            if (HideTaskbar)
+            {
+                Taskbar.Show();
+            }
+
+            Cursor.Show();
 
             SetForegroundWindow(mceWnd);
 
@@ -335,6 +353,14 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             get
             {
                 return true;
+            }
+        }
+
+        protected virtual bool HideTaskbar
+        {
+            get
+            {
+                return false;
             }
         }
 

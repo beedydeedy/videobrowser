@@ -6,8 +6,8 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Interfaces;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Metadata;
-using MediaBrowser.Library.RemoteControl;
 using MediaBrowser.Library.Threading;
+using MediaBrowser.Library.UserInput;
 using MediaBrowser.LibraryManagement;
 using Microsoft.MediaCenter;
 

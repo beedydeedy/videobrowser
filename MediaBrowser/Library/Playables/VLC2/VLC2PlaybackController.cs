@@ -5,9 +5,9 @@ using System.Net;
 using System.Threading;
 using System.Xml;
 using MediaBrowser.Library.Entities;
+using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
-using MediaBrowser.Library.RemoteControl;
 
 namespace MediaBrowser.Library.Playables.VLC2
 {

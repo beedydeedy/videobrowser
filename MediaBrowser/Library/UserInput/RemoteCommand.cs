@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MediaBrowser.Library.RemoteControl {
+namespace MediaBrowser.Library.UserInput {
     public enum RemoteCommand {
         FastForward,
         Rewind,
