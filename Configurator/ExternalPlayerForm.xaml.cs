@@ -52,7 +52,7 @@ namespace Configurator
             PlayableExternalConfigurator uiConfigurator = PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(ExternalPlayerName);
 
             if (MessageBox.Show(uiConfigurator.ConfigureUserSettingsConfirmationMessage, "Configure Player", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {               
+            {
                 ConfigData.ExternalPlayer currentConfiguration = uiConfigurator.GetDefaultConfiguration();
                 currentConfiguration.Command = txtCommand.Text;
                 uiConfigurator.ConfigureUserSettings(currentConfiguration);
@@ -128,6 +128,7 @@ namespace Configurator
         {
             chkMinimizeMce.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
             chkShowSplashScreen.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
+            chkHideTaskbar.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
@@ -166,10 +167,10 @@ namespace Configurator
             lstLaunchType.SelectedItem = externalPlayer.LaunchType;
 
             txtArguments.Text = externalPlayer.Args;
-            txtCommand.Text = externalPlayer.Command;
 
             chkMinimizeMce.IsChecked = externalPlayer.MinimizeMCE;
             chkShowSplashScreen.IsChecked = externalPlayer.ShowSplashScreen;
+            chkHideTaskbar.IsChecked = externalPlayer.HideTaskbar;
             chkSupportsMultiFileCommand.IsChecked = externalPlayer.SupportsMultiFileCommandArguments;
             chkSupportsPLS.IsChecked = externalPlayer.SupportsPlaylists;
 
@@ -190,7 +191,14 @@ namespace Configurator
             SetControlVisibility(uiConfigurator);
             SetTips(uiConfigurator);
 
-            AutoFillPaths(uiConfigurator);
+            if (string.IsNullOrEmpty(externalPlayer.Command))
+            {
+                AutoFillPaths(uiConfigurator);
+            }
+            else
+            {
+                txtCommand.Text = externalPlayer.Command;
+            }
         }
 
         public void UpdateObjectFromControls(ConfigData.ExternalPlayer externalPlayer)
@@ -203,6 +211,7 @@ namespace Configurator
 
             externalPlayer.MinimizeMCE = chkMinimizeMce.IsChecked.Value;
             externalPlayer.ShowSplashScreen = chkShowSplashScreen.IsChecked.Value;
+            externalPlayer.HideTaskbar = chkHideTaskbar.IsChecked.Value;
             externalPlayer.SupportsMultiFileCommandArguments = chkSupportsMultiFileCommand.IsChecked.Value;
             externalPlayer.SupportsPlaylists = chkSupportsPLS.IsChecked.Value;
 
@@ -231,8 +240,6 @@ namespace Configurator
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Hidden;
             }
 
-            chkShowSplashScreen.Visibility = configurator.AllowShowSplashScreenEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
-            chkMinimizeMce.Visibility = configurator.AllowMinimizeMCEEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
             lblArguments.Visibility = configurator.AllowArgumentsEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
             txtArguments.Visibility = configurator.AllowArgumentsEditing ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
             lbConfigureMyPlayer.Visibility = configurator.SupportsConfiguringUserSettings ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
@@ -270,7 +277,17 @@ namespace Configurator
 
             if ((lstMediaTypes.ItemsSource as EnumWrapperList<MediaType>).GetCheckedValues().Contains(MediaType.ISO) && uiConfigurator.ShowIsoDirectLaunchWarning)
             {
-                if (MessageBox.Show(uiConfigurator.IsoDirectLaunchWarning, "Confirm ISO Media Type", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show(uiConfigurator.IsoDirectLaunchWarning, "Confirm ISO Media Type", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                {
+                    return false;
+                }
+            }
+
+            if (chkHideTaskbar.IsChecked == true)
+            {
+                string warning = "Hiding the windows taskbar can improve the external player experience but comes with a warning. If MediaBrowser crashes or becomes unstable during playback, you may have to reboot your computer to get your taskbar back. You can also get the taskbar back by starting and stopping another video that uses the same player. Are you sure you want to continue?";
+
+                if (MessageBox.Show(warning, "Confirm Hide Taskbar", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                 {
                     return false;
                 }
@@ -301,9 +318,11 @@ namespace Configurator
                 if (File.Exists(path))
                 {
                     txtCommand.Text = path;
-                    break;
+                    return;
                 }
             }
+
+            txtCommand.Text = string.Empty;
         }
 
         private class EnumWrapper<TEnumType>

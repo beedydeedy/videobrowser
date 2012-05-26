@@ -111,22 +111,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
             }
         }
 
-        public virtual bool AllowMinimizeMCEEditing
-        {
-            get
-            {
-                return true;
-            }
-        }
-
-        public virtual bool AllowShowSplashScreenEditing
-        {
-            get
-            {
-                return true;
-            }
-        }
-
         public virtual void ConfigureUserSettings(ConfigData.ExternalPlayer currentConfiguration)
         {
         }

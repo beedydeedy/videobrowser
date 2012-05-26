@@ -494,6 +494,7 @@ namespace MediaBrowser
             public string Args { get; set; }
             public bool MinimizeMCE { get; set; } //whether or not to minimize MCE when starting external player
             public bool ShowSplashScreen { get; set; } //whether or not to show the MB splash screen
+            public bool HideTaskbar { get; set; }
 
             public ExternalPlayer()
             {

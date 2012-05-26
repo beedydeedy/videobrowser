@@ -33,6 +33,17 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
         }
 
         /// <summary>
+        /// Determines if the windows taskbar should be hidden during playback
+        /// </summary>
+        protected override bool HideTaskbar
+        {
+            get
+            {
+                return ExternalPlayerConfiguration.HideTaskbar;
+            }
+        }
+
+        /// <summary>
         /// Determines if the MB splash screen should be displayed before playback
         /// </summary>
         protected override bool ShowSplashScreen
