@@ -58,8 +58,6 @@
 
         <CheckBox Name="chkShowSplashScreen" Margin="355,190,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether or not Media Browser should display a splash screen before the external player loads, to avoid seeing the Windows desktop.">Show Media Browser Splash Screen</CheckBox>
 
-        <CheckBox Name="chkHideTaskbar" Margin="355,215,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether or not the windows taskbar should be hidden when launching the player.">Hide Windows Taskbar</CheckBox>
-
         <CheckBox Name="chkSupportsMultiFileCommand" Margin="355,240,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" ToolTip="Determines whether supports launching a list of files, to be played in sequence.">Player Supports Multi-File Command</CheckBox>
 
         <CheckBox Name="chkSupportsPLS" Margin="355,265,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Content="Player Supports PLS Playlists">

@@ -128,7 +128,7 @@ namespace Configurator
         {
             chkMinimizeMce.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
             chkShowSplashScreen.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
-            chkHideTaskbar.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
+            //chkHideTaskbar.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
@@ -170,7 +170,7 @@ namespace Configurator
 
             chkMinimizeMce.IsChecked = externalPlayer.MinimizeMCE;
             chkShowSplashScreen.IsChecked = externalPlayer.ShowSplashScreen;
-            chkHideTaskbar.IsChecked = externalPlayer.HideTaskbar;
+            //chkHideTaskbar.IsChecked = externalPlayer.HideTaskbar;
             chkSupportsMultiFileCommand.IsChecked = externalPlayer.SupportsMultiFileCommandArguments;
             chkSupportsPLS.IsChecked = externalPlayer.SupportsPlaylists;
 
@@ -211,7 +211,7 @@ namespace Configurator
 
             externalPlayer.MinimizeMCE = chkMinimizeMce.IsChecked.Value;
             externalPlayer.ShowSplashScreen = chkShowSplashScreen.IsChecked.Value;
-            externalPlayer.HideTaskbar = chkHideTaskbar.IsChecked.Value;
+            //externalPlayer.HideTaskbar = chkHideTaskbar.IsChecked.Value;
             externalPlayer.SupportsMultiFileCommandArguments = chkSupportsMultiFileCommand.IsChecked.Value;
             externalPlayer.SupportsPlaylists = chkSupportsPLS.IsChecked.Value;
 
@@ -283,7 +283,7 @@ namespace Configurator
                 }
             }
 
-            if (chkHideTaskbar.IsChecked == true)
+            /*if (chkHideTaskbar.IsChecked == true)
             {
                 string warning = "Hiding the windows taskbar can improve the external player experience but comes with a warning. If MediaBrowser crashes or becomes unstable during playback, you may have to reboot your computer to get your taskbar back. You can also get the taskbar back by starting and stopping another video that uses the same player. Are you sure you want to continue?";
 
@@ -291,7 +291,7 @@ namespace Configurator
                 {
                     return false;
                 }
-            }
+            }*/
 
             return true;
         }
