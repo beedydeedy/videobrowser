@@ -532,6 +532,14 @@ namespace MediaBrowser.Library.Playables
 
         internal void Play()
         {
+            if (QueueItem && !PlaybackController.IsPlaying)
+            {
+                QueueItem = false;
+
+                // This is for music
+                GoFullScreen = false;
+            }
+
             Prepare();
 
             if (!HasMediaItems && !Files.Any())
@@ -564,7 +572,7 @@ namespace MediaBrowser.Library.Playables
                 return;
             }
 
-            if (StopAllPlaybackBeforePlaying)
+            if (!QueueItem && StopAllPlaybackBeforePlaying)
             {
                 StopAllApplicationPlayback();
             }
