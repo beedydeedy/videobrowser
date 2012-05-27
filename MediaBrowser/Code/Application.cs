@@ -1467,7 +1467,7 @@ namespace MediaBrowser
         /// </summary>
         public void Shuffle(Item item)
         {
-            Play(item, false, false, PlayMethod.UIMenu, true);
+            Play(item, false, false, null, true);
         }
 
         /// <summary>
@@ -1491,7 +1491,7 @@ namespace MediaBrowser
         /// </summary>
         public void AddToQueue(Item item)
         {
-            Play(item, false, true, PlayMethod.UIMenu, false);
+            Play(item, false, true, null, false);
         }
 
         /// <summary>
@@ -1499,7 +1499,7 @@ namespace MediaBrowser
         /// </summary>
         public void Play(Item item)
         {
-            Play(item, false, false, PlayMethod.UIMenu, false);
+            Play(item, false, false, null, false);
         }
 
         /// <summary>
@@ -1515,7 +1515,11 @@ namespace MediaBrowser
             }
         }
 
-        public void Play(Item item, bool resume, bool queue, PlayMethod playMethod, bool shuffle)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="playIntros">Whether not not intros should be played. Unless you have a specific reason to set this, leave it null so the core can decide.</param>
+        public void Play(Item item, bool resume, bool queue, bool? playIntros, bool shuffle)
         {
             //if playback is disabled display a message
             if (!PlaybackEnabled)
@@ -1532,9 +1536,13 @@ namespace MediaBrowser
                 return;
             }
 
+            if (playIntros.HasValue)
+            {
+                playable.PlayIntros = playIntros.Value;
+            }
+
             playable.Resume = resume;
             playable.QueueItem = queue;
-            playable.PlayMethod = playMethod;
             playable.Shuffle = shuffle;
 
             Play(playable);
@@ -1545,7 +1553,7 @@ namespace MediaBrowser
         /// </summary>
         public void Resume(Item item)
         {
-            Play(item, true, false, PlayMethod.UIMenu, false);
+            Play(item, true, false, null, false);
         }
 
         public void Play(PlayableItem playable)
@@ -1585,26 +1593,9 @@ namespace MediaBrowser
         /// <summary>
         /// Runs all preplay processes
         /// </summary>
-        /// <param name="originalBaseItem">The original item that was played in the UI</param>
-        internal bool RunPrePlayProcesses(BaseItem originalBaseItem, PlayableItem playableItem)
+        internal void RunPrePlayProcesses(PlayableItem playableItem)
         {
-            if (originalBaseItem != null && Kernel.Instance.PrePlayProcesses.Any())
-            {
-                Item item = ItemFactory.Instance.Create(originalBaseItem);
-
-                bool playIntros = playableItem.PlayMethod == PlayMethod.UIMenu && !playableItem.Resume && !playableItem.QueueItem && playableItem.HasMediaItems && playableItem.StartPositionTicks == 0 && playableItem.StartPlaylistPosition == 0 && playableItem.HasVideo;
-
-                Logger.ReportInfo("Running pre-play processes for: " + item.Name);
-
-                foreach (Kernel.PrePlayProcess process in Kernel.Instance.PrePlayProcesses)
-                {
-                    if (!process(item, playIntros)) return false;
-                }
-            }
-
             OnPrePlayback(playableItem);
-
-            return true;
         }
 
         /// <summary>

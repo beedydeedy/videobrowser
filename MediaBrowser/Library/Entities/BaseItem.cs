@@ -517,14 +517,4 @@ namespace MediaBrowser.Library.Entities {
         }
 
     }
-
-    /// <summary>
-    /// Describes ways an entity can be played
-    /// </summary>
-    public enum PlayMethod
-    {
-        UIMenu = 0,
-
-        RemotePlayButton = 1
-    }
 }

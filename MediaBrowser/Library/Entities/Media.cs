@@ -11,7 +11,7 @@ namespace MediaBrowser.Library.Entities {
 
         public override bool PlayAction(Item item)
         {
-            Application.CurrentInstance.Play(item, false, false, PlayMethod.RemotePlayButton, false); //play with no intros
+            Application.CurrentInstance.Play(item, false, false, false, false); //play with no intros
             return true;
         }
 

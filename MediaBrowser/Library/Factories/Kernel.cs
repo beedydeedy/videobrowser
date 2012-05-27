@@ -789,28 +789,8 @@ namespace MediaBrowser.Library {
             return menuItem;
         }
 
-        public delegate bool PrePlayProcess(Item item, bool PlayIntros);
         public delegate void PostPlayProcess();
-        public List<PrePlayProcess> PrePlayProcesses = new List<PrePlayProcess>();
         public List<PostPlayProcess> PostPlayProcesses = new List<PostPlayProcess>();
-
-        public PrePlayProcess AddPrePlayProcess(PrePlayProcess process)
-        {
-            return AddPrePlayProcess(process, 2);
-        }
-
-        public PrePlayProcess AddPrePlayProcess(PrePlayProcess process, int priority)
-        {
-            if (priority == 0)
-            {
-                PrePlayProcesses.Insert(0, process);
-            }
-            else
-            {
-                PrePlayProcesses.Add(process);
-            }
-            return process;
-        }
 
         public PostPlayProcess AddPostPlayProcess(PostPlayProcess process)
         {

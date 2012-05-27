@@ -142,11 +142,6 @@ namespace MediaBrowser.Library.Playables
         internal IEnumerable<string> FilesFormattedForPlayer { get; set; }
 
         /// <summary>
-        /// Describes how the item was played by the user
-        /// </summary>
-        public PlayMethod PlayMethod { get; set; }
-
-        /// <summary>
         /// Determines if the item should be queued, as opposed to played immediately
         /// </summary>
         public bool QueueItem { get; set; }
@@ -446,6 +441,28 @@ namespace MediaBrowser.Library.Playables
             }
         }
 
+        private bool? _PlayIntros;
+        /// <summary>
+        /// Determines whether or not intros should be played before the main feature
+        /// </summary>
+        public bool PlayIntros
+        {
+            get
+            {
+                // If it was expliticly set
+                if (_PlayIntros.HasValue)
+                {
+                    return _PlayIntros.Value;
+                }
+
+                return !Resume && HasMediaItems && StartPositionTicks == 0 && StartPlaylistPosition == 0 && HasVideo; 
+            }
+            set
+            {
+                _PlayIntros = value;
+            }
+        }
+
         #region AddMedia
         public void AddMedia(string file)
         {
@@ -532,14 +549,6 @@ namespace MediaBrowser.Library.Playables
 
         internal void Play()
         {
-            if (QueueItem && !PlaybackController.IsPlaying)
-            {
-                QueueItem = false;
-
-                // This is for music
-                GoFullScreen = false;
-            }
-
             Prepare();
 
             if (!HasMediaItems && !Files.Any())
@@ -566,11 +575,7 @@ namespace MediaBrowser.Library.Playables
             }
 
             // Run all pre-play processes
-            if (!RunPrePlayProcesses())
-            {
-                // Abort playback if one of them returns false
-                return;
-            }
+            RunPrePlayProcesses();
 
             if (!QueueItem && StopAllPlaybackBeforePlaying)
             {
@@ -599,6 +604,22 @@ namespace MediaBrowser.Library.Playables
         /// </summary>
         protected virtual void Prepare()
         {
+            if (QueueItem && !PlaybackController.IsPlaying)
+            {
+                QueueItem = false;
+
+                // This is for music
+                GoFullScreen = false;
+            }
+
+            // Always force this to false regardless of what the caller asks for
+            if (QueueItem)
+            {
+                PlayIntros = false;
+            }
+
+            Logger.ReportVerbose("PlayIntros: " + PlayIntros.ToString());
+
             // Filter for IsPlaylistCapable
             if (MediaItems.Count() > 1)
             {
@@ -631,24 +652,13 @@ namespace MediaBrowser.Library.Playables
         /// <summary>
         /// Runs preplay processes and aborts playback if one of them returns false
         /// </summary>
-        private bool RunPrePlayProcesses()
+        private void RunPrePlayProcesses()
         {
             PlayState = Playables.PlayableItemPlayState.Preplay;
 
-            if (!RaiseGlobalPlaybackEvents)
+            if (RaiseGlobalPlaybackEvents)
             {
-                return true;
-            }
-
-            try
-            {
-                return Application.CurrentInstance.RunPrePlayProcesses(PrimaryBaseItem, this);
-            }
-            catch (Exception ex)
-            {
-                Logger.ReportException("PrePlayProcess had an error: ", ex);
-
-                return true;
+                Application.CurrentInstance.RunPrePlayProcesses(this);
             }
         }
 
