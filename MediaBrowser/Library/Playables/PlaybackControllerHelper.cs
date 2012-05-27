@@ -469,7 +469,7 @@ namespace MediaBrowser.Library.Playables
 
         public static bool RequiresWPL(PlayableItem playable)
         {
-            return playable.FilesFormattedForPlayer.Count() > 1;
+            return playable.FilesFormattedForPlayer.Count() > 1 && playable.HasVideo;
         }
 
         public static string GetTranscodedPath(string path)

@@ -187,19 +187,17 @@ namespace MediaBrowser
         {
             Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
 
-            string file;
-
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
                 IEnumerable<string> files = playable.FilesFormattedForPlayer;
 
-                file = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playable.StartPlaylistPosition);
-            }
-            else
-            {
-                // Play single file
-                file = playable.FilesFormattedForPlayer.First();
+                string playlistFile = PlaybackControllerHelper.CreateWPLPlaylist(playable.Id.ToString(), files, playable.StartPlaylistPosition);
+
+                if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, playlistFile, false))
+                {
+                    return false;
+                }
             }
 
             // If we're playing a dvd and the last item played was a MediaCollection, we need to make sure the MediaCollection has
@@ -216,9 +214,16 @@ namespace MediaBrowser
                 }
             }
 
-            if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, file, false))
+            bool queue = false;
+
+            foreach (string fileToPlay in playable.FilesFormattedForPlayer)
             {
-                return false;
+                if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, fileToPlay, queue))
+                {
+                    return false;
+                } 
+                
+                queue = true;
             }
 
             return true;
