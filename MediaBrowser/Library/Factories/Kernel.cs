@@ -789,27 +789,6 @@ namespace MediaBrowser.Library {
             return menuItem;
         }
 
-        public delegate void PostPlayProcess();
-        public List<PostPlayProcess> PostPlayProcesses = new List<PostPlayProcess>();
-
-        public PostPlayProcess AddPostPlayProcess(PostPlayProcess process)
-        {
-            return AddPostPlayProcess(process, 2);
-        }
-
-        public PostPlayProcess AddPostPlayProcess(PostPlayProcess process, int priority)
-        {
-            if (priority == 0)
-            {
-                PostPlayProcesses.Insert(0, process);
-            }
-            else
-            {
-                PostPlayProcesses.Add(process);
-            }
-            return process;
-        }
-
         public void AddExternalPlayableItem(Type aType)
         {
             externalPlayableItems.Add(aType);

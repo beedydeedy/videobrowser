@@ -1638,25 +1638,6 @@ namespace MediaBrowser
             }
         }
 
-        /// <summary>
-        /// Runs the kernel's post play processes
-        /// </summary>
-        public void RunPostPlayProcesses()
-        {
-            if (Kernel.Instance.PostPlayProcesses.Any())
-            {
-                Logger.ReportVerbose("Running Kernel post-play processes");
-
-                Async.Queue("RunPostPlayProcesses", () =>
-                {
-                    foreach (Kernel.PostPlayProcess process in Kernel.Instance.PostPlayProcesses)
-                    {
-                        process();
-                    }
-                });
-            }
-        }
-
         public void UnlockPC()
         {
             Kernel.Instance.ParentalControls.Unlock();

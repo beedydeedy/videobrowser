@@ -143,9 +143,6 @@ namespace MediaBrowser.Code.ModelItems
                 }
             }
 
-            // Run the kernel's post play processes
-            RunPostPlayProcesses();
-
             // Show or hide the resume button depending on playstate
             UpdateResumeStatusInUI();
 
@@ -583,17 +580,6 @@ namespace MediaBrowser.Code.ModelItems
             }
 
             state.CurrentMediaIndex = mediaIndex;
-        }
-
-        /// <summary>
-        /// Runs all post-play processes
-        /// </summary>
-        private void RunPostPlayProcesses()
-        {
-            if (CurrentPlayableItems.Any(p => p.RaiseGlobalPlaybackEvents))
-            {
-                Application.CurrentInstance.RunPostPlayProcesses();
-            }
         }
 
         /// <summary>
