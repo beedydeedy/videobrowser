@@ -618,8 +618,6 @@ namespace MediaBrowser.Library.Playables
                 PlayIntros = false;
             }
 
-            Logger.ReportVerbose("PlayIntros: " + PlayIntros.ToString());
-
             // Filter for IsPlaylistCapable
             if (MediaItems.Count() > 1)
             {
