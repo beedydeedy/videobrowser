@@ -8,10 +8,6 @@
         <ComboBox Name="lstPlayerType" Margin="160,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
         </ComboBox>
         
-        <Label Name="lblLaunchType" Margin="320,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Launch Type:</Label>
-        <ComboBox Name="lstLaunchType" Margin="420,22,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
-        </ComboBox>
-
         <Label Name="lblCommand" Margin="20,60,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">Player Path:</Label>
         <TextBox Name="txtCommand" Margin="100,62,0,0" Width="460" VerticalAlignment="Top" HorizontalAlignment="Left"></TextBox>
         <Button Name="btnCommand" Margin="562,61,0,0" Padding="8 1 7 0" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" />

@@ -33,7 +33,6 @@ namespace Configurator
             }
 
             lstPlayerType.SelectionChanged += new SelectionChangedEventHandler(lstPlayerType_SelectionChanged);
-            lstLaunchType.SelectionChanged += new SelectionChangedEventHandler(lstLaunchType_SelectionChanged);
             btnCommand.Click += new RoutedEventHandler(btnCommand_Click);
             lnkSelectAllMediaTypes.Click += new RoutedEventHandler(lnkSelectAllMediaTypes_Click);
             lnkSelectAllVideoFormats.Click += new RoutedEventHandler(lnkSelectAllVideoFormats_Click);
@@ -93,14 +92,6 @@ namespace Configurator
             }
         }
 
-        private ConfigData.ExternalPlayerLaunchType ExternalPlayerLaunchType
-        {
-            get
-            {
-                return (ConfigData.ExternalPlayerLaunchType)lstLaunchType.SelectedItem;
-            }
-        }
-
         void btnCommand_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new System.Windows.Forms.OpenFileDialog();
@@ -124,13 +115,6 @@ namespace Configurator
             FillControlsFromObject(externalPlayer, uiConfigurator, false, false);
         }
 
-        void lstLaunchType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            chkMinimizeMce.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
-            chkShowSplashScreen.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
-            //chkHideTaskbar.Visibility = ExternalPlayerLaunchType == ConfigData.ExternalPlayerLaunchType.CommandLine ? Visibility.Visible : Visibility.Hidden;
-        }
-
         private void btnOK_Click(object sender, RoutedEventArgs e)
         {
             if (!ValidateUserInput())
@@ -150,7 +134,6 @@ namespace Configurator
         private void PopulateControls()
         {
             lstPlayerType.ItemsSource = PlayableItemFactory.Instance.GetAllPlayableExternalConfigurators().Select(t => t.ExternalPlayerName);
-            lstLaunchType.ItemsSource = Enum.GetValues(typeof(ConfigData.ExternalPlayerLaunchType));
 
             SetListDataSource(lstMediaTypes, EnumWrapperList<MediaType>.Create());
             SetListDataSource(lstVideoFormats, EnumWrapperList<VideoFormat>.Create());
@@ -164,7 +147,6 @@ namespace Configurator
         public void FillControlsFromObject(ConfigData.ExternalPlayer externalPlayer, PlayableExternalConfigurator uiConfigurator, bool refreshMediaTypes, bool refreshVideoFormats)
         {
             lstPlayerType.SelectedItem = externalPlayer.ExternalPlayerName;
-            lstLaunchType.SelectedItem = externalPlayer.LaunchType;
 
             txtArguments.Text = externalPlayer.Args;
 
@@ -204,7 +186,6 @@ namespace Configurator
         public void UpdateObjectFromControls(ConfigData.ExternalPlayer externalPlayer)
         {
             externalPlayer.ExternalPlayerName = lstPlayerType.SelectedItem.ToString();
-            externalPlayer.LaunchType = (ConfigData.ExternalPlayerLaunchType)lstLaunchType.SelectedItem;
 
             externalPlayer.Args = txtArguments.Text;
             externalPlayer.Command = txtCommand.Text;
@@ -225,17 +206,11 @@ namespace Configurator
             // We can make this more flexible down the road if needed
             if (configurator.GetType() == typeof(PlayableExternalConfigurator))
             {
-                lblLaunchType.Visibility = System.Windows.Visibility.Visible;
-                lstLaunchType.Visibility = System.Windows.Visibility.Visible;
-
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Visible;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Visible;
             }
             else
             {
-                lblLaunchType.Visibility = System.Windows.Visibility.Hidden;
-                lstLaunchType.Visibility = System.Windows.Visibility.Hidden;
-
                 chkSupportsMultiFileCommand.Visibility = System.Windows.Visibility.Hidden;
                 chkSupportsPLS.Visibility = System.Windows.Visibility.Hidden;
             }
