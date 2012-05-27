@@ -445,11 +445,7 @@ namespace MediaBrowser.LibraryManagement
                 {
                     WebRequest request = WebRequest.Create(path);
                     var response = request.GetResponse();
-                    Stream stream = response.GetResponseStream();
-                    byte[] buffer = new byte[11];
-                    stream.Read(buffer, 0, 11);
                     response.Close();
-                    stream.Close();
                 }
                 catch
                 {
