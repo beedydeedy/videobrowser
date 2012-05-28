@@ -750,6 +750,9 @@ namespace MediaBrowser
             if (Config.ParentalControlEnabled)
                 Logger.ReportInfo("*** Parental Controls are ON with a max rating of "+Config.ParentalMaxAllowedString+".  Block Unrated is "+Config.ParentalBlockUnrated+" and Hide Content is "+Config.HideParentalDisAllowed);
             Logger.ReportInfo("*** Internet Providers are "+(Config.AllowInternetMetadataProviders ? "ON." : "OFF."));
+            // Now let's put a diagnostic ping in here for the beta cycle so we can see how much testing we're getting
+            string info = "IP=" + Config.AllowInternetMetadataProviders + " EXTP=" + Config.ExternalPlayers.Count;
+            Helper.Ping("http://www.ebrsoft.com/software/mb/plugins/ping.php?product=MBBeta&ver=" + Kernel.Instance.VersionStr + "&mac=" + Helper.GetMACAddress() + "&key="+info);
             try
             {
                 if (Config.IsFirstRun)
@@ -957,6 +960,7 @@ namespace MediaBrowser
                 case "2.5.3.0":
                 case "2.6.0.0":
                     Config.EnableNestedMovieFolders = false;  //turn this off - it is what causes all the "small library" issues
+                    Config.EnableTranscode360 = false; //no longer need transcoding and it just causes problems
                     Kernel.Instance.ConfigData.FetchedPosterSize = "w500"; //reset to new api
                     Kernel.Instance.ConfigData.FetchedBackdropSize = "w1280"; //reset to new api
                     Kernel.Instance.ConfigData.Save();
