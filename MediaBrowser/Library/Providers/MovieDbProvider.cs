@@ -76,11 +76,12 @@ namespace MediaBrowser.Library.Providers
             {
                 forceDownload = false; //reset
                 FetchMovieData();
-                downloadDate = DateTime.UtcNow;
+                downloadDate = DateTime.UtcNow.AddHours(4); // fudge for differing system times
             }
             else
             {
                 Logger.ReportVerbose("MovieDBProvider not fetching because local meta exists for " + Item.Name);
+                downloadDate = DateTime.UtcNow.AddHours(4);
             }
         }
 
