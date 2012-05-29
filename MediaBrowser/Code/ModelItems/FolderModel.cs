@@ -64,23 +64,21 @@ namespace MediaBrowser.Library {
         public int Search(string searchValue, bool includeSubs, bool unwatchedOnly, int rating, int ratingFactor)
         {
             if (searchValue == null) searchValue = "";
-            //if (!string.IsNullOrEmpty(searchValue))
-            {
-                IEnumerable<BaseItem> results = includeSubs ?
-                    this.folder.RecursiveChildren.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList() :
-                    this.folder.Children.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList();
+            searchValue = searchValue.ToLower();
+            IEnumerable<BaseItem> results = includeSubs ?
+                this.folder.RecursiveChildren.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList() :
+                this.folder.Children.Where(i => MatchesCriteria(i, searchValue, unwatchedOnly, rating, ratingFactor)).ToList();
 
-                if (results.Count() > 0)
-                {
-                    Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(results.ToList()) 
-                        { Name = this.Name + " - Search Results (" + searchValue + (unwatchedOnly ? "/unwatched":"") 
-                            + (rating > 0 ? "/"+Ratings.ToString(rating) + (ratingFactor > 0 ? "-" : "+") : "") + ")" }));
-                    return results.Count();
-                }
-                else
-                {
-                    Application.CurrentInstance.Information.AddInformationString("No Search Results Found");
-                }
+            if (results.Count() > 0)
+            {
+                Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(results.ToList()) 
+                    { Name = this.Name + " - Search Results (" + searchValue + (unwatchedOnly ? "/unwatched":"") 
+                        + (rating > 0 ? "/"+Ratings.ToString(rating) + (ratingFactor > 0 ? "-" : "+") : "") + ")" }));
+                return results.Count();
+            }
+            else
+            {
+                Application.CurrentInstance.Information.AddInformationString("No Search Results Found");
             }
             return 0;
         }
