@@ -56,13 +56,14 @@ namespace MediaBrowser.Library.Providers
             if (DateTime.Today.Subtract(Item.DateCreated).TotalDays > 180 && downloadDate != DateTime.MinValue)
                 return false; // don't trigger a refresh data for item that are more than 6 months old and have been refreshed before
 
-            if (DateTime.Today.Subtract(downloadDate).TotalDays < Config.Instance.MetadataCheckForUpdateAge) // only refresh every n days
+            if (DateTime.Today.Subtract(downloadDate).TotalDays < Kernel.Instance.ConfigData.MetadataCheckForUpdateAge) // only refresh every n days
                 return false;
 
             if (HasAltMeta())
                 return false; //never refresh if has meta from other source
 
             forceDownload = true; //tell the provider to re-download even if meta already there
+            Logger.ReportVerbose("MovieDbProvider - needs refresh.  Download date: " + downloadDate + " item created date: " + Item.DateCreated + " Check for Update age: " + Kernel.Instance.ConfigData.MetadataCheckForUpdateAge);
             return true;
         }
 
