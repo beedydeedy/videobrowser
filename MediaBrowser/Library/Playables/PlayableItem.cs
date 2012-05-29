@@ -561,17 +561,9 @@ namespace MediaBrowser.Library.Playables
             Logger.ReportInfo(PlaybackController.ControllerName + " about to play " + DisplayName);
 
             // If the controller already has active playable items, stop it and wait for it to flush out
-            if (!QueueItem && PlaybackController.IsPlaying)
+            if (!QueueItem)
             {
-                Logger.ReportVerbose("Stopping {0} because it's already playing.", PlaybackController.ControllerName);
-                
-                PlaybackController.Stop();
-
-                while (PlaybackController.IsPlaying)
-                {
-                    Logger.ReportVerbose("Still waiting for {0} to stop", PlaybackController.ControllerName); 
-                    System.Threading.Thread.Sleep(250);
-                }
+                PlaybackController.StopAndWait();
             }
 
             // Run all pre-play processes

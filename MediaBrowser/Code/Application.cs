@@ -1855,27 +1855,14 @@ namespace MediaBrowser
             {
                 if (controller.IsPlaying)
                 {
-                    Logger.ReportVerbose("Stopping playback on " + controller.ControllerName); 
-                    controller.Stop();
+                    controller.StopAndWait();
                 }
             }
 
             if (IsExternalWmcApplicationPlaying)
             {
                 Logger.ReportVerbose("Stopping playback from another wmc application, such as live tv");
-                StopExternalWmcApplication(false);
-            }
-
-            if (waitForStop)
-            {
-                int i = 0;
-
-                // Try to wait for playback to completely stop, but don't get hung up too long
-                while ((IsPlaying || IsExternalWmcApplicationPlaying) && i < 10)
-                {
-                    System.Threading.Thread.Sleep(250);
-                    i++;
-                }
+                StopExternalWmcApplication(true);
             }
         }
 

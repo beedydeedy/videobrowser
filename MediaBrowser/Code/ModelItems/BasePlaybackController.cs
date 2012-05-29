@@ -655,6 +655,23 @@ namespace MediaBrowser.Code.ModelItems
 
             base.Dispose(isDisposing);
         }
+
+        public void StopAndWait()
+        {
+            var playstate = PlayState;
+
+            if (playstate == PlaybackControllerPlayState.Playing || playstate == PlaybackControllerPlayState.Paused)
+            {
+                Logger.ReportVerbose("Stopping {0} .", ControllerName); 
+                Stop();
+            }
+
+            while (PlayState != PlaybackControllerPlayState.Idle)
+            {
+                Logger.ReportVerbose("Still waiting for {0} to stop", ControllerName);
+                System.Threading.Thread.Sleep(250);
+            }
+        }
     }
 
     public enum PlaybackControllerPlayState
