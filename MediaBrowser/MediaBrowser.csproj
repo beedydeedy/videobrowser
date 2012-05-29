@@ -344,6 +344,7 @@
     <None Include="Images\Icons\IconNext.png" />
     <None Include="Images\Icons\IconPrevious.png" />
     <Content Include="Images\Icons\IconRemote.png" />
+    <Content Include="Images\Icons\IconSearch.png" />
     <Content Include="Images\Icons\IconWatched.png" />
     <Content Include="Images\Lock.png" />
     <Content Include="Images\Locked.png" />

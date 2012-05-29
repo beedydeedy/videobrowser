@@ -54,6 +54,7 @@
         <Actions>
           <Set Target="[SearchPanel.Visible]" Value="false" />
           <Set Target="[MouseBlocker.Visible]" Value="false" />
+          <Set Target="[Application.ShowSearchPanel]" Value="false" />
         </Actions>
       </Changed>
 
@@ -63,12 +64,18 @@
           <Modified Source="[SearchKey.Invoked]" />
         </Conditions>
         <Actions>
-          <PlaySound Sound="sound://sounds:Miniselect" />
-          <Set Target="[SearchPanel.Visible]" Value="true" />
-          <Set Target="[MouseBlocker.Visible]" Value="true" />
-          <Invoke Target="[SearchPanel.NavigateInto]" />
+          <Set Target="[Application.ShowSearchPanel]" Value="true" />
         </Actions>
       </Rule>
+
+      <Condition Source="[Application.ShowSearchPanel]" SourceValue="true"  >
+        <Actions>
+            <PlaySound Sound="sound://sounds:Miniselect" />
+            <Set Target="[SearchPanel.Visible]" Value="true" />
+            <Set Target="[MouseBlocker.Visible]" Value="true" />
+            <Invoke Target="[SearchPanel.NavigateInto]" />
+        </Actions>
+      </Condition>
 
     </Rules>
 

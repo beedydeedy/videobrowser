@@ -67,7 +67,7 @@ namespace MediaBrowser.Library.Logging
             if (exception != null)
             {
                 var trace = new StackTrace(exception, true);
-                builder.AppendFormat("Unhandled exception.  Type={0} Msg={1} Src={2} Method={5} Line={6} Col={7}{4}StackTrace={4}{3}",
+                builder.AppendFormat("Exception.  Type={0} Msg={1} Src={2} Method={5} Line={6} Col={7}{4}StackTrace={4}{3}",
                     exception.GetType().FullName,
                     exception.Message,
                     exception.Source,

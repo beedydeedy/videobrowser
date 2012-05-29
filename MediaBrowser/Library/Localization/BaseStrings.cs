@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0048";
+        const string VERSION = "1.0050";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -225,6 +225,7 @@ namespace MediaBrowser.Library.Localization
 
         //Display Prefs
         public string ViewDispPref = "View";
+        public string ViewSearch = "Search";
         public string CoverFlowDispPref = "Cover Flow";
         public string DetailDispPref = "Detail";
         public string PosterDispPref = "Poster";
@@ -273,7 +274,7 @@ namespace MediaBrowser.Library.Localization
         public string ResetConfigDial = "Are you sure you wish to reset all configuration to defaults?";
         public string ResetConfigCapDial = "Reset Configuration";
         public string ConfigResetDial = "Configuration Reset";
-        public string UpdateMBDial = "Do you wish to update Media Browser now?  (Requires you to grant permissions and a restart of Media Browser)";
+        public string UpdateMBDial = "Please visit www.mediabrowser.tv/download to install the new version.";
         public string UpdateMBCapDial = "Update Available";
         public string UpdateMBExtDial = "There is an update available for Media Browser.  Please update Media Browser next time you are at your MediaCenter PC.";
         public string DLUpdateFailDial = "Media Browser will operate normally and prompt you again the next time you load it.";

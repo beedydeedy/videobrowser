@@ -63,6 +63,7 @@
       <Command Name="CloseSortConfiguration" />
       <Command Name="ShowIndexConfiguration" />
       <Command Name="CloseIndexConfiguration" />
+      <Command Name="ShowSearch" />
       <Command Name="CloseContextMenu" />
       <Command Name="ClosePopupPlay" />
       <a:Clock Name="Clock"/>
@@ -99,6 +100,7 @@
           <Set Target="[ViewConfig.Visible]" Value="false"/>
           <Set Target="[SortOrdersBtn.Visible]" Value="false"/>
           <Set Target="[SortConfig.Visible]" Value="false"/>
+          <Set Target="[SearchBtn.Visible]" Value="false"/>
           <Set Target="[IndexesBtn.Visible]" Value="false"/>
           <Set Target="[IndexConfig.Visible]" Value="false"/>
           <Set Target="[Breadcrumbs.Visible]" Value="false"/>
@@ -134,6 +136,12 @@
           <Set Target="[ContextMenu.Visible]" Value="false" />
           <Invoke Target="[Application.ResetContextMenu]" />
           <Set Target="[FindAsYouTypePanel.Visible]" Value="true" />
+        </Actions>
+      </Changed>
+
+      <Changed Source="[ShowSearch.Invoked]" >
+        <Actions>
+          <Set Target="[Application.ShowSearchPanel]" Value="true" />
         </Actions>
       </Changed>
 
@@ -487,6 +495,12 @@
                   <FormLayoutInput Left="IndexesBtn,0,0" Top="IndexesBtn,1"/>
                 </LayoutInput>
               </vm:RadioConfiguration>
+
+              <vm:ImgButton Name="SearchBtn" Command="[ShowSearch]" Image="image://i:Search" Content="[Application.LocalStrings.#ViewSearch!cor:String]" Font="font://f:P_ConfigButtons">
+                <LayoutInput>
+                  <FormLayoutInput Left="IndexesBtn,1" Bottom="ViewsBtn,1"/>
+                </LayoutInput>
+              </vm:ImgButton>
 
               <!-- find in list panel - highest Z-Order -->
               <Panel Name="FindAsYouTypePanel" >

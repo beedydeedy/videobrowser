@@ -114,9 +114,9 @@ namespace MediaBrowser.Library.Providers
                 {
                     file = Path.Combine(dir, filename_without_extension);
                     if (File.Exists(file + primaryExt))
-                        return file + primaryExt;
+                        return (file + primaryExt).ToLower();
                     if (File.Exists(file + secondaryExt))
-                        return file + secondaryExt;
+                        return (file + secondaryExt).ToLower();
                 }
             }
             return null;
@@ -138,18 +138,18 @@ namespace MediaBrowser.Library.Providers
 
             // image moved or image deleted
             bool changed = FindImage(Primary) != primaryPath;
-            //if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("primary image changed. primaryPath: "+primaryPath);
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("primary image changed. primaryPath: "+primaryPath);
             changed |= FindImage(Banner) != bannerPath;
-            //if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("banner changed");
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("banner changed");
 
             var realBackdrops = FindImages(Backdrop);
             changed |= realBackdrops.Except(backdropPaths ?? new List<string> ()).Count() != 0;
-            //if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("backdrops changed");
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("backdrops changed");
 
             // Basic item corruption fix
             if (!changed) {
                 changed |= primaryPath != null && Item.PrimaryImagePath == null;
-                //if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("provider and item paths don't match:");
+                if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("provider and item paths don't match:");
             }
 
             return changed;

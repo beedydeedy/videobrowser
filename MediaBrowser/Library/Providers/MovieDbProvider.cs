@@ -56,13 +56,14 @@ namespace MediaBrowser.Library.Providers
             if (DateTime.Today.Subtract(Item.DateCreated).TotalDays > 180 && downloadDate != DateTime.MinValue)
                 return false; // don't trigger a refresh data for item that are more than 6 months old and have been refreshed before
 
-            if (DateTime.Today.Subtract(downloadDate).TotalDays < Config.Instance.MetadataCheckForUpdateAge) // only refresh every n days
+            if (DateTime.Today.Subtract(downloadDate).TotalDays < Kernel.Instance.ConfigData.MetadataCheckForUpdateAge) // only refresh every n days
                 return false;
 
             if (HasAltMeta())
                 return false; //never refresh if has meta from other source
 
             forceDownload = true; //tell the provider to re-download even if meta already there
+            Logger.ReportVerbose("MovieDbProvider - needs refresh.  Download date: " + downloadDate + " item created date: " + Item.DateCreated + " Check for Update age: " + Kernel.Instance.ConfigData.MetadataCheckForUpdateAge);
             return true;
         }
 
@@ -75,11 +76,12 @@ namespace MediaBrowser.Library.Providers
             {
                 forceDownload = false; //reset
                 FetchMovieData();
-                downloadDate = DateTime.UtcNow;
+                downloadDate = DateTime.UtcNow.AddHours(4); // fudge for differing system times
             }
             else
             {
                 Logger.ReportVerbose("MovieDBProvider not fetching because local meta exists for " + Item.Name);
+                downloadDate = DateTime.UtcNow.AddHours(4);
             }
         }
 
@@ -260,7 +262,7 @@ namespace MediaBrowser.Library.Providers
                             url3 = string.Format(altTitleSearch, id, ApiKey);
                             string resp = Helper.FetchJson(url3);
                             var response = Helper.ToJsonDict(resp);
-                            Logger.ReportVerbose("Alt Title response: " + resp);
+                            //Logger.ReportVerbose("Alt Title response: " + resp);
                             if (response != null)
                             {
                                 try
