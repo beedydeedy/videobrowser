@@ -445,6 +445,12 @@ namespace MediaBrowser.Library.Playables
                 if (string.IsNullOrEmpty(duration) && metadata.ContainsKey("TrackDuration"))
                 {
                     duration = metadata["TrackDuration"] as string;
+
+                    // Found it in metadata, now parse
+                    if (!string.IsNullOrEmpty(duration))
+                    {
+                        return TimeSpan.FromSeconds(double.Parse(duration)).Ticks;
+                    }
                 }
 
                 // Found it in metadata, now parse
