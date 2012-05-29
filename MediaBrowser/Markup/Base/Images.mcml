@@ -23,6 +23,7 @@
   <Image Name="Starburst" Source="resx://MediaBrowser/MediaBrowser.Resources/Starburst"/>
   <Image Name="Locked" Source="resx://MediaBrowser/MediaBrowser.Resources/Locked"/>
   <Image Name="UnLocked" Source="resx://MediaBrowser/MediaBrowser.Resources/UnLocked"/>
+  <Image Name="Search" Source="resx://MediaBrowser/MediaBrowser.Resources/IconSearch"/>
 
   <Image Name="HDLogo" Source="resx://MediaBrowser/MediaBrowser.Resources/HD" />
 	<Image Name="HDLogo1080" Source="resx://MediaBrowser/MediaBrowser.Resources/hd1080" />

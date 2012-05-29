@@ -1539,6 +1539,13 @@ namespace MediaBrowser {
             }
         }
         
+        internal static System.Drawing.Bitmap IconSearch {
+            get {
+                object obj = ResourceManager.GetObject("IconSearch", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap IconShuffle {
             get {
                 object obj = ResourceManager.GetObject("IconShuffle", resourceCulture);

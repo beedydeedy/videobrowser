@@ -1103,6 +1103,20 @@ namespace MediaBrowser
             }
         }
 
+        private bool showSearchPanel = false;
+        public bool ShowSearchPanel
+        {
+            get { return this.showSearchPanel; }
+            set
+            {
+                if (showSearchPanel != value)
+                {
+                    showSearchPanel = value;
+                    FirePropertyChanged("ShowSearchPanel");
+                }
+            }
+        }
+
         private bool showNowPlaying = false;
         public bool ShowNowPlaying
         {
