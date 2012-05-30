@@ -10,6 +10,9 @@ namespace MediaInfoProvider
 {
     public class PluginOptions : PluginConfigurationOptions
     {
+        [Label("Save to File")]
+        public bool SaveToFile = true;
+
         [Label("Allow Rips  (service)")]
         public bool AllowBDRips = false;
 

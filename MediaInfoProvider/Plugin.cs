@@ -31,7 +31,8 @@ namespace MediaInfoProvider {
             }
 
             int.TryParse(PluginOptions.Instance.ServiceTimeout, out ServiceTimeout);
-            kernel.MetadataProviderFactories.Add(MetadataProviderFactory.Get<MediaInfoProvider>()); 
+            kernel.MetadataProviderFactories.Add(MetadataProviderFactory.Get<MediaInfoProvider>());
+            Logger.ReportInfo("MediaInfoProvider plugin version (" + Version + ") loaded.");
         }
 
         public override bool IsConfigurable
