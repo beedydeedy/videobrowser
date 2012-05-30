@@ -40,12 +40,14 @@ namespace MBMigrate
             {
                 Migrate26();
 
-                //set install directory and clean any bad ext players
+                //set install directory and clean any bad ext players and reset image sizes
                 _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
                 try
                 {
                     _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
                     _config.ExternalPlayers.RemoveAll(p => String.IsNullOrEmpty(p.ExternalPlayerName));
+                    _config.FetchedPosterSize = "w500";
+                    _config.FetchedBackdropSize = "w1280";
                     _config.Save();
                 }
                 catch { }
