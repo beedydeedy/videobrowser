@@ -5,6 +5,9 @@
       xmlns:cb="resx://MediaBrowser/MediaBrowser.Resources/CheckBox"
       xmlns:st="resx://MediaBrowser/MediaBrowser.Resources/SpinnerText"
       xmlns:sb="resx://MediaBrowser/MediaBrowser.Resources/SimpleButton"
+      xmlns:vm="resx://MediaBrowser/MediaBrowser.Resources/ViewMenu"
+      xmlns:ib="resx://MediaBrowser/MediaBrowser.Resources/ImageButton"
+      xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
   	  xmlns:f="file://Fonts_DoNotEdit.mcml"
       xmlns:s="file://Styles_DoNotEdit.mcml"
       xmlns:addin="assembly://Microsoft.MediaCenter/Microsoft.MediaCenter.Hosting"
@@ -21,6 +24,8 @@
       <EditableText Name="SearchValue"/>
       <ShortcutHandler Name="Back" Handle="true" HandlerStage="Bubbled" Shortcut="Back"/>
       <Command Name="Search"/>
+      <Command Name="OSK"/>
+      <addin:AddInHost Name="AddInHost" />
       <BooleanChoice Name="IncludeNested" />
       <BooleanChoice Name="UnwatchedOnly" />
 
@@ -66,6 +71,17 @@
         </Actions>
       </Changed>
 
+      <!--Bring up keyboard-->
+      <Changed Source="[OSK.Invoked]" >
+        <Actions>
+          <Invoke
+                  Target="[AddInHost.MediaCenterEnvironment.ShowOnscreenKeyboard]"
+                  editableText="[SearchValue]"
+                  passwordMasked="false"
+                  maxLength="50"/>
+        </Actions>
+      </Changed>
+
       <Changed Source="[Search.Invoked]" >
         <Conditions>
           <IsValid Source="[Application.CurrentFolderModel]"/>
@@ -100,7 +116,8 @@
               <FormLayoutInput Top="Parent,0,10" Left="Parent,0,10"/>
             </LayoutInput>
             <Children>
-              <te:TextEdit Name="SearchField" Margins="20,0,0,0" Label="[Application.LocalStrings.#TitleContains!cor:String]" EditableText="[SearchValue]" MaximumSize="500,0" EditSize="250,34" Font="font://f:SE_DefaultFont" MaxChars="50" />
+              <te:TextEdit Name="SearchField" Margins="20,0,0,0" Label="[Application.LocalStrings.#TitleContains!cor:String]" EditableText="[SearchValue]" MaximumSize="450,0" EditSize="250,34" Font="font://f:SE_DefaultFont" MaxChars="50" />
+              <vm:ImageBtn Name="OSKBtn" Command="[OSK]" Focused="image://i:KeyFocus" NonFocused="image://i:Key"  Margins="0,0,15,0" />
               <cb:CheckBox Name="Nested" Label="[Application.LocalStrings.#IncludeNested!cor:String]" Checked="[IncludeNested]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
               <cb:CheckBox Name="Unwatched" Label="[Application.LocalStrings.#UnwatchedOnly!cor:String]" Checked="[UnwatchedOnly]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
             </Children>
@@ -118,12 +135,12 @@
           </Panel>
 
 
-          <Panel Name="ButtonPanel" Layout="HorizontalFlow" Margins="10,0,0,10" >
+          <Panel Name="ButtonPanel" Layout="HorizontalFlow" Margins="30,0,0,10" >
             <LayoutInput>
               <FormLayoutInput Vertical="Far" Horizontal="Near" />
             </LayoutInput>
             <Children>
-              <sb:SimpleButton Name="CancelButton" Text="[Application.LocalStrings.#Cancel!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Close]" />
+              <sb:SimpleButton Name="CancelButton" Text="[Application.LocalStrings.#Cancel!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Close]" Margins="0,0,30,0" />
               <sb:SimpleButton Name="SearchButton" Text="[Application.LocalStrings.#Search!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Search]" />
               
             </Children>
