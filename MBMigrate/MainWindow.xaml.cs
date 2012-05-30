@@ -36,17 +36,20 @@ namespace MBMigrate
         {
             InitializeComponent();
             //_serviceConfig = ServiceConfigData.FromFile(ApplicationPaths.ServiceConfigFile);
-            _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
-            try
-            {
-                _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
-                _config.Save();
-            }
-            catch { }
-
             Async.Queue("Migration", () =>
             {
                 Migrate26();
+
+                //set install directory and clean any bad ext players
+                _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
+                try
+                {
+                    _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+                    _config.ExternalPlayers.RemoveAll(p => String.IsNullOrEmpty(p.ExternalPlayerName));
+                    _config.Save();
+                }
+                catch { }
+
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
         }

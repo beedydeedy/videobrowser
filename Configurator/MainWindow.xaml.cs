@@ -680,7 +680,10 @@ namespace Configurator
         {
             lstExternalPlayers.Items.Clear();
             foreach (ConfigData.ExternalPlayer item in config.ExternalPlayers)
-                lstExternalPlayers.Items.Add(item);
+            {
+                if (!String.IsNullOrEmpty(item.ExternalPlayerName))
+                    lstExternalPlayers.Items.Add(item);
+            }
         }
 
         #region Media Collection methods
