@@ -73,7 +73,9 @@ namespace MediaInfoProvider
             Video video = Item as Video;
             if (video == null ) return;
             //if data exists in our file - just get it from there
-            string dataFile = Path.Combine(Item.Path, "mediainfo.data");
+            string dataFile = Item is Episode ? 
+                Path.Combine(Path.Combine(Path.GetDirectoryName(Item.Path),"metadata"),Path.GetFileNameWithoutExtension(Item.Path)+"-mediainfo.data") :
+                Path.Combine(Item.Path, "mediainfo.data");
             if (File.Exists(dataFile)) 
             {
                 Logger.ReportVerbose("Reading MediaInfo from data file...");
@@ -117,7 +119,7 @@ namespace MediaInfoProvider
                                 var stream = new MemoryStream();
                                 Serializer.Serialize<object>(stream, mi);
                                 Kernel.IgnoreFileSystemMods = true;
-                                File.WriteAllBytes(Path.Combine(video.Path, "mediainfo.data"), stream.ToArray());
+                                File.WriteAllBytes(dataFile, stream.ToArray());
                                 Kernel.IgnoreFileSystemMods = false;
                             }
                         }
