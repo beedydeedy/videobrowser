@@ -1483,6 +1483,13 @@ namespace MediaBrowser {
             }
         }
         
+        internal static System.Drawing.Bitmap IconKeyboard {
+            get {
+                object obj = ResourceManager.GetObject("IconKeyboard", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap IconMusic {
             get {
                 object obj = ResourceManager.GetObject("IconMusic", resourceCulture);
