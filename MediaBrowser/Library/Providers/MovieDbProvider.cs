@@ -504,7 +504,14 @@ namespace MediaBrowser.Library.Providers
                         string role = (string)person["character"];
                         if (name != null)
                         {
-                            sortedActors.Add(Convert.ToInt32(person["order"].ToString()), new Actor() { Name = name, Role = role });
+                            try
+                            {
+                                sortedActors.Add(Convert.ToInt32(person["order"].ToString()), new Actor() { Name = name, Role = role });
+                            }
+                            catch (ArgumentException e)
+                            {
+                                Logger.ReportException("Actor " + name + " has duplicate order of " + person["order"].ToString() + " in tmdb data.", e);
+                            }
                             if (Kernel.Instance.ConfigData.DownloadPeopleImages && person["profile_path"] != null && !File.Exists(Path.Combine(ApplicationPaths.AppIBNPath, "People/"+name)+"/folder.jpg"))
                             {
                                 try 
