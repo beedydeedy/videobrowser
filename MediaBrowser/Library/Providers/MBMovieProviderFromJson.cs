@@ -52,7 +52,7 @@ namespace MediaBrowser.Library.Providers
                 string json = File.ReadAllText(metaFile);
                 Logger.ReportVerbose("Processing MovieDB info from local json...");
                 ProcessMainInfo(json);
-                lastWriteTime = DateTime.UtcNow;
+                lastWriteTime = new FileInfo(metaFile).LastWriteTimeUtc.AddHours(4); //fudge to account for differing system times
             }
         }
 
