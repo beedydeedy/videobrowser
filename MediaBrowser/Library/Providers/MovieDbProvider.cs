@@ -260,7 +260,7 @@ namespace MediaBrowser.Library.Providers
                             url3 = string.Format(altTitleSearch, id, ApiKey);
                             string resp = Helper.FetchJson(url3);
                             var response = Helper.ToJsonDict(resp);
-                            Logger.ReportVerbose("Alt Title response: " + resp);
+                            //Logger.ReportVerbose("Alt Title response: " + resp);
                             if (response != null)
                             {
                                 try
