@@ -97,23 +97,23 @@ namespace MediaBrowser.Util
                 remoteFile = node.Attributes["url"].Value;
 
                 // Old -> start update
-                if (CurrentVersion < newVersion)
+                if (CurrentVersion < newVersion)  //disable the automatic installer since this doesn't work very well with versions that require migration and configuration
                 {
-                    if (Application.MediaCenterEnvironment.Capabilities.ContainsKey("Console"))
-                    {
-                        // Prompt them if they want to update.
-                        DialogResult reply = Application.DisplayDialog(Application.CurrentInstance.StringData("UpdateMBDial"), Application.CurrentInstance.StringData("UpdateMBCapDial"), (DialogButtons)12 /* Yes, No */, 10);
-                        if (reply == DialogResult.Yes)
-                        {
-                            // If they want it, download in the background and prompt when done.
-                            DownloadUpdate();
-                        }
-                    }
-                    else
+                    //if (Application.MediaCenterEnvironment.Capabilities.ContainsKey("Console"))
+                    //{
+                    //    // Prompt them if they want to update.
+                    //    DialogResult reply = Application.DisplayDialog(Application.CurrentInstance.StringData("UpdateMBDial"), Application.CurrentInstance.StringData("UpdateMBCapDial"), (DialogButtons)12 /* Yes, No */, 10);
+                    //    if (reply == DialogResult.Yes)
+                    //    {
+                    //        // If they want it, download in the background and prompt when done.
+                    //        DownloadUpdate();
+                    //    }
+                    //}
+                    //else
                     {
                         // Let the user know about the update, but do nothing as we can't install from 
                         // an extender.
-                        DialogResult reply = Application.DisplayDialog(Application.CurrentInstance.StringData("UpdateMBExtDial"), Application.CurrentInstance.StringData("UpdateMBCapDial"), (DialogButtons)1 /* OK */, 10);
+                        DialogResult reply = Application.DisplayDialog(Application.CurrentInstance.StringData("UpdateMBDial"), Application.CurrentInstance.StringData("UpdateMBCapDial"), (DialogButtons)1 /* OK */, 10);
                     }
                 }
             }
