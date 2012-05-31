@@ -95,9 +95,22 @@ namespace MediaBrowser.Library
         {
             if (ratingStr != null && ratings.ContainsKey(ratingStr))
                 return ratings[ratingStr];
-            else 
-                return ratings[""]; //return "unknown" level
+            else
+            {
+                string stripped = stripCountry(ratingStr);
+                if (ratingStr != null && ratings.ContainsKey(stripped))
+                    return ratings[stripped];
+                else
+                    return ratings[""]; //return "unknown" level
+            }
         }
+
+        private static string stripCountry(string rating)
+        {
+            int start = rating.IndexOf('-');
+            return start > 0 ? rating.Substring(start + 1) : rating;
+        }
+
         public static string ToString(int level)
         {
             if (ratingsStrings.ContainsKey(level))
