@@ -25,6 +25,7 @@
   <Image Name="UnLocked" Source="resx://MediaBrowser/MediaBrowser.Resources/UnLocked"/>
   <Image Name="Search" Source="resx://MediaBrowser/MediaBrowser.Resources/IconSearch"/>
   <Image Name="Key" Source="resx://MediaBrowser/MediaBrowser.Resources/IconKeyboard"/>
+  <Image Name="KeyFocus" Source="resx://MediaBrowser/MediaBrowser.Resources/IconKeyboardFocus"/>
 
   <Image Name="HDLogo" Source="resx://MediaBrowser/MediaBrowser.Resources/HD" />
 	<Image Name="HDLogo1080" Source="resx://MediaBrowser/MediaBrowser.Resources/hd1080" />
