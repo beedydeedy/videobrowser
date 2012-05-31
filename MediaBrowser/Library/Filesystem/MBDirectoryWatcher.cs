@@ -127,12 +127,19 @@ namespace MediaBrowser.Library.Filesystem
             }            
         }
 
+        string[] ignores = new string[] { ".jpg", ".json", ".data", ".png", ".xml" };
         private void WatchedFolderUpdated(string FullPath, FileSystemEventArgs e)
         {
             if (!Kernel.IgnoreFileSystemMods)
             {
                 try
                 {
+                    string ext = Path.GetExtension(e.Name).ToLower();
+                    if (ignores.Contains(ext))
+                    {
+                        Logger.ReportVerbose("File Watcher ignoring change of type " + e.ChangeType + " to " + e.FullPath + ".");
+                        return;
+                    }
                     if (Directory.Exists(FullPath))
                     {
                         lastChangedDirectory = Path.GetDirectoryName(e.FullPath).ToLower();
