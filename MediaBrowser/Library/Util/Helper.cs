@@ -433,6 +433,31 @@ namespace MediaBrowser.LibraryManagement
             return null;
         }
 
+        /// <summary>
+        /// Ping an url
+        /// </summary>
+        /// <param name="path"></param>
+        public static void Ping(string path)
+        {
+            MediaBrowser.Library.Threading.Async.Queue("Ping", () =>
+            {
+                try
+                {
+                    WebRequest request = WebRequest.Create(path);
+                    var response = request.GetResponse();
+                    Stream stream = response.GetResponseStream();
+                    byte[] buffer = new byte[11];
+                    stream.Read(buffer, 0, 11);
+                    response.Close();
+                    stream.Close();
+                }
+                catch
+                {
+
+                }
+            });
+        }
+
         public static Dictionary<string, object> ToJsonDict(string json)
         {
             return json != null ? new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json) : null;
