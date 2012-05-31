@@ -501,7 +501,7 @@ namespace Configurator
             cbxAutoValidate.IsChecked = config.AutoValidate;
 
             //metadata
-            cbxInetProviders.IsChecked = config.AllowInternetMetadataProviders;
+            cbxInetProviders.IsChecked = gbTmdb.IsEnabled = config.AllowInternetMetadataProviders;
             cbxSaveMetaLocally.IsChecked = config.SaveLocalMeta;
             cbxDownloadPeople.IsChecked = config.DownloadPeopleImages;
             cbxSaveSeasonBD.IsChecked = config.SaveSeasonBackdrops;
