@@ -97,7 +97,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
       
                 string url = string.Format(seriesGet, TVUtils.TVDBApiKey, seriesId, Config.Instance.PreferredMetaDataLanguage);
                 XmlDocument doc = TVUtils.Fetch(url);
-                if (doc != null) {
+                if (doc != null)
+                {
 
                     success = true;
 
@@ -141,7 +142,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
                             if (Kernel.Instance.ConfigData.SaveLocalMeta && actorsNode != null)
                             {
                                 //add to main doc for saving
-                                actorsNode.AppendChild(doc.ImportNode(p,true));
+                                actorsNode.AppendChild(doc.ImportNode(p, true));
                             }
                         }
                     }
@@ -160,26 +161,28 @@ namespace MediaBrowser.Library.Providers.TVDB {
 
                     string g = doc.SafeGetString("//Genre");
 
-                    if (g != null) {
+                    if (g != null)
+                    {
                         string[] genres = g.Trim('|').Split('|');
-                        if (g.Length > 0) {
+                        if (g.Length > 0)
+                        {
                             series.Genres = new List<string>();
                             series.Genres.AddRange(genres);
                         }
                     }
-                }
 
-                if (Kernel.Instance.ConfigData.SaveLocalMeta)
-                {
-                    try
+                    if (Kernel.Instance.ConfigData.SaveLocalMeta)
                     {
-                        Kernel.IgnoreFileSystemMods = true;
-                        doc.Save(System.IO.Path.Combine(Item.Path, LOCAL_META_FILE_NAME));
-                        Kernel.IgnoreFileSystemMods = false;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.ReportException("Error saving local series meta.", e);
+                        try
+                        {
+                            Kernel.IgnoreFileSystemMods = true;
+                            doc.Save(System.IO.Path.Combine(Item.Path, LOCAL_META_FILE_NAME));
+                            Kernel.IgnoreFileSystemMods = false;
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.ReportException("Error saving local series meta.", e);
+                        }
                     }
                 }
             }
