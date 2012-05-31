@@ -21,7 +21,7 @@ namespace MediaBrowser.Library.EntityDiscovery {
             setup = null;
 
             var folder = location as IFolderMediaLocation; 
-            if (!(folder==null) && !folder.IsHidden())
+            if (!(folder==null) && !folder.IsHidden() && folder.Name.ToUpper() != MovieResolver.TrailersPath)
             {
                 if (folder.Children.Count > 0 && !ignoreFolders.Contains(folder.Name.ToLower())) {
                     if (!folder.ContainsChild(IGNORE_FOLDER)) { 
