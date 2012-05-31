@@ -190,7 +190,7 @@ namespace MediaBrowser.Library.Playables.TMT5
             }
         }
 
-        public override void Pause()
+        protected override void PauseInternal()
         {
             SendCommandToMMC("-pause");
         }
@@ -200,7 +200,7 @@ namespace MediaBrowser.Library.Playables.TMT5
             SendCommandToMMC("-stop");
         }
 
-        public override void UnPause()
+        protected override void UnPauseInternal()
         {
             SendCommandToMMC("-play");
         }

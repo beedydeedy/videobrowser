@@ -369,12 +369,12 @@ namespace MediaBrowser.Library.Playables.VLC2
             }
         }
 
-        public override void Pause()
+        protected override void PauseInternal()
         {
             SendStatusRequest(new Uri(StatusUrl + "?command=pl_pause"));
         }
 
-        public override void UnPause()
+        protected override void UnPauseInternal()
         {
             SendStatusRequest(new Uri(StatusUrl + "?command=pl_play"));
         }
@@ -384,7 +384,7 @@ namespace MediaBrowser.Library.Playables.VLC2
             SendStatusRequest(new Uri(StatusUrl + "?command=pl_stop"));
         }
 
-        public override void Seek(long position)
+        protected override void SeekInternal(long position)
         {
             TimeSpan time = TimeSpan.FromTicks(position);
 

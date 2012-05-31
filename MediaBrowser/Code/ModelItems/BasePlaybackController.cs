@@ -325,11 +325,8 @@ namespace MediaBrowser.Code.ModelItems
         /// </summary>
         public abstract void DisplayMessage(string header, string message, int timeout);
 
-        public abstract void Pause();
-        public abstract void UnPause();
         protected abstract void PlayMediaInternal(PlayableItem playable);
         protected abstract void StopInternal();
-        public abstract void Seek(long position);
         public abstract void GoToFullScreen();
 
         /// <summary>
@@ -354,6 +351,32 @@ namespace MediaBrowser.Code.ModelItems
                 }
 
                 return PlaybackControllerPlayState.Idle;
+            }
+        }
+
+        public void Pause()
+        {
+            if (PlayState == PlaybackControllerPlayState.Playing)
+            {
+                PauseInternal();
+            }
+        }
+
+        public void UnPause()
+        {
+            if (PlayState == PlaybackControllerPlayState.Paused)
+            {
+                UnPauseInternal();
+            }
+        }
+
+        public void Seek(long position)
+        {
+            var playstate = PlayState;
+
+            if (playstate == PlaybackControllerPlayState.Playing || playstate == PlaybackControllerPlayState.Paused)
+            {
+                SeekInternal(position);
             }
         }
 
@@ -676,6 +699,27 @@ namespace MediaBrowser.Code.ModelItems
                 Logger.ReportVerbose("Still waiting for {0} to stop", ControllerName);
                 System.Threading.Thread.Sleep(250);
             }
+        }
+
+        /// <summary>
+        /// Subclasses will have to override this, if they can
+        /// </summary>
+        protected virtual void PauseInternal()
+        {
+        }
+
+        /// <summary>
+        /// Subclasses will have to override this, if they can
+        /// </summary>
+        protected virtual void UnPauseInternal()
+        {
+        }
+
+        /// <summary>
+        /// Subclasses will have to override this, if they can
+        /// </summary>
+        protected virtual void SeekInternal(long positionTicks)
+        {
         }
     }
 

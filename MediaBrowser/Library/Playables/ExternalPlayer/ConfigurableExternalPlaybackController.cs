@@ -120,21 +120,6 @@ namespace MediaBrowser.Library.Playables.ExternalPlayer
 
         }
 
-        public override void Pause()
-        {
-
-        }
-
-        public override void Seek(long position)
-        {
-
-        }
-
-        public override void UnPause()
-        {
-
-        }
-
         public override bool CanPause
         {
             get { return false; }

@@ -515,7 +515,7 @@ namespace MediaBrowser
         /// <summary>
         /// Pauses playback
         /// </summary>
-        public override void Pause()
+        protected override void PauseInternal()
         {
             var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
             if (transport != null)
@@ -527,7 +527,7 @@ namespace MediaBrowser
         /// <summary>
         /// Unpauses playback
         /// </summary>
-        public override void UnPause()
+        protected override void UnPauseInternal()
         {
             var transport = PlaybackControllerHelper.GetCurrentMediaTransport();
             if (transport != null)
@@ -606,7 +606,7 @@ namespace MediaBrowser
         /// <summary>
         /// Moves the player to a given position
         /// </summary>
-        public override void Seek(long position)
+        protected override void SeekInternal(long position)
         {
             var mce = AddInHost.Current.MediaCenterEnvironment;
             Logger.ReportVerbose("Trying to seek position :" + new TimeSpan(position).ToString());

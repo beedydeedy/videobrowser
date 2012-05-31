@@ -330,12 +330,12 @@ namespace MediaBrowser.Library.Playables.MpcHc
             }
         }
 
-        public override void Pause()
+        protected override void PauseInternal()
         {
             SendCommandToPlayer("888", new Dictionary<string, string>());
         }
 
-        public override void UnPause()
+        protected override void UnPauseInternal()
         {
             SendCommandToPlayer("887", new Dictionary<string, string>());
         }
@@ -350,7 +350,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
             SendCommandToPlayer("816", new Dictionary<string, string>());
         }
 
-        public override void Seek(long position)
+        protected override void SeekInternal(long position)
         {
             Dictionary<string, string> additionalParams = new Dictionary<string, string>();
 
