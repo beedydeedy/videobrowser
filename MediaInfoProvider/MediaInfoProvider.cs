@@ -72,6 +72,19 @@ namespace MediaInfoProvider
         {
             Video video = Item as Video;
             if (video == null ) return;
+            //if data exists in our file - just get it from there
+            string dataFile = Path.Combine(Item.Path, "mediainfo.data");
+            if (File.Exists(dataFile)) 
+            {
+                Logger.ReportVerbose("Reading MediaInfo from data file...");
+                using (var fs = MediaBrowser.Library.Filesystem.ProtectedFileStream.OpenSharedReader(dataFile))
+                {
+                    MediaInfoData data = Serializer.Deserialize<object>(fs) as MediaInfoData;
+                    video.MediaInfo = Merge(video.MediaInfo, data);
+                    fs.Close();
+                }
+                return;
+            }
             if (!enabled)
             {
                 Logger.ReportInfo("MediaInfo is disabled - probably due to previous error");
@@ -96,7 +109,17 @@ namespace MediaInfoProvider
                     {
                         try
                         {
-                            Async.RunWithTimeout(() => video.MediaInfo = Merge(video.MediaInfo, GetMediaInfo(filename,video.MediaType)), timeout);
+                            var mi = GetMediaInfo(filename,video.MediaType);
+                            Async.RunWithTimeout(() => video.MediaInfo = Merge(video.MediaInfo, mi), timeout);
+                            //now save it in a file
+                            if (Plugin.PluginOptions.Instance.SaveToFile)
+                            {
+                                var stream = new MemoryStream();
+                                Serializer.Serialize<object>(stream, mi);
+                                Kernel.IgnoreFileSystemMods = true;
+                                File.WriteAllBytes(Path.Combine(video.Path, "mediainfo.data"), stream.ToArray());
+                                Kernel.IgnoreFileSystemMods = false;
+                            }
                         }
                         catch (TimeoutException)
                         {
@@ -113,6 +136,10 @@ namespace MediaInfoProvider
                                 hasTimedOut = true;
                                 enabled = false;  //no telling how long the MI dll is going to be hung.  Best to not try it again this session
                             }
+                        }
+                        catch (Exception e) 
+                        {
+                            Logger.ReportException("Error in MediaInfoProvider.",e);
                         }
                     }
                     else
