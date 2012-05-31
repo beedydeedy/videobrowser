@@ -187,6 +187,8 @@ namespace MediaBrowser
         {
             Microsoft.MediaCenter.MediaType type = PlaybackControllerHelper.GetMediaType(playable);
 
+            bool playedWithPlaylist = false;
+
             // Need to create a playlist
             if (PlaybackControllerHelper.RequiresWPL(playable))
             {
@@ -198,6 +200,8 @@ namespace MediaBrowser
                 {
                     return false;
                 }
+
+                playedWithPlaylist = true;
             }
 
             // If we're playing a dvd and the last item played was a MediaCollection, we need to make sure the MediaCollection has
@@ -214,16 +218,19 @@ namespace MediaBrowser
                 }
             }
 
-            bool queue = false;
-
-            foreach (string fileToPlay in playable.FilesFormattedForPlayer)
+            if (!playedWithPlaylist)
             {
-                if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, fileToPlay, queue))
+                bool queue = false;
+
+                foreach (string fileToPlay in playable.FilesFormattedForPlayer)
                 {
-                    return false;
-                } 
-                
-                queue = true;
+                    if (!PlaybackControllerHelper.CallPlayMedia(mediaCenterEnvironment, type, fileToPlay, queue))
+                    {
+                        return false;
+                    }
+
+                    queue = true;
+                }
             }
 
             return true;
