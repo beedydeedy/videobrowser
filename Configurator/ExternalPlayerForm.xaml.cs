@@ -54,7 +54,15 @@ namespace Configurator
             {
                 ConfigData.ExternalPlayer currentConfiguration = uiConfigurator.GetDefaultConfiguration();
                 currentConfiguration.Command = txtCommand.Text;
-                uiConfigurator.ConfigureUserSettings(currentConfiguration);
+
+                try
+                {
+                    uiConfigurator.ConfigureUserSettings(currentConfiguration);
+                }
+                catch
+                {
+                    MessageBox.Show("There was an error configuring some settings. Please open your player and verify them.");
+                }
             }
         }
 
