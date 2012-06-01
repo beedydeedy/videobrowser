@@ -94,6 +94,9 @@ namespace MediaBrowser.Library.Playables.MpcHc
             }
         }
 
+        /// <summary>
+        /// This will be used to configure mpc settings when "store settings to ini file" is enabled
+        /// </summary>
         private void ConfigureUserSettingsIntoINIFile(string iniPath)
         {
             AddCommandModSettingsToIniFile(iniPath, 19);
@@ -138,9 +141,12 @@ namespace MediaBrowser.Library.Playables.MpcHc
             Helper.SetIniFileValues(iniPath, values);
         }
 
+        /// <summary>
+        /// This will be used to configure mpc settings when "store settings to ini file" is disabled
+        /// </summary>
         private void ConfigureUserSettingsIntoRegistry()
         {
-            string regPath = WriteEmbeddedRegFileToDisk();
+            string regPath = WriteEmbeddedRegFileToTempFile();
             
             ProcessStartInfo processInfo = new ProcessStartInfo();
 
@@ -153,7 +159,10 @@ namespace MediaBrowser.Library.Playables.MpcHc
             }
         }
 
-        private string WriteEmbeddedRegFileToDisk()
+        /// <summary>
+        /// Takes the embedded mpc reg patch and writes it to a temp file
+        /// </summary>
+        private string WriteEmbeddedRegFileToTempFile()
         {
             string resourceName = "MediaBrowser.Library.Playables.MpcHc.MpcHcSettings.reg";
 
