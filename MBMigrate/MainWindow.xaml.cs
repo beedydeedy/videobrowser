@@ -38,19 +38,8 @@ namespace MBMigrate
             //_serviceConfig = ServiceConfigData.FromFile(ApplicationPaths.ServiceConfigFile);
             Async.Queue("Migration", () =>
             {
-                Migrate26();
-
-                //set install directory and clean any bad ext players and reset image sizes
                 _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
-                try
-                {
-                    _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
-                    _config.ExternalPlayers.RemoveAll(p => String.IsNullOrEmpty(p.ExternalPlayerName));
-                    _config.FetchedPosterSize = "w500";
-                    _config.FetchedBackdropSize = "w1280";
-                    _config.Save();
-                }
-                catch { }
+                Migrate26();
 
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
@@ -82,6 +71,17 @@ namespace MBMigrate
                 BackupConfig(current);
                 //external config
                 UpgradeExternalPlayerXml();
+                //set install directory and clean any bad ext players and reset image sizes
+                try
+                {
+                    _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);  //re-load because ext player migration changed it
+                    _config.MBInstallDir = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+                    _config.ExternalPlayers.RemoveAll(p => String.IsNullOrEmpty(p.ExternalPlayerName));
+                    _config.FetchedPosterSize = "w500";
+                    _config.FetchedBackdropSize = "w1280";
+                    _config.Save();
+                }
+                catch { }
             }
         }
 
