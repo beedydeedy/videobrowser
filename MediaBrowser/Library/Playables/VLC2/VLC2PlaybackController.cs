@@ -376,7 +376,8 @@ namespace MediaBrowser.Library.Playables.VLC2
 
         protected override void UnPauseInternal()
         {
-            SendStatusRequest(new Uri(StatusUrl + "?command=pl_play"));
+            // It uses the same command by toggling
+            PauseInternal();
         }
 
         protected override void StopInternal()
@@ -388,7 +389,7 @@ namespace MediaBrowser.Library.Playables.VLC2
         {
             TimeSpan time = TimeSpan.FromTicks(position);
 
-            SendStatusRequest(new Uri(StatusUrl + "?command=seek&val=" + time.TotalSeconds));
+            SendStatusRequest(new Uri(StatusUrl + "?command=seek&val=" + Convert.ToInt32(time.TotalSeconds)));
         }
 
         public override bool IsPaused
