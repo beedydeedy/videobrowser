@@ -102,8 +102,6 @@ namespace Configurator
             config.InitialFolder = ApplicationPaths.AppInitialDirPath;
             RefreshItems();
             RefreshPodcasts();
-            //be sure no bad player setups
-            if (config.ExternalPlayers.RemoveAll(p => string.IsNullOrEmpty(p.ExternalPlayerName)) > 0) config.Save();
             RefreshPlayers();
 
             LoadConfigurationSettings();
