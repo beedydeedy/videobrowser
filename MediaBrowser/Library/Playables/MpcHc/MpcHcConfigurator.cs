@@ -115,15 +115,20 @@ namespace MediaBrowser.Library.Playables.MpcHc
             values["UseGlobalMedia"] = 1;
             values["EnableWebServer"] = 1;
             values["WebServerPort"] = int.Parse(MpcHcPlaybackController.HttpPort);
+
+            // Set medium jump to 30 seconds
             values["JumpDistM"] = 30000;
+
+            // Set large jump to 5 minutes
+            values["JumpDistL"] = 300000;
 
             // These are unreadable, but they setup basic functions such as play, pause, stop, back, next, ff, rw, etc
             values["CommandMod0"] = "816 13 58 \"\" 5 0 13 0";
             values["CommandMod1"] = "890 3 be \"\" 5 0 0 0";
             values["CommandMod2"] = "902 b 0 \"\" 5 0 49 0";
             values["CommandMod3"] = "901 b 0 \"\" 5 0 50 0";
-            values["CommandMod4"] = "904 b 27 \"\" 5 0 0 0";
-            values["CommandMod5"] = "903 b 25 \"\" 5 0 0 0";
+            values["CommandMod4"] = "904 b 27 \"\" 5 0 11 0";
+            values["CommandMod5"] = "903 b 25 \"\" 5 0 12 0";
             values["CommandMod6"] = "920 b 22 \"\" 5 0 51 0";
             values["CommandMod7"] = "919 b 21 \"\" 5 0 52 0";
             values["CommandMod8"] = "907 1 0 \"\" 5 16 10 16";
