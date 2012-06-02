@@ -193,6 +193,10 @@ namespace Configurator
 
         public void UpdateObjectFromControls(ConfigData.ExternalPlayer externalPlayer)
         {
+            PlayableExternalConfigurator uiConfigurator = PlayableItemFactory.Instance.GetPlayableExternalConfiguratorByName(ExternalPlayerName);
+            ConfigData.ExternalPlayer externalPlayerDefault = uiConfigurator.GetDefaultConfiguration();
+
+            externalPlayer.LaunchType = externalPlayerDefault.LaunchType;
             externalPlayer.ExternalPlayerName = lstPlayerType.SelectedItem.ToString();
 
             externalPlayer.Args = txtArguments.Text;
