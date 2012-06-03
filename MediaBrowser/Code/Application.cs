@@ -919,21 +919,6 @@ namespace MediaBrowser
         bool FirstRunForVersion(string thisVersion)
         {
             var oldVersion = new System.Version(Config.MBVersion);
-            if (oldVersion < new System.Version(2, 0, 0, 0))
-            {
-                Logger.ReportInfo("First run of Media Browser.  Initiating a full refresh of the library in service.");
-                if (MBServiceController.SendCommandToService(IPCCommands.ForceRebuild))
-                {
-                    MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-                    ev.Dialog(CurrentInstance.StringData("RebuildNecDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 30, true);
-                }
-                else
-                {
-                    MediaCenterEnvironment ev = Microsoft.MediaCenter.Hosting.AddInHost.Current.MediaCenterEnvironment;
-                    ev.Dialog(CurrentInstance.StringData("RebuildFailedDial"), CurrentInstance.StringData("ForcedRebuildCapDial"), DialogButtons.Ok, 30, true);
-                }
-                return true;
-            }
             switch (thisVersion)
             {
                 case "2.2.4.0":
