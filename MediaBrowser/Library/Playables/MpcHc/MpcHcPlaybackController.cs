@@ -116,57 +116,64 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             Logger.ReportVerbose("Response received from MPC-HC web interface: " + result);
 
-            // Sample result
-            // OnStatus('test.avi', 'Playing', 5292, '00:00:05', 1203090, '00:20:03', 0, 100, 'C:\test.avi')
-            // 5292 = position in ms
-            // 00:00:05 = position
-            // 1203090 = duration in ms
-            // 00:20:03 = duration
-
-            // Strip off the leading "OnStatus(" and the trailing ")"
-            result = result.Substring(result.IndexOf('\''));
-            result = result.Substring(0, result.LastIndexOf('\''));
-
-            // Strip off the filename at the beginning
-            result = result.Substring(result.IndexOf("', '") + 3);
-
-            // Find the last index of ", '" so that we can extract and then strip off the file path at the end.
-            int lastIndexOfSeparator = result.LastIndexOf(", '");
-
-            // Get the current playing file path
-            string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\'');
-
-            // Strip off the current playing file path
-            result = result.Substring(0, lastIndexOfSeparator);
-
-            IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
-
-            long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(1))).Ticks;
-            long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(3))).Ticks;
-
-            string playstate = values.ElementAt(0).ToLower();
-
-            _CurrentPlayState = playstate;
-
-            if (playstate == "stopped")
+            try
             {
-                if (_HasStartedPlaying)
+                // Sample result
+                // OnStatus('test.avi', 'Playing', 5292, '00:00:05', 1203090, '00:20:03', 0, 100, 'C:\test.avi')
+                // 5292 = position in ms
+                // 00:00:05 = position
+                // 1203090 = duration in ms
+                // 00:20:03 = duration
+
+                // Strip off the leading "OnStatus(" and the trailing ")"
+                result = result.Substring(result.IndexOf('\''));
+                result = result.Substring(0, result.LastIndexOf('\''));
+
+                // Strip off the filename at the beginning
+                result = result.Substring(result.IndexOf("', '") + 3);
+
+                // Find the last index of ", '" so that we can extract and then strip off the file path at the end.
+                int lastIndexOfSeparator = result.LastIndexOf(", '");
+
+                // Get the current playing file path
+                string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\'');
+
+                // Strip off the current playing file path
+                result = result.Substring(0, lastIndexOfSeparator);
+
+                IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
+
+                long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(1))).Ticks;
+                long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(3))).Ticks;
+
+                string playstate = values.ElementAt(0).ToLower();
+                _CurrentPlayState = playstate;
+
+                if (playstate == "stopped")
                 {
-                    ClosePlayer();
+                    if (_HasStartedPlaying)
+                    {
+                        ClosePlayer();
+                    }
+                }
+                else
+                {
+                    if (playstate == "playing")
+                    {
+                        _HasStartedPlaying = true;
+                    }
+
+                    if (_HasStartedPlaying)
+                    {
+                        OnProgress(GetPlaybackState(currentPositionTicks, currentDurationTicks, currentPlayingFile));
+                    }
                 }
             }
-            else 
+            catch (Exception ex)
             {
-                if (playstate == "playing")
-                {
-                    _HasStartedPlaying = true;
-                }
-
-                if (_HasStartedPlaying)
-                {
-                    OnProgress(GetPlaybackState(currentPositionTicks, currentDurationTicks, currentPlayingFile));
-                }
+                Logger.ReportException("Unrecognized response in MPC-HC web interface.", ex);
             }
+
         }
 
         protected override void OnPlaybackFinished(PlaybackStateEventArgs args)
