@@ -123,16 +123,28 @@ namespace MediaBrowser.Library.Playables.MpcHc
             // 1203090 = duration in ms
             // 00:20:03 = duration
 
+            // Strip off the leading OnStatus( and the trailing )
             result = result.Substring(result.IndexOf('\''));
             result = result.Substring(0, result.LastIndexOf('\''));
 
+            // Strip off the filename at the beginning
+            result = result.Substring(result.IndexOf("', '") + 3);
+
+            // Find the last index of ", '" so that we can extract and then strip off the path to the current file
+            int lastIndexOfSeparator = result.LastIndexOf(", '");
+
+            // Get the current playing file
+            string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\'');
+
+            // Strip off the current playing file
+            result = result.Substring(0, lastIndexOfSeparator);
+
             IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
 
-            long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(2))).Ticks;
-            long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(4))).Ticks;
-            string currentPlayingFileName = values.Last().ToLower();
+            long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(1))).Ticks;
+            long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(3))).Ticks;
 
-            string playstate = values.ElementAt(1).ToLower();
+            string playstate = values.ElementAt(0).ToLower();
 
             _CurrentPlayState = playstate;
 
@@ -152,7 +164,7 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
                 if (_HasStartedPlaying)
                 {
-                    OnProgress(GetPlaybackState(currentPositionTicks, currentDurationTicks, currentPlayingFileName));
+                    OnProgress(GetPlaybackState(currentPositionTicks, currentDurationTicks, currentPlayingFile));
                 }
             }
         }
