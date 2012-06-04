@@ -919,6 +919,7 @@ namespace MediaBrowser
         bool FirstRunForVersion(string thisVersion)
         {
             var oldVersion = new System.Version(Config.MBVersion);
+            if (oldVersion < new System.Version(2, 0, 0, 0)) return true;  //new install, don't need to migrate
             switch (thisVersion)
             {
                 case "2.2.4.0":
@@ -970,7 +971,7 @@ namespace MediaBrowser
                         }
                     }
                     else
-                        if (oldVersion < new System.Version(2,5,0,0))
+                    if (oldVersion < new System.Version(2,5,0,0))
                     {
                         //upgrading from 2.3.2 - item migration should have already occurred...
                         Config.EnableTraceLogging = true; //turn this on by default since we now have levels and retention/clearing
