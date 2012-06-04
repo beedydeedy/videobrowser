@@ -750,6 +750,7 @@ namespace MediaBrowser
             if (Config.ParentalControlEnabled)
                 Logger.ReportInfo("*** Parental Controls are ON with a max rating of "+Config.ParentalMaxAllowedString+".  Block Unrated is "+Config.ParentalBlockUnrated+" and Hide Content is "+Config.HideParentalDisAllowed);
             Logger.ReportInfo("*** Internet Providers are "+(Config.AllowInternetMetadataProviders ? "ON." : "OFF."));
+            Logger.ReportInfo("*** Theme in use is: " + Config.ViewTheme);
             // Now let's put a diagnostic ping in here for the beta cycle so we can see how much testing we're getting
             string info = "IP=" + Config.AllowInternetMetadataProviders + " EXTP=" + Config.ExternalPlayers.Count + " EXT=" + RunningOnExtender;
             Helper.Ping("http://www.ebrsoft.com/software/mb/plugins/ping.php?product=MBBeta&ver=" + Kernel.Instance.VersionStr + "&mac=" + Helper.GetMACAddress() + "&key="+info);
