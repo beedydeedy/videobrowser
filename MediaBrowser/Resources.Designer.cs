@@ -2162,16 +2162,16 @@ namespace MediaBrowser {
             }
         }
         
-        internal static System.Drawing.Bitmap rated_gb_pg1 {
+        internal static System.Drawing.Bitmap rated_gb_r18 {
             get {
-                object obj = ResourceManager.GetObject("rated_gb_pg1", resourceCulture);
+                object obj = ResourceManager.GetObject("rated_gb_r18", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
         
-        internal static System.Drawing.Bitmap rated_gb_r18 {
+        internal static System.Drawing.Bitmap rated_gb_u {
             get {
-                object obj = ResourceManager.GetObject("rated_gb_r18", resourceCulture);
+                object obj = ResourceManager.GetObject("rated_gb_u", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
