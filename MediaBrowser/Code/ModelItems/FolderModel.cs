@@ -71,7 +71,7 @@ namespace MediaBrowser.Library {
 
             if (results.Count() > 0)
             {
-                Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(results.ToList()) 
+                Application.CurrentInstance.Navigate(ItemFactory.Instance.Create(new SearchResultFolder(GroupResults(results)) 
                     { Name = this.Name + " - Search Results (" + searchValue + (unwatchedOnly ? "/unwatched":"") 
                         + (rating > 0 ? "/"+Ratings.ToString(rating) + (ratingFactor > 0 ? "-" : "+") : "") + ")" }));
                 return results.Count();
@@ -81,6 +81,107 @@ namespace MediaBrowser.Library {
                 Application.CurrentInstance.Information.AddInformationString("No Search Results Found");
             }
             return 0;
+        }
+
+        private List<BaseItem> GroupResults(IEnumerable<BaseItem> items)
+        {
+            List<BaseItem> folderChildren = new List<BaseItem>();
+            int containerNo = 0;
+            //now collapse anything that needs to be and create the child list for the list folder
+            var containers = from item in items
+                             where item is IGroupInIndex
+                             group item by (item as IGroupInIndex).MainContainer;
+
+            foreach (var container in containers)
+            {
+                Logger.ReportVerbose("Container " + (container.Key == null ? "--Unknown--" : container.Key.Name) + " items: " + container.Count());
+                if (container.Count() < Kernel.Instance.ConfigData.RecentItemCollapseThresh)
+                {
+                    //add the items without rolling up
+                    foreach (var i in container)
+                    {
+                        //make sure any inherited images get loaded
+                        var ignore = i.Parent != null ? i.Parent.BackdropImages : null;
+                        ignore = i.BackdropImages;
+                        var ignore2 = i.LogoImage;
+                        ignore2 = i.ArtImage;
+
+                        folderChildren.Add(i);
+                    }
+                }
+                else
+                {
+                    var currentContainer = container.Key as IContainer ?? new IndexFolder() { Name = "<Unknown>" };
+                    containerNo++;
+                    IndexFolder aContainer = new IndexFolder(new List<BaseItem>())
+                    {
+                        Id = ("searchcontainer" + this.Name + this.Path + containerNo).GetMD5(),
+                        Name = currentContainer.Name + " (" + container.Count() + " Items)",
+                        Overview = currentContainer.Overview,
+                        MpaaRating = currentContainer.MpaaRating,
+                        Genres = currentContainer.Genres,
+                        ImdbRating = currentContainer.ImdbRating,
+                        Studios = currentContainer.Studios,
+                        PrimaryImagePath = currentContainer.PrimaryImagePath,
+                        SecondaryImagePath = currentContainer.SecondaryImagePath,
+                        BannerImagePath = currentContainer.BannerImagePath,
+                        BackdropImagePaths = currentContainer.BackdropImagePaths,
+                        TVDBSeriesId = currentContainer is Series ? (currentContainer as Series).TVDBSeriesId : null,
+                        LogoImagePath = currentContainer is Media ? (currentContainer as Media).LogoImagePath : null,
+                        ArtImagePath = currentContainer is Media ? (currentContainer as Media).ArtImagePath : null,
+                        ThumbnailImagePath = currentContainer is Media ? (currentContainer as Media).ThumbnailImagePath : null,
+                        DisplayMediaType = currentContainer.DisplayMediaType,
+                        DateCreated = container.First().DateCreated,
+                        Parent = this.Folder
+                    };
+                    if (container.Key is Series)
+                    {
+
+                        //always roll into seasons
+                        var seasons = from episode in container
+                                      group episode by episode.Parent;
+                        foreach (var season in seasons)
+                        {
+                            var currentSeason = season.Key as Series ?? new Season() { Name = "<Unknown>" };
+                            containerNo++;
+                            IndexFolder aSeason = new IndexFolder(season.ToList())
+                            {
+                                Id = ("searchseason" + this.Name + this.Path + containerNo).GetMD5(),
+                                Name = currentSeason.Name + " (" + season.Count() + " Items)",
+                                Overview = currentSeason.Overview,
+                                MpaaRating = currentSeason.MpaaRating,
+                                Genres = currentSeason.Genres,
+                                ImdbRating = currentSeason.ImdbRating,
+                                Studios = currentSeason.Studios,
+                                PrimaryImagePath = currentSeason.PrimaryImagePath,
+                                SecondaryImagePath = currentSeason.SecondaryImagePath,
+                                BannerImagePath = currentSeason.BannerImagePath,
+                                BackdropImagePaths = currentSeason.BackdropImagePaths,
+                                TVDBSeriesId = currentSeason.TVDBSeriesId,
+                                LogoImagePath = currentSeason.LogoImagePath,
+                                ArtImagePath = currentSeason.ArtImagePath,
+                                ThumbnailImagePath = currentSeason.ThumbnailImagePath,
+                                DisplayMediaType = currentSeason.DisplayMediaType,
+                                DateCreated = season.First().DateCreated,
+                                Parent = currentSeason == aContainer ? this.Folder : aContainer
+                            };
+                            aContainer.AddChild(aSeason);
+                        }
+                    }
+                    else
+                    {
+                        //not series so just add all children to container
+                        aContainer.AddChildren(container.ToList());
+                    }
+                    //and container to children
+                    folderChildren.Add(aContainer);
+                }
+            }
+
+            //finally add all the items that don't go in containers
+            folderChildren.AddRange(items.Where(i => (!(i is IGroupInIndex))));
+
+            return folderChildren;
         }
 
         private bool MatchesCriteria(BaseItem item, string value, bool unwatchedOnly, int rating, int ratingFactor)
