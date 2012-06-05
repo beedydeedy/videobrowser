@@ -920,7 +920,11 @@ namespace MediaBrowser
         bool FirstRunForVersion(string thisVersion)
         {
             var oldVersion = new System.Version(Config.MBVersion);
-            if (oldVersion < new System.Version(2, 0, 0, 0)) return true;  //new install, don't need to migrate
+            if (oldVersion < new System.Version(2, 0, 0, 0))
+            {
+                FullRefresh();
+                return true;  //new install, don't need to migrate
+            }
             switch (thisVersion)
             {
                 case "2.2.4.0":
