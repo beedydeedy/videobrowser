@@ -242,6 +242,9 @@ namespace MediaBrowser.Library.Factories
             clone.MediaType = MediaTypeResolver.DetermineType(mountedPath);
             clone.DisplayMediaType = clone.MediaType.ToString();
 
+            // Application.AddNewlyWatched requires this to be set
+            clone.Parent = video.Parent;
+
             return clone;
         }
     }
