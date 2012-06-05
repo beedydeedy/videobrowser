@@ -294,7 +294,7 @@ namespace MediaBrowser
         /// </summary>
         protected void MediaCenterEnvironment_PropertyChanged(IPropertyObject sender, string property)
         {
-            Logger.ReportVerbose("MediaCenterEnvironment_PropertyChanged: " + property);
+            //Logger.ReportVerbose("MediaCenterEnvironment_PropertyChanged: " + property);
 
             MediaCenterEnvironment env = sender as MediaCenterEnvironment;
 
@@ -327,7 +327,7 @@ namespace MediaBrowser
         /// </summary>
         protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
-            Logger.ReportVerbose("MediaTransport_PropertyChanged: " + property);
+            //Logger.ReportVerbose("MediaTransport_PropertyChanged: " + property);
 
             MediaTransport transport = sender as MediaTransport;
 
@@ -410,7 +410,7 @@ namespace MediaBrowser
                 // Get the title from the PlayableItem, if it's available. Otherwise use MediaMetadata
                 string title = eventArgs.Item == null ? metadataTitle : (eventArgs.Item.HasMediaItems ? eventArgs.Item.MediaItems.ElementAt(eventArgs.CurrentMediaIndex).Name : eventArgs.Item.Files.ElementAt(eventArgs.CurrentFileIndex));
 
-                Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
+                //Logger.ReportVerbose("Playstate changed to {0} for {1}, PositionTicks:{2}, Playlist Index:{3}", state, title, positionTicks, eventArgs.CurrentFileIndex);
 
                 PlayStateChanged();
             }
