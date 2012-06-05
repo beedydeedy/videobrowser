@@ -128,7 +128,8 @@ namespace MediaBrowser.Library.Metadata {
 
         static bool NeedsRefresh(IList<IMetadataProvider> supportedProviders, bool fastOnly) {
             foreach (var provider in supportedProviders) {
-                try {
+                try 
+                {
                     if ((provider.IsSlow || provider.RequiresInternet) && fastOnly) continue;
                     if (provider.NeedsRefresh())
                     {
@@ -136,7 +137,7 @@ namespace MediaBrowser.Library.Metadata {
                         return true;
                     }
                 } catch (Exception e) {
-                    Logger.ReportException("Metadata provider failed during NeedsRefresh", e);
+                    Logger.ReportException("Metadata provider failed during NeedsRefresh. Item Path: "+provider.Item.Path, e);
                     Debug.Assert(false, "Providers should catch all the exceptions that NeedsRefresh generates!");
                 }
             }
