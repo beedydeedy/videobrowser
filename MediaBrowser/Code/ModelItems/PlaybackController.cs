@@ -327,8 +327,6 @@ namespace MediaBrowser
         /// </summary>
         protected void MediaTransport_PropertyChanged(IPropertyObject sender, string property)
         {
-            Logger.ReportVerbose("MediaTransport_PropertyChanged: " + property);
-
             MediaTransport transport = sender as MediaTransport;
 
             MediaCenterEnvironment env = AddInHost.Current.MediaCenterEnvironment;
