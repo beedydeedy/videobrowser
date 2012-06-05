@@ -13,7 +13,7 @@ namespace MBTrailers {
     public class Plugin : BasePlugin {
 
         internal const string PluginName = "Media Browser Trailers";
-        internal const string PluginDescription = "HD Trailers for MediaBrowser (Titan SP1). Now includes cache management and backdrop fetching.\n\nUnrestricted version is available to supporters.";
+        internal const string PluginDescription = "HD Trailers for MediaBrowser (Atlas). ";
 
         internal const int ProxyPort = 8752;
 
