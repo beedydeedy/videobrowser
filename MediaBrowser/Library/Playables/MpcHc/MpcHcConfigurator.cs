@@ -56,6 +56,8 @@ namespace MediaBrowser.Library.Playables.MpcHc
 
             paths.AddRange(GetProgramFilesPaths("Media Player Classic - Home Cinema\\mpc-hc.exe"));
             paths.AddRange(GetProgramFilesPaths("Media Player Classic - Home Cinema\\mpc-hc64.exe"));
+            paths.AddRange(GetProgramFilesPaths("MPC-HC\\mpc-hc.exe"));
+            paths.AddRange(GetProgramFilesPaths("MPC-HC\\mpc-hc64.exe"));
 
             return paths;
         }
