@@ -244,7 +244,7 @@
                                 <Grid Name="WeatherGrid">
                                     <!--<Label Margin="10,32,0,0" Height="28" Width="130" HorizontalAlignment="Left" VerticalAlignment="Top" ToolTip="Yahoo! Weather location ID (e.g. UKXX0055)">Yahoo! Weather ID</Label>-->
                                     <TextBlock Margin="10,32,0,0" Padding="5,5,5,5" Height="28" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Left" Width="130" ToolTip="Go to the Yahoo! Weather">
-                                        <Hyperlink NavigateUri="http://weather.yahoo.com/" RequestNavigate="HandleRequestNavigate">Yahoo! Weather ID</Hyperlink>
+                                        Weather ID
                                     </TextBlock>
                                     <Label Margin="150,31,0,0" HorizontalAlignment="Left" ToolTip="Weather temperature unit" Height="28" VerticalAlignment="Top">Weather Unit</Label>
                                     <TextBox Margin="10,60,10,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="28" Width="130" Name="tbxWeatherID" />
