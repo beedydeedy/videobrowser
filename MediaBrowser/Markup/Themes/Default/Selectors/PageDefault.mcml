@@ -450,7 +450,7 @@
 
               <pc:PCIndicatorButton Name="PCIBtn" Application="[Application]" Size="23,23">
                 <LayoutInput>
-                  <FormLayoutInput Left="IndexesBtn,1,0"  Bottom="Parent,0,122"/>                  
+                  <FormLayoutInput Left="SearchBtn,1,0"  Bottom="Parent,0,122"/>                  
                 </LayoutInput>
               </pc:PCIndicatorButton>
 
