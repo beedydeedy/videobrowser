@@ -1982,7 +1982,7 @@ namespace MediaBrowser
             {
                 string sDuration = duration.HasValue ? (TimeSpan.FromTicks(duration.Value).ToString()) : "0";
 
-                Logger.ReportVerbose("Playstate saved for {0} at {1}, duration: {2}, playlist position: {3}", media.Name, TimeSpan.FromTicks(positionTicks), sDuration, playlistPosition);
+                //Logger.ReportVerbose("Playstate saved for {0} at {1}, duration: {2}, playlist position: {3}", media.Name, TimeSpan.FromTicks(positionTicks), sDuration, playlistPosition);
                 Kernel.Instance.SavePlayState(media, playstate);
             }
         }
