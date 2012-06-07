@@ -72,7 +72,7 @@ namespace Configurator.Code {
                 {"traktmb", new System.Version(0,9,6,17)},
                 {"storageviewer", new System.Version(0,0,4,10)},
                 {"gamebrowser", new System.Version(1,9,0,0)},
-                {"subdued theme", new System.Version(2,8,8,1)},
+                {"subdued theme", new System.Version(2,9,0,1)},
                 {"music support", new System.Version(2,1)},
                 {"mbtv", new System.Version(1,4,9,10)},
             };
