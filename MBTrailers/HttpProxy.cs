@@ -100,24 +100,31 @@ namespace WebProxy {
                 Logger.ReportVerbose(trailers.Count + " " + searchInfo.Type + " trailers being searched.");
                 foreach (var info in trailers)
                 {
-                    if (info == null || info.Path == null)
+                    try
                     {
-                        Logger.ReportWarning("MBTrailers - Null item in trailer list...");
-                        continue;
+                        if (info == null || info.Path == null)
+                        {
+                            Logger.ReportWarning("MBTrailers - Null item in trailer list...");
+                            continue;
+                        }
+                        if (!string.IsNullOrEmpty(searchInfo.Rating) && Ratings.Level(info.Rating) <= Ratings.Level(searchInfo.Rating) && GenreMatches(searchInfo, info, threshhold) && !info.Path.StartsWith(searchInfo.Path))
+                        {
+                            Logger.ReportVerbose("MATCH FOUND: " + info.Path + " Rating: " + info.Rating);
+                            foundTrailers.Add(info.Path);
+                        }
+                        else
+                        {
+                            Logger.ReportVerbose(info.Path + " doesn't match.  Rating: " + info.Rating);
+                            if (info.Genres != null)
+                                foreach (var genre in info.Genres)
+                                {
+                                    Logger.ReportVerbose("Genre: " + genre);
+                                }
+                        }
                     }
-                    if (!string.IsNullOrEmpty(searchInfo.Rating) && Ratings.Level(info.Rating) <= Ratings.Level(searchInfo.Rating) && GenreMatches(searchInfo, info, threshhold) && !info.Path.StartsWith(searchInfo.Path))
+                    catch (Exception e)
                     {
-                        Logger.ReportVerbose("MATCH FOUND: "+info.Path + " Rating: " + info.Rating);
-                        foundTrailers.Add(info.Path);
-                    }
-                    else
-                    {
-                        Logger.ReportVerbose(info.Path + " doesn't match.  Rating: " + info.Rating);
-                        if (info.Genres != null)
-                            foreach (var genre in info.Genres)
-                            {
-                                Logger.ReportVerbose("Genre: " + genre);
-                            }
+                        Logger.ReportVerbose("Error searching for matching trailers.", e);
                     }
                 }
             }
