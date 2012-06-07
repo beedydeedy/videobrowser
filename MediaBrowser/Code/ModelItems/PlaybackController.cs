@@ -440,9 +440,10 @@ namespace MediaBrowser
             {
                 Application.CurrentInstance.ShowNowPlaying = false;
 
-                bool forceReturn = mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD;
-
-                PlaybackControllerHelper.ReturnToApplication(forceReturn);
+                if (mediaType == Microsoft.MediaCenter.Extensibility.MediaType.Audio || mediaType == Microsoft.MediaCenter.Extensibility.MediaType.DVD)
+                {
+                    PlaybackControllerHelper.ReturnToApplication(true);
+                }
             }
 
             // Fire the OnFinished event for each item
