@@ -1,6 +1,10 @@
 <Mcml xmlns="http://schemas.microsoft.com/2006/mcml"
       xmlns:cor="assembly://MSCorLib/System"
       xmlns:ss="resx://MediaBrowser/MediaBrowser.Resources/SimpleSpinner"
+      xmlns:vm="resx://MediaBrowser/MediaBrowser.Resources/ViewMenu"
+      xmlns:i="resx://MediaBrowser/MediaBrowser.Resources/Images"
+  	  xmlns:f="file://Fonts_DoNotEdit.mcml"
+      xmlns:s="file://Styles_DoNotEdit.mcml"
       xmlns:me="Me">
 
   <UI Name="SpinnerText" BaseUI="ss:SimpleSpinner">
@@ -53,6 +57,50 @@
 
     </Rules>
 
+  </UI>
+
+
+  <UI Name="VerticalSpinnerText" BaseUI="me:SpinnerText">
+    <Properties>
+      <Inset Name="ControlsMargin" Inset="80,0,0,0" />
+    </Properties>
+    <Content>
+      <Panel Layout="VerticalFlow">
+        <Children>
+          
+          <Panel Layout="HorizontalFlow">
+            <Children>
+              <Text Name="Text" Content="[Label]" Font="[Font]" Color="[Color]" MinimumSize="[LabelMinSize]" />
+          
+              <!-- Current value -->
+              <ColorFill Name="Background" Content="Transparent" MinimumSize="[ValueMinSize]" MaximumSize="175,35" Padding="5,0,0,5">
+                <Children>
+                  <Text Name="Value" Font="[ValueFont]" Color="color://s:FontColorLight" />
+                </Children>
+              </ColorFill>
+
+            </Children>
+          </Panel>
+
+          <Panel Name="Controls" Layout="HorizontalFlow" Margins="[ControlsMargin]">
+            <Children>
+              <!-- Previous button -->
+              <vm:ImageBtn Name="btnPrevious" Focused="image://i:DecrementFocus"
+                           NonFocused="image://i:DecrementNoFocus"
+                           Command="[Previous]"/>
+
+              <!-- Next button -->
+              <vm:ImageBtn Name="btnNext" Focused="image://i:IncrementFocus"
+                           NonFocused="image://i:IncrementNoFocus"
+                           Command="[Next]"/>
+
+            </Children>
+          </Panel>
+          
+        </Children>
+      </Panel>
+      
+    </Content>
   </UI>
 
 </Mcml>

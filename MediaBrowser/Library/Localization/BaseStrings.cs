@@ -16,7 +16,7 @@ namespace MediaBrowser.Library.Localization
     [Serializable]
     public class BaseStrings
     {
-        const string VERSION = "1.0050";
+        const string VERSION = "1.0051";
         const string ENFILE = "strings-en.xml";
 
         public string Version = VERSION; //this is used to see if we have changed and need to re-save
@@ -333,8 +333,9 @@ namespace MediaBrowser.Library.Localization
         public string TitleContains = "Title Contains ";
 
         //Search
-        public string IncludeNested = "Include Nested";
-        public string UnwatchedOnly = "Unwatched Only";
+        public string IncludeNested = "Include Subfolders";
+        public string UnwatchedOnly = "Include Only Unwatched";
+        public string FilterByRated = "Filter by Rating";
 
         //Profiler
         public string WelcomeProf = "Welcome to Media Browser";

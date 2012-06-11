@@ -35,5 +35,8 @@
 
   <!-- Watched Text Color Default -->
   <Color Name="ListViewWatchedTextColor" Color="LightSkyBlue" />
+  <!-- Search -->
+  <Color Name="Search_GradientColor" Color="200,0,0,0" />
+  <Color Name="Search_LineColor" Color="200,200,200" />
 
 </Mcml>
