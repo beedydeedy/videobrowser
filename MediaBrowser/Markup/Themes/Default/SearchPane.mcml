@@ -18,6 +18,14 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <Command Name="Close" Command="$Required"/>
+      
+      <!-- Coloring -->
+      <Color Name="HeadingColor" Color="AliceBlue"/>
+      <!--<Color Name="GradientColor" Color="200,0,0,0"/>
+      <Color Name="LineColor" Color="200,200,200"/>-->
+      <Color Name="GradientColor" Color="color://s:Search_GradientColor"/>
+      <Color Name="LineColor" Color="color://s:Search_LineColor"/>
+      <!-- End Coloring-->
     </Properties>
 
     <Locals>
@@ -65,6 +73,7 @@
     </Locals>
 
     <Rules>
+      <Default Target="[IncludeNested.Value]" Value="true" />
       <Changed Source="[Back.Invoked]" >
         <Actions>
           <Invoke Target="[Close.Invoke]" />
@@ -87,9 +96,9 @@
           <IsValid Source="[Application.CurrentFolderModel]"/>
         </Conditions>
         <Actions>
-          <Invoke Target="[Application.CurrentFolderModel.Search]" 
-                  searchValue="[SearchValue.Value]" 
-                  includeSubs="[IncludeNested.Value]" 
+          <Invoke Target="[Application.CurrentFolderModel.Search]"
+                  searchValue="[SearchValue.Value]"
+                  includeSubs="[IncludeNested.Value]"
                   unwatchedOnly="[UnwatchedOnly.Value]"
                   rating="[RatingsValues.Chosen!cor:Int32]"
                   ratingFactor="[RatingDirectionValues.Chosen!cor:Int32]"
@@ -106,48 +115,74 @@
     <Content>
       <Panel Layout="Form" Navigation="ContainAll">
         <Children>
-          <Text Content="[Application.LocalStrings.#Search!cor:String]" Alpha=".55" Color="AliceBlue" Font="Segoe Media Center, 64" >
+          <Text Content="[Application.LocalStrings.#Search!cor:String]" Alpha=".55" Color="AliceBlue" Font="Segoe Media Center, 32" >
             <LayoutInput>
-              <FormLayoutInput Top="Parent,0,10" Right="Parent,1,-20"/>
+              <FormLayoutInput Top="Parent,0,10" Left="Title,0"/>
             </LayoutInput>
           </Text>
-          <Panel Name="Title" Layout="HorizontalFlow" Margins="20,50,0,0" >
-            <LayoutInput>
-              <FormLayoutInput Top="Parent,0,10" Left="Parent,0,10"/>
-            </LayoutInput>
-            <Children>
-              <te:TextEdit Name="SearchField" Margins="20,0,0,0" Label="[Application.LocalStrings.#TitleContains!cor:String]" EditableText="[SearchValue]" MaximumSize="450,0" EditSize="250,34" Font="font://f:SE_DefaultFont" MaxChars="50" />
-              <vm:ImageBtn Name="OSKBtn" Command="[OSK]" Focused="image://i:KeyFocus" NonFocused="image://i:Key"  Margins="0,0,15,0" />
-              <cb:CheckBox Name="Nested" Label="[Application.LocalStrings.#IncludeNested!cor:String]" Checked="[IncludeNested]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
-              <cb:CheckBox Name="Unwatched" Label="[Application.LocalStrings.#UnwatchedOnly!cor:String]" Checked="[UnwatchedOnly]" Font="font://f:SE_DefaultFont" Margins="10,0,0,0" />
-            </Children>
-            
-          </Panel>
-          <Panel Layout="HorizontalFlow" >
-            <LayoutInput>
-              <FormLayoutInput Top="Title,1,20" Left="Parent,0,565" />
-            </LayoutInput>
-            <Children>
-              <st:SpinnerText Model="[RatingsStrings]" Label="[Application.LocalStrings.#Rated!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="80,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="Any" />
-              <st:SpinnerText Model="[RatingDirection]" Label="[Application.LocalStrings.#Or!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="40,0" ValueMinSize="150,0" ValueFont="font://f:SE_DefaultFont" DefaultString="[Application.LocalStrings.#Lower!cor:String]" />
-              
-            </Children>
-          </Panel>
-
-
-          <Panel Name="ButtonPanel" Layout="HorizontalFlow" Margins="30,0,0,10" >
-            <LayoutInput>
-              <FormLayoutInput Vertical="Far" Horizontal="Near" />
-            </LayoutInput>
-            <Children>
-              <sb:SimpleButton Name="CancelButton" Text="[Application.LocalStrings.#Cancel!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Close]" Margins="0,0,30,0" />
-              <sb:SimpleButton Name="SearchButton" Text="[Application.LocalStrings.#Search!cor:String]" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Search]" />
-              
-            </Children>
-          </Panel>
-            
-          <ColorFill Content="Black" Alpha=".75" Layout="Fill"/>
           
+          <Panel Name="Title" Layout="HorizontalFlow">
+            <Layout>
+              <FlowLayout Orientation="Horizontal"/>
+            </Layout>
+            <LayoutInput>
+              <FormLayoutInput Top="Parent,0,80" Right="Parent,0.5, -10" />
+            </LayoutInput>
+            <Children>
+              <te:TextEdit Name="SearchField" Label="[Application.LocalStrings.#TitleContains!cor:String]" EditableText="[SearchValue]" MaximumSize="450,0" EditSize="250,34" Font="font://f:SE_DefaultFont" MaxChars="50" />
+              <vm:ImageBtn Name="OSKBtn" Command="[OSK]" Focused="image://i:KeyFocus" NonFocused="image://i:Key"  />              
+            </Children>
+          </Panel>
+
+          <Panel Layout="VerticalFlow">
+            <LayoutInput>
+              <FormLayoutInput Top="Parent,0,55" Left="Parent, 0.5, 20" />
+            </LayoutInput>
+            <Children>
+              <cb:CheckBox Name="Nested" Label="[Application.LocalStrings.#IncludeNested!cor:String]" Checked="[IncludeNested]" Font="font://f:SE_DefaultFont" />
+              <cb:CheckBox Name="Unwatched" Label="[Application.LocalStrings.#UnwatchedOnly!cor:String]" Checked="[UnwatchedOnly]" Font="font://f:SE_DefaultFont" />
+              <Panel Layout="HorizontalFlow">
+                <Children>
+                  <st:VerticalSpinnerText Model="[RatingsStrings]" Label="[Application.LocalStrings.#FilterByRated!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="160,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="Any"  ControlsMargin="175,0,0,0" />
+                  <st:VerticalSpinnerText Model="[RatingDirection]" Label="[Application.LocalStrings.#Or!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="35,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="[Application.LocalStrings.#Lower!cor:String]" ControlsMargin="40,0,0,0"/>    
+                </Children>
+              </Panel>              
+            </Children>
+          </Panel>
+
+
+          <Clip FadeSize="50" Orientation="Vertical" FadeAmount="1" 
+            CenterPointPercent="0.5,0.5,0.5">
+            <LayoutInput>
+              <FormLayoutInput Top="Parent,0,55" Left="Title, 1, 10" Bottom="Parent, 1, -75" />
+            </LayoutInput>
+            <Children>
+              <ColorFill Content="[LineColor]" Layout="Fill" MaximumSize="2,0"/>
+            </Children>
+          </Clip>
+
+          
+          <Panel Name="ButtonPanel" Layout="HorizontalFlow" Navigation="PreferFocusOrder">
+            <Layout>
+              <FlowLayout Orientation="Horizontal" StripAlignment="Center"/>
+            </Layout>
+            <LayoutInput>
+              <AnchorLayoutInput Top="Parent, 0, 150" Left="Title, 0" Right="Title, 1" />
+            </LayoutInput>
+            <Children>
+              <Panel FocusOrder="1"></Panel>
+              <sb:SimpleButton Name="CancelButton" Text="[Application.LocalStrings.#Cancel!cor:String]" FocusOrder="10" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Close]" Margins="0,0,30,0" />
+              <sb:SimpleButton Name="SearchButton" Text="[Application.LocalStrings.#Search!cor:String]" FocusOrder="1" Size="150,50" Font="font://f:CP_ButtonFont" Command="[Search]" />
+            </Children>
+          </Panel>
+
+          <Clip FadeSize="50" Orientation="Vertical" FadeAmount="1" ShowNear="false"
+            CenterPointPercent="0.5,0.5,0.5" Layout="Fill" >
+            <Children>
+              <ColorFill Content="[GradientColor]" Layout="Fill"/>
+            </Children>
+          </Clip>
+
         </Children>
       </Panel>
 
