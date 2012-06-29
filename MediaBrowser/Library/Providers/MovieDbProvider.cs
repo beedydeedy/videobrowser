@@ -417,7 +417,7 @@ namespace MediaBrowser.Library.Providers
                 movie.TagLine = (string)jsonDict.GetValueOrDefault<string,object>("tagline","");
                 movie.ImdbID = (string)jsonDict.GetValueOrDefault<string,object>("imdb_id","");
                 float rating;
-                string voteAvg = (string)jsonDict.GetValueOrDefault<string, object>("vote_average", "");
+                string voteAvg = jsonDict.GetValueOrDefault<string, object>("vote_average", "").ToString();
                 if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
                     movie.ImdbRating = rating;
 
