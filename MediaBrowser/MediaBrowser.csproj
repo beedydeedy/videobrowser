@@ -110,6 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
+    <Compile Include="Code\ModelItems\DefaultImages.cs" />
     <Compile Include="Library\Events\GenericEventArgs.cs" />
     <Compile Include="Library\Events\PlaybackStateEventArgs.cs" />
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
@@ -963,7 +964,9 @@
     <Content Include="Markup\Themes\Default\LayoutThumb.mcml" />
     <Content Include="Markup\Themes\Default\LayoutThumbStrip.mcml" />
     <Content Include="Markup\StylesBlackExtender.mcml" />
-    <Content Include="Markup\StylesDefaultExtender.mcml" />
+    <Content Include="Markup\StylesDefaultExtender.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\FontsSmall.mcml" />
     <Content Include="Markup\FontsDefault.mcml" />
     <Content Include="Markup\StylesBlack.mcml" />

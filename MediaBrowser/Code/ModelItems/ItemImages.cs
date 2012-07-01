@@ -83,7 +83,7 @@ namespace MediaBrowser.Library
                     }
                 }
 
-                if (backdropImage == null)  
+                if (backdropImage == null)
                 {
                     if (Config.Instance.RandomizeBackdrops)
                     {
@@ -208,7 +208,7 @@ namespace MediaBrowser.Library
             if (backdropImages == null)
             {
                 backdropImages = new List<AsyncImageLoader>();
-     
+
                 Async.Queue("Backdrop Loader", () =>
                 {
                     foreach (var image in baseItem.BackdropImages)
@@ -337,7 +337,8 @@ namespace MediaBrowser.Library
             get
             {
 
-                if (baseItem.PrimaryImagePath != null) {
+                if (baseItem.PrimaryImagePath != null)
+                {
                     EnsurePrimaryImageIsSet();
 
                     if (primaryImage.IsLoaded &&
@@ -356,19 +357,23 @@ namespace MediaBrowser.Library
                         //Logger.ReportWarning("Primary image small size not set: " + Name);
                     }
                     return primaryImageSmall != null ? primaryImageSmall.Image : PrimaryImage;
-                } else {
+                }
+                else
+                {
                     return DefaultImage;
                 }
 
-              
+
             }
         }
 
-        private void LoadSmallPrimaryImage() {
+        private void LoadSmallPrimaryImage()
+        {
             float aspect = primaryImage.Size.Height / (float)primaryImage.Size.Width;
             float constraintAspect = aspect;
 
-            if (preferredImageSmallSize.Height > 0 && preferredImageSmallSize.Width > 0) {
+            if (preferredImageSmallSize.Height > 0 && preferredImageSmallSize.Width > 0)
+            {
                 constraintAspect = preferredImageSmallSize.Height / (float)preferredImageSmallSize.Width;
             }
 
@@ -377,22 +382,31 @@ namespace MediaBrowser.Library
                 DefaultImage,
                 PrimaryImageChanged);
 
-            if (aspect == constraintAspect) {
+            if (aspect == constraintAspect)
+            {
                 smallImageIsDistorted = false;
-            } else {
+            }
+            else
+            {
                 smallImageIsDistorted = Math.Abs(aspect - constraintAspect) < Config.Instance.MaximumAspectRatioDistortion;
             }
 
-            if (smallImageIsDistorted) {
+            if (smallImageIsDistorted)
+            {
                 primaryImageSmall.Size = preferredImageSmallSize;
-            } else {
+            }
+            else
+            {
 
                 int width = preferredImageSmallSize.Width;
                 int height = preferredImageSmallSize.Height;
 
-                if (aspect > constraintAspect || width <= 0) {
+                if (aspect > constraintAspect || width <= 0)
+                {
                     width = (int)((float)height / aspect);
-                } else {
+                }
+                else
+                {
                     height = (int)((float)width * aspect);
                 }
 
@@ -649,7 +663,8 @@ namespace MediaBrowser.Library
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
 
-        public void SetPrimarySmallToTiny() {
+        public void SetPrimarySmallToTiny()
+        {
             var windowSize = GetWindowSize(new Size(1280, 720));
             this.preferredImageSmallSize = new Size(-1, windowSize.Height / 8);
         }
@@ -675,36 +690,42 @@ namespace MediaBrowser.Library
 
         }
 
-        private static Size GetWindowSize(Size size) {
+        private static Size GetWindowSize(Size size)
+        {
 
-            try {
+            try
+            {
 
                 // find ehshell 
                 var ehshell = Process.GetProcessesByName("ehshell").First().MainWindowHandle;
 
-                if (ehshell != IntPtr.Zero) {
+                if (ehshell != IntPtr.Zero)
+                {
 
                     RECT windowSize;
                     GetWindowRect(ehshell, out windowSize);
 
                     size = new Size(
-                        (windowSize.Right - windowSize.Left) ,
+                        (windowSize.Right - windowSize.Left),
                         (windowSize.Bottom - windowSize.Top)
                         );
 
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logger.ReportException("Failed to gather size information, made a guess ", e);
             }
             return size;
         }
 
 
-        static Image DefaultVideoImage = new Image("res://ehres!MOVIE.ICON.DEFAULT.PNG");
-        static Image DefaultActorImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/MissingPerson");
-        static Image DefaultStudioImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/BlankGraphic");
-        static Image DefaultFolderImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/folder");
 
+        static Image DefaultVideoImage = DefaultImages.Video;
+        static Image DefaultActorImage = DefaultImages.Actor;
+        static Image DefaultStudioImage = DefaultImages.Studio;
+        static Image DefaultFolderImage = DefaultImages.Folder;
+        
         public Image DefaultImage
         {
             get
