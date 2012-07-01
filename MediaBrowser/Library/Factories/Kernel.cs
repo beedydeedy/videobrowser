@@ -147,13 +147,12 @@ namespace MediaBrowser.Library {
                 Kernel.Instance = kernel;
 
                 // setup IBN if not there
-                string ibnLocation = Config.Instance.ImageByNameLocation;
-                if (string.IsNullOrEmpty(ibnLocation))
-                    ibnLocation = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
+                string ibnLocation = ApplicationPaths.AppIBNPath;
                 if (!Directory.Exists(ibnLocation))
                 {
                     try
                     {
+                        Logger.ReportInfo("****Creating IBN...");
                         Directory.CreateDirectory(ibnLocation);
                         Directory.CreateDirectory(Path.Combine(ibnLocation, "Genre"));
                         Directory.CreateDirectory(Path.Combine(ibnLocation, "People"));
@@ -161,6 +160,18 @@ namespace MediaBrowser.Library {
                         Directory.CreateDirectory(Path.Combine(ibnLocation, "Year"));
                         Directory.CreateDirectory(Path.Combine(ibnLocation, "General"));
                         Directory.CreateDirectory(Path.Combine(ibnLocation, "MediaInfo"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Video"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Movie"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Episode"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Series"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Season"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Folder"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\BoxSet"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Actor"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Genre"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Year"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Studio"));
                     }
                     catch (Exception e)
                     {

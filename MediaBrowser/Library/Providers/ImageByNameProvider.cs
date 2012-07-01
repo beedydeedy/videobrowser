@@ -19,38 +19,43 @@ namespace MediaBrowser.Library.Providers
             get {
                 if (location == null)
                 {
-                    if (string.IsNullOrEmpty(Item.Name)) return "";
 
-                    location = Config.Instance.ImageByNameLocation;
-                    if ((location == null) || (location.Length == 0))
-                        location = Path.Combine(ApplicationPaths.AppConfigPath, "ImagesByName");
+                    location = ApplicationPaths.AppIBNPath;
 
                     //sub-folder is based on the type of thing we're looking for
-                    switch (Path.GetExtension(Item.GetType().ToString())) //cheap way to grab the type name without all the prefix
-                    {
-                        case ".Genre":
+                    if (Item is Genre)
                             location = Path.Combine(location, "Genre");
-                            break;
-                        case ".Actor":
-                        case ".Person":
+                    else if (Item is Person)
                             location = Path.Combine(location, "People");
-                            break;
-                        case ".Studio":
+                    else if (Item is Studio)
                             location = Path.Combine(location, "Studio");
-                            break;
-                        case ".Year":
+                    else if (Item is Year)
                             location = Path.Combine(location, "Year");
-                            break;
-                        default:
+                    else
                             location = Path.Combine(location, "General");
-                            break;
-                    }
+
+
                     char[] invalid = Path.GetInvalidFileNameChars();
 
                     string name = Item.Name;
                     foreach (char c in invalid)
                         name = name.Replace(c.ToString(), "");
                     location = Path.Combine(location, name);
+
+                    if (!Directory.Exists(location))
+                    {
+                        //try the default area by type
+                        location = ApplicationPaths.AppIBNPath; //reset to root
+                        location = Path.Combine(location, "Default\\"+Item.GetType().Name);
+
+                        //now we have a specific default folder for this type - be sure it exists
+                        if (!Directory.Exists(location))
+                        {
+                            //nope - use a generic
+                            string baseType = Item is Folder ? "folder" : "video";
+                            location = Path.Combine(ApplicationPaths.AppIBNPath, "default\\" + baseType);
+                        }
+                    }
                 }
                 return location;
             }

@@ -721,10 +721,11 @@ namespace MediaBrowser.Library
 
 
 
-        static Image DefaultVideoImage = DefaultImages.Video;
-        static Image DefaultActorImage = DefaultImages.Actor;
-        static Image DefaultStudioImage = DefaultImages.Studio;
-        static Image DefaultFolderImage = DefaultImages.Folder;
+        static Image DefaultVideoImage = new Image("res://ehres!MOVIE.ICON.DEFAULT.PNG");
+        static Image DefaultActorImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/MissingPerson");
+        static Image DefaultStudioImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/BlankGraphic");
+        static Image DefaultFolderImage = new Image("resx://MediaBrowser/MediaBrowser.Resources/folder");
+ 
         
         public Image DefaultImage
         {

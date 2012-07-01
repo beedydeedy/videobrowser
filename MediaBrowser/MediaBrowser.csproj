@@ -110,7 +110,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Code\ModelItems\BasePlaybackController.cs" />
-    <Compile Include="Code\ModelItems\DefaultImages.cs" />
     <Compile Include="Library\Events\GenericEventArgs.cs" />
     <Compile Include="Library\Events\PlaybackStateEventArgs.cs" />
     <Compile Include="Library\Events\PlayStateSaveEventArgs.cs" />
@@ -939,7 +938,9 @@
     </Content>
     <Content Include="Markup\Controls\Spinners\ColorSpinner.mcml" />
     <Content Include="Markup\Controls\Spinners\SimpleSpinner.mcml" />
-    <Content Include="Markup\Controls\Spinners\SpinnerText.mcml" />
+    <Content Include="Markup\Controls\Spinners\SpinnerText.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\StarRating.mcml" />
     <Content Include="Markup\Controls\Summary.mcml" />
     <Content Include="Markup\Controls\Tabs\Tab.mcml" />
