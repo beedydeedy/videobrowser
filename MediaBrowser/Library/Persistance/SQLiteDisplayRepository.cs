@@ -19,6 +19,8 @@ namespace MediaBrowser.Library.Persistance
     public class SQLiteDisplayRepository : SQLiteRepository
     {
 
+        const string CURRENT_SCHEMA_VERSION = "2.6.1.0";
+
         public SQLiteDisplayRepository(string dbPath)
         {
 
@@ -29,24 +31,32 @@ namespace MediaBrowser.Library.Persistance
             string[] queries = {
                                "create table if not exists display_prefs (guid primary key, view_type, show_labels, vertical_scroll, sort_order, index_by, use_banner, thumb_constraint_width, thumb_constraint_height, use_coverflow, use_backdrop )",
                                "create index if not exists idx_display on display_prefs (guid)",
-                               "create table if not exists custom_display_prefs (guid, parm_key, parm_value)",
-                               "create index if not exists idx_custom on custom_display_prefs (guid, parm_key)"
+                               "create table if not exists custom_display_prefs (guid, parm_key, parm_value, primary key (guid, parm_key))",
+                               "create index if not exists idx_custom on custom_display_prefs (guid, parm_key)",
+                               "create table if not exists schema_version (table_name primary key, version)",
                                };
 
 
-            foreach (var query in queries) {
-                try {
-
-                    connection.Exec(query);
-                } catch (Exception e) {
-                    Logger.ReportInfo(e.ToString());
-                }
-            }
-
-
+            RunQueries(queries);
+            MigrateCustomDisplayPrefs();
             alive = true; // tell writer to keep going
             Async.Queue("Sqlite Display Writer", DelayedWriter);
 
+        }
+
+
+        private void MigrateCustomDisplayPrefs()
+        {
+            if (SchemaVersion("custom_display_prefs") != CURRENT_SCHEMA_VERSION)
+            {
+                string[] queries = 
+                {
+                    "drop table custom_display_prefs",
+                               "create table if not exists custom_display_prefs (guid, parm_key, parm_value, primary key (guid, parm_key))",
+                               "create index if not exists idx_custom on custom_display_prefs (guid, parm_key)",
+                };
+                if (RunQueries(queries)) SetSchemaVersion("custom_display_prefs", CURRENT_SCHEMA_VERSION);
+            }
         }
 
         public DisplayPreferences RetrieveDisplayPreferences(DisplayPreferences dp)
