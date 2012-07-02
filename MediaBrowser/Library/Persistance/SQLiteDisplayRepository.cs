@@ -49,6 +49,7 @@ namespace MediaBrowser.Library.Persistance
         {
             if (SchemaVersion("custom_display_prefs") != CURRENT_SCHEMA_VERSION)
             {
+                Logger.ReportInfo("*** Migrating custom display prefs to version " + CURRENT_SCHEMA_VERSION);
                 string[] queries = 
                 {
                     "drop table custom_display_prefs",
