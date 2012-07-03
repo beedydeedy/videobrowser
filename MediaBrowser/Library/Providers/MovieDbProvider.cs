@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Web;
 using System.Xml;
@@ -89,9 +90,14 @@ namespace MediaBrowser.Library.Providers
 
         private bool HasLocalMeta()
         {
-            //need at least the xml and folder.jpg/png or a mymovies put in by someone else
-            return HasAltMeta() || (File.Exists(System.IO.Path.Combine(Item.Path,LOCAL_META_FILE_NAME)) && (File.Exists(System.IO.Path.Combine(Item.Path,"folder.jpg")) ||
-                File.Exists(System.IO.Path.Combine(Item.Path,"folder.png"))));
+            //need at least the xml and folder.jpg/png or a movie.xml put in by someone else
+            return HasAltMeta() || (File.Exists(System.IO.Path.Combine(Item.Path,LOCAL_META_FILE_NAME)));
+        }
+
+        protected bool HasLocalImage()
+        {
+            return File.Exists(System.IO.Path.Combine(Item.Path,"folder.jpg")) ||
+                File.Exists(System.IO.Path.Combine(Item.Path,"folder.png"));
         }
 
         private bool HasAltMeta()
@@ -572,30 +578,13 @@ namespace MediaBrowser.Library.Providers
 
         protected virtual void ProcessImages(string json)
         {
-            if (Kernel.Instance.ConfigData.SaveLocalMeta)
-            {
-                //clear out old images
-                try
-                {
-                    File.Delete(Path.Combine(Item.Path, "folder.jpg"));
-                    File.Delete(Path.Combine(Item.Path, "folder.png"));
-                    for (int i = 0; i < Kernel.Instance.ConfigData.MaxBackdrops; i++)
-                    {
-                        File.Delete((Path.Combine(Item.Path, "backdrop" + (i > 0 ? i.ToString() : "") + ".jpg")));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.ReportException("MovieDbProvider - Error trying to clear out images.", e);
-                }
-            }
             Dictionary<string, object> jsonDict = Helper.ToJsonDict(json);
 
             if (jsonDict != null)
             {
                 //poster
                 System.Collections.ArrayList posters = (System.Collections.ArrayList)jsonDict["posters"];
-                if (posters != null && posters.Count > 0)
+                if (posters != null && posters.Count > 0 && (Kernel.Instance.ConfigData.RefreshItemImages || !HasLocalImage()))
                 {
                     string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedPosterSize;
                     //posters should be in order of rating.  get first one for our language
@@ -609,11 +598,20 @@ namespace MediaBrowser.Library.Providers
                         }
                     }
 
-                    if (Item.PrimaryImagePath == null)
+                    if (Item.PrimaryImagePath == null && (Kernel.Instance.ConfigData.RefreshItemImages || !HasLocalImage()))
                     {
-                        //couldn't find one for our specific country - just take the first one
-                        Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated ");
-                        Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + ((Dictionary<string, object>)posters[0])["file_path"].ToString(), "folder");
+                        //couldn't find one for our specific country - just take the first one with null country
+                        Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated unspecified");
+                        string posterPath = "";
+                        try 
+                        {
+                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == null))["file_path"].ToString();
+                        } catch
+                        {
+                            //fall back to first one
+                            posterPath = ((Dictionary<string, object>)posters[0])["file_path"].ToString();
+                        }
+                        Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + posterPath, "folder");
                     }
                 }
 
