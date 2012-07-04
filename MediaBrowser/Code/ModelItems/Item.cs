@@ -660,7 +660,11 @@ namespace MediaBrowser.Library
                 primaryImage = null;
                 bannerImage = null;
                 primaryImageSmall = null;
-                baseItem.ReCacheAllImages();
+                logoImage = null;
+                artImage = null;
+                thumbnailImage = null;
+                backdropImages = null;
+                //baseItem.ReCacheAllImages();
                 Microsoft.MediaCenter.UI.Application.DeferredInvoke(_ => this.FireAllPropertiesChanged());
             });
         }
