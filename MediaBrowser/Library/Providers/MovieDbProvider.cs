@@ -484,7 +484,8 @@ namespace MediaBrowser.Library.Providers
                 System.Collections.ArrayList studios = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("production_companies",null);
                 if (studios != null)
                 {
-                    if (movie.Studios == null) movie.Studios = new List<string>();
+                    //always clear so they don't double up
+                    movie.Studios = new List<string>();
                     foreach (Dictionary<string, object> studio in studios)
                     {
                         string name = (string)studio.GetValueOrDefault<string,object>("name","");
@@ -496,7 +497,8 @@ namespace MediaBrowser.Library.Providers
                 System.Collections.ArrayList genres = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("genres",null);
                 if (genres != null)
                 {
-                    if (movie.Genres == null) movie.Genres = new List<string>();
+                    //always clear so they don't double up
+                    movie.Genres = new List<string>();
                     foreach (Dictionary<string, object> genre in genres)
                     {
                         string name = (string)genre.GetValueOrDefault<string,object>("name","");
@@ -512,7 +514,8 @@ namespace MediaBrowser.Library.Providers
                 SortedList<int, Actor> sortedActors = new SortedList<int,Actor>();
                 if (cast != null)
                 {
-                    if (movie.Actors == null) movie.Actors = new List<Actor>();
+                    // always clear so they don't double up
+                    movie.Actors = new List<Actor>();
                     foreach (Dictionary<string, object> person in cast)
                     {
                         string name = (string)person.GetValueOrDefault<string,object>("name","");
@@ -551,8 +554,9 @@ namespace MediaBrowser.Library.Providers
                 System.Collections.ArrayList crew = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("crew",null);
                 if (crew != null)
                 {
-                    if (movie.Directors == null) movie.Directors = new List<string>();
-                    if (movie.Writers == null) movie.Writers = new List<string>();
+                    //always clear these so they don't double up
+                    movie.Directors = new List<string>();
+                    movie.Writers = new List<string>();
                     foreach (Dictionary<string, object> person in crew)
                     {
                         string name = (string)person["name"];
