@@ -122,9 +122,6 @@ namespace MediaBrowser
         public bool EnableResumeSupport = true; 
         [Comment(@"Any folder named trailers will be ignored and treated as a folder containing trailers")]
         public bool EnableLocalTrailerSupport = true; 
-        [Hidden]
-        [Comment(@"If you enable this, make sure System.Data.SQLite.DLL is copied to c:\program data\mediabrowser, make sure you install the right version there is a x32 and x64")]
-        public bool EnableExperimentalSqliteSupport = false;
         [Group("Updates")]
         [Comment(@"If you enable this MB will watch for changes in your file system and update the UI as it happens, may not work properly with SMB shares")]
         public bool EnableDirectoryWatchers = true;
@@ -434,15 +431,17 @@ namespace MediaBrowser
         [Comment("This is a hack until I can rewrite some file date processing")]
         public bool EnableShortcutDateHack = true;
 
-        [Hidden]
+        [Group("Display")]
+        [Comment("Hide empty folders (and series an seasons)")]
+        public bool HideEmptyFolders = false;
+
         [Comment("Save metadata locally so it doesn't have to be re-fetched from the inet")]
         public bool SaveLocalMeta = false;
 
-        [Hidden]
         [Comment("Save backdrops at the season level (if false will inherit from series)")]
         public bool SaveSeasonBackdrops = false;
 
-        [Hidden]
+        [Comment("Maximum number of backdrops to download from internet provider")]
         public int MaxBackdrops = 4; //maximum number of backdrops to be saved by the inet providers
 
         [Comment("Download people images to IBN")]

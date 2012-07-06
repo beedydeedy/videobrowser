@@ -145,6 +145,12 @@ namespace MediaBrowser
             set { if (this.data.CacheAllImagesInMemory != value) { this.data.CacheAllImagesInMemory = value; Save(); FirePropertyChanged("CacheAllImagesInMemory"); } }
         }
 
+        public bool HideEmptyFolders
+        {
+            get { return this.data.HideEmptyFolders; }
+            set { if (this.data.HideEmptyFolders != value) { this.data.HideEmptyFolders = value; Save(); FirePropertyChanged("HideEmptyFolders"); } }
+        }
+
         [Comment(@"The current version of MB - will be the last version te first time we run so we can do something")]
         public string MBVersion
         {

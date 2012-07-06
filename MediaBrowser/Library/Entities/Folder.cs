@@ -152,12 +152,14 @@ namespace MediaBrowser.Library.Entities {
         public IList<BaseItem> Children {
             get {
                 // return a clone
+                IList<BaseItem> visibleChildren;
                 lock (ActualChildren) {
                     if (Config.Instance.ParentalControlEnabled && Config.Instance.HideParentalDisAllowed)
-                        return parentalAllowedChildren;
+                        visibleChildren = parentalAllowedChildren;
                     else
-                        return ActualChildren.ToList();
+                        visibleChildren = ActualChildren;
                 }
+                return Kernel.Instance.ConfigData.HideEmptyFolders ? visibleChildren.Where(i => !(i is Folder) || (i as Folder).Children.Count > 0).ToList() : visibleChildren.ToList();
             }
         }
 
@@ -712,6 +714,8 @@ namespace MediaBrowser.Library.Entities {
                 currentChildren[item.Id] = item;
             }
 
+            Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
+
             bool changed = false;
             foreach (var item in validChildren) {
                 BaseItem currentChild;
@@ -742,6 +746,7 @@ namespace MediaBrowser.Library.Entities {
 
                         if (folder != null)
                         {
+                            Logger.ReportVerbose(item.Name + " is folder - validating...");
                             folder.ValidateChildren();
                         }
                     }
