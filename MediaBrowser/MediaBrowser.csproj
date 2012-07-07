@@ -104,6 +104,9 @@
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Telerik.WinControls, Version=2012.1.321.20, Culture=neutral, PublicKeyToken=5bb2a467cbec794e, processorArchitecture=MSIL" />
+    <Reference Include="Telerik.WinControls.UI, Version=2012.1.321.20, Culture=neutral, PublicKeyToken=5bb2a467cbec794e, processorArchitecture=MSIL" />
+    <Reference Include="TelerikCommon, Version=2012.1.321.20, Culture=neutral, PublicKeyToken=5bb2a467cbec794e, processorArchitecture=MSIL" />
     <Reference Include="WindowsBase">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -128,6 +131,8 @@
     <Compile Include="Library\Filesystem\VodcastContents.cs" />
     <Compile Include="Library\ImageManagement\CustomImageCache.cs" />
     <Compile Include="Library\Interfaces\ISupportsTrailers.cs" />
+    <Compile Include="Library\Localization\AURatingsDictionary.cs" />
+    <Compile Include="Library\Localization\NLRatingsDictionary.cs" />
     <Compile Include="Library\Localization\GBRatingsDictionary.cs" />
     <Compile Include="Library\Localization\RatingsDefinition.cs" />
     <Compile Include="Library\Localization\USRatingsDictionary.cs" />
@@ -317,10 +322,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
     <None Include="BaseItemClassDiagram.cd" />
-    <None Include="DevInstall.cmd" />
     <EmbeddedResource Include="Library\Playables\MpcHc\MpcHcSettings.reg" />
+    <None Include="DevInstall.cmd" />
     <None Include="MediaBrowser.snk" />
     <None Include="Migrated rules for MediaBrowser.ruleset" />
   </ItemGroup>

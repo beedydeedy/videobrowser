@@ -33,7 +33,15 @@ namespace MediaBrowser.Library
             ratings = new Dictionary<string, int>();
             //global value of None
             ratings.Add("None", -1);
-            foreach (var pair in ratingsDef.RatingsDict) ratings.Add(pair.Key, pair.Value);
+            foreach (var pair in ratingsDef.RatingsDict)
+                try
+                {
+                    ratings.Add(pair.Key, pair.Value);
+                }
+                catch (Exception e)
+                {
+                    Logging.Logger.ReportException("Error adding " + pair.Key + " to ratings", e);
+                }
             if (Kernel.Instance.ConfigData.MetadataCountryCode.ToUpper() != "US")
                 foreach (var pair in new USRatingsDictionary()) ratings.Add(pair.Key, pair.Value);
             //global values of CS
