@@ -39,7 +39,7 @@ namespace MBMigrate
             Async.Queue("Migration", () =>
             {
                 _config = ConfigData.FromFile(ApplicationPaths.ConfigFile);
-                Migrate26();
+                Migrate261();
 
                 Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() => this.Close()));
             });
@@ -60,6 +60,12 @@ namespace MBMigrate
                     // no biggie...
                 }
             }
+        }
+
+        public void Migrate261()
+        {
+            //need to continue to do this...
+            MigratePlugins();
         }
 
         public void Migrate26()
@@ -197,7 +203,11 @@ namespace MBMigrate
         public void Migrate253()
         {
             //version 2.5.3 migration
+            MigratePlugins();
+        }
 
+        public void MigratePlugins()
+        {
             List<string> KnownGlobalDLLs = new List<string>() {
                 "Ascendancy.dll",
                 "BDScreenSaver.dll",
@@ -275,129 +285,129 @@ namespace MBMigrate
 
         }
 
-        public void Migrate25()
-        {
-            //version 2.5 migration
-            Version current = new Version(_config.MBVersion);
-            if (current > new Version(2, 0) && current < new Version(2, 5))
-            {
-                string sqliteDb = Path.Combine(ApplicationPaths.AppCachePath, "cache.db");
-                string sqliteDll = Path.Combine(ApplicationPaths.AppConfigPath, "system.data.sqlite.dll");
-                if (!_config.EnableExperimentalSqliteSupport)
-                    //clean up any old sql db...
-                    try
-                    {
-                        File.Delete(sqliteDb);
-                    }
-                    catch { }
+        //public void Migrate25()
+        //{
+        //    //version 2.5 migration
+        //    Version current = new Version(_config.MBVersion);
+        //    if (current > new Version(2, 0) && current < new Version(2, 5))
+        //    {
+        //        string sqliteDb = Path.Combine(ApplicationPaths.AppCachePath, "cache.db");
+        //        string sqliteDll = Path.Combine(ApplicationPaths.AppConfigPath, "system.data.sqlite.dll");
+        //        if (!_config.EnableExperimentalSqliteSupport)
+        //            //clean up any old sql db...
+        //            try
+        //            {
+        //                File.Delete(sqliteDb);
+        //            }
+        //            catch { }
 
-                Kernel.Init(_config);
-                Logger.ReportInfo("==== Migration Process Started...");
-                var newRepo = Kernel.Instance.ItemRepository;
-                try
-                {
-                    //var oldRepo = new MediaBrowser.Library.ItemRepository();
-                    //UpdateProgress("Preparing...", .03);
-                    //Thread.Sleep(15000); //allow old repo to load
-                    if (_config.EnableExperimentalSqliteSupport)
-                    {
-                        UpdateProgress("Backing up DB", .05);
-                        Logger.ReportInfo("Attempting to backup cache db...");
-                        if (newRepo.BackupDatabase()) Logger.ReportInfo("Database backed up successfully");
-                    }
-                    //UpdateProgress("PlayStates", .10);
-                    ////newRepo.MigratePlayState(oldRepo);
+        //        Kernel.Init(_config);
+        //        Logger.ReportInfo("==== Migration Process Started...");
+        //        var newRepo = Kernel.Instance.ItemRepository;
+        //        try
+        //        {
+        //            //var oldRepo = new MediaBrowser.Library.ItemRepository();
+        //            //UpdateProgress("Preparing...", .03);
+        //            //Thread.Sleep(15000); //allow old repo to load
+        //            if (_config.EnableExperimentalSqliteSupport)
+        //            {
+        //                UpdateProgress("Backing up DB", .05);
+        //                Logger.ReportInfo("Attempting to backup cache db...");
+        //                if (newRepo.BackupDatabase()) Logger.ReportInfo("Database backed up successfully");
+        //            }
+        //            //UpdateProgress("PlayStates", .10);
+        //            ////newRepo.MigratePlayState(oldRepo);
                     
-                    //UpdateProgress("DisplayPrefs", .20);
-                    //newRepo.MigrateDisplayPrefs(oldRepo);
+        //            //UpdateProgress("DisplayPrefs", .20);
+        //            //newRepo.MigrateDisplayPrefs(oldRepo);
 
-                    UpdateProgress("Images", .01);
-                    //MediaBrowser.Library.ImageManagement.ImageCache.Instance.DeleteResizedImages();
+        //            UpdateProgress("Images", .01);
+        //            //MediaBrowser.Library.ImageManagement.ImageCache.Instance.DeleteResizedImages();
 
-                    if (_config.EnableExperimentalSqliteSupport)
-                    {
-                        //were already using SQL - our repo can migrate itself
-                        UpdateProgress("Items", .80);
-                        newRepo.MigrateItems();
-                    }
-                    else
-                    {
-                        //need to go through the file-based repo and re-save
-                        MediaBrowser.Library.Entities.BaseItem item;
-                        int cnt = 0;
-                        string[] cacheFiles = Directory.GetFiles(Path.Combine(ApplicationPaths.AppCachePath, "Items"));
-                        double total = cacheFiles.Count();
-                        foreach (var file in cacheFiles)
-                        {
-                            UpdateProgress("Items", (double)(cnt / total));
-                            try
-                            {
-                                using (Stream fs = MediaBrowser.Library.Filesystem.ProtectedFileStream.OpenSharedReader(file))
-                                {
-                                    BinaryReader reader = new BinaryReader(fs);
-                                    item = Serializer.Deserialize<MediaBrowser.Library.Entities.BaseItem>(fs);
-                                }
+        //            if (_config.EnableExperimentalSqliteSupport)
+        //            {
+        //                //were already using SQL - our repo can migrate itself
+        //                UpdateProgress("Items", .80);
+        //                newRepo.MigrateItems();
+        //            }
+        //            else
+        //            {
+        //                //need to go through the file-based repo and re-save
+        //                MediaBrowser.Library.Entities.BaseItem item;
+        //                int cnt = 0;
+        //                string[] cacheFiles = Directory.GetFiles(Path.Combine(ApplicationPaths.AppCachePath, "Items"));
+        //                double total = cacheFiles.Count();
+        //                foreach (var file in cacheFiles)
+        //                {
+        //                    UpdateProgress("Items", (double)(cnt / total));
+        //                    try
+        //                    {
+        //                        using (Stream fs = MediaBrowser.Library.Filesystem.ProtectedFileStream.OpenSharedReader(file))
+        //                        {
+        //                            BinaryReader reader = new BinaryReader(fs);
+        //                            item = Serializer.Deserialize<MediaBrowser.Library.Entities.BaseItem>(fs);
+        //                        }
 
-                                if (item != null)
-                                {
-                                    Logger.ReportInfo("Migrating Item: " + item.Name);
-                                    newRepo.SaveItem(item);
-                                    if (item is Folder)
-                                    {
-                                        //need to save our children refs
-                                        var children = RetrieveChildrenOld(item.Id);
-                                        if (children != null) newRepo.SaveChildren(item.Id, children);
-                                    }
-                                    cnt++;
-                                    if (item is Video && (item as Video).RunningTime != null)
-                                    {
-                                        TimeSpan duration = TimeSpan.FromMinutes((item as Video).RunningTime.Value);
-                                        if (duration.Ticks > 0)
-                                        {
-                                            PlaybackStatus ps = newRepo.RetrievePlayState(item.Id);
-                                            decimal pctIn = Decimal.Divide(ps.PositionTicks, duration.Ticks) * 100;
-                                            if (pctIn > Kernel.Instance.ConfigData.MaxResumePct)
-                                            {
-                                                Logger.ReportInfo("Setting " + item.Name + " to 'Watched' based on last played position.");
-                                                ps.PositionTicks = 0;
-                                                newRepo.SavePlayState(ps);
-                                            }
-                                        }
-                                    }
-                                }
+        //                        if (item != null)
+        //                        {
+        //                            Logger.ReportInfo("Migrating Item: " + item.Name);
+        //                            newRepo.SaveItem(item);
+        //                            if (item is Folder)
+        //                            {
+        //                                //need to save our children refs
+        //                                var children = RetrieveChildrenOld(item.Id);
+        //                                if (children != null) newRepo.SaveChildren(item.Id, children);
+        //                            }
+        //                            cnt++;
+        //                            if (item is Video && (item as Video).RunningTime != null)
+        //                            {
+        //                                TimeSpan duration = TimeSpan.FromMinutes((item as Video).RunningTime.Value);
+        //                                if (duration.Ticks > 0)
+        //                                {
+        //                                    PlaybackStatus ps = newRepo.RetrievePlayState(item.Id);
+        //                                    decimal pctIn = Decimal.Divide(ps.PositionTicks, duration.Ticks) * 100;
+        //                                    if (pctIn > Kernel.Instance.ConfigData.MaxResumePct)
+        //                                    {
+        //                                        Logger.ReportInfo("Setting " + item.Name + " to 'Watched' based on last played position.");
+        //                                        ps.PositionTicks = 0;
+        //                                        newRepo.SavePlayState(ps);
+        //                                    }
+        //                                }
+        //                            }
+        //                        }
                                     
-                            }
-                            catch (Exception e)
-                            {
-                                //this could fail if some items have already been refreshed before we migrated them
-                                Logger.ReportException("Could not migrate item (probably just old data) " + file + e != null && e.InnerException != null ? " Inner Exception: " + e.InnerException.Message : "", e);
-                            }
-                        }
-                        Logger.ReportInfo(cnt + " Items migrated successfully.");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.ReportException("Error in migration - will need to re-build cache.", e);
-                    try
-                    {
-                        File.Delete(sqliteDb);
-                    }
-                    catch { }
-                }
-                UpdateProgress("Finishing up...",1);
-                try
-                {
-                    Async.RunWithTimeout(newRepo.ShutdownDatabase, 30000); //be sure all writes are flushed
-                }
-                catch
-                {
-                    Logger.ReportWarning("Timed out attempting to close out DB.  Assuming all is ok and moving on...");
-                }
-            }
-            else Logger.ReportInfo("Nothing to Migrate.  Version is: " + _config.MBVersion);
+        //                    }
+        //                    catch (Exception e)
+        //                    {
+        //                        //this could fail if some items have already been refreshed before we migrated them
+        //                        Logger.ReportException("Could not migrate item (probably just old data) " + file + e != null && e.InnerException != null ? " Inner Exception: " + e.InnerException.Message : "", e);
+        //                    }
+        //                }
+        //                Logger.ReportInfo(cnt + " Items migrated successfully.");
+        //            }
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Logger.ReportException("Error in migration - will need to re-build cache.", e);
+        //            try
+        //            {
+        //                File.Delete(sqliteDb);
+        //            }
+        //            catch { }
+        //        }
+        //        UpdateProgress("Finishing up...",1);
+        //        try
+        //        {
+        //            Async.RunWithTimeout(newRepo.ShutdownDatabase, 30000); //be sure all writes are flushed
+        //        }
+        //        catch
+        //        {
+        //            Logger.ReportWarning("Timed out attempting to close out DB.  Assuming all is ok and moving on...");
+        //        }
+        //    }
+        //    else Logger.ReportInfo("Nothing to Migrate.  Version is: " + _config.MBVersion);
             
-        }
+        //}
 
         public IEnumerable<Guid> RetrieveChildrenOld(Guid id)
         {
