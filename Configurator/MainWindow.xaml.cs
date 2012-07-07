@@ -1622,7 +1622,7 @@ sortorder: {2}
         private void hdrBasic_MouseDown(object sender, MouseButtonEventArgs e)
         {
             SetHeader(hdrBasic);
-            cacheTab.Visibility = externalPlayersTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = helpTab.Visibility = Visibility.Collapsed;
+            externalPlayersTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = helpTab.Visibility = Visibility.Collapsed;
             mediacollectionTab.Visibility = podcastsTab.Visibility = displayTab.Visibility = plugins.Visibility = metadataTab.Visibility = Visibility.Visible;
         }
 
@@ -1637,7 +1637,7 @@ sortorder: {2}
         private void hdrHelpAbout_MouseDown(object sender, MouseButtonEventArgs e)
         {
             SetHeader(hdrHelpAbout);
-            cacheTab.Visibility = externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = Visibility.Collapsed;
+            externalPlayersTab.Visibility = displayTab.Visibility = extendersTab.Visibility = parentalControlTab.Visibility = Visibility.Collapsed;
             mediacollectionTab.Visibility = podcastsTab.Visibility = plugins.Visibility = metadataTab.Visibility = Visibility.Collapsed;
             helpTab.Visibility = Visibility.Visible;
             helpTab.IsSelected = true;
@@ -1933,122 +1933,6 @@ sortorder: {2}
         }
 
         private delegate TreeViewItem AddLibraryFolderCB(TreeViewItem parent, string dir);
-
-        private void btnClearCache_Click(object sender, RoutedEventArgs e)
-        {
-            bool error = false;
-            //clear selected cache folders
-            if (cbxItemCache.IsChecked.Value) {
-                try
-                {
-                    this.Cursor = Cursors.Wait;
-                    if (config.EnableExperimentalSqliteSupport)
-                    {
-                        Kernel.Instance.ItemRepository.ClearEntireCache();
-                    }
-                    else
-                    {
-
-                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items")))
-                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"), true);
-                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children")))
-                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"), true);
-                        if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata")))
-                            Directory.Delete(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"), true);
-
-                        //recreate the directories
-                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "items"));
-                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "children"));
-                        Directory.CreateDirectory(System.IO.Path.Combine(ApplicationPaths.AppCachePath, "providerdata"));
-                    }
-                    //force MB to re-build library next time
-                    Kernel.Instance.ServiceConfigData.LastFullRefresh = DateTime.MinValue;
-                    Kernel.Instance.ServiceConfigData.Save();
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error trying to delete items cache.", ex);
-                    error = true;
-                }
-                finally
-                {
-                    this.Cursor = Cursors.Arrow;
-                }
-            }
-
-            if (cbxImageCache.IsChecked.Value)
-            {
-                try
-                {
-                    Directory.Delete(ApplicationPaths.AppImagePath,true);
-                    Directory.CreateDirectory(ApplicationPaths.AppImagePath);
-                    //force MB to re-build library next time
-                    Kernel.Instance.ServiceConfigData.LastFullRefresh = DateTime.MinValue;
-                    Kernel.Instance.ServiceConfigData.Save();
-                }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error trying to delete image cache.", ex);
-                    error = true;
-                }
-            }
-
-            if (cbxPlaystateCache.IsChecked.Value)
-            {
-                try
-                {
-                    if (Directory.Exists(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate")))
-                    {
-                        string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate"));
-                        foreach (string file in files)
-                        {
-                            File.Delete(file);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error trying to delete playstate cache.", ex);
-                    error = true;
-                }
-            }
-
-            if (cbxDisplayCache.IsChecked.Value)
-            {
-                try
-                {
-                    string[] files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "display"));
-                    foreach (string file in files) {
-                        File.Delete(file);
-                    }
-                    files = Directory.GetFiles(System.IO.Path.Combine(ApplicationPaths.AppUserSettingsPath, "thumbsizes"));
-                    foreach (string file in files)
-                    {
-                        File.Delete(file);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.ReportException("Error trying to delete display/thumb cache.", ex);
-                    error = true;
-                }
-            }
-
-            if (error)
-            {
-                MessageBox.Show("Unable to clear cache.  If MediaBrowser is running, please close it and try again.  Check log for details.", "Error");
-            }
-            else
-            {
-                PopUpMsg.DisplayMessage("Selected Cache Areas Cleared Successfully.");
-            }
-        }
-
-        private void cbxCache_Click(object sender, RoutedEventArgs e)
-        {
-            btnClearCache.IsEnabled = cbxItemCache.IsChecked.Value | cbxImageCache.IsChecked.Value | cbxDisplayCache.IsChecked.Value | cbxPlaystateCache.IsChecked.Value;
-	    }
 
         private void enableLogging_Click(object sender, RoutedEventArgs e)
         {
