@@ -501,6 +501,11 @@
     <None Include="Images\Ratings\rated-gb-18.png" />
     <None Include="Images\Ratings\rated-gb-12a.png" />
     <None Include="Images\Ratings\rated-gb-15.png" />
+    <Content Include="Images\Ratings\Rated-NL-9.png" />
+    <Content Include="Images\Ratings\Rated-NL-12.png" />
+    <Content Include="Images\Ratings\Rated-NL-16.png" />
+    <Content Include="Images\Ratings\Rated-NL-6.png" />
+    <Content Include="Images\Ratings\Rated-NL-AL.png" />
     <Content Include="Images\Ratings\Rated-Custom.png" />
     <Content Include="Images\Ratings\Rated-G.png" />
     <Content Include="Images\Ratings\rated-gb-pg.png" />
