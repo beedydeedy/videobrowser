@@ -558,8 +558,8 @@ namespace Configurator
             ddlWeatherUnits.Items.Add("Celsius");
             ddlWeatherUnits.Items.Add("Fahrenheit");
             // Parental Ratings
-            ddlOptionMaxAllowedRating.ItemsSource = ratings.ToString();
-            ddlFolderRating.ItemsSource = ratings.ToString();
+            ddlOptionMaxAllowedRating.ItemsSource = ratings.ToStrings();
+            ddlFolderRating.ItemsSource = ratings.ToStrings();
             //meta
             AllLanguages = GetLanguages(CultureInfo.GetCultures(CultureTypes.NeutralCultures));
             ddlMetadataLanguage.ItemsSource = AllLanguages;
@@ -1563,31 +1563,11 @@ sortorder: {2}
         }
         private void ddlOptionMaxAllowedRating_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch ((string)ddlOptionMaxAllowedRating.SelectedItem) {
-                case "G": 
-                    config.MaxParentalLevel = 1;
-                    break;
-                
-                case "PG":
-                    config.MaxParentalLevel = 2;
-                    break;
-                case "PG-13":
-                    config.MaxParentalLevel = 3;
-                    break;
-                case "R":
-                    config.MaxParentalLevel = 4;
-                    break;
-                case "NC-17":
-                    config.MaxParentalLevel = 5;
-                    break;
-                case "CS":
-                    config.MaxParentalLevel = 999;
-                    break;
-                default:
-                    config.MaxParentalLevel = 1000; //default to everything
-                    break;
+            if (ddlOptionMaxAllowedRating.SelectedItem != null)
+            {
+                config.MaxParentalLevel = Ratings.Level((string)ddlOptionMaxAllowedRating.SelectedItem);
+                SaveConfig();
             }
-            SaveConfig();
         }
 
         private void slUnlockPeriod_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -2214,6 +2194,14 @@ sortorder: {2}
             if (country != null)
             {
                 config.MetadataCountryCode = country.TwoLetterISORegionName;
+                //also need to re-init our ratings
+                ratings = new Ratings();
+                // and the options
+                ddlOptionMaxAllowedRating.ItemsSource = ratings.ToStrings();
+                ddlOptionMaxAllowedRating.Items.Refresh();
+                ddlOptionMaxAllowedRating.SelectedItem = Ratings.ToString(config.MaxParentalLevel);
+                ddlFolderRating.ItemsSource = ratings.ToStrings();
+                ddlFolderRating.Items.Refresh();
                 config.Save();
             }
         }

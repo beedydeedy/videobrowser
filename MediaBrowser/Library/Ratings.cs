@@ -12,8 +12,7 @@ namespace MediaBrowser.Library
 {
     public class Ratings
     {
-        private static RatingsDefinition ratingsDef = RatingsDefinition.FromFile(Path.Combine(ApplicationPaths.AppLocalizationPath, "Ratings-" + Kernel.Instance.ConfigData.MetadataCountryCode+".xml"));
-        private static Dictionary<string,int> usRatings = new USRatingsDictionary(); //we need this for defaults
+        private static RatingsDefinition ratingsDef;
         private static Dictionary<string, int> ratings;
         private static Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
 
@@ -30,12 +29,13 @@ namespace MediaBrowser.Library
         public void Initialize(bool blockUnrated)
         {
             //build our ratings dictionary from the combined local one and us one
+            ratingsDef = RatingsDefinition.FromFile(Path.Combine(ApplicationPaths.AppLocalizationPath, "Ratings-" + Kernel.Instance.ConfigData.MetadataCountryCode+".xml"));
             ratings = new Dictionary<string, int>();
             //global value of None
             ratings.Add("None", -1);
             foreach (var pair in ratingsDef.RatingsDict) ratings.Add(pair.Key, pair.Value);
             if (Kernel.Instance.ConfigData.MetadataCountryCode.ToUpper() != "US")
-                foreach (var pair in usRatings) ratings.Add(pair.Key, pair.Value);
+                foreach (var pair in new USRatingsDictionary()) ratings.Add(pair.Key, pair.Value);
             //global values of CS
             ratings.Add("CS", 1000);
             if (blockUnrated)
@@ -46,38 +46,6 @@ namespace MediaBrowser.Library
             {
                 ratings.Add("", 0);
             }
-            //ratings.Add("None", -1);
-            //ratings.Add("G", 1);
-            //ratings.Add("E", 1);
-            //ratings.Add("EC", 1);
-            //ratings.Add("GB-U", 1);
-            //ratings.Add("TV-G", 1);
-            //ratings.Add("TV-Y", 1);
-            //ratings.Add("TV-Y7", 1);
-            //ratings.Add("TV-Y7-FV", 1);
-            //ratings.Add("PG", 2);
-            //ratings.Add("GB-PG", 2);
-            //ratings.Add("GB-12", 2);
-            //ratings.Add("GB-12A", 2);
-            //ratings.Add("10+", 2);
-            //ratings.Add("TV-PG", 2);
-            //ratings.Add("PG-13", 3);
-            //ratings.Add("T", 3);
-            //ratings.Add("GB-15", 3);
-            //ratings.Add("TV-14", 3);
-            //ratings.Add("R", 4);
-            //ratings.Add("M", 4);
-            //ratings.Add("GB-18", 4);
-            //ratings.Add("TV-MA", 4);
-            //ratings.Add("NC-17", 5);
-            //ratings.Add("GB-R18", 5);
-            //ratings.Add("AO", 5);
-            //ratings.Add("RP", 5);
-            //ratings.Add("UR", 5);
-            //ratings.Add("NR", 5);
-            //ratings.Add("X", 10);
-            //ratings.Add("XXX", 100);
-            //ratings.Add("CS", 1000);
             //and rating reverse lookup dictionary (non-redundant ones)
             ratingsStrings.Clear();
             int lastLevel = -10;
@@ -128,11 +96,17 @@ namespace MediaBrowser.Library
 
         public static string ToString(int level)
         {
-            if (ratingsStrings.ContainsKey(level))
-                return ratingsStrings[level];
-            else return null;
+            //return the closest one
+            while (level > 0) 
+            {
+                if (ratingsStrings.ContainsKey(level))
+                    return ratingsStrings[level];
+                else 
+                    level--;
+            }
+            return null;
         }
-        public IEnumerable<string> ToString()
+        public IEnumerable<string> ToStrings()
         {
             //return the whole list of ratings strings
             return ratingsStrings.Values;
