@@ -34,7 +34,6 @@ namespace MediaBrowser.Library.Entities {
         [Persist]
         public int? RunningTime { get; set; }
 
-        [DontClearOnForcedRefresh]
         [Persist]
         public MediaInfoData MediaInfo { get; set; }
 
