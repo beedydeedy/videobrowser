@@ -75,7 +75,7 @@ namespace MediaBrowser.Library
             ratings.Remove("");
             if (block)
             {
-                ratings.Add("", 5);
+                ratings.Add("", 1000);
             }
             else
             {
@@ -112,12 +112,18 @@ namespace MediaBrowser.Library
                 else 
                     level--;
             }
-            return null;
+            return ratingsStrings.Values.FirstOrDefault(); //default to first one
         }
-        public IEnumerable<string> ToStrings()
+        public List<string> ToStrings()
         {
             //return the whole list of ratings strings
-            return ratingsStrings.Values;
+            return ratingsStrings.Values.ToList();
+        }
+
+        public List<int> ToValues()
+        {
+            //return the whole list of ratings values
+            return ratingsStrings.Keys.ToList();
         }
 
         public Microsoft.MediaCenter.UI.Image RatingImage(string rating)

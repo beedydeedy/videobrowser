@@ -27,6 +27,7 @@
     <Properties>
       <a:Application Name="Application" Application="$Required"/>
       <cor:Boolean Name="ShowFull" Boolean="true" />
+      <lib:Ratings Name="Ratings" />
 
     </Properties>
 
@@ -49,29 +50,9 @@
       <IntRangedValue Name="UnlockPeriod" Value="[Application.Config.ParentalUnlockPeriod]" MaxValue="100" MinValue="1" Step="1"/>
       <cor:String Name="InitialRating" String="[Application.Config.ParentalMaxAllowedString]" />
       <EditableText Name="PIN" Value="" />
-      <Choice Name="RatingsStrings">
-        <Options>
-          <cor:String String="None" />
-          <cor:String String="G" />
-          <cor:String String="PG" />
-          <cor:String String="PG-13" />
-          <cor:String String="R" />
-          <cor:String String="NC-17" />
-          <cor:String String="CS" />
-        </Options>
-      </Choice>
-      <Choice Name="RatingsValues">
-        <Options>
-          <cor:Int32 Int32="-1" />
-          <cor:Int32 Int32="1" />
-          <cor:Int32 Int32="2" />
-          <cor:Int32 Int32="3" />
-          <cor:Int32 Int32="4" />
-          <cor:Int32 Int32="5" />
-          <cor:Int32 Int32="999" />
-        </Options>
-      </Choice>
-      <Choice Name="RatingsDescs">
+      <Choice Name="RatingsStrings" Options="[Ratings.ToStrings]" />
+      <Choice Name="RatingsValues" Options="[Ratings.ToValues]" />
+      <!--<Choice Name="RatingsDescs">
         <Options>
           <cor:String String="Block All Content." />
           <cor:String String="General Audiences - Appropriate for all.  Also Includes E, EC, TV-Y and TV-Y7." />
@@ -81,7 +62,7 @@
           <cor:String String="Not appropriate for anyone under 17. Also Includes AO and Unrated (explicit rating of Unrated)" />
           <cor:String String="Custom Security Level. Use for securing folders only." />
         </Options>
-      </Choice>
+      </Choice>-->
       <BooleanChoice Name="EnableScreenSaver" Value="[Application.Config.EnableScreenSaver]" />
       <BooleanChoice Name="EnableRootPage" Value="[Application.Config.EnableRootPage]" />
       <BooleanChoice Name="EnableTraceLogging" Value="[Application.Config.EnableTraceLogging]" />
@@ -324,6 +305,13 @@
           <Set Target="[UnlockPCBtn.Visible]" Value="[Application.Config.ParentalControlEnabled]" />
         </Actions>
       </Changed>
+      <Changed Source="[RatingsStrings.Chosen]">
+        <Actions>
+          <Set Target="[RatingsValues.ChosenIndex]" Value="[RatingsStrings.ChosenIndex]" />
+          <!--<Set Target="[RatingsDescs.ChosenIndex]" Value="[RatingsStrings.ChosenIndex]" />-->
+          <!--<Set Target="[RatingsDesc.Content]" Value="[RatingsDescs.Chosen!cor:String]"/>-->
+        </Actions>
+      </Changed>
       <Binding Source="[UnlockPeriod.Value]" Target="[Config.ParentalUnlockPeriod]" />
       <Binding Source="[Enabled.Value]" Target="[Config.ParentalControlEnabled]" />
       <Binding Source="[HideProtected.Value]" Target="[Config.HideParentalDisAllowed]" />
@@ -331,13 +319,6 @@
       <Binding Source="[AutoUnlock.Value]" Target="[Config.UnlockOnPinEntry]" />
       <Binding Source="[RatingsValues.Chosen!cor:Int32]" Target="[Config.MaxParentalLevel]" />
 
-      <Changed Source="[RatingsStrings.Chosen]">
-        <Actions>
-          <Set Target="[RatingsValues.ChosenIndex]" Value="[RatingsStrings.ChosenIndex]" />
-          <Set Target="[RatingsDescs.ChosenIndex]" Value="[RatingsStrings.ChosenIndex]" />
-          <Set Target="[RatingsDesc.Content]" Value="[RatingsDescs.Chosen!cor:String]"/>
-        </Actions>
-      </Changed>
 
       <Condition Source="[Config.IsFirstRun]" SourceValue="true">
         <Actions>
@@ -701,7 +682,7 @@
                         <Children>
                           <cb:CheckBox Label="[Application.LocalStrings.#EnableParentalBlocksConfig!cor:String]" FocusItem="[FocusItem]" Checked="[Enabled]" Margins="[CMargin]" Font="font://f:CP_ConfigItemFont"/>
                           <st:SpinnerText Model="[RatingsStrings]" FocusItem="[FocusItem]"  Label="[Application.LocalStrings.#MaxAllowedRatingConfig!cor:String]" Color="color://s:FontColorMedium" Font="font://f:CP_ConfigItemFont" ValueFont="font://f:CP_ConfigItemFont" Margins="[CMargin]" DefaultString="[InitialRating]" />
-                          <Text Name="RatingsDesc" Content="" MinimumSize="450,90" MaximumSize="450,90" Margins="[CMargin]" Font="Segoe Media Center Bold,14" Color="color://s:FontColorLight" WordWrap="true" />
+                          <!--<Text Name="RatingsDesc" Content="" MinimumSize="450,90" MaximumSize="450,90" Margins="[CMargin]" Font="Segoe Media Center Bold,14" Color="color://s:FontColorLight" WordWrap="true" />-->
                           <cb:CheckBox Label="[Application.LocalStrings.#BlockUnratedContentConfig!cor:String]" Checked="[BlockUnrated]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
                           <cb:CheckBox Label="[Application.LocalStrings.#HideBlockedContentConfig!cor:String]" Checked="[HideProtected]" FocusItem="[FocusItem]"  Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
                           <cb:CheckBox Label="[Application.LocalStrings.#UnlockonPINEntryConfig!cor:String]" Checked="[AutoUnlock]" FocusItem="[FocusItem]" Margins="[CMargin]"   Font="font://f:CP_ConfigItemFont"/>
