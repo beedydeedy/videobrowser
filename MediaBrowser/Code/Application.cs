@@ -950,10 +950,11 @@ namespace MediaBrowser
                 case "2.5.2.0":
                 case "2.5.3.0":
                 case "2.6.0.0":
+                case "2.6.1.0":
                     Config.EnableNestedMovieFolders = false;  //turn this off - it is what causes all the "small library" issues
                     Config.EnableTranscode360 = false; //no longer need transcoding and it just causes problems
-                    Kernel.Instance.ConfigData.FetchedPosterSize = "w500"; //reset to new api
-                    Kernel.Instance.ConfigData.FetchedBackdropSize = "w1280"; //reset to new api
+                    if (!Kernel.Instance.ConfigData.FetchedPosterSize.StartsWith("w")) Kernel.Instance.ConfigData.FetchedPosterSize = "w500"; //reset to new api
+                    if (!Kernel.Instance.ConfigData.FetchedBackdropSize.StartsWith("w")) Kernel.Instance.ConfigData.FetchedBackdropSize = "w1280"; //reset to new api
                     Kernel.Instance.ConfigData.Save();
                     if (oldVersion <= new System.Version(2, 3, 0, 0))
                     {
