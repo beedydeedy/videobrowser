@@ -158,8 +158,8 @@ namespace MediaBrowser.Library.Entities {
                         visibleChildren = parentalAllowedChildren;
                     else
                         visibleChildren = ActualChildren;
+                    return Kernel.Instance.ConfigData.HideEmptyFolders ? visibleChildren.Where(i => !(i is Folder) || (i as Folder).Children.Count > 0).ToList() : visibleChildren.ToList();
                 }
-                return Kernel.Instance.ConfigData.HideEmptyFolders ? visibleChildren.Where(i => !(i is Folder) || (i as Folder).Children.Count > 0).ToList() : visibleChildren.ToList();
             }
         }
 
