@@ -367,6 +367,12 @@ namespace MediaBrowser.Library.Providers
 
             var info = Helper.FetchJson(url);
 
+            if (String.IsNullOrEmpty(info.Trim()))
+            {
+                Logger.ReportError("MovieDbProvider - Unable to find information for " + Item.Name + " (id:" + id + ")");
+                return;
+            }
+
             url = string.Format(castInfo, id, ApiKey, itemType);
             var cast = Helper.FetchJson(url) ?? "";
             int castStart = !String.IsNullOrEmpty(cast) ? cast.IndexOf("\"cast\":") : 0;
@@ -380,10 +386,11 @@ namespace MediaBrowser.Library.Providers
             int releasesEnd = !String.IsNullOrEmpty(releases) ? releases.IndexOf("]",releasesStart)+1 : 0;
 
             //combine main info, releases and cast info into one json string
-            json = info.Substring(0, info.LastIndexOf("}")) + ","
-                + releases.Substring(releasesStart, releasesEnd - releasesStart) + ","
-                + cast.Substring(castStart, castEnd - castStart) + ","
-                + cast.Substring(crewStart, crewEnd - crewStart) + "}";
+            json = info.Substring(0, info.LastIndexOf("}"));
+            json += releases != "" ? ("," + releases.Substring(releasesStart, releasesEnd - releasesStart)) : "";
+            json += cast != "" ? "," + (cast.Substring(castStart, castEnd - castStart) + ","
+                               + cast.Substring(crewStart, crewEnd - crewStart)) : ""; 
+            json += "}";
 
             ProcessMainInfo(json);
 
