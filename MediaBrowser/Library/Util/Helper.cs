@@ -400,7 +400,7 @@ namespace MediaBrowser.LibraryManagement
         public static string FetchJson(string url) {
             try
             {
-                Logger.ReportVerbose("Requesting json from: " + url);
+                //Logger.ReportVerbose("Requesting json from: " + url);
                 int attempt = 0;
                 while (attempt < 2)
                 {
