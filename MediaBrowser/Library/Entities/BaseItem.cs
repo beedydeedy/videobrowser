@@ -439,6 +439,9 @@ namespace MediaBrowser.Library.Entities {
                 images.Add(PrimaryImage);
                 images.Add(SecondaryImage);
                 images.Add(BannerImage);
+                images.Add(LogoImage);
+                images.Add(ArtImage);
+                images.Add(ThumbnailImage);
                 images.AddRange(BackdropImages);
 
                 foreach (var image in images) {
