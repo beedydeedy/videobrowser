@@ -7,6 +7,7 @@ using MediaBrowser.Library.Entities;
 using MediaBrowser.Library.Events;
 using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Playables.ExternalPlayer;
+using System.IO;
 
 namespace MediaBrowser.Library.Playables.MpcHc
 {
@@ -188,7 +189,27 @@ namespace MediaBrowser.Library.Playables.MpcHc
         /// </summary>
         internal override IEnumerable<string> GetPlayableFiles(Media media)
         {
-            return base.GetPlayableFiles(media).Select(i => FormatPath(i));
+            return base.GetPlayableFiles(media).Select(i => {
+
+                string path = i;
+
+                Video video = media as Video;
+
+                if (video != null & video.MediaType == MediaType.DVD)
+                {
+                    // Point directly to the video_ts path
+                    // Otherwise mpc will play any other media files that might exist in the dvd top folder (e.g. video backdrops).
+                    string videoTsPath = Path.Combine(path, "video_ts");
+
+                    if (Directory.Exists(videoTsPath))
+                    {
+                        path = videoTsPath;
+                    }
+                }
+
+                return FormatPath(path);
+            
+            });
         }
 
         /// <summary>
