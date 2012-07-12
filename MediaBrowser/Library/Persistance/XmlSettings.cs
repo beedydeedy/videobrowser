@@ -151,7 +151,7 @@ namespace MediaBrowser.Library.Persistance {
 
                 foreach (XmlNode child in node.ChildNodes)
                 {
-                    dict.Add(child.Name.Replace('_','-'), (int)serializer.Read(child, typeof(int)));
+                    dict.Add(child.Name.Replace('_','-').Replace("Plus","+"), (int)serializer.Read(child, typeof(int)));
                 }
                 return dict;
             }
@@ -169,7 +169,7 @@ namespace MediaBrowser.Library.Persistance {
 
                     foreach (KeyValuePair<string, int> entry in dict)
                     {
-                        var inner = node.OwnerDocument.CreateNode(XmlNodeType.Element, entry.Key.Replace('-','_'), null);
+                        var inner = node.OwnerDocument.CreateNode(XmlNodeType.Element, entry.Key.Replace('-','_').Replace("+","Plus"), null);
                         node.AppendChild(inner);
                         serializer.Write(inner, entry.Value);
                     }

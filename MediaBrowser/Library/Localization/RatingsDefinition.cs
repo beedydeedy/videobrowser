@@ -32,6 +32,12 @@ namespace MediaBrowser.Library.Localization
                 case "GB":
                     RatingsDict = new GBRatingsDictionary();
                     break;
+                case "NL":
+                    RatingsDict = new NLRatingsDictionary();
+                    break;
+                case "AU":
+                    RatingsDict = new AURatingsDictionary();
+                    break;
                 default:
                     RatingsDict = new USRatingsDictionary();
                     break;
