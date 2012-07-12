@@ -369,15 +369,15 @@ namespace MediaBrowser.Library.Providers
 
             url = string.Format(castInfo, id, ApiKey, itemType);
             var cast = Helper.FetchJson(url) ?? "";
-            int castStart = cast.IndexOf("\"cast\":");
-            int castEnd = cast.IndexOf("]",castStart)+1;
-            int crewStart = cast.IndexOf("\"crew\":");
-            int crewEnd = cast.IndexOf("]", crewStart)+1;
+            int castStart = !String.IsNullOrEmpty(cast) ? cast.IndexOf("\"cast\":") : 0;
+            int castEnd = !String.IsNullOrEmpty(cast) ? cast.IndexOf("]",castStart)+1 : 0;
+            int crewStart = !String.IsNullOrEmpty(cast) ? cast.IndexOf("\"crew\":") : 0;
+            int crewEnd = !String.IsNullOrEmpty(cast) ? cast.IndexOf("]", crewStart)+1 : 0;
 
             url = string.Format(releaseInfo, id, ApiKey, itemType);
             var releases = Helper.FetchJson(url) ?? "";
-            int releasesStart = releases.IndexOf("\"countries\":");
-            int releasesEnd = releases.IndexOf("]",releasesStart)+1;
+            int releasesStart = !String.IsNullOrEmpty(releases) ? releases.IndexOf("\"countries\":") : 0;
+            int releasesEnd = !String.IsNullOrEmpty(releases) ? releases.IndexOf("]",releasesStart)+1 : 0;
 
             //combine main info, releases and cast info into one json string
             json = info.Substring(0, info.LastIndexOf("}")) + ","
