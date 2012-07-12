@@ -98,7 +98,7 @@ namespace MediaBrowser.Library
         {
             get
             {
-                return Ratings.ToString(MaxAllowed) ?? "G"; //return something valid if not there
+                return Ratings.ToString(MaxAllowed) ?? ""; //return something valid if not there
             }
         }
 
