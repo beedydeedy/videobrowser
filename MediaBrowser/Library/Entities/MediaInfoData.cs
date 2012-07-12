@@ -43,7 +43,6 @@ namespace MediaBrowser.Library.Entities
             public string ScanType = "";
         }
 
-        [DontClearOnForcedRefresh]
         [Persist]
         private MIData _pluginData = new MIData();
         [Persist]
