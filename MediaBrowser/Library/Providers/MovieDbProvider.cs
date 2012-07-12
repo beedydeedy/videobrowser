@@ -491,6 +491,17 @@ namespace MediaBrowser.Library.Providers
                     }
                 }
 
+                //if that still didn't find a rating and we are a boxset, use the one from our first child
+                if (movie.MpaaRating == null && movie is BoxSet)
+                {
+                    var boxset = movie as BoxSet;
+                    if (boxset != null)
+                    {
+                        Logger.ReportInfo("MovieDbProvider - Using rating of first child of boxset...");
+                        boxset.MpaaRating = boxset.Children.Count > 0 ? boxset.Children[0].OfficialRating : null;
+                    }
+                }
+
                 //mediainfo should override this metadata
                 if (movie.MediaInfo != null && movie.MediaInfo.RunTime > 0)
                 {
