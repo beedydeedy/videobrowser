@@ -15,7 +15,7 @@ namespace MediaBrowser.Library.Localization
             this.Add("GB-12A", 7);
             this.Add("GB-15", 8);
             this.Add("GB-18", 9);
-            this.Add("GB-R18", 10);
+            this.Add("GB-R18", 15);
         }
     }
 }
