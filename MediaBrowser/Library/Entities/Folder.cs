@@ -714,7 +714,7 @@ namespace MediaBrowser.Library.Entities {
                 currentChildren[item.Id] = item;
             }
 
-            Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
+            //Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
 
             bool changed = false;
             foreach (var item in validChildren) {
