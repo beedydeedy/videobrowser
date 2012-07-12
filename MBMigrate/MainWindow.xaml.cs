@@ -95,6 +95,21 @@ namespace MBMigrate
                 {
                     Logger.ReportException("Error creating new IBN folders", e);
                 }
+
+                //translate PC to new values
+                Dictionary<int, int> translations = new Dictionary<int, int>()
+                {
+                    {1,1},
+                    {2,5},
+                    {3,6},
+                    {4,8},
+                    {5,9}
+                };
+                if (translations.ContainsKey(_config.MaxParentalLevel))
+                {
+                    _config.MaxParentalLevel = translations[_config.MaxParentalLevel];
+                    _config.Save();
+                }
             }
         }
 
