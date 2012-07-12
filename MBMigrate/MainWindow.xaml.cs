@@ -64,8 +64,38 @@ namespace MBMigrate
 
         public void Migrate261()
         {
-            //need to continue to do this...
-            MigratePlugins();
+            //version 2.6 migration
+            Version current = new Version(_config.MBVersion);
+            if (current > new Version(2, 0) && current < new Version(2, 6, 1))
+            {
+                //need to continue to do this...
+                MigratePlugins();
+
+                //create new IBN directories
+                string ibnLocation = ApplicationPaths.AppIBNPath;
+                try
+                {
+                    if (!Directory.Exists(Path.Combine(ibnLocation, "default")))
+                    {
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Video"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Movie"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Episode"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Series"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Season"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Folder"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\BoxSet"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Actor"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Genre"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Year"));
+                        Directory.CreateDirectory(Path.Combine(ibnLocation, "Default\\Studio"));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.ReportException("Error creating new IBN folders", e);
+                }
+            }
         }
 
         public void Migrate26()
