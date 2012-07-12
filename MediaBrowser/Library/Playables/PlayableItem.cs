@@ -772,11 +772,13 @@ namespace MediaBrowser.Library.Playables
                     return true;
                 }
 
-                // See if we can detect the first file as a video
-                if (IsVideo(video.Files.First(), video.MediaType))
+                // Hack alert
+                if (video.GetType().Name == "Song")
                 {
-                    return true;
+                    return false;
                 }
+
+                return true;
             }
 
             return false;
@@ -784,11 +786,8 @@ namespace MediaBrowser.Library.Playables
 
         public static bool IsVideo(string path)
         {
-            return IsVideo(path, MediaTypeResolver.DetermineType(path));
-        }
+            MediaType type = MediaTypeResolver.DetermineType(path);
 
-        public static bool IsVideo(string path, MediaType type)
-        {
             // Assume video if type is not unknown
             if (type != MediaType.Unknown || Helper.IsVideo(path))
             {
