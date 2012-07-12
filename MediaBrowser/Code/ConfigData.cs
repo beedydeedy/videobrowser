@@ -448,7 +448,10 @@ namespace MediaBrowser
         [Comment("Download people images to IBN")]
         public bool DownloadPeopleImages = true;
 
-        [Hidden]
+        [Comment("Refresh the images from TMDB when we fetch other meta.  This will replace local versions.")]
+        public bool RefreshItemImages = true;
+
+        [Comment("The size of posters to fetch from tmdb")]
         public string FetchedPosterSize = "w500"; //w500, w342, w185 or original
 
         [Comment("The size of backdrops to fetch from tmdb")]
