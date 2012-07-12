@@ -389,15 +389,7 @@ namespace MediaBrowser.Library.Persistance {
                                 //,   "create table play_states (guid primary key, play_count, position_ticks, playlist_position, last_played)"
                                };
 
-
-            foreach (var query in queries) {
-                try {
-                    connection.Exec(query);
-                } catch (Exception e) {
-                    Logger.ReportInfo(e.ToString());
-                }
-            }
-
+            RunQueries(queries);
             alive = true; // tell writer to keep going
             Async.Queue("Sqlite Writer", DelayedWriter);
 
@@ -429,28 +421,6 @@ namespace MediaBrowser.Library.Persistance {
                 connection.Open();
             }
             return success;
-        }
-
-        private string SchemaVersion(string tableName)
-        {
-            string version = "";
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "select version from schema_version where table_name = @1";
-            cmd.AddParam("@1", tableName);
-
-            using (var reader = cmd.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    version = reader.GetString(0);
-                }
-            }
-            return version;
-        }
-
-        private void SetSchemaVersion(string tableName, string version)
-        {
-            connection.Exec("replace into schema_version (table_name, version) values('" + tableName + "','" + version + "')");
         }
 
 
