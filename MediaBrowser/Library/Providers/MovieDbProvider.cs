@@ -14,6 +14,7 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.LibraryManagement;
 using MediaBrowser.Library.ImageManagement;
 using MediaBrowser.Library.Configuration;
+using MediaBrowser.Library.Extensions;
 
 namespace MediaBrowser.Library.Providers
 {
@@ -23,10 +24,10 @@ namespace MediaBrowser.Library.Providers
     {
         private static string search3 = @"http://api.themoviedb.org/3/search/movie?api_key={1}&query={0}&language={2}";
         private static string altTitleSearch = @"http://api.themoviedb.org/3/movie/{0}?api_key={1}";
-        private static string getInfo3 = @"http://api.themoviedb.org/3/movie/{0}?api_key={1}&language={2}";
+        private static string getInfo3 = @"http://api.themoviedb.org/3/{3}/{0}?api_key={1}&language={2}";
         private static string castInfo = @"http://api.themoviedb.org/3/movie/{0}/casts?api_key={1}";
         private static string releaseInfo = @"http://api.themoviedb.org/3/movie/{0}/releases?api_key={1}";
-        private static string getImages = @"http://api.themoviedb.org/3/movie/{0}/images?api_key={1}";
+        private static string getImages = @"http://api.themoviedb.org/3/{2}/{0}/images?api_key={1}";
         private static readonly string ApiKey = "f6bd687ffa63cd282b6ff2c6877f2669";
         static readonly Regex[] nameMatches = new Regex[] {
             new Regex(@"(?<name>.*)\((?<year>\d{4})\)"), // matches "My Movie (2001)" and gives us the name and the year
@@ -36,6 +37,7 @@ namespace MediaBrowser.Library.Providers
         protected const string LOCAL_META_FILE_NAME = "MBMovie.json";
         protected const string ALT_META_FILE_NAME = "movie.xml";
         protected bool forceDownload = false;
+        protected string itemType = "movie";
 
         #region IMetadataProvider Members
 
@@ -322,7 +324,7 @@ namespace MediaBrowser.Library.Providers
             string childId = AttemptFindId(name, year, language);
             if (childId != null)
             {
-                string url = string.Format(getInfo3, childId, ApiKey, language);
+                string url = string.Format(getInfo3, childId, ApiKey, language, itemType);
                 string json = Helper.FetchJson(url);
                 var jsonDict = Helper.ToJsonDict(json);
                 if (jsonDict != null)
@@ -347,21 +349,22 @@ namespace MediaBrowser.Library.Providers
                 Logger.ReportInfo("MoviedbProvider: Ignoring " + Item.Name + " because ID forced blank.");
                 return;
             }
-            string url = string.Format(getInfo3, id, ApiKey, Config.Instance.PreferredMetaDataLanguage);
+            itemType = Item is BoxSet ? "collection" : "movie";
+            string url = string.Format(getInfo3, id, ApiKey, Config.Instance.PreferredMetaDataLanguage, itemType);
             moviedbId = id;
             string json;
 
             var info = Helper.FetchJson(url);
 
-            url = string.Format(castInfo, id, ApiKey);
-            var cast = Helper.FetchJson(url);
+            url = string.Format(castInfo, id, ApiKey, itemType);
+            var cast = Helper.FetchJson(url) ?? "";
             int castStart = cast.IndexOf("\"cast\":");
             int castEnd = cast.IndexOf("]",castStart)+1;
             int crewStart = cast.IndexOf("\"crew\":");
             int crewEnd = cast.IndexOf("]", crewStart)+1;
 
-            url = string.Format(releaseInfo, id, ApiKey);
-            var releases = Helper.FetchJson(url);
+            url = string.Format(releaseInfo, id, ApiKey, itemType);
+            var releases = Helper.FetchJson(url) ?? "";
             int releasesStart = releases.IndexOf("\"countries\":");
             int releasesEnd = releases.IndexOf("]",releasesStart)+1;
 
@@ -374,8 +377,13 @@ namespace MediaBrowser.Library.Providers
             ProcessMainInfo(json);
 
             //now the images
-            url = string.Format(getImages, id, ApiKey);
+            url = string.Format(getImages, id, ApiKey, itemType);
             var images = Helper.FetchJson(url);
+            if (images == null && itemType == "collection")
+            {
+                url = string.Format(getImages, id, ApiKey, "movie");  //until tmdb corrects the api - collection images are found here
+                images = Helper.FetchJson(url);
+            }
             ProcessImages(images);
 
             //and save locally
@@ -403,17 +411,18 @@ namespace MediaBrowser.Library.Providers
             if (jsonDict != null)
             {
 
-                movie.Name = (string)jsonDict["title"];
-                movie.Overview = (string)jsonDict["overview"];
+                movie.Name = (string)jsonDict.GetValueOrDefault<string,object>("title",null) ?? (string)jsonDict.GetValueOrDefault<string,object>("name",null);
+                movie.Overview = (string)jsonDict.GetValueOrDefault<string,object>("overview","");
                 movie.Overview = movie.Overview != null ? movie.Overview.Replace("\n\n", "\n") : null;
-                movie.TagLine = (string)jsonDict["tagline"];
-                movie.ImdbID = (string)jsonDict["imdb_id"];
+                movie.TagLine = (string)jsonDict.GetValueOrDefault<string,object>("tagline","");
+                movie.ImdbID = (string)jsonDict.GetValueOrDefault<string,object>("imdb_id","");
                 float rating;
-                if (float.TryParse(jsonDict["vote_average"].ToString(), System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
+                string voteAvg = (string)jsonDict.GetValueOrDefault<string, object>("vote_average", "");
+                if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
                     movie.ImdbRating = rating;
 
                 //release date and certification are retrieved based on configured country
-                System.Collections.ArrayList releases = (System.Collections.ArrayList)jsonDict["countries"];
+                System.Collections.ArrayList releases = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("countries",null);
                 if (releases != null)
                 {
                     string usRelease = null, usCert = null;
@@ -421,19 +430,19 @@ namespace MediaBrowser.Library.Providers
                     string ourCountry = Kernel.Instance.ConfigData.MetadataCountryCode;
                     foreach (Dictionary<string, object> release in releases)
                     {
-                        string country = (string)release["iso_3166_1"];
+                        string country = (string)release.GetValueOrDefault<string,object>("iso_3166_1",null);
                         //grab the us info so we can default to it if need be
                         if (country == "US")
                         {
-                            usRelease = release["release_date"].ToString();
-                            usCert = (string)release["certification"];
+                            usRelease = (string)release.GetValueOrDefault<string,object>("release_date","");
+                            usCert = (string)release.GetValueOrDefault<string,object>("certification","");
                         }
                         if (ourCountry != "US")
                         {
                             if (country == ourCountry)
                             {
-                                ourRelease = release["release_date"].ToString();
-                                ourCert = (string)release["certification"];
+                                ourRelease = (string)release.GetValueOrDefault<string,object>("release_date","");
+                                ourCert = (string)release.GetValueOrDefault<string,object>("certification","");
                             }
                         }
                     }
@@ -461,30 +470,30 @@ namespace MediaBrowser.Library.Providers
                 else
                 {
                     int runtime;
-                    if (Int32.TryParse(jsonDict["runtime"].ToString(), out runtime))
+                    if (Int32.TryParse(jsonDict.GetValueOrDefault<string,object>("runtime","").ToString(), out runtime))
                         movie.RunningTime = runtime;
                 }
                 
                 //studios
-                System.Collections.ArrayList studios = (System.Collections.ArrayList)jsonDict["production_companies"];
+                System.Collections.ArrayList studios = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("production_companies",null);
                 if (studios != null)
                 {
                     if (movie.Studios == null) movie.Studios = new List<string>();
                     foreach (Dictionary<string, object> studio in studios)
                     {
-                        string name = (string)studio["name"];
+                        string name = (string)studio.GetValueOrDefault<string,object>("name","");
                         if (name != null) movie.Studios.Add(name);
                     }
                 }
 
                 //genres
-                System.Collections.ArrayList genres = (System.Collections.ArrayList)jsonDict["genres"];
+                System.Collections.ArrayList genres = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("genres",null);
                 if (genres != null)
                 {
                     if (movie.Genres == null) movie.Genres = new List<string>();
                     foreach (Dictionary<string, object> genre in genres)
                     {
-                        string name = (string)genre["name"];
+                        string name = (string)genre.GetValueOrDefault<string,object>("name","");
                         if (name != null) movie.Genres.Add(name);
                     }
                 }
@@ -493,15 +502,15 @@ namespace MediaBrowser.Library.Providers
                 string tmdbImageUrl = Kernel.Instance.ConfigData.TmdbImageUrl + Kernel.Instance.ConfigData.FetchedProfileSize;
 
                 //actors
-                System.Collections.ArrayList cast = (System.Collections.ArrayList)jsonDict["cast"];
+                System.Collections.ArrayList cast = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("cast",null);
                 SortedList<int, Actor> sortedActors = new SortedList<int,Actor>();
                 if (cast != null)
                 {
                     if (movie.Actors == null) movie.Actors = new List<Actor>();
                     foreach (Dictionary<string, object> person in cast)
                     {
-                        string name = (string)person["name"];
-                        string role = (string)person["character"];
+                        string name = (string)person.GetValueOrDefault<string,object>("name","");
+                        string role = (string)person.GetValueOrDefault<string,object>("character","");
                         if (name != null)
                         {
                             try
@@ -533,7 +542,7 @@ namespace MediaBrowser.Library.Providers
                 }
 
                 //directors and writers are both in "crew"
-                System.Collections.ArrayList crew = (System.Collections.ArrayList)jsonDict["crew"];
+                System.Collections.ArrayList crew = (System.Collections.ArrayList)jsonDict.GetValueOrDefault<string,object>("crew",null);
                 if (crew != null)
                 {
                     if (movie.Directors == null) movie.Directors = new List<string>();
