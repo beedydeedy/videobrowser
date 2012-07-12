@@ -505,6 +505,7 @@ namespace Configurator
             cbxSaveMetaLocally.IsChecked = config.SaveLocalMeta;
             cbxDownloadPeople.IsChecked = config.DownloadPeopleImages;
             cbxSaveSeasonBD.IsChecked = config.SaveSeasonBackdrops;
+            cbxRefreshImages.IsChecked = config.RefreshItemImages;
             tbxMaxBackdrops.Text = config.MaxBackdrops.ToString();
             tbxMetadataUpdateAge.Text = config.MetadataCheckForUpdateAge.ToString();
         }
@@ -1530,6 +1531,12 @@ sortorder: {2}
             config.Save();
         }
 
+        private void cbxRefreshImages_Checked(object sender, RoutedEventArgs e)
+        {
+            config.RefreshItemImages = cbxRefreshImages.IsChecked.Value;
+            config.Save();
+        }
+
 
 
         #endregion
@@ -2223,7 +2230,6 @@ sortorder: {2}
             config.FetchedProfileSize = ddlPersonImageSize.SelectedItem.ToString();
             config.Save();
         }
-
 
     }
 
