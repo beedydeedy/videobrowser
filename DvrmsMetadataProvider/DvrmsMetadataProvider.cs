@@ -38,7 +38,19 @@ namespace DvrmsMetadataProvider {
     public class DvrmsMetadataProvider : BaseMetadataProvider {
 
         public Show Show { get { return (Show)Item; } }
-        public bool IsDvrms { get { return (Item as Video).VideoFiles.First().ToLower().EndsWith(".dvr-ms") || (Item as Video).VideoFiles.First().ToLower().EndsWith(".wtv"); ; } }
+        
+        public bool IsDvrms 
+        { 
+            get 
+            {
+                Video video = Item as Video;
+
+                if (video != null)
+                    return video.VideoFiles.FirstOrDefault().ToLower().EndsWith(".dvr-ms") || video.VideoFiles.FirstOrDefault().ToLower().EndsWith(".wtv");
+                else
+                    return false;
+            }
+        }
 
         [Persist]
         DateTime updateDate = DateTime.MinValue;
