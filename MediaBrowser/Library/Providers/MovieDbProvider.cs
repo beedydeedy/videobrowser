@@ -605,13 +605,21 @@ namespace MediaBrowser.Library.Providers
                         string posterPath = "";
                         try 
                         {
-                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == null))["file_path"].ToString();
+                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == null).First())["file_path"].ToString();
                         } catch
                         {
                             //fall back to first one
-                            posterPath = ((Dictionary<string, object>)posters[0])["file_path"].ToString();
+                            try
+                            {
+                                posterPath = ((Dictionary<string, object>)posters[0])["file_path"].ToString();
+                            }
+                            catch (Exception e)
+                            {
+                                //give up
+                                Logger.ReportException("Unable to find poster.", e);
+                            }
                         }
-                        Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + posterPath, "folder");
+                        if (!String.IsNullOrEmpty(posterPath)) Item.PrimaryImagePath = ProcessImage(tmdbImageUrl + posterPath, "folder");
                     }
                 }
 
