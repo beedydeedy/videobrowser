@@ -63,7 +63,7 @@ namespace MediaBrowser.Library.Entities {
         {
             get
             {
-                return MpaaRating ?? "";
+                return MpaaRating ?? "None";
             }
         }
 
