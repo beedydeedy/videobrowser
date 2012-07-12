@@ -140,7 +140,50 @@ namespace MediaBrowser.Library.Persistance {
             }
         }
 
-        class EnumSerializer : AbstractSerializer {
+        class StringIntDictionarySerializer : AbstractSerializer
+        {
+
+            public override object Read(XmlNode node, Type type)
+            {
+                Dictionary<string, int> dict = new Dictionary<string, int>();
+
+                var serializer = FindSerializer(typeof(int));
+
+                foreach (XmlNode child in node.ChildNodes)
+                {
+                    dict.Add(child.Name.Replace('_','-'), (int)serializer.Read(child, typeof(int)));
+                }
+                return dict;
+            }
+
+            public override void Write(XmlNode node, object o)
+            {
+                Dictionary<string, int> dict = (Dictionary<string, int>)o;
+
+                node.InnerXml = "";
+
+                if (dict != null)
+                {
+
+                    var serializer = FindSerializer(typeof(int));
+
+                    foreach (KeyValuePair<string, int> entry in dict)
+                    {
+                        var inner = node.OwnerDocument.CreateNode(XmlNodeType.Element, entry.Key.Replace('-','_'), null);
+                        node.AppendChild(inner);
+                        serializer.Write(inner, entry.Value);
+                    }
+                }
+            }
+
+            public override bool SupportsType(Type type)
+            {
+                return type == typeof(Dictionary<string, int>);
+            }
+        }
+
+        class EnumSerializer : AbstractSerializer
+        {
             public override bool SupportsType(Type type) {
                 return type.IsEnum;
             }
@@ -319,6 +362,7 @@ namespace MediaBrowser.Library.Persistance {
                 new DateTimeSerializer(),
                 new EnumSerializer(),
                 new ListSerializer(),
+                new StringIntDictionarySerializer(),
                 new GenericObjectSerializer()
             };
         }
