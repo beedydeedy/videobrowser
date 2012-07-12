@@ -402,6 +402,18 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        public override string OfficialRating
+        {
+            get
+            {
+                return "None"; // default to "None" for folders so they won't block automatically if block unrated is set
+            }
+            set
+            {
+                base.OfficialRating = value;
+            }
+        }
+
         protected int? runtime;
         public int RunTime
         {
