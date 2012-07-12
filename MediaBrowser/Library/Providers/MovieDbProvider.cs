@@ -424,7 +424,9 @@ namespace MediaBrowser.Library.Providers
                 movie.ImdbID = (string)jsonDict.GetValueOrDefault<string,object>("imdb_id","");
                 float rating;
                 string voteAvg = jsonDict.GetValueOrDefault<string, object>("vote_average", "").ToString();
-                if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo("en-us"), out rating))
+                string culture = Kernel.Instance.ConfigData.PreferredMetaDataLanguage + "-" + Kernel.Instance.ConfigData.MetadataCountryCode;
+                Logger.ReportVerbose("Culture for numeric conversion is: " + culture);
+                if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo(culture), out rating))
                     movie.ImdbRating = rating;
 
                 //release date and certification are retrieved based on configured country
