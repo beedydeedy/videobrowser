@@ -141,12 +141,12 @@
             <Children>
               <cb:CheckBox Name="Nested" Label="[Application.LocalStrings.#IncludeNested!cor:String]" Checked="[IncludeNested]" Font="font://f:SE_DefaultFont" />
               <cb:CheckBox Name="Unwatched" Label="[Application.LocalStrings.#UnwatchedOnly!cor:String]" Checked="[UnwatchedOnly]" Font="font://f:SE_DefaultFont" />
-              <!--<Panel Layout="HorizontalFlow">
+              <Panel Layout="HorizontalFlow">
                 <Children>
                   <st:VerticalSpinnerText Model="[RatingsStrings]" Label="[Application.LocalStrings.#FilterByRated!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="160,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="Any"  ControlsMargin="175,0,0,0" />
                   <st:VerticalSpinnerText Model="[RatingDirection]" Label="[Application.LocalStrings.#Or!cor:String]" Color="color://s:FontColorMedium" Font="font://f:SE_DefaultFont" LabelMinSize="35,0" ValueMinSize="90,0" ValueFont="font://f:SE_DefaultFont" DefaultString="[Application.LocalStrings.#Lower!cor:String]" ControlsMargin="40,0,0,0"/>    
                 </Children>
-              </Panel>-->              
+              </Panel>              
             </Children>
           </Panel>
 
