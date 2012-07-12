@@ -18,18 +18,18 @@ namespace MediaBrowser.Library.Localization
             this.Add("TV-Y7-FV", 4);
             this.Add("PG", 5);
             this.Add("TV-PG", 5);
-            this.Add("PG-13", 6);
-            this.Add("T", 6);
-            this.Add("TV-14", 7);
-            this.Add("R", 8);
-            this.Add("M", 8);
-            this.Add("TV-MA", 8);
-            this.Add("NC-17", 9);
-            this.Add("AO", 10);
-            this.Add("RP", 10);
-            this.Add("UR", 10);
-            this.Add("NR", 10);
-            this.Add("X", 10);
+            this.Add("PG-13", 7);
+            this.Add("T", 7);
+            this.Add("TV-14", 8);
+            this.Add("R", 9);
+            this.Add("M", 9);
+            this.Add("TV-MA", 9);
+            this.Add("NC-17", 10);
+            this.Add("AO", 15);
+            this.Add("RP", 15);
+            this.Add("UR", 15);
+            this.Add("NR", 15);
+            this.Add("X", 15);
             this.Add("XXX", 100);
         }
     }

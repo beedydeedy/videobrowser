@@ -101,9 +101,9 @@ namespace MBMigrate
                 {
                     {1,1},
                     {2,5},
-                    {3,6},
-                    {4,8},
-                    {5,9}
+                    {3,7},
+                    {4,9},
+                    {5,10}
                 };
                 if (translations.ContainsKey(_config.MaxParentalLevel))
                 {

@@ -57,6 +57,7 @@ namespace MediaBrowser.Library
             //and rating reverse lookup dictionary (non-redundant ones)
             ratingsStrings.Clear();
             int lastLevel = -10;
+            ratingsStrings.Add(-1,LocalizedStrings.Instance.GetString("Any"));
             foreach (var pair in ratingsDef.RatingsDict.OrderBy(p => p.Value))
             {
                 if (pair.Value > lastLevel)
