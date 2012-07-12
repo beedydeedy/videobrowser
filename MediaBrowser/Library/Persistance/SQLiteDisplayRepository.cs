@@ -130,12 +130,12 @@ namespace MediaBrowser.Library.Persistance
             QueueCommand(cmd);
 
             //custom prefs
-            var delCmd = connection.CreateCommand();
-            delCmd.CommandText = "delete from custom_display_prefs where guid = @guid";
-            delCmd.AddParam("@guid", dp.Id);
-            delCmd.ExecuteNonQuery();
+            //var delCmd = connection.CreateCommand();
+            //delCmd.CommandText = "delete from custom_display_prefs where guid = @guid";
+            //delCmd.AddParam("@guid", dp.Id);
+            //delCmd.ExecuteNonQuery();
             var insCmd = connection.CreateCommand();
-            insCmd.CommandText = "insert or ignore into custom_display_prefs(guid, parm_key, parm_value) values(@guid, @key, @value)"; 
+            insCmd.CommandText = "insert or replace into custom_display_prefs(guid, parm_key, parm_value) values(@guid, @key, @value)"; 
             insCmd.AddParam("@guid", dp.Id);
             SQLiteParameter val = new SQLiteParameter("@value");
             insCmd.Parameters.Add(val);
