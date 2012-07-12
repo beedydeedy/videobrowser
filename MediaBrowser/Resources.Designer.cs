@@ -2190,6 +2190,41 @@ namespace MediaBrowser {
             }
         }
         
+        internal static System.Drawing.Bitmap rated_nl_12 {
+            get {
+                object obj = ResourceManager.GetObject("rated_nl_12", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_nl_16 {
+            get {
+                object obj = ResourceManager.GetObject("rated_nl_16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_nl_6 {
+            get {
+                object obj = ResourceManager.GetObject("rated_nl_6", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_nl_9 {
+            get {
+                object obj = ResourceManager.GetObject("rated_nl_9", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap rated_nl_al {
+            get {
+                object obj = ResourceManager.GetObject("rated_nl_al", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap rated_nr {
             get {
                 object obj = ResourceManager.GetObject("rated_nr", resourceCulture);

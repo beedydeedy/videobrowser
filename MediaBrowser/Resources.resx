@@ -1204,8 +1204,23 @@
   <data name="rated_gb_u" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>images\ratings\rated-gb-u.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="SpinnerText" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>markup\controls\spinners\spinnertext.mcml;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="rated_nl_12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ratings\rated-nl-12.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="rated_nl_16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ratings\rated-nl-16.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="rated_nl_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ratings\rated-nl-6.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="rated_nl_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ratings\rated-nl-9.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="rated_nl_al" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>images\ratings\rated-nl-al.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
