@@ -24,7 +24,7 @@ namespace MediaBrowser.Library.Providers
     public class MovieDbProvider : BaseMetadataProvider
     {
         private static string search3 = @"http://api.themoviedb.org/3/search/movie?api_key={1}&query={0}&language={2}";
-        private static string altTitleSearch = @"http://api.themoviedb.org/3/movie/{0}?api_key={1}";
+        private static string altTitleSearch = @"http://api.themoviedb.org/3/movie/{0}/alternative_titles?api_key={1}&country={2}";
         private static string getInfo3 = @"http://api.themoviedb.org/3/{3}/{0}?api_key={1}&language={2}";
         private static string castInfo = @"http://api.themoviedb.org/3/movie/{0}/casts?api_key={1}";
         private static string releaseInfo = @"http://api.themoviedb.org/3/movie/{0}/releases?api_key={1}";
@@ -267,7 +267,7 @@ namespace MediaBrowser.Library.Providers
                         if (matchedName == null)
                         {
                             //that title didn't match - look for alternatives
-                            url3 = string.Format(altTitleSearch, id, ApiKey);
+                            url3 = string.Format(altTitleSearch, id, ApiKey, Kernel.Instance.ConfigData.MetadataCountryCode);
                             string resp = Helper.FetchJson(url3);
                             var response = Helper.ToJsonDict(resp);
                             //Logger.ReportVerbose("Alt Title response: " + resp);
@@ -275,14 +275,19 @@ namespace MediaBrowser.Library.Providers
                             {
                                 try
                                 {
-                                    Dictionary<string, object> altTitles = (Dictionary<string, object>)response["titles"];
-                                    foreach (var title in altTitles)
+                                    System.Collections.ArrayList altTitles = (System.Collections.ArrayList)response["titles"];
+                                    foreach (Dictionary<string,object> title in altTitles)
                                     {
-                                        string t = GetComparableName(((Dictionary<string, string>)title.Value)["title"]);
+                                        string t = GetComparableName((string)((Dictionary<string, object>)title).GetValueOrDefault("title",""));
                                         if (t == compName)
                                         {
+                                            Logger.ReportVerbose("MovieDbProvider - " + compName + " matched " + t);
                                             matchedName = t;
                                             break;
+                                        }
+                                        else
+                                        {
+                                            Logger.ReportVerbose("MovieDbProvider - " + compName + " did not match " + t);
                                         }
                                     }
                                 }
@@ -312,7 +317,7 @@ namespace MediaBrowser.Library.Providers
                         }
 
                         //matched name and year
-                        return id;
+                        return matchedName != null ? id : null;
                     }
                 }
             }
