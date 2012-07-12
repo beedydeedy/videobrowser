@@ -424,9 +424,18 @@ namespace MediaBrowser.Library.Providers
                 movie.ImdbID = (string)jsonDict.GetValueOrDefault<string,object>("imdb_id","");
                 float rating;
                 string voteAvg = jsonDict.GetValueOrDefault<string, object>("vote_average", "").ToString();
-                string culture = Kernel.Instance.ConfigData.PreferredMetaDataLanguage + "-" + Kernel.Instance.ConfigData.MetadataCountryCode;
-                Logger.ReportVerbose("Culture for numeric conversion is: " + culture);
-                if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, new System.Globalization.CultureInfo(culture), out rating))
+                string cultureStr = Kernel.Instance.ConfigData.PreferredMetaDataLanguage + "-" + Kernel.Instance.ConfigData.MetadataCountryCode;
+                System.Globalization.CultureInfo culture;
+                try
+                {
+                    culture = new System.Globalization.CultureInfo(cultureStr);
+                }
+                catch
+                {
+                    culture = System.Globalization.CultureInfo.CurrentCulture; //default to windows settings if other was invalid
+                }
+                Logger.ReportVerbose("Culture for numeric conversion is: " + culture.Name);
+                if (float.TryParse(voteAvg, System.Globalization.NumberStyles.AllowDecimalPoint, culture, out rating))
                     movie.ImdbRating = rating;
 
                 //release date and certification are retrieved based on configured country
