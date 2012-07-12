@@ -39,7 +39,6 @@ namespace MediaBrowser.Library.Metadata {
                 typeof(VideoFormatProvider),
                 typeof(MBMovieProviderFromJson),
                 typeof(MovieProviderFromXml),
-                typeof(LegacyMovieProviderFromXml),
                 typeof(FolderProviderFromXml),
                 typeof(LocalEpisodeProvider), 
                 typeof(LocalSeriesProvider),
