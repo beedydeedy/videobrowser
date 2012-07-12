@@ -927,11 +927,15 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="Markup\Controls\RadioGroup.mcml" />
-    <Content Include="Markup\Controls\Scrollers\AutoScroller.mcml" />
+    <Content Include="Markup\Controls\Scrollers\AutoScroller.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\Scrollers\PosterScroller.mcml">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Markup\Controls\Scrollers\ScrollableText.mcml" />
+    <Content Include="Markup\Controls\Scrollers\ScrollableText.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Controls\Spinners\ColorSpinner.mcml" />
     <Content Include="Markup\Controls\Spinners\SimpleSpinner.mcml" />
     <Content Include="Markup\Controls\Spinners\SpinnerText.mcml" />
@@ -963,7 +967,9 @@
     <Content Include="Markup\FontsSmall.mcml" />
     <Content Include="Markup\FontsDefault.mcml" />
     <Content Include="Markup\StylesBlack.mcml" />
-    <Content Include="Markup\Themes\Default\SearchPane.mcml" />
+    <Content Include="Markup\Themes\Default\SearchPane.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Themes\Default\Splash.mcml" />
     <Content Include="Markup\Themes\Default\ParentalPINEntry.mcml" />
     <Content Include="Markup\Themes\Default\Selectors\PageDefault.mcml">
@@ -976,7 +982,9 @@
     <Content Include="Markup\Themes\Default\Selectors\PageDetailArea.mcml">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Markup\Themes\Default\LayoutDetails.mcml" />
+    <Content Include="Markup\Themes\Default\LayoutDetails.mcml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Markup\Page.mcml">
       <SubType>Designer</SubType>
     </Content>
