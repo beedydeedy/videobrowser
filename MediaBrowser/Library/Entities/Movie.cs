@@ -18,6 +18,9 @@ namespace MediaBrowser.Library.Entities {
         [Persist]
         List<string> VolumePaths { get; set; }
 
+        [Persist]
+        public string TmdbID { get; set; }
+
         public override void Assign(IMediaLocation location, IEnumerable<InitializationParameter> parameters, Guid id) {
             base.Assign(location, parameters, id);
 

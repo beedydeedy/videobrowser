@@ -11,6 +11,7 @@ namespace MediaBrowser.Library.Entities
         string Overview { get; set; }
         string TagLine { get; set; }
         string ImdbID { get; set; }
+        string TmdbID { get; set; }
         MediaInfoData MediaInfo { get; set; }
         List<Actor> Actors { get; set; }
         List<string> Directors { get; set; }
