@@ -33,6 +33,7 @@ namespace MediaBrowser.Library.Plugins {
         bool IsLatestVersion { get; set; }
         string ListDisplayString { get; }
         bool IsPremium { get; }
+        void UnInstalling();
     }
 
     public static class PluginClasses

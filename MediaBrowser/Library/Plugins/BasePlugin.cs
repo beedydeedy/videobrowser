@@ -162,6 +162,12 @@ namespace MediaBrowser.Library.Plugins {
             get { return knownPremiumPlugins.Contains(this.Name); }
         }
 
+        /// <summary>
+        /// Implement this to clean up anything necessary when being uninstalled
+        /// </summary>
+        public virtual void UnInstalling()
+        { }
+
         #endregion
 
     }

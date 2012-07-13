@@ -110,6 +110,7 @@ namespace MediaBrowser.Library.Plugins {
         public string PluginClass { get { return pluginInterface.PluginClass; } }
 
         public void Delete() {
+            pluginInterface.UnInstalling();
             File.Delete(filename);
         }
 
@@ -161,5 +162,7 @@ namespace MediaBrowser.Library.Plugins {
             get { return pluginInterface.UpgradeInfo; }
         }
 
+        public virtual void UnInstalling()
+        { }
     }
 }

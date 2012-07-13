@@ -83,6 +83,8 @@ namespace MediaBrowser.Library.Plugins {
             set;
         }
 
+        public virtual void UnInstalling()
+        { }
 
         public virtual MBLoadContext InitDirective { get; set; }
         public virtual string PluginClass { get; set; }

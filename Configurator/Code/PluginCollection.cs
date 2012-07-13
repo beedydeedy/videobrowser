@@ -104,6 +104,8 @@ namespace Configurator.Code {
             get { return ""; }
         }
 
+        public void UnInstalling()
+        { }
     }
 
     public class PluginCollection : ObservableCollection<IPlugin> {
