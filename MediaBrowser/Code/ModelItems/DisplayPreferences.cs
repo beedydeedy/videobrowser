@@ -319,6 +319,13 @@ namespace MediaBrowser.Library
             }
         }
 
+        public void SetCustomParm(string key, string value)
+        {
+            customParms[key] = value;
+            Save();
+            FirePropertyChanged("CustomParms");
+        }
+
         internal void LoadDefaults()
         {
 
