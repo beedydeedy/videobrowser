@@ -617,6 +617,12 @@ namespace MediaBrowser.Library {
             return null;
         }
 
+        public System.Reflection.Assembly FindPluginAssembly(string name)
+        {
+            return PluginAssemblies.Find(a => a.FullName.ToLower().Contains(name.ToLower()));
+        }
+
+
         public static Kernel Instance {
             get {
                 if (kernel != null) return kernel;
