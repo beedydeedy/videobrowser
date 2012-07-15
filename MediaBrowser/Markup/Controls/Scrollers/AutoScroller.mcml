@@ -164,6 +164,7 @@
       <Color Name="FocusColor" Color="color://s:FontColorLight"/>
       <cor:Int32 Name="ScrollSpeed" Int32="1"/>
       <cor:Int32 Name="ScrollDelay" Int32="8000"/>
+      <cor:Boolean Name="Enabled" Boolean="true" />
     </Properties>
 
     <Locals>
@@ -218,8 +219,16 @@
         <Actions>
           <Invoke Target="[ScrollingData.Home]" ></Invoke>
           <Invoke Target="[Delay.Stop]"></Invoke>
-          <Invoke Target="[Delay.Start]"></Invoke>
           <Invoke Target="[ScrollText.Stop]"></Invoke>
+        </Actions>
+      </Changed>
+
+      <Changed Source="[Text]" InitialEvaluate="true">
+        <Conditions>
+          <Equality Source="[Enabled]" Value="true" />
+        </Conditions>
+        <Actions>
+          <Invoke Target="[Delay.Start]"></Invoke>
         </Actions>
       </Changed>
 
