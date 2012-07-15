@@ -54,6 +54,12 @@ namespace MediaBrowser.Library.Entities
         [Persist]
         public MediaInfoData MediaInfo { get; set; }
 
+        [Persist]
+        public string Plot { get; set; }
+
+        [Persist]
+        public string TrailerPath { get; set; }
+
         //doesn't make sense to index a box set...
         private Dictionary<string, string> ourIndexOptions = new Dictionary<string, string>() {
             {LocalizedStrings.Instance.GetString("NoneDispPref"), ""}

@@ -24,5 +24,12 @@ namespace MediaBrowser.Library.Entities
         List<string> Studios { get; set; }
         string AspectRatio { get; set; }
         int? ProductionYear { get; set; }
+        string DisplayMediaType { get; set; }
+        string CustomRating { get; set; }
+        string CustomPIN { get; set; }
+        string Plot { get; set; }
+        string SortName { get; set; }
+        string TrailerPath { get; set; }
+        DateTime DateCreated { get; set; }
     }
 }
