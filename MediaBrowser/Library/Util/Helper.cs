@@ -552,16 +552,19 @@ namespace MediaBrowser.LibraryManagement
             }
             else
             {
-                //not there, get it from resources in default or the current theme
-                string resourceRef;
-                if (Kernel.Instance.HasInternalIcons(Config.Instance.ViewTheme))
+                //not there, get it from resources in default or the current theme if it exists
+                string resourceRef = "resx://MediaBrowser/MediaBrowser.Resources/";
+                //Logger.ReportInfo("============== Current Theme: " + Application.CurrentInstance.CurrentTheme.Name);
+                System.Reflection.Assembly assembly = Kernel.Instance.FindPluginAssembly(Application.CurrentInstance.CurrentTheme.Name);
+                if (assembly != null)
                 {
-                    //cheap way to grab a valid reference to the current themes resources...
-                    resourceRef = Application.CurrentInstance.CurrentTheme.PageArea.Substring(0, Application.CurrentInstance.CurrentTheme.PageArea.LastIndexOf("/") + 1);
-                }
-                else
-                {
-                    resourceRef = "resx://MediaBrowser/MediaBrowser.Resources/";
+                    //Logger.ReportInfo("============== Found Assembly. ");
+                    if (assembly.GetManifestResourceInfo(name) != null)
+                    {
+                        //Logger.ReportInfo("============== Found Resource: " + name);
+                        //cheap way to grab a valid reference to the current themes resources...
+                        resourceRef = Application.CurrentInstance.CurrentTheme.PageArea.Substring(0, Application.CurrentInstance.CurrentTheme.PageArea.LastIndexOf("/") + 1);
+                    }
                 }
                 //cache it
                 Logger.ReportVerbose("===CustomImage " + resourceRef + name + " being cached on first access.  Should only have to do this once per session...");

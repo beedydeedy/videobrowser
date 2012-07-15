@@ -778,10 +778,10 @@ namespace MediaBrowser.Library.Entities {
             if (!changed && childrenCopy.Count != (validChildren.Count + unavailableItems)) {
                 Logger.ReportWarning("For some reason we have duplicate items in folder "+Name+", fixing this up!");
                 Logger.ReportVerbose("ChildrenCopy count: "+childrenCopy.Count + " ValidChildren count: "+(validChildren.Count + unavailableItems));
-                Logger.ReportVerbose("ChildrenCopy contents are: ");
-                foreach (var item in childrenCopy) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
-                Logger.ReportVerbose("ValidChildren contents are: ");
-                foreach (var item in validChildren) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
+                //Logger.ReportVerbose("ChildrenCopy contents are: ");
+                //foreach (var item in childrenCopy) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
+                //Logger.ReportVerbose("ValidChildren contents are: ");
+                //foreach (var item in validChildren) Logger.ReportVerbose("  --- " + item.Name + " Path: " + item.Path);
                 childrenCopy = childrenCopy
                     .Distinct(i => i.Id)
                     .ToList();
