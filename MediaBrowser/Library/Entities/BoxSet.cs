@@ -37,6 +37,9 @@ namespace MediaBrowser.Library.Entities
         public string ImdbID { get; set; }
 
         [Persist]
+        public string TmdbID { get; set; }
+
+        [Persist]
         public string Status { get; set; }
 
         [Persist]

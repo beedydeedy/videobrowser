@@ -434,6 +434,7 @@ namespace MediaBrowser.Library.Providers
                 movie.Overview = movie.Overview != null ? movie.Overview.Replace("\n\n", "\n") : null;
                 movie.TagLine = (string)jsonDict.GetValueOrDefault<string,object>("tagline","");
                 movie.ImdbID = (string)jsonDict.GetValueOrDefault<string,object>("imdb_id","");
+                movie.TmdbID = moviedbId;
                 float rating;
                 string voteAvg = jsonDict.GetValueOrDefault<string, object>("vote_average", "").ToString();
                 string cultureStr = Kernel.Instance.ConfigData.PreferredMetaDataLanguage + "-" + Kernel.Instance.ConfigData.MetadataCountryCode;

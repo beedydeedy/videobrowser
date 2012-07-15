@@ -148,7 +148,10 @@ namespace MediaBrowser.Library.Providers
                         movie.ImdbID = doc.SafeGetString("Title/IMDbId");
                     }
                 }
-
+                if (movie.TmdbID == null)
+                {
+                    movie.TmdbID = doc.SafeGetString("Title/TMDbId");
+                }
 
                 foreach (XmlNode node in doc.SelectNodes("Title/Persons/Person[Type='Actor']"))
                 {
