@@ -635,7 +635,7 @@ namespace MediaBrowser.Code.ModelItems
                 return video.IsoFiles;
             }
 
-            return media.Files;
+            return media.Files.OrderBy(s => s);
         }
 
         /// <summary>
