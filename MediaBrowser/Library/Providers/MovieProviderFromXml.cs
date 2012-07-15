@@ -11,7 +11,7 @@ using MediaBrowser.Library.Providers.Attributes;
 
 namespace MediaBrowser.Library.Providers
 {
-    [SupportedType(typeof(Movie))]
+    [SupportedType(typeof(IMovie))]
     public class MovieProviderFromXml : BaseMetadataProvider
     {
 
@@ -54,7 +54,7 @@ namespace MediaBrowser.Library.Providers
 
         public override void Fetch()
         {
-            var movie = Item as Movie;
+            var movie = Item as IMovie;
             Debug.Assert(movie != null);
 
             string mfile = XmlLocation();
@@ -94,17 +94,6 @@ namespace MediaBrowser.Library.Providers
                     if (File.Exists(front))
                         Item.PrimaryImagePath = front;
                 }
-
-
-                //using this for logos now
-                //string back = doc.SafeGetString("Title/Covers/Back");
-                //if ((back != null) && (back.Length > 0))
-                //{
-                //    back = Path.Combine(location, back);
-                //    if (File.Exists(back))
-                //        Item.SecondaryImagePath = back;
-                //}
-
 
                 if (string.IsNullOrEmpty(movie.DisplayMediaType))
                 {
