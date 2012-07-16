@@ -668,6 +668,7 @@ namespace MediaBrowser.Library {
                             Logger.ReportInfo("refreshing " + item.Name);
                             item.RefreshMetadata(MetadataRefreshOptions.Force);
                             item.ReCacheAllImages();
+                            this.FireAllPropertiesChanged();
                         }
                     }
                 }
