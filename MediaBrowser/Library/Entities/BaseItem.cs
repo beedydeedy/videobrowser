@@ -455,10 +455,13 @@ namespace MediaBrowser.Library.Entities {
                     }
                 }
                 //if we're forcing via UI - clear out our meta file too and force a download
-                string metaFile = System.IO.Path.Combine(this.Path, "MBMovie.json");
-                if (System.IO.File.Exists(metaFile)) 
-                    try { System.IO.File.Delete(metaFile); }
-                    catch { }
+                if (this.Path != null)
+                {
+                    string metaFile = System.IO.Path.Combine(this.Path, MovieDbProvider.LOCAL_META_FILE_NAME);
+                    if (System.IO.File.Exists(metaFile))
+                        try { System.IO.File.Delete(metaFile); }
+                        catch { }
+                }
             }
 
             bool changed = MetadataProviderHelper.UpdateMetadata(this, options);
