@@ -12,7 +12,7 @@ using MediaBrowser.Library.ImageManagement;
 using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Providers.TVDB {
-    static class TVUtils {
+    public static class TVUtils {
 
 
         public static readonly string TVDBApiKey = "B89CE93890E9419B";
