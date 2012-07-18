@@ -10,6 +10,7 @@ namespace MediaBrowser.Library.Localization
         public NLRatingsDictionary()
         {
             this.Add("NL-AL", 1);
+            this.Add("NL-MG6", 2);
             this.Add("NL-6", 3);
             this.Add("NL-9", 5);
             this.Add("NL-12", 6);
