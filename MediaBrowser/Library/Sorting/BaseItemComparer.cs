@@ -4,7 +4,7 @@ using System.Text;
 using MediaBrowser.Library.Entities;
 
 namespace MediaBrowser.Library {
-    internal class BaseItemComparer : IComparer<BaseItem> {
+    public class BaseItemComparer : IComparer<BaseItem> {
         private SortOrder order;
         private string propertyName;
         private StringComparison compareCulture = StringComparison.CurrentCultureIgnoreCase;
