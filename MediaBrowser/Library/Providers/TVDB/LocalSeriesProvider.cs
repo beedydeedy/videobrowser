@@ -148,6 +148,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
             series.ImdbRating = metadataDoc.SafeGetSingle("Series/Rating", (float)-1, 10);
 
             series.Status = seriesNode.SafeGetString("Status");
+            series.AirDay = seriesNode.SafeGetString("Airs_DayOfWeek");
+            series.AirTime = seriesNode.SafeGetString("Airs_Time");
 
             string studios = seriesNode.SafeGetString("Network");
             if (studios != null) {

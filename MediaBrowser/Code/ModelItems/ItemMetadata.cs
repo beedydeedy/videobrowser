@@ -38,6 +38,28 @@ namespace MediaBrowser.Library {
             }
         }
 
+        public string AirDay {
+            get {
+                string day = null;
+                var series = baseItem as Series;
+                if (series != null) {
+                    day = series.AirDay;
+                }
+                return day ?? "";
+            }
+        }
+
+        public string AirTime {
+            get {
+                string time = null;
+                var series = baseItem as Series;
+                if (series != null) {
+                    time = series.AirTime;
+                }
+                return time ?? "";
+            }
+        }
+
         public bool IsHD {
             get {
                 return ((this.MediaInfo.Width >= 1280) || (this.MediaInfo.Height >= 720));

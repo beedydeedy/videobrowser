@@ -105,6 +105,8 @@ namespace MediaBrowser.Library.Providers.TVDB {
                     series.Name = doc.SafeGetString("//SeriesName");
                     series.Overview = doc.SafeGetString("//Overview");
                     series.ImdbRating = doc.SafeGetSingle("//Rating", 0, 10);
+                    series.AirDay = doc.SafeGetString("//Airs_DayOfWeek");
+                    series.AirTime = doc.SafeGetString("//Airs_Time");
 
                     string n = doc.SafeGetString("//banner");
                     if ((n != null) && (n.Length > 0))
