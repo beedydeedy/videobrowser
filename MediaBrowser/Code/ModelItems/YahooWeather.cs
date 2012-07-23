@@ -19,24 +19,15 @@ namespace MediaBrowser
     /// </summary>
     public class YahooWeather : ModelItem
     {
-        #region static fields 
+        
         private static readonly string FileName = string.Format("weather_{1}_{0}.xml", Application.CurrentInstance.Config.YahooWeatherFeed, Application.CurrentInstance.Config.YahooWeatherUnit);
         private readonly string DownloadToFilePath = Path.Combine(ApplicationPaths.AppRSSPath, FileName);        
-        //private readonly string Feed = string.Format("http://weather.yahooapis.com/forecastrss?p={0}&u={1}",
-        //    Application.CurrentInstance.Config.YahooWeatherFeed,
-        //    Application.CurrentInstance.Config.YahooWeatherUnit);
+        
         private readonly string Feed = string.Format("http://xml.weather.yahoo.com/forecastrss/{0}_{1}.xml",
             Application.CurrentInstance.Config.YahooWeatherFeed,
             Application.CurrentInstance.Config.YahooWeatherUnit);
         private const int RefreshIntervalHrs = 3;
-
-        #endregion
-
-        public YahooWeather()
-        {
-        }
-
-        #region fields
+        
         private string _imageUrl = "";
         private string _code = "";
         private string _codeDescription = "";
@@ -44,6 +35,8 @@ namespace MediaBrowser
         private string _temp = "";
         private string _unit = "";
         private string _longTemp = "";
+        private string _longPressure = "";
+        private string _longWindSpeed = "";
         private string _humidity = "";
         private string _speedunit = "";
         private string _chill = "";
@@ -56,6 +49,13 @@ namespace MediaBrowser
         private string _pressureunit = "";
         ArrayListDataSet _forecast = new ArrayListDataSet();
         ArrayListDataSet _extendedForecast = new ArrayListDataSet();
+        private string _visibileDistance;
+        private string _distanceUnit;
+        private string _longVisibility;
+
+        public YahooWeather()
+        {
+        }
 
         public string Code
         {
@@ -74,7 +74,6 @@ namespace MediaBrowser
             get { return _imageUrl; }
             set { _imageUrl = value; FirePropertyChanged("ImageUrl"); }
         }
-
 
         public string Location
         {
@@ -98,6 +97,16 @@ namespace MediaBrowser
             get { return _longTemp;}
             set { _longTemp = value; FirePropertyChanged("LongTemp"); }
         }
+        public string LongPressure
+        {
+            get { return _longPressure; }
+            set { _longPressure = value; FirePropertyChanged("LongPressure"); }
+        }
+        public string LongWindSpeed
+        {
+            get { return _longWindSpeed; }
+            set { _longWindSpeed = value; FirePropertyChanged("LongWindSpeed"); }
+        }
         public string Humidity
         {
             get { return _humidity; }
@@ -117,6 +126,35 @@ namespace MediaBrowser
                 FirePropertyChanged("SpeedUnit");
             }
         }
+        public string DistanceUnit
+        {
+            get { return _distanceUnit; }
+            set
+            {
+                _distanceUnit = value;
+                FirePropertyChanged("DistanceUnit");
+            }
+        }
+
+        public string VisibileDistance
+        {
+            get { return _visibileDistance; }
+            set
+            {
+                _visibileDistance = value;
+                FirePropertyChanged("VisibileDistance");
+            }
+        }
+
+        public string LongVisibility
+        {
+            get { return _longVisibility; }
+            set
+            {
+                _longVisibility = value;
+                FirePropertyChanged("LongVisibility");
+            }
+        }
 
         public string Chill
         {
@@ -132,10 +170,9 @@ namespace MediaBrowser
         {
             get
             {
-                Int32 heading;
-                if (_direction != "")
+                if (!string.IsNullOrEmpty(_direction))
                 {
-                    heading = Int32.Parse(_direction);
+                    var heading = Int32.Parse(_direction);
                     if (heading < 12) _translatedirection = "N";
                     else if (heading < 34) _translatedirection = "NNE";
                     else if (heading < 57) _translatedirection = "NE";
@@ -209,9 +246,6 @@ namespace MediaBrowser
         {
             get { return _extendedForecast; }
         }
-        #endregion
-
-        #region methods
         
         public void GetWeatherInfo()
         {
@@ -280,23 +314,29 @@ namespace MediaBrowser
             XmlNamespaceManager man = new XmlNamespaceManager(xDoc.NameTable);
             man.AddNamespace("yweather", "http://xml.weather.yahoo.com/ns/rss/1.0");
 
-            this.Unit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["temperature"].Value.ToString();
-            this.SpeedUnit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["speed"].Value.ToString();
-            this.PressureUnit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["pressure"].Value.ToString();
-            this.CodeDescription = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["text"].Value.ToString();
-            this.Location = xDoc.SelectSingleNode("rss/channel/yweather:location", man).Attributes["city"].Value.ToString();
-            this.Humidity = xDoc.SelectSingleNode("rss/channel/yweather:atmosphere", man).Attributes["humidity"].Value.ToString();
-            this.Chill = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["chill"].Value.ToString();
-            this.Direction = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["direction"].Value.ToString();
-            this.Speed = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["speed"].Value.ToString();
-            this.Pressure = xDoc.SelectSingleNode("rss/channel/yweather:atmosphere", man).Attributes["pressure"].Value.ToString();
-            this.Sunrise = xDoc.SelectSingleNode("rss/channel/yweather:astronomy", man).Attributes["sunrise"].Value.ToString();
-            this.Sunset = xDoc.SelectSingleNode("rss/channel/yweather:astronomy", man).Attributes["sunset"].Value.ToString();
-            this.Temp = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["temp"].Value.ToString();
-            this.Code = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["code"].Value.ToString();
-            this.ImageUrl = string.Format("resx://MediaBrowser/MediaBrowser.Resources/_{0}", this.Code);
+            Unit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["temperature"].Value.ToString();
+            SpeedUnit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["speed"].Value.ToString();
+            PressureUnit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["pressure"].Value.ToString();
+            DistanceUnit = xDoc.SelectSingleNode("rss/channel/yweather:units", man).Attributes["distance"].Value.ToString();
+            
+            CodeDescription = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["text"].Value.ToString();
+            Location = xDoc.SelectSingleNode("rss/channel/yweather:location", man).Attributes["city"].Value.ToString();
+            Humidity = xDoc.SelectSingleNode("rss/channel/yweather:atmosphere", man).Attributes["humidity"].Value.ToString();
+            VisibileDistance = xDoc.SelectSingleNode("rss/channel/yweather:atmosphere", man).Attributes["visibility"].Value.ToString();
+            Chill = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["chill"].Value.ToString();
+            Direction = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["direction"].Value.ToString();
+            Speed = xDoc.SelectSingleNode("rss/channel/yweather:wind", man).Attributes["speed"].Value.ToString();
+            Pressure = xDoc.SelectSingleNode("rss/channel/yweather:atmosphere", man).Attributes["pressure"].Value.ToString();
+            Sunrise = xDoc.SelectSingleNode("rss/channel/yweather:astronomy", man).Attributes["sunrise"].Value.ToString();
+            Sunset = xDoc.SelectSingleNode("rss/channel/yweather:astronomy", man).Attributes["sunset"].Value.ToString();
+            Temp = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["temp"].Value.ToString();
+            Code = xDoc.SelectSingleNode("rss/channel/item/yweather:condition", man).Attributes["code"].Value.ToString();
+            ImageUrl = string.Format("resx://MediaBrowser/MediaBrowser.Resources/_{0}", this.Code);
             //this.ImageUrl = string.Format("http://l.yimg.com/a/i/us/we/52/{0}.gif", this.Code);
-            this.LongTemp = string.Format("{0}°{1} {2}", Temp, Unit, CodeDescription); 
+            LongTemp = string.Format("{0}°{1} {2}", Temp, Unit, CodeDescription);
+            LongPressure = string.Format("{0} {1}", Pressure, PressureUnit);
+            LongWindSpeed = string.Format("{0} {1} {2}", Speed, SpeedUnit, Direction);
+            LongVisibility = string.Format("{0} {1}", VisibileDistance, DistanceUnit);
 
             var tempForecast = xDoc.SelectNodes("rss/channel/item/yweather:forecast", man);
             //<yweather:forecast day="Fri" date="24 Apr 2009" low="50" high="63" text="Partly Cloudy" code="30" />
@@ -318,8 +358,6 @@ namespace MediaBrowser
             }
 
         }
-
-        #endregion
     }
 
     public class ForecastItem : ModelItem
