@@ -63,8 +63,11 @@ namespace MediaBrowser.Library.Persistance {
             if (enableAsyncValidation) {
                 Async.Queue("Fast Load Loader",() =>
                 {
-                    LoadFastLoadData();
-                    Validate();
+                    using (new MediaBrowser.Util.Profiler("Dictionary loading and validation"))
+                    {
+                        LoadFastLoadData();
+                        Validate();
+                    }
                 },
                     () => asyncValidationDone.Set()
                  );

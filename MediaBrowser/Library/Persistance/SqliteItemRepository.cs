@@ -366,6 +366,7 @@ namespace MediaBrowser.Library.Persistance {
             if (!ConnectToDB(dbPath)) throw new ApplicationException("CRITICAL ERROR - Unable to connect to database: " + dbPath + ".  Program cannot function.");
 
             displayRepo = new SQLiteDisplayRepository(Path.Combine(ApplicationPaths.AppUserSettingsPath, "display.db"));
+            using (new MediaBrowser.Util.Profiler("Playstate initialization"))
             playbackStatus = new FileBasedDictionary<PlaybackStatus>(GetPath("playstate", ApplicationPaths.AppUserSettingsPath));
 
             //string playStateDBPath = Path.Combine(ApplicationPaths.AppUserSettingsPath, "playstate.db");

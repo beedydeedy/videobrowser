@@ -59,7 +59,8 @@ namespace Configurator
         private void Initialize() {
             Instance = this;
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
-           
+
+            Logger.ReportVerbose("======= Kernel intialized. Building window...");
             InitializeComponent();
             pluginList.MouseDoubleClick += pluginList_DoubleClicked;
             PopUpMsg = new PopupMsg(alertText);
@@ -83,6 +84,7 @@ namespace Configurator
                 //not going to re-set version in case there is something we want to do in MB itself
             }
 
+            Logger.ReportVerbose("======= Loading combo boxes...");
             LoadComboBoxes();
             lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
 
@@ -100,11 +102,16 @@ namespace Configurator
 
 
             config.InitialFolder = ApplicationPaths.AppInitialDirPath;
+            Logger.ReportVerbose("======= Refreshing Items...");
             RefreshItems();
+            Logger.ReportVerbose("======= Refreshing Podcasts...");
             RefreshPodcasts();
+            Logger.ReportVerbose("======= Refreshing Ext Players...");
             RefreshPlayers();
 
+            Logger.ReportVerbose("======= Loading Config Settings...");
             LoadConfigurationSettings();
+            Logger.ReportVerbose("======= Config Settings Loaded.");
 
             for (char c = 'D'; c <= 'Z'; c++) {
                 daemonToolsDrive.Items.Add(c.ToString());
@@ -120,12 +127,18 @@ namespace Configurator
             daemonToolsLocation.Text = config.DaemonToolsLocation;
 
 
+            Logger.ReportVerbose("======= Refreshing Extender Formats...");
             RefreshExtenderFormats();
+            Logger.ReportVerbose("======= Refreshing Display Settings...");
             RefreshDisplaySettings();
+            Logger.ReportVerbose("======= Podcast Details...");
             podcastDetails(false);
+            Logger.ReportVerbose("======= Saving Config...");
             SaveConfig();
 
+            Logger.ReportVerbose("======= Initializing Plugin Manager...");
             PluginManager.Instance.Init();
+            Logger.ReportVerbose("======= Loading Plugin List...");
             CollectionViewSource src = new CollectionViewSource();
             src.Source = PluginManager.Instance.InstalledPlugins;
             src.GroupDescriptions.Add(new PropertyGroupDescription("PluginClass"));
@@ -134,24 +147,30 @@ namespace Configurator
 
             //pluginList.Items.Refresh();
 
+            Logger.ReportVerbose("======= Kicking off plugin update check thread...");
             Async.Queue("Plugin Update Check", () =>
             {
-                while (!PluginManager.Instance.PluginsLoaded) { } //wait for plugins to load
-                ForceUpgradeCheck(); //remove incompatable plug-ins
-                if (PluginManager.Instance.UpgradesAvailable())
-                    Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
-                    {
-                        PopUpMsg.DisplayMessage("Some of your plug-ins have upgrades available.");
-                    }));
+                using (new MediaBrowser.Util.Profiler("Plugin update check"))
+                {
+                    while (!PluginManager.Instance.PluginsLoaded) { } //wait for plugins to load
+                    ForceUpgradeCheck(); //remove incompatable plug-ins
+                    if (PluginManager.Instance.UpgradesAvailable())
+                        Dispatcher.Invoke(DispatcherPriority.Background, (System.Windows.Forms.MethodInvoker)(() =>
+                        {
+                            PopUpMsg.DisplayMessage("Some of your plug-ins have upgrades available.");
+                        }));
+                }
             });
 
             SupportImprovementNag();
 
+            Logger.ReportVerbose("======= Kicking off validations thread...");
             Async.Queue("Startup Validations", () =>
             {
                 RefreshEntryPoints(false);
                 ValidateMBAppDataFolderPermissions();
             });
+            Logger.ReportVerbose("======= Initialize Finised.");
         }
 
         private void SupportImprovementNag()
@@ -803,68 +822,71 @@ sortorder: {2}
         {
             Async.Queue("Configurator ep refresh", () =>
             {
-                EntryPointManager epm = null;
-
-                try
+                using (new MediaBrowser.Util.Profiler("Entry Point Refresh"))
                 {
-                    epm = new EntryPointManager();
-                }
-                catch (Exception ex)
-                {
-                    //Write to error log, don't prompt user.
-                    Logger.ReportError("Error starting Entry Point Manager in RefreshEntryPoints(). " + ex.Message);
-                    return;
-                }
-
-                try
-                {
-                    List<EntryPointItem> entryPoints = new List<EntryPointItem>();
+                    EntryPointManager epm = null;
 
                     try
                     {
-                        Logger.ReportInfo("Reloading Virtual children");
-                        if (RefreshPlugins)
-                        {
-                            //Kernel.Init(KernelLoadDirective.ShadowPlugins);
-                            Kernel.Instance.ReLoadRoot();
-                        }
-
-                        Kernel.Instance.RootFolder.ValidateChildren();
+                        epm = new EntryPointManager();
                     }
                     catch (Exception ex)
                     {
-                        Logger.ReportError("Error validating children. " + ex.Message, ex);
-                        throw new Exception("Error validating children. " + ex.Message);
+                        //Write to error log, don't prompt user.
+                        Logger.ReportError("Error starting Entry Point Manager in RefreshEntryPoints(). " + ex.Message);
+                        return;
                     }
 
-                    foreach (var folder in Kernel.Instance.RootFolder.Children)
+                    try
                     {
-                        String displayName = folder.Name;
-                        if (displayName == null || displayName.Length <= 0)
-                            continue;
+                        List<EntryPointItem> entryPoints = new List<EntryPointItem>();
 
-                        String path = string.Empty;
-
-                        if (folder.GetType() == typeof(Folder) && folder.Path != null && folder.Path.Length > 1)
+                        try
                         {
-                            path = folder.Path;
+                            Logger.ReportInfo("Reloading Virtual children");
+                            if (RefreshPlugins)
+                            {
+                                //Kernel.Init(KernelLoadDirective.ShadowPlugins);
+                                Kernel.Instance.ReLoadRoot();
+                            }
+
+                            Kernel.Instance.RootFolder.ValidateChildren();
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            path = folder.Id.ToString();
+                            Logger.ReportError("Error validating children. " + ex.Message, ex);
+                            throw new Exception("Error validating children. " + ex.Message);
                         }
 
-                        EntryPointItem ep = new EntryPointItem(displayName, path);
-                        entryPoints.Add(ep);
+                        foreach (var folder in Kernel.Instance.RootFolder.Children)
+                        {
+                            String displayName = folder.Name;
+                            if (displayName == null || displayName.Length <= 0)
+                                continue;
+
+                            String path = string.Empty;
+
+                            if (folder.GetType() == typeof(Folder) && folder.Path != null && folder.Path.Length > 1)
+                            {
+                                path = folder.Path;
+                            }
+                            else
+                            {
+                                path = folder.Id.ToString();
+                            }
+
+                            EntryPointItem ep = new EntryPointItem(displayName, path);
+                            entryPoints.Add(ep);
+                        }
+
+                        epm.ValidateEntryPoints(entryPoints);
                     }
-
-                    epm.ValidateEntryPoints(entryPoints);
-                }
-                catch (Exception ex)
-                {
-                    String msg = "Error Refreshing Entry Points. " + ex.Message;
-                    Logger.ReportError(msg, ex);
-                    //MessageBox.Show(msg);
+                    catch (Exception ex)
+                    {
+                        String msg = "Error Refreshing Entry Points. " + ex.Message;
+                        Logger.ReportError(msg, ex);
+                        //MessageBox.Show(msg);
+                    }
                 }
             });
         }
