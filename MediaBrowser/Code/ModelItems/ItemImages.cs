@@ -579,6 +579,45 @@ namespace MediaBrowser.Library
             }
         }
 
+        AsyncImageLoader discImage = null;
+        public Image DiscImage
+        {
+            get
+            {
+                if (!HasDiscImage)
+                {
+                    return null;
+                }
+                EnsureDiscImageIsSet();
+                return discImage.Image;
+            }
+        }
+
+        private void EnsureDiscImageIsSet()
+        {
+            if (discImage == null)
+            {
+                discImage = new AsyncImageLoader(
+                    () => baseItem.DiscImage,
+                    DefaultImage,
+                    DiscImageChanged);
+                var ignore = discImage.Image;
+            }
+        }
+
+        void DiscImageChanged()
+        {
+            FirePropertyChanged("DiscImage");
+        }
+
+        public bool HasDiscImage
+        {
+            get
+            {
+                return baseItem.DiscImagePath != null;
+            }
+        }
+
         public bool HasPrimaryImage
         {
             get { return baseItem.PrimaryImagePath != null; }

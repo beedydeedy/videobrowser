@@ -60,6 +60,8 @@ namespace MediaBrowser.Library.Entities {
         [Persist]
         public virtual string ThumbnailImagePath { get; set; }
         [Persist]
+        public virtual string DiscImagePath { get; set; }
+        [Persist]
         public virtual string BannerImagePath { get; set; }
 
         public string BackdropImagePath {
@@ -103,6 +105,12 @@ namespace MediaBrowser.Library.Entities {
         public LibraryImage ThumbnailImage {
             get {
                 return GetImage(ThumbnailImagePath) ?? PrimaryImage;
+            }
+        }
+
+        public LibraryImage DiscImage {
+            get {
+                return GetImage(DiscImagePath);
             }
         }
 
