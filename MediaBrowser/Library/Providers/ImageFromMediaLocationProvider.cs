@@ -21,6 +21,7 @@ namespace MediaBrowser.Library.Providers
         const string Logo = "logo";
         const string Art = "clearart";
         const string Thumbnail = "thumb";
+        const string Disc = "disc";
         
 
         [Persist]
@@ -35,6 +36,8 @@ namespace MediaBrowser.Library.Providers
         string artPath;
         [Persist]
         string thumbPath;
+        [Persist]
+        string discPath;
 
 
         protected virtual string Location { get { return Item.Path == null ? "" : Item.Path.ToLower(); } }
@@ -55,6 +58,7 @@ namespace MediaBrowser.Library.Providers
                 Item.LogoImagePath = logoPath = FindImage(Logo);
                 Item.ArtImagePath = artPath = FindImage(Art);
                 Item.ThumbnailImagePath = thumbPath = FindImage(Thumbnail);
+                Item.DiscImagePath = discPath = FindImage(Disc);
                 backdropPaths = FindImages(Backdrop);
                 if (backdropPaths.Count > 0) {
                     Item.BackdropImagePaths = backdropPaths;
@@ -141,6 +145,14 @@ namespace MediaBrowser.Library.Providers
             if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("primary image changed. primaryPath: "+primaryPath);
             changed |= FindImage(Banner) != bannerPath;
             if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("banner changed");
+            changed |= FindImage(Logo) != logoPath;
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("logo changed");
+            changed |= FindImage(Thumbnail) != thumbPath;
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("thumb changed");
+            changed |= FindImage(Art) != artPath;
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("art changed");
+            changed |= FindImage(Disc) != discPath;
+            if (changed) MediaBrowser.Library.Logging.Logger.ReportVerbose("disc changed");
 
             var realBackdrops = FindImages(Backdrop);
             changed |= realBackdrops.Except(backdropPaths ?? new List<string> ()).Count() != 0;

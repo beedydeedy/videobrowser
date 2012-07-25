@@ -450,6 +450,7 @@ namespace MediaBrowser.Library.Entities {
                 images.Add(LogoImage);
                 images.Add(ArtImage);
                 images.Add(ThumbnailImage);
+                images.Add(DiscImage);
                 images.AddRange(BackdropImages);
 
                 foreach (var image in images) {
@@ -509,6 +510,11 @@ namespace MediaBrowser.Library.Entities {
             {
                 this.ArtImage.ClearLocalImages();
                 ignore = this.ArtImage.GetLocalImagePath(); //and art
+            }
+            if (this.DiscImage != null)
+            {
+                this.DiscImage.ClearLocalImages();
+                ignore = this.DiscImage.GetLocalImagePath(); //and disc
             }
             if (this.ThumbnailImage != null)
             {
