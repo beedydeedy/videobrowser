@@ -163,6 +163,18 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
+        /// <summary>
+        /// Returns our first child or null if no children
+        /// </summary>
+        public virtual BaseItem FirstChild
+        {
+            get
+            {
+                return this.ActualChildren.Count > 0 ? this.ActualChildren[0] : null;
+            }
+        }
+
+
         protected BaseItem lastWatchedItem;
         public BaseItem LastWatchedItem
         {
