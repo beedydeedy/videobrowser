@@ -43,16 +43,39 @@ namespace MediaBrowser.Library
                     Logging.Logger.ReportException("Error adding " + pair.Key + " to ratings", e);
                 }
             if (Kernel.Instance.ConfigData.MetadataCountryCode.ToUpper() != "US")
-                foreach (var pair in new USRatingsDictionary()) ratings.Add(pair.Key, pair.Value);
+                foreach (var pair in new USRatingsDictionary()) 
+                    try 
+                    {
+                        ratings.Add(pair.Key, pair.Value);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logger.ReportException("Error adding " + pair.Key + " to ratings", e);
+                    }
             //global values of CS
-            ratings.Add("CS", 1000);
-            if (blockUnrated)
+            try
             {
-                ratings.Add("", 1000);
+                ratings.Add("CS", 1000);
             }
-            else
+            catch (Exception e)
             {
-                ratings.Add("", 0);
+                Logging.Logger.ReportException("Error adding CS to ratings", e);
+            }
+
+            try
+            {
+                if (blockUnrated)
+                {
+                    ratings.Add("", 1000);
+                }
+                else
+                {
+                    ratings.Add("", 0);
+                }
+            }
+            catch (Exception e)
+            {
+                Logging.Logger.ReportException("Error adding blank value to ratings", e);
             }
             //and rating reverse lookup dictionary (non-redundant ones)
             ratingsStrings.Clear();
@@ -63,10 +86,24 @@ namespace MediaBrowser.Library
                 if (pair.Value > lastLevel)
                 {
                     lastLevel = pair.Value;
-                    ratingsStrings.Add(pair.Value, pair.Key);
+                    try
+                    {
+                        ratingsStrings.Add(pair.Value, pair.Key);
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.Logger.ReportException("Error adding "+pair.Value+" to ratings strings", e);
+                    }
                 }
             }
-            ratingsStrings.Add(999, "CS"); //this is different because we want Custom to be protected, not allowed
+            try
+            {
+                ratingsStrings.Add(999, "CS"); //this is different because we want Custom to be protected, not allowed
+            }
+            catch (Exception e)
+            {
+                Logging.Logger.ReportException("Error adding CS to ratings strings", e);
+            }
 
             return;
         }
