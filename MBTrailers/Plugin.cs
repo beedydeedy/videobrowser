@@ -146,14 +146,6 @@ namespace MBTrailers {
             }
         }
 
-        public override Version TestedMBVersion
-        {
-            get
-            {
-                return new Version("2.6.0.0");
-            }
-        }
-
         public override Version RequiredMBVersion
         {
             get

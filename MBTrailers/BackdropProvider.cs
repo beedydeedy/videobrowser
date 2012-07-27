@@ -200,9 +200,12 @@ namespace MBTrailers
 
 
                 movie.BackdropImagePaths = new List<string>();
+                int num = 0;
                 foreach (XmlNode n in doc.SelectNodes("//movie/images/image[@type='backdrop' and @size='original']/@url"))
                 {
                     movie.BackdropImagePaths.Add(n.InnerText);
+                    num++;
+                    if (num > MediaBrowser.Library.Kernel.Instance.ConfigData.MaxBackdrops) break;
                 }
 
 
