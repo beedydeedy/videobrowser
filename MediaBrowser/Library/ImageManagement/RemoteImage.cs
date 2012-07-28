@@ -29,9 +29,9 @@ namespace MediaBrowser.Library.ImageManagement {
         internal Image DownloadImage() {
             Logger.ReportVerbose("Fetching image: " + Path);
             HttpWebRequest req = (HttpWebRequest)HttpWebRequest.Create(Path);
+            MemoryStream ms = new MemoryStream();
             req.Timeout = 60000;
             using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse()) {
-                MemoryStream ms = new MemoryStream();
                 Stream r = resp.GetResponseStream();
                 int read = 1;
                 byte[] buffer = new byte[10000];

@@ -115,6 +115,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
                         if (Kernel.Instance.ConfigData.SaveLocalMeta)
                         {
                             Kernel.IgnoreFileSystemMods = true;
+                            if (!Directory.Exists(MetaFolderName)) Directory.CreateDirectory(MetaFolderName);
                             Item.PrimaryImagePath = TVUtils.FetchAndSaveImage(TVUtils.BannerUrl + p, Path.Combine(MetaFolderName, Path.GetFileNameWithoutExtension(p)));
                             Kernel.IgnoreFileSystemMods = false;
                         }
