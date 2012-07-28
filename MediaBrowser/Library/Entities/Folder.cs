@@ -758,8 +758,12 @@ namespace MediaBrowser.Library.Entities {
 
                         if (folder != null)
                         {
-                            Logger.ReportVerbose(item.Name + " is folder - validating...");
+                            Logger.ReportVerbose(item.Name + " is folder - validating and refreshing children...");
                             folder.ValidateChildren();
+                            foreach (var child in folder.Children)  //necessary to get new sub-items to refresh properly
+                            {
+                                child.RefreshMetadata(MediaBrowser.Library.Metadata.MetadataRefreshOptions.Force);
+                            }
                         }
                     }
                 }
