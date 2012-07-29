@@ -1861,7 +1861,7 @@ sortorder: {2}
                     LibraryFolder curFolder = (LibraryFolder)curItem.Header;
                     if (curFolder != null && ddlFolderRating.SelectedValue != null)
                     {
-                        curFolder.CustomRating = ddlFolderRating.SelectedValue.ToString();
+                        curFolder.CustomRating = ddlFolderRating.SelectedValue.ToString().Replace("Any","None");
                         if (curFolder.CustomRating != null)
                         {
                             curFolder.SaveXML();
