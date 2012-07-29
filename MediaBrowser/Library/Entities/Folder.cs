@@ -441,7 +441,7 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        [Persist]
+        
         protected int? mediaCount;
         public int MediaCount
         {
