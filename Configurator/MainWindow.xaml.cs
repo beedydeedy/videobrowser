@@ -38,7 +38,7 @@ namespace Configurator
     {
 
         public ConfigData config;
-        Ratings ratings = new Ratings();
+        Ratings ratings;
         PermissionDialog waitWin;
         PopupMsg PopUpMsg;
         public bool KernelModified = false;
@@ -59,7 +59,7 @@ namespace Configurator
         private void Initialize() {
             Instance = this;
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
-
+            ratings = new Ratings();
             Logger.ReportVerbose("======= Kernel intialized. Building window...");
             InitializeComponent();
             pluginList.MouseDoubleClick += pluginList_DoubleClicked;

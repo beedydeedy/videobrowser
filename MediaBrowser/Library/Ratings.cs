@@ -15,6 +15,18 @@ namespace MediaBrowser.Library
         private static RatingsDefinition ratingsDef;
         private static Dictionary<string, int> ratings;
         private static Dictionary<int, string> ratingsStrings = new Dictionary<int, string>();
+        private static ConfigData config;
+        private static ConfigData Config
+        {
+            get
+            {
+                if (config == null)
+                {
+                    config = Kernel.Instance.ConfigData;
+                }
+                return config;
+            }
+        }
 
         public Ratings(bool blockUnrated)
         {
@@ -26,10 +38,20 @@ namespace MediaBrowser.Library
             this.Initialize(false);
         }
 
+        /// <summary>
+        /// Use this constructor when calling before kernel is initialized
+        /// </summary>
+        /// <param name="cfg"></param>
+        public Ratings(ConfigData cfg)
+        {
+            config = cfg;
+            this.Initialize(false);
+        }
+
         public void Initialize(bool blockUnrated)
         {
             //build our ratings dictionary from the combined local one and us one
-            ratingsDef = RatingsDefinition.FromFile(Path.Combine(ApplicationPaths.AppLocalizationPath, "Ratings-" + Kernel.Instance.ConfigData.MetadataCountryCode+".xml"));
+            ratingsDef = RatingsDefinition.FromFile(Path.Combine(ApplicationPaths.AppLocalizationPath, "Ratings-" + Config.MetadataCountryCode+".xml"));
             ratings = new Dictionary<string, int>();
             //global value of None
             ratings.Add("None", -1);
@@ -42,7 +64,7 @@ namespace MediaBrowser.Library
                 {
                     Logging.Logger.ReportException("Error adding " + pair.Key + " to ratings", e);
                 }
-            if (Kernel.Instance.ConfigData.MetadataCountryCode.ToUpper() != "US")
+            if (Config.MetadataCountryCode.ToUpper() != "US")
                 foreach (var pair in new USRatingsDictionary()) 
                     try 
                     {
