@@ -492,6 +492,11 @@ namespace MediaBrowser.LibraryManagement
             return ret;
         }
 
+        public static bool DontFetchMeta(string path)
+        {
+            return path != null ? path.ToLower().Contains("[dontfetchmeta]") : false;
+        }
+
         public static string[] GetStringInBetween(string strBegin,
             string strEnd, string strSource,
             bool includeBegin, bool includeEnd)

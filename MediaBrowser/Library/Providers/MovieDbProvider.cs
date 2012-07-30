@@ -55,6 +55,8 @@ namespace MediaBrowser.Library.Providers
                 Logger.ReportInfo("MetadataCheckForUpdateAge = -1 wont clear and check for updated metadata");
                 return false;
             }
+
+            if (Helper.DontFetchMeta(Item.Path)) return false;
             
             if (DateTime.Today.Subtract(Item.DateCreated).TotalDays > 180 && downloadDate != DateTime.MinValue)
                 return false; // don't trigger a refresh data for item that are more than 6 months old and have been refreshed before
@@ -73,7 +75,16 @@ namespace MediaBrowser.Library.Providers
 
         public override void Fetch()
         {
-            if (HasAltMeta()) return;  //never fetch if external local meta exists
+            if (HasAltMeta())
+            {
+                Logger.ReportInfo("MovieDbProvider - Not fetching because 3rd party meta exists for "+Item.Name);
+                return;
+            }
+            if (Helper.DontFetchMeta(Item.Path))
+            {
+                Logger.ReportInfo("MovieDbProvider - Not fetching because requested to ignore " + Item.Name);
+                return;
+            }
 
             if (forceDownload || !Kernel.Instance.ConfigData.SaveLocalMeta || !HasLocalMeta())
             {

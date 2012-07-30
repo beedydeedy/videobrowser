@@ -8,6 +8,7 @@ using MediaBrowser.Library.Persistance;
 using System.Xml;
 using System.Diagnostics;
 using MediaBrowser.Library.Logging;
+using MediaBrowser.LibraryManagement;
 using System.IO;
 
 namespace MediaBrowser.Library.Providers.TVDB {
@@ -34,9 +35,12 @@ namespace MediaBrowser.Library.Providers.TVDB {
             bool fetch = false;
 
             if (Config.Instance.MetadataCheckForUpdateAge == -1 && downloadDate != DateTime.MinValue)
+            {
                 Logger.ReportInfo("MetadataCheckForUpdateAge = -1 wont clear and check for updated metadata");
+                return false;
+            }
 
-            if (!HasLocalMeta())
+            if (!HasLocalMeta() && !Helper.DontFetchMeta(Item.Path))
             {
                 fetch = seriesId != GetSeriesId();
                 fetch |= (
@@ -51,7 +55,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
         }
 
         public override void Fetch() {
-            if (!HasLocalMeta())
+            if (!HasLocalMeta() && !Helper.DontFetchMeta(Item.Path))
             {
                 seriesId = GetSeriesId();
 
@@ -62,7 +66,7 @@ namespace MediaBrowser.Library.Providers.TVDB {
             }
             else
             {
-                Logger.ReportInfo("Episode provider not fetching because local meta exists: " + Item.Name);
+                Logger.ReportInfo("Episode provider not fetching because local meta exists or requested to ignore: " + Item.Name);
             }
         }
 
