@@ -60,7 +60,7 @@ namespace Configurator
             Instance = this;
             Kernel.Init(KernelLoadDirective.ShadowPlugins);
             ratings = new Ratings();
-            Logger.ReportVerbose("======= Kernel intialized. Building window...");
+            //Logger.ReportVerbose("======= Kernel intialized. Building window...");
             InitializeComponent();
             pluginList.MouseDoubleClick += pluginList_DoubleClicked;
             PopUpMsg = new PopupMsg(alertText);
@@ -84,7 +84,7 @@ namespace Configurator
                 //not going to re-set version in case there is something we want to do in MB itself
             }
 
-            Logger.ReportVerbose("======= Loading combo boxes...");
+            //Logger.ReportVerbose("======= Loading combo boxes...");
             LoadComboBoxes();
             lblVersion.Content = lblVersion2.Content = "Version " + Kernel.Instance.VersionStr;
 
@@ -102,16 +102,16 @@ namespace Configurator
 
 
             config.InitialFolder = ApplicationPaths.AppInitialDirPath;
-            Logger.ReportVerbose("======= Refreshing Items...");
+            //Logger.ReportVerbose("======= Refreshing Items...");
             RefreshItems();
-            Logger.ReportVerbose("======= Refreshing Podcasts...");
+            //Logger.ReportVerbose("======= Refreshing Podcasts...");
             RefreshPodcasts();
-            Logger.ReportVerbose("======= Refreshing Ext Players...");
+            //Logger.ReportVerbose("======= Refreshing Ext Players...");
             RefreshPlayers();
 
-            Logger.ReportVerbose("======= Loading Config Settings...");
+            //Logger.ReportVerbose("======= Loading Config Settings...");
             LoadConfigurationSettings();
-            Logger.ReportVerbose("======= Config Settings Loaded.");
+            //Logger.ReportVerbose("======= Config Settings Loaded.");
 
             for (char c = 'D'; c <= 'Z'; c++) {
                 daemonToolsDrive.Items.Add(c.ToString());
@@ -127,18 +127,18 @@ namespace Configurator
             daemonToolsLocation.Text = config.DaemonToolsLocation;
 
 
-            Logger.ReportVerbose("======= Refreshing Extender Formats...");
+            //Logger.ReportVerbose("======= Refreshing Extender Formats...");
             RefreshExtenderFormats();
-            Logger.ReportVerbose("======= Refreshing Display Settings...");
+            //Logger.ReportVerbose("======= Refreshing Display Settings...");
             RefreshDisplaySettings();
-            Logger.ReportVerbose("======= Podcast Details...");
+            //Logger.ReportVerbose("======= Podcast Details...");
             podcastDetails(false);
-            Logger.ReportVerbose("======= Saving Config...");
+            //Logger.ReportVerbose("======= Saving Config...");
             SaveConfig();
 
-            Logger.ReportVerbose("======= Initializing Plugin Manager...");
+            //Logger.ReportVerbose("======= Initializing Plugin Manager...");
             PluginManager.Instance.Init();
-            Logger.ReportVerbose("======= Loading Plugin List...");
+            //Logger.ReportVerbose("======= Loading Plugin List...");
             CollectionViewSource src = new CollectionViewSource();
             src.Source = PluginManager.Instance.InstalledPlugins;
             src.GroupDescriptions.Add(new PropertyGroupDescription("PluginClass"));
@@ -147,7 +147,7 @@ namespace Configurator
 
             //pluginList.Items.Refresh();
 
-            Logger.ReportVerbose("======= Kicking off plugin update check thread...");
+            //Logger.ReportVerbose("======= Kicking off plugin update check thread...");
             Async.Queue("Plugin Update Check", () =>
             {
                 using (new MediaBrowser.Util.Profiler("Plugin update check"))
@@ -164,13 +164,13 @@ namespace Configurator
 
             SupportImprovementNag();
 
-            Logger.ReportVerbose("======= Kicking off validations thread...");
+            //Logger.ReportVerbose("======= Kicking off validations thread...");
             Async.Queue("Startup Validations", () =>
             {
                 RefreshEntryPoints(false);
                 ValidateMBAppDataFolderPermissions();
             });
-            Logger.ReportVerbose("======= Initialize Finised.");
+            //Logger.ReportVerbose("======= Initialize Finised.");
         }
 
         private void SupportImprovementNag()
