@@ -300,12 +300,18 @@ namespace MediaBrowser.Library.Providers.TVDB {
             string comparableName = GetComparableName(name);
             foreach (XmlNode node in nodes) {
                 XmlNode n = node.SelectSingleNode("./SeriesName");
-                if (GetComparableName(n.InnerText) == comparableName) {
+                if (GetComparableName(n.InnerText) == comparableName)
+                {
                     n = node.SelectSingleNode("./seriesid");
                     if (n != null)
                         return n.InnerText;
                 }
+                else
+                {
+                    Logger.ReportInfo("TVDb Provider - " + n.InnerText + " did not match " + comparableName);
+                }
             }
+            Logger.ReportInfo("TVDb Provider - Could not find " + name + ". Check name on Thetvdb.org.");
             return null;
         }
 
