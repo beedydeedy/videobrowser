@@ -398,7 +398,7 @@ namespace MediaBrowserService
         
         private void tbxRefreshInterval_LostFocus(object sender, RoutedEventArgs e)
         {
-            Int32.TryParse(tbxRefreshInterval.Text, out _config.FullRefreshInterval);
+            if (!Int32.TryParse(tbxRefreshInterval.Text, out _config.FullRefreshInterval)) _config.FullRefreshInterval = 1;
             _config.Save();
             UpdateStatus();
         }
