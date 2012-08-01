@@ -651,11 +651,11 @@ namespace MediaBrowser.Library.Providers
                     if (Item.PrimaryImagePath == null && (Kernel.Instance.ConfigData.RefreshItemImages || !HasLocalImage()))
                     {
                         //couldn't find one for our specific country - just take the first one with null country
-                        Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated unspecified");
+                        Logger.ReportVerbose("MovieDbProvider - no specific language poster using highest rated English one.");
                         string posterPath = "";
                         try 
                         {
-                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == null).First())["file_path"].ToString();
+                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == "en").First())["file_path"].ToString();
                         } catch
                         {
                             //fall back to first one
