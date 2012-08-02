@@ -378,13 +378,13 @@ namespace MediaBrowser.Library.Providers
 
             var info = Helper.FetchJson(url);
 
-            if (String.IsNullOrEmpty(info.Trim()))
+            if (String.IsNullOrEmpty(info) || String.IsNullOrEmpty(((Dictionary<string,object>)Helper.ToJsonDict(info))["overview"] as string))
             {
                 if (Kernel.Instance.ConfigData.PreferredMetaDataLanguage.ToLower() != "en") {
                     Logger.ReportInfo("MovieDbProvider couldn't find meta for language "+Kernel.Instance.ConfigData.PreferredMetaDataLanguage+". Trying English...");
                     url = string.Format(getInfo3, id, ApiKey, "en", itemType);
                     info = Helper.FetchJson(url);
-                    if (String.IsNullOrEmpty(info.Trim()))
+                    if (String.IsNullOrEmpty(info) || String.IsNullOrEmpty(((Dictionary<string, object>)Helper.ToJsonDict(info))["overview"] as string))
                     {
                         Logger.ReportError("MovieDbProvider - Unable to find information for " + Item.Name + " (id:" + id + ")");
                         return;
