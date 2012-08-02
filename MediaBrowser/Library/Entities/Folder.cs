@@ -411,7 +411,11 @@ namespace MediaBrowser.Library.Entities {
                 FolderChildrenChanged = ValidateChildrenImpl();
                 if (FolderChildrenChanged)
                 {
+                    //recalculate and store the new counts
                     this.runtime = this.mediaCount = null;
+                    var ignore = this.MediaCount;
+                    ignore = this.RunTime;
+                    Kernel.Instance.ItemRepository.SaveItem(this);
                 }
             }
         }
@@ -441,7 +445,7 @@ namespace MediaBrowser.Library.Entities {
             }
         }
 
-        
+        [Persist]
         protected int? mediaCount;
         public int MediaCount
         {
