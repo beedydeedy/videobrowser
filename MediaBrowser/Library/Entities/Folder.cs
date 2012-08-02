@@ -415,7 +415,6 @@ namespace MediaBrowser.Library.Entities {
                     this.runtime = this.mediaCount = null;
                     var ignore = this.MediaCount;
                     ignore = this.RunTime;
-                    Kernel.Instance.ItemRepository.SaveItem(this);
                 }
             }
         }
@@ -730,7 +729,7 @@ namespace MediaBrowser.Library.Entities {
                 currentChildren[item.Id] = item;
             }
 
-            //Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
+            Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
 
             bool changed = false;
             foreach (var item in validChildren) {

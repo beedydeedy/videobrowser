@@ -193,6 +193,12 @@ namespace MediaBrowser.Library {
                 (rating < 0 || (ratingFactor * Ratings.Level(item.OfficialRating)) <= (ratingFactor * rating));
         }
 
+        public void ResetMediaCount()
+        {
+            this.mediaCount = null;
+            FirePropertiesChanged("MediaCount", "MediaCountStr");
+        }
+
         protected int? mediaCount;
         public virtual int MediaCount
         {
@@ -734,7 +740,8 @@ namespace MediaBrowser.Library {
             folderChildren.ListenForChanges();
 
             ResetRunTime();
-            FirePropertiesChanged("Children", "SelectedChildIndex", "MediaCount", "MediaCountStr", "RunningTime", "RunningTimeString");
+            ResetMediaCount();
+            FirePropertiesChanged("Children", "SelectedChildIndex");
             
             lock (watchLock)
                 unwatchedCountCache = -1;
