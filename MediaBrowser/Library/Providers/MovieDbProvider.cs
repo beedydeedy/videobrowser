@@ -380,8 +380,16 @@ namespace MediaBrowser.Library.Providers
 
             if (String.IsNullOrEmpty(info.Trim()))
             {
-                Logger.ReportError("MovieDbProvider - Unable to find information for " + Item.Name + " (id:" + id + ")");
-                return;
+                if (Kernel.Instance.ConfigData.PreferredMetaDataLanguage.ToLower() != "en") {
+                    Logger.ReportInfo("MovieDbProvider couldn't find meta for language "+Kernel.Instance.ConfigData.PreferredMetaDataLanguage+". Trying English...");
+                    url = string.Format(getInfo3, id, ApiKey, "en", itemType);
+                    info = Helper.FetchJson(url);
+                    if (String.IsNullOrEmpty(info.Trim()))
+                    {
+                        Logger.ReportError("MovieDbProvider - Unable to find information for " + Item.Name + " (id:" + id + ")");
+                        return;
+                    }
+                }
             }
 
             url = string.Format(castInfo, id, ApiKey, itemType);
@@ -909,7 +917,7 @@ namespace MediaBrowser.Library.Providers
                 }
             }
             name = sb.ToString();
-            name = name.Replace("the", " ");
+            name = name.Replace(" the ", " ");
 
             string prev_name;
             do
