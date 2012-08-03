@@ -63,6 +63,10 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 {
                     if (FetchEpisodeData()) downloadDate = DateTime.Today;
                 }
+                else
+                {
+                    Logger.ReportWarning("Episode provider cannot determine Series Id for " + Item.Path);
+                }
             }
             else
             {
@@ -194,16 +198,19 @@ namespace MediaBrowser.Library.Providers.TVDB {
         private string GetSeriesId() {
             string seriesId = null;
 
-            var parent = Item.Parent;
-            if (parent != null && !(parent.GetType() == typeof(Series))) {
-                parent = parent.Parent;
-            }
+            Episode episode = Item as Episode;
+            if (episode != null)
+            {
+                Series series = episode.Series;
+                if (series != null)
+                {
 
-            if (parent is Series) {
-                seriesId = (parent as Series).TVDBSeriesId;
+                    seriesId = series.TVDBSeriesId;
+                }
             }
             return seriesId;
         }
+
         private bool HasLocalMeta()
         {
             return (File.Exists(MetaFileName));
