@@ -729,7 +729,8 @@ namespace MediaBrowser.Library.Entities {
                 currentChildren[item.Id] = item;
             }
 
-            Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
+            if (currentChildren.Count != validChildren.Count)
+                Logger.ReportVerbose("Validating "+this.Name+". CurrentChildren: "+currentChildren.Count+". Physical Children: "+validChildren.Count);
 
             bool changed = false;
             foreach (var item in validChildren) {
@@ -747,7 +748,7 @@ namespace MediaBrowser.Library.Entities {
                     }
                 } else {
                     changed = true;
-                    Logger.ReportInfo("Adding new item to library: " + item.Path);
+                    Logger.ReportInfo("Adding new item to library: " + item.Name + " (" + item.Path + ")");
                     lock (ActualChildren) {
                         item.Parent = this;
                         ActualChildren.Add(item);
@@ -815,7 +816,8 @@ namespace MediaBrowser.Library.Entities {
 
 
             if (changed) {
-                SaveChildren(Children);
+                lock(ActualChildren)
+                    SaveChildren(ActualChildren);
                 //we need to blank out the persisted RAL items for the top level folder
                 var item = this;
                 while (item != null && item.Parent != Kernel.Instance.RootFolder) item = item.Parent;
@@ -877,6 +879,7 @@ namespace MediaBrowser.Library.Entities {
         }
 
         protected void SaveChildren(IList<BaseItem> items, bool saveIndvidualChidren) {
+            //Logger.ReportVerbose("Saving " + items.Count + " children for " + this.Name);
             Kernel.Instance.ItemRepository.SaveChildren(Id, items.Select(i => i.Id));
             if (saveIndvidualChidren)
             {
