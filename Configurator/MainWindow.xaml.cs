@@ -354,8 +354,8 @@ namespace Configurator
             }
             foreach (string subdir in dirs)
             {
-                //only want directories that don't directly contain movies in our tree...
-                if (!containsMedia(subdir))
+                //only want directories that don't directly contain movies and are not boxsets in our tree...
+                if (!containsMedia(subdir) && !subdir.ToLower().Contains("[boxset]"))
                 {
                     TreeViewItem aNode; // = new TreeViewItem();
                     //LibraryFolder aFolder = new LibraryFolder(subdir);
@@ -562,6 +562,8 @@ namespace Configurator
                 return Name;
             }
         }
+
+        private List<string> folderSettings;
         private void LoadComboBoxes()
         {
             // Themes
@@ -579,7 +581,9 @@ namespace Configurator
             ddlWeatherUnits.Items.Add("Fahrenheit");
             // Parental Ratings
             ddlOptionMaxAllowedRating.ItemsSource = ratings.ToStrings();
-            ddlFolderRating.ItemsSource = ratings.ToStrings();
+            //create a set of ratings strings that makes more sense for the folder list
+            folderSettings = ratings.ToStrings().Select(r => r != "Any" ? r : "None").ToList();
+            ddlFolderRating.ItemsSource = folderSettings;
             //meta
             AllLanguages = GetLanguages(CultureInfo.GetCultures(CultureTypes.NeutralCultures));
             ddlMetadataLanguage.ItemsSource = AllLanguages;
@@ -2229,7 +2233,9 @@ sortorder: {2}
                 ddlOptionMaxAllowedRating.ItemsSource = ratings.ToStrings();
                 ddlOptionMaxAllowedRating.Items.Refresh();
                 ddlOptionMaxAllowedRating.SelectedItem = Ratings.ToString(config.MaxParentalLevel);
-                ddlFolderRating.ItemsSource = ratings.ToStrings();
+                //create a set of ratings strings that makes more sense for the folder list
+                folderSettings = ratings.ToStrings().Select(r => r != "Any" ? r : "None").ToList();
+                ddlFolderRating.ItemsSource = folderSettings;
                 ddlFolderRating.Items.Refresh();
                 config.Save();
             }
