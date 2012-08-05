@@ -663,7 +663,7 @@ namespace MediaBrowser.Library.Providers
                         string posterPath = "";
                         try 
                         {
-                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => ((Dictionary<string,object>)p)["iso_639_1"] == "en").First())["file_path"].ToString();
+                            posterPath = ((Dictionary<string, object>)posters.ToArray().Where(p => (string)((Dictionary<string,object>)p)["iso_639_1"] == "en").First())["file_path"].ToString();
                         } catch
                         {
                             //fall back to first one
