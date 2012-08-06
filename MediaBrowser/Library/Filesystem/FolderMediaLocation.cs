@@ -17,13 +17,13 @@ namespace MediaBrowser.Library.Filesystem {
         Lazy<Dictionary<string, IMediaLocation>> index;
         protected List<string> unavailableLocations = new List<string>();
 
-        internal FolderMediaLocation(FileInfo info, IFolderMediaLocation parent)
+        public FolderMediaLocation(FileInfo info, IFolderMediaLocation parent)
             : this(info, parent, null) 
         {
         }
 
         // special constructor used by the virtual folders (allows for folder relocation)
-        internal FolderMediaLocation(FileInfo info, IFolderMediaLocation parent, IFolderMediaLocation location)
+        public FolderMediaLocation(FileInfo info, IFolderMediaLocation parent, IFolderMediaLocation location)
             : base(info, parent) {
             children = new Lazy<IList<IMediaLocation>>(GetChildren);
             index = new Lazy<Dictionary<string, IMediaLocation>>(CreateIndex); 

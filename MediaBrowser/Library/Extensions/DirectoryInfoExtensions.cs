@@ -6,7 +6,7 @@ using MediaBrowser.Library.Filesystem;
 using MediaBrowser.Library.Logging;
 
 namespace MediaBrowser.Library.Extensions {
-    static class DirectoryInfoExtensions {
+    public static class DirectoryInfoExtensions {
         public static FileInfo ToFileInfo (this System.IO.FileSystemInfo info) 
         {
             DateTime created, modified;
