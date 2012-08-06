@@ -431,8 +431,9 @@ namespace MediaBrowser
         [Comment("This is a hack until I can rewrite some file date processing")]
         public bool EnableShortcutDateHack = true;
 
+        [Hidden]
         [Group("Display")]
-        [Comment("Hide empty folders (and series an seasons)")]
+        [Comment("Hide empty folders (and series and seasons)")]
         public bool HideEmptyFolders = false;
 
         [Comment("Save metadata locally so it doesn't have to be re-fetched from the inet")]
