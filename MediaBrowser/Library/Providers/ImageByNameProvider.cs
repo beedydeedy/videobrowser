@@ -42,23 +42,6 @@ namespace MediaBrowser.Library.Providers
                         name = name.Replace(c.ToString(), "");
                     location = Path.Combine(location, name);
 
-                    if (!Directory.Exists(location))
-                    {
-                        //try the default area by type
-                        location = ApplicationPaths.AppIBNPath; //reset to root
-                        location = Path.Combine(location, "Default\\"+Item.GetType().Name);
-
-                        //Logging.Logger.ReportVerbose("IBN provider looking for: " + location);
-
-                        //now we have a specific default folder for this type - be sure it exists
-                        if (!Directory.Exists(location))
-                        {
-                            //nope - use a generic
-                            string baseType = Item is Folder ? "folder" : "video";
-                            location = Path.Combine(ApplicationPaths.AppIBNPath, "default\\" + baseType);
-                            //Logging.Logger.ReportVerbose("IBN provider defaulting to: " + location);
-                        }
-                    }
                 }
                 return location;
             }

@@ -166,6 +166,7 @@
     <Compile Include="Library\Playables\VLC2\VLC2Configurator.cs" />
     <Compile Include="Library\Playables\VLC2\VLC2PlaybackController.cs" />
     <Compile Include="Library\Providers\LegacyMovieProviderFromXml.cs" />
+    <Compile Include="Library\Providers\MBDefaultImageProvider.cs" />
     <Compile Include="Library\Providers\MBMovieProviderFromJson.cs" />
     <Compile Include="Library\Providers\VideoFormatProvider.cs" />
     <Compile Include="Library\Entities\Actor.cs" />

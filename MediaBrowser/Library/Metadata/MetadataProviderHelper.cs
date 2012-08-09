@@ -46,7 +46,8 @@ namespace MediaBrowser.Library.Metadata {
                 typeof(RemoteEpisodeProvider),
                 typeof(RemoteSeasonProvider), 
                 typeof(RemoteSeriesProvider),
-                typeof(MovieDbProvider)
+                typeof(MovieDbProvider),
+                typeof(MBDefaultImageProvider)
             }.Select(t => new MetadataProviderFactory(t)).ToList(); 
             
         }
