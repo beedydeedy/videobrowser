@@ -397,7 +397,8 @@ namespace MediaBrowser.Library.Providers
             url = string.Format(castInfo, id, ApiKey, itemType);
             var cast = Helper.FetchJson(url) ?? "";
             int castStart = !String.IsNullOrEmpty(cast) ? cast.IndexOf("\"cast\":") : 0;
-            int castEnd = !String.IsNullOrEmpty(cast) ? cast.IndexOf("]",castStart)+1 : 0;
+            int castEnd = !String.IsNullOrEmpty(cast) ? cast.IndexOf("],",castStart)+1 : 0;
+            if (castEnd == 0 && !string.IsNullOrEmpty(cast)) castEnd = cast.IndexOf("]", castStart) + 1; //no crew
             int crewStart = !String.IsNullOrEmpty(cast) ? cast.IndexOf("\"crew\":") : 0;
             int crewEnd = !String.IsNullOrEmpty(cast) ? cast.IndexOf("]", crewStart)+1 : 0;
 
