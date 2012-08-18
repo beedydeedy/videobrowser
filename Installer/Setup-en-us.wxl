@@ -14,7 +14,7 @@
 	<String Id="Property_CompanyName">Media Browser</String>
 
 	<String Id="Package_Description">Media Browser for Windows Media Center</String>
-	<String Id="Package_Comments">This Installer database contains the logic and data required to install Media Browser.</String>
+	<String Id="Package_Comments">This Installer database contains the logic and data required to install Media Browser. Please close the Media Browser Service if it is running before continuing.</String>
 
   <String Id="Dialog_CreateDesktopShortcut">Create a shortcut for Media Browser on the desktop.</String>
   <String Id="Dialog_CreateStartMenuShortcut">Create a shortcut for Media Browser in the start menu.</String>
