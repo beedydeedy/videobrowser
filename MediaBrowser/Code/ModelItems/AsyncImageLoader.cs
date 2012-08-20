@@ -15,7 +15,7 @@ using MediaBrowser.Library.Logging;
 using MediaBrowser.Library.Filesystem;
 
 namespace MediaBrowser.Code.ModelItems {
-    class AsyncImageLoader {
+    public class AsyncImageLoader {
 
         static BackgroundProcessor<Action> ImageLoadingProcessors = new BackgroundProcessor<Action>(2, action => action(), "Image loader");
         static BackgroundProcessor<Action> NetImageLoadingProcessors = new BackgroundProcessor<Action>(2, action => action(), "Net Image loader");
