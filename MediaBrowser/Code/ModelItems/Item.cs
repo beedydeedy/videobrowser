@@ -45,7 +45,7 @@ namespace MediaBrowser.Library
 
 
         #region Item Construction
-        internal Item()
+        public Item()
         {
         }
 
