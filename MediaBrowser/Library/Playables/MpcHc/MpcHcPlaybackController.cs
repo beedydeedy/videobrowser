@@ -127,22 +127,22 @@ namespace MediaBrowser.Library.Playables.MpcHc
                 // 00:20:03 = duration
 
                 // Strip off the leading "OnStatus(" and the trailing ")"
-                result = result.Substring(result.IndexOf('\''));
-                result = result.Substring(0, result.LastIndexOf('\''));
+                result = result.Substring(result.IndexOf('\"'));
+                result = result.Substring(0, result.LastIndexOf('\"'));
 
                 // Strip off the filename at the beginning
-                result = result.Substring(result.IndexOf("', '") + 3);
+                result = result.Substring(result.IndexOf("\", \"") + 3);
 
                 // Find the last index of ", '" so that we can extract and then strip off the file path at the end.
-                int lastIndexOfSeparator = result.LastIndexOf(", '");
+                int lastIndexOfSeparator = result.LastIndexOf(", \"");
 
                 // Get the current playing file path
-                string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\'');
+                string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\"');
 
                 // Strip off the current playing file path
                 result = result.Substring(0, lastIndexOfSeparator);
 
-                IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\''));
+                IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\"'));
 
                 long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(1))).Ticks;
                 long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(3))).Ticks;
