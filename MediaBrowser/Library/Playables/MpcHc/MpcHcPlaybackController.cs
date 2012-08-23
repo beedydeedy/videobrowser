@@ -126,23 +126,25 @@ namespace MediaBrowser.Library.Playables.MpcHc
                 // 1203090 = duration in ms
                 // 00:20:03 = duration
 
+                char quoteChar = result.IndexOf(", \"") == -1 ? '\'' : '\"';
+
                 // Strip off the leading "OnStatus(" and the trailing ")"
-                result = result.Substring(result.IndexOf('\"'));
-                result = result.Substring(0, result.LastIndexOf('\"'));
+                result = result.Substring(result.IndexOf(quoteChar));
+                result = result.Substring(0, result.LastIndexOf(quoteChar));
 
                 // Strip off the filename at the beginning
-                result = result.Substring(result.IndexOf("\", \"") + 3);
+                result = result.Substring(result.IndexOf(string.Format("{0}, {0}", quoteChar)) + 3);
 
                 // Find the last index of ", '" so that we can extract and then strip off the file path at the end.
-                int lastIndexOfSeparator = result.LastIndexOf(", \"");
+                int lastIndexOfSeparator = result.LastIndexOf(", " + quoteChar);
 
                 // Get the current playing file path
-                string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim('\"');
+                string currentPlayingFile = result.Substring(lastIndexOfSeparator + 2).Trim(quoteChar);
 
                 // Strip off the current playing file path
                 result = result.Substring(0, lastIndexOfSeparator);
 
-                IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim('\"'));
+                IEnumerable<string> values = result.Split(',').Select(v => v.Trim().Trim(quoteChar));
 
                 long currentPositionTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(1))).Ticks;
                 long currentDurationTicks = TimeSpan.FromMilliseconds(double.Parse(values.ElementAt(3))).Ticks;
