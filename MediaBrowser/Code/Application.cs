@@ -753,8 +753,8 @@ namespace MediaBrowser
             if (Config.AllowInternetMetadataProviders) Logger.ReportInfo("*** Save Locally is "+(Config.SaveLocalMeta ? "ON." : "OFF."));
             Logger.ReportInfo("*** Theme in use is: " + Config.ViewTheme);
             // Now let's put a diagnostic ping in here for the beta cycle so we can see how much testing we're getting
-            string info = "IP=" + Config.AllowInternetMetadataProviders + " EXTP=" + Config.ExternalPlayers.Count + " EXT=" + RunningOnExtender;
-            Helper.Ping("http://www.ebrsoft.com/software/mb/plugins/ping.php?product=MBBeta&ver=" + Kernel.Instance.VersionStr + "&mac=" + Helper.GetMACAddress() + "&key=" + info);
+            //string info = "IP=" + Config.AllowInternetMetadataProviders + " EXTP=" + Config.ExternalPlayers.Count + " EXT=" + RunningOnExtender;
+            //Helper.Ping("http://www.ebrsoft.com/software/mb/plugins/ping.php?product=MBBeta&ver=" + Kernel.Instance.VersionStr + "&mac=" + Helper.GetMACAddress() + "&key=" + info);
             try
             {
                 if (Config.IsFirstRun)
