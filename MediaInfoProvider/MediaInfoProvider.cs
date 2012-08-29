@@ -70,6 +70,7 @@ namespace MediaInfoProvider
 
         public override void Fetch()
         {
+            filename = FindVideoFile();
             Video video = Item as Video;
             if (video == null ) return;
             //if data exists in our file - just get it from there
@@ -95,7 +96,6 @@ namespace MediaInfoProvider
             if (!video.ContainsRippedMedia || (Kernel.LoadContext == MBLoadContext.Service && Plugin.PluginOptions.Instance.AllowBDRips && (video.MediaType == MediaType.BluRay || video.MediaType == MediaType.DVD)))
             {
 
-                filename = FindVideoFile();
                 if (video.MediaType == MediaType.Wtv) {
                     return;
                 }
@@ -375,6 +375,12 @@ namespace MediaInfoProvider
 
         public override bool NeedsRefresh()
         {
+            //if our data file exists, we don't need refreshing
+            string dataFile = Item is Episode ? 
+                Path.Combine(Path.Combine(Path.GetDirectoryName(Item.Path),"metadata"),Path.GetFileNameWithoutExtension(Item.Path)+"-mediainfo.data") :
+                Path.Combine(Item.Path, "mediainfo.data");
+            if (File.Exists(dataFile)) return false;
+
             string videoFilename = FindVideoFile();
 
             bool force = false;

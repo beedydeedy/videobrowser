@@ -34,27 +34,31 @@ namespace MBTrailers {
             if ((options & MetadataRefreshOptions.FastOnly) != MetadataRefreshOptions.FastOnly &&
                 Plugin.PluginOptions.Instance.FetchBackdrops && string.IsNullOrEmpty(this.BackdropImagePath))
             {
-                // use our own movieDBProvider to grab just the backdrops
-                var provider = new BackdropProvider();
-                provider.Item = (Movie)Serializer.Clone(this);
-                provider.Fetch();
-                this.BackdropImagePaths = provider.Item.BackdropImagePaths;
-                foreach (var image in this.BackdropImages) {
-                    try
+                if (this.BackdropImagePath == null)
+                {
+                    // use our own movieDBProvider to grab just the backdrops
+                    var provider = new BackdropProvider();
+                    provider.Item = (Movie)Serializer.Clone(this);
+                    provider.Fetch();
+                    this.BackdropImagePaths = provider.Item.BackdropImagePaths;
+                    foreach (var image in this.BackdropImages)
                     {
-                        if (image != null)
+                        try
                         {
-                            image.ClearLocalImages();
-                            MediaBrowser.Library.Factories.LibraryImageFactory.Instance.ClearCache(image.Path);
-                            var ignore = image.GetLocalImagePath();
+                            if (image != null)
+                            {
+                                image.ClearLocalImages();
+                                MediaBrowser.Library.Factories.LibraryImageFactory.Instance.ClearCache(image.Path);
+                                var ignore = image.GetLocalImagePath();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MediaBrowser.Library.Logging.Logger.ReportException("Failed to clear local image (its probably in use)", ex);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        MediaBrowser.Library.Logging.Logger.ReportException("Failed to clear local image (its probably in use)", ex);
-                    }
+                    changed = true;
                 }
-                changed = true;
 
             }
             
