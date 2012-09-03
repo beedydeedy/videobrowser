@@ -325,10 +325,10 @@ namespace MediaBrowser.Library.Providers
                                     }
                                 }
                             }
+                            //matched name and year
+                            return matchedName != null ? id : null;
                         }
 
-                        //matched name and year
-                        return matchedName != null ? id : null;
                     }
                 }
             }
