@@ -154,5 +154,12 @@ namespace MBTrailers {
             }
         }
 
+        public override string UpgradeInfo
+        {
+            get
+            {
+                return "This version improves service refresh speeds.";
+            }
+        }
     }
 }
