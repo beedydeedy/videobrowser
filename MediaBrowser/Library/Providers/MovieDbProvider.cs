@@ -502,13 +502,22 @@ namespace MediaBrowser.Library.Providers
                     if (!string.IsNullOrEmpty(ourRelease))
                     {
                         movie.ProductionYear = Int32.Parse(ourRelease.Substring(0, 4));
-                        movie.MpaaRating = ourCountry+"-"+ourCert;
                     }
                     else
                     {
                         if (!string.IsNullOrEmpty(usRelease))
                         {
                             movie.ProductionYear = Int32.Parse(usRelease.Substring(0, 4));
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(ourCert))
+                    {
+                        movie.MpaaRating = ourCountry+"-"+ourCert;
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(usCert))
+                        {
                             movie.MpaaRating = usCert;
                         }
                     }
