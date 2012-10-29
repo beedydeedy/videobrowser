@@ -28,3 +28,5 @@ MediaBrowser/ClassDiagram1.cd
 MediaBrowser/ClassDiagram3.cd
 Configurator/Configurator.jtconfig
 MediaBrowser/DevInstall.cmd
+MediaBrowserService/_ReSharper.MediaBrowserService/*
+MediaBrowser/ClassDiagram2.cd
