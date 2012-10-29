@@ -336,7 +336,9 @@ namespace MediaBrowser.Library.Providers.TVDB {
                 }
             }
             name = sb.ToString();
-            name = name.Replace("the", " ");
+            name = name.Replace(", the", "");
+            name = name.Replace("the ", " ");
+            name = name.Replace(" the ", " ");
 
             string prev_name;
             do {

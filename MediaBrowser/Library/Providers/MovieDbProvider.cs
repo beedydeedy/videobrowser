@@ -929,6 +929,8 @@ namespace MediaBrowser.Library.Providers
                 }
             }
             name = sb.ToString();
+            name = name.Replace(", the", "");
+            name = name.Replace("the ", " ");
             name = name.Replace(" the ", " ");
 
             string prev_name;
