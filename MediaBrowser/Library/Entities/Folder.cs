@@ -23,7 +23,7 @@ namespace MediaBrowser.Library.Entities {
 
         public event EventHandler<ChildrenChangedEventArgs> ChildrenChanged;
 
-        Lazy<List<BaseItem>> children;
+        MediaBrowser.Library.Util.Lazy<List<BaseItem>> children;
         protected IFolderMediaLocation location;
         protected IComparer<BaseItem> sortFunction = new BaseItemComparer(SortOrder.Name);
         object validateChildrenLock = new object();
@@ -33,7 +33,7 @@ namespace MediaBrowser.Library.Entities {
 
         public Folder()
             : base() {
-            children = new Lazy<List<BaseItem>>(() => GetChildren(true), () => OnChildrenChanged(null));
+            children = new MediaBrowser.Library.Util.Lazy<List<BaseItem>>(() => GetChildren(true), () => OnChildrenChanged(null));
         }
 
         public IComparer<BaseItem> SortFunction

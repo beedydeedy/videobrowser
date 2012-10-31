@@ -13,8 +13,8 @@ namespace MediaBrowser.Library.Filesystem {
     public class FolderMediaLocation : MediaLocation, IFolderMediaLocation  {
 
         private IFolderMediaLocation location;
-        Lazy<IList<IMediaLocation>> children;
-        Lazy<Dictionary<string, IMediaLocation>> index;
+        MediaBrowser.Library.Util.Lazy<IList<IMediaLocation>> children;
+        MediaBrowser.Library.Util.Lazy<Dictionary<string, IMediaLocation>> index;
         protected List<string> unavailableLocations = new List<string>();
 
         public FolderMediaLocation(FileInfo info, IFolderMediaLocation parent)
@@ -25,8 +25,8 @@ namespace MediaBrowser.Library.Filesystem {
         // special constructor used by the virtual folders (allows for folder relocation)
         public FolderMediaLocation(FileInfo info, IFolderMediaLocation parent, IFolderMediaLocation location)
             : base(info, parent) {
-            children = new Lazy<IList<IMediaLocation>>(GetChildren);
-            index = new Lazy<Dictionary<string, IMediaLocation>>(CreateIndex); 
+            children = new MediaBrowser.Library.Util.Lazy<IList<IMediaLocation>>(GetChildren);
+            index = new MediaBrowser.Library.Util.Lazy<Dictionary<string, IMediaLocation>>(CreateIndex); 
             if (location == null) {
                 this.location = this;
             } else {
