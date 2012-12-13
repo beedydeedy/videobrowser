@@ -30,3 +30,5 @@ Configurator/Configurator.jtconfig
 MediaBrowser/DevInstall.cmd
 MediaBrowserService/_ReSharper.MediaBrowserService/*
 MediaBrowser/ClassDiagram2.cd
+Configurator/_ReSharper.Configurator/*
+*_ReSharper.*

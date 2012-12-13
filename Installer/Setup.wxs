@@ -193,7 +193,11 @@
       <Component Id="Configurator.exe" Guid="3186FBE0-641C-45f9-AA16-7EAA85B7405C" DiskId="1">
         <File Id="Configurator.exe" Name="Configurator.exe" KeyPath="yes" Source="..\Configurator\bin\$(var.BuildType)\Configurator.exe" Checksum="yes" Vital="yes"/>
       </Component>
-			<Component Id="MediaBrowser.dll" Guid="3D581843-2412-458d-AF79-29845B277677" DiskId="1">
+      <Component Id="Configurator.exe.config" Guid="5041AA87-37FD-4D9B-BBC4-71DDAEF6EE96" DiskId="1">
+        <Condition>VersionNT = 602</Condition>
+        <File Id="Configurator.exe.config" Name="Configurator.exe.config" Source="..\Windows 8.config" CompanionFile="Configurator.exe" Checksum="yes" Vital="yes"/>
+      </Component>
+      <Component Id="MediaBrowser.dll" Guid="3D581843-2412-458d-AF79-29845B277677" DiskId="1">
 				<File Id="MediaBrowser.dll" Name="MediaBrowser.dll" KeyPath="yes" Source="..\MediaBrowser\bin\$(var.BuildType)\MediaBrowser.dll" Checksum="yes" Vital="yes" Assembly=".net"/>
 			</Component>
       <Component Id="Registration7.xml" Guid="C079A9EC-299A-4b0b-B5F3-9661E3A32AD0" DiskId="1">
@@ -211,8 +215,16 @@
       <Component Id="MediaBrowserService.exe" Guid="D19774DD-253A-47E2-94FA-3EFB220E2B77" DiskId="1">
         <File Id="MediaBrowserService.exe" Name="MediaBrowserService.exe" Source="..\MediaBrowserService\bin\$(var.BuildType)\MediaBrowserService.exe" Checksum="no"/>
       </Component>
+      <Component Id="MediaBrowserService.exe.config" Guid="08A236F8-2BED-4F07-BE2B-CC33C54CA474" DiskId="1">
+        <Condition>VersionNT = 602</Condition>
+        <File Id="MediaBrowserService.exe.config" Name="MediaBrowserService.exe.config" Source="..\Windows 8.config" CompanionFile="MediaBrowserService.exe" Checksum="yes" Vital="yes"/>
+      </Component>
       <Component Id="MBMigrate.exe" Guid="D66E860A-24F2-44A5-B9E1-BD24BF3D7146" DiskId="1">
         <File Id="MBMigrate.exe" Name="MBMigrate.exe" Source="..\MBMigrate\bin\$(var.BuildType)\MBMigrate.exe" Checksum="no"/>
+      </Component>
+      <Component Id="MBMigrate.exe.config" Guid="46359E77-B137-4DB2-B2CB-E38CF5F9447F" DiskId="1">
+        <Condition>VersionNT = 602</Condition>
+        <File Id="MBMigrate.exe.config" Name="MBMigrate.exe.config" Source="..\Windows 8.config" CompanionFile="MBMigrate.exe" Checksum="yes" Vital="yes"/>
       </Component>
     </DirectoryRef>
 
@@ -265,10 +277,13 @@
 		<!-- can be displayed and allow user selection in setup UI if desired.                               -->
 		<Feature Id="APPROOTFEATURE" Title="MediaBrowser" Level="1">
       <ComponentRef Id="Configurator.exe" />
+      <ComponentRef Id="Configurator.exe.config" />
       <ComponentRef Id="MediaBrowserService.exe" />
+      <ComponentRef Id="MediaBrowserService.exe.config" />
       <ComponentRef Id="MediaBrowser.dll" />
       <ComponentRef Id="MBMigrate.exe" />
-			<ComponentRef Id="Application.png" />
+      <ComponentRef Id="MBMigrate.exe.config" />
+      <ComponentRef Id="Application.png" />
       <ComponentRef Id="ApplicationInactive.png" />
       <ComponentRef Id="Registration7.xml" />
       <ComponentRef Id="MediaBrowserIcon.ico" />
@@ -372,18 +387,18 @@
 				<![CDATA[NOT REMOVE AND (VersionNT = 600)]]>
 			</Custom>-->
 
-      <!-- Windows 7 -->
+      <!-- Windows 7 and above -->
       <Custom Action="CA_RegisterMceApp_Unregister_Install_Cmd7" After="CostFinalize">
-        <![CDATA[(NOT REMOVE) AND (VersionNT = 601)]]>
+        <![CDATA[(NOT REMOVE) AND (VersionNT >= 601)]]>
       </Custom>
       <Custom Action="CA_RegisterMceApp_Unregister_Uninstall_Cmd7" After="CA_RegisterMceApp_Unregister_Install_Cmd7" >
-        <![CDATA[(REMOVE) AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT = 601)]]>
+        <![CDATA[(REMOVE) AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT >= 601)]]>
       </Custom>
       <Custom Action="CA_RegisterMceApp_Register_Cmd7" After="CA_RegisterMceApp_Unregister_Uninstall_Cmd7">
-        <![CDATA[NOT REMOVE AND (VersionNT = 601)]]>
+        <![CDATA[NOT REMOVE AND (VersionNT >= 601)]]>
       </Custom>
       <Custom Action="CA_RegisterMceApp_Rollback_Cmd7" After="CA_RegisterMceApp_Register_Cmd7">
-        <![CDATA[NOT REMOVE AND (VersionNT = 601)]]>
+        <![CDATA[NOT REMOVE AND (VersionNT >= 601)]]>
       </Custom>
 
 			<!-- This unregistration custom action must occur before files are removed during uninstall of the -->

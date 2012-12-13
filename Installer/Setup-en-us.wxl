@@ -3,7 +3,7 @@
 
 	<String Id="LaunchCondition_AdminPrivs">You must have Administrative rights on this machine to install [ProductName].</String>
 	<String Id="LaunchCondition_NewerVersion">A newer version of [ProductName] is already installed.</String>
-	<String Id="LaunchCondition_WrongOSVersion">[ProductName] can only be installed on Microsoft Windows 7 (Home Premium, Professional or Ultimate Edition).</String>
+	<String Id="LaunchCondition_WrongOSVersion">[ProductName] can only be installed on Microsoft Windows 7 or 8 with Media Center also installed.</String>
   <String Id="LaunchCondition_WrongDotNetFramework">[ProductName] requires that .NET Framework version 3.5 or above is installed.</String>
 
 	<String Id="Property_ArpHelpLink">http://community.mediabrowser.tv/topics?category_id=5</String>
